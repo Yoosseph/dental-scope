@@ -38,6 +38,8 @@ export class LabelLayer {
   onClick?: (id: string) => void;
   /** returns the structure id at the first ray hit from the camera toward a point, or null */
   raycastOwner?: (from: THREE.Vector3, to: THREE.Vector3) => { id: string; distance: number } | null;
+  /** false when a point has been cut away by the section plane */
+  keeps?: (p: THREE.Vector3) => boolean;
 
   constructor(root: HTMLElement) {
     this.root = root;
@@ -92,6 +94,10 @@ export class LabelLayer {
     for (const c of sorted) {
       const l = this.els.get(c.id)!;
       const p = c.anchor();
+      if (this.keeps && !this.keeps(p)) {
+        this.show(l, false);
+        continue;
+      }
       tmp.copy(p).sub(camera.position);
       const depth = tmp.dot(camDir);
       if (depth <= camera.near) {

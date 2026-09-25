@@ -145,6 +145,7 @@ export class Engine {
     this.labels = new LabelLayer(this.overlay);
     this.labels.onClick = (id) => this.selectFromUI(id, { focus: false });
     this.labels.raycastOwner = (from, to) => this.raycastOwner(from, to);
+    this.labels.keeps = (p) => !getState().clip.enabled || this.section.keeps(p);
 
     this.bindPointer();
     this.resizeObs = new ResizeObserver(() => this.resize());
