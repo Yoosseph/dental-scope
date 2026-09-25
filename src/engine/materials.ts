@@ -27,8 +27,8 @@ const STYLES: Record<string, TissueStyle> = {
   canal: { color: '#b83842', roughness: 0.5, cap: '#a42d36', emissive: '#300a0d' },
   pdl: { color: '#d4847d', roughness: 0.6, cap: '#c26f68' },
   gingiva: { color: '#d88a8c', roughness: 0.5, sheen: 0.4, cap: '#c77074' },
-  bone: { color: '#e8e0cc', roughness: 0.82, cap: '#d8c9a6' },
-  alveolar: { color: '#e2d6ba', roughness: 0.85, cap: '#d2c19c' },
+  bone: { color: '#e8e0cc', roughness: 0.82, cap: '#ddd0b2' },
+  alveolar: { color: '#e4dac2', roughness: 0.85, cap: '#dacdb0' },
   condyle: { color: '#e4dac3', roughness: 0.75, cap: '#d0c2a1' },
   disc: { color: '#86b2c4', roughness: 0.45, cap: '#6d9aae' },
   skull: { color: '#e6dfcd', roughness: 0.85, cap: '#d6caac' },
@@ -104,9 +104,12 @@ export function createTissueMaterial(styleKey: string): TissueMaterial {
         {
           vec3 vdir = normalize(vViewPosition);
           float fres = pow(1.0 - clamp(abs(dot(normalize(vNormal), vdir)), 0.0, 1.0), 2.2);
-          gl_FragColor.rgb = mix(gl_FragColor.rgb, uHiColor, uHi * (0.16 + 0.7 * fres));
+          vec3 hi = linearToOutputTexel(vec4(uHiColor, 1.0)).rgb;
+          gl_FragColor.rgb = mix(gl_FragColor.rgb, hi, uHi * (0.16 + 0.7 * fres));
           if (!gl_FrontFacing) {
-            vec3 cap = mix(uCap, uHiColor, uHi * 0.35);
+            // cut surface: flat tissue colour (converted to output space), lightly shaded by depth
+            vec3 cap = linearToOutputTexel(vec4(uCap, 1.0)).rgb;
+            cap = mix(cap, hi, uHi * 0.35);
             gl_FragColor = vec4(cap, gl_FragColor.a);
           }
           gl_FragColor.a *= uOpacityFx;

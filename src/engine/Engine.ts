@@ -130,14 +130,15 @@ export class Engine {
     };
     this.rig.controls.addEventListener('change', () => this.invalidate());
     const reduce = matchMedia('(prefers-reduced-motion: reduce)');
-    this.animator.reducedMotion = reduce.matches;
+    // ?motion=reduce forces reduced motion (useful for screenshots and slow devices)
+    this.animator.reducedMotion = reduce.matches || new URLSearchParams(location.search).get('motion') === 'reduce';
     reduce.addEventListener?.('change', (e) => (this.animator.reducedMotion = e.matches));
 
     // initial framing: the dentition, three-quarter view
     const [lo, hi] = this.registry.manifest.bounds;
     const teethBox = new THREE.Box3(new THREE.Vector3(...lo).min(new THREE.Vector3(...hi)), new THREE.Vector3(...lo).max(new THREE.Vector3(...hi)));
     const sphere = teethBox.getBoundingSphere(new THREE.Sphere());
-    this.rig.home = { target: sphere.center.clone().add(new THREE.Vector3(0, 0.1, -0.2)), radius: sphere.radius * 1.12 };
+    this.rig.home = { target: sphere.center.clone().add(new THREE.Vector3(0, -0.15, -0.2)), radius: sphere.radius * 1.28 };
     this.resize();
     this.rig.preset('three-quarter', this.rig.home.target, this.rig.home.radius, 0);
 
@@ -266,8 +267,20 @@ export class Engine {
     if (s.dissectFdi !== p.dissectFdi && s.dissectFdi !== null) void this.ensureTooth(s.dissectFdi);
     if (s.autoRotate !== p.autoRotate) this.rig.controls.autoRotate = s.autoRotate;
     if (visChanged || s.labels !== p.labels || s.numbering !== p.numbering || s.selectedId !== p.selectedId) this.refreshLabels();
+    if (s.explode !== p.explode) this.reframeForExplode(s);
     if (s.explode !== p.explode || s.toothExplode !== p.toothExplode) this.invalidate();
     this.invalidate();
+  }
+
+  private explodeTimer = 0;
+  /** While a view preset is active, widen the framing so the exploded anatomy stays in view. */
+  private reframeForExplode(s: AppState) {
+    if (!s.view || s.dissectFdi !== null || s.isolateId) return;
+    const view = s.view;
+    clearTimeout(this.explodeTimer);
+    this.explodeTimer = window.setTimeout(() => {
+      this.rig.preset(view, this.rig.home.target, this.rig.home.radius * (1 + 0.75 * getState().explode), 0.6);
+    }, 120);
   }
 
   private refreshAll() {
@@ -330,7 +343,9 @@ export class Engine {
   }
 
   private refreshClip() {
-    const { clip } = getState();
+    const { clip, dissectFdi } = getState();
+    const frame = dissectFdi !== null ? this.registry.get(`tooth-${dissectFdi}`)?.tooth?.frame : undefined;
+    this.section.setFrame(frame ? { sagittal: frame.buccal, coronal: frame.mesial, axial: frame.axis } : null);
     this.section.update(clip, this.activeBounds(), this.rig.camera, this.rig.controls.target);
     const planes = clip.enabled ? this.section.planes : null;
     for (const e of this.entries.values()) {
@@ -394,7 +409,7 @@ export class Engine {
           kind: 'landmark',
           priority: d.labelPriority + 2,
           radius: 0.2,
-          owners: new Set([d.id]),
+          owners: new Set([d.id, ...(parentKey ? [this.registry.meshOwner.get(parentKey)!] : [])]),
           anchor: () => (parentEntry ? anchor.clone().add(parentEntry.mesh.position) : anchor),
         });
       }
@@ -632,14 +647,40 @@ export class Engine {
 
   /* ============================================================== loop */
 
+  private insets = { right: 0, bottom: 0 };
+
+  /**
+   * Shift the optical centre away from UI that covers the canvas (detail panel,
+   * mobile bottom sheet) so the focused anatomy stays visible. Animated.
+   */
+  setInsets(right: number, bottom: number) {
+    const from = { ...this.insets };
+    if (from.right === right && from.bottom === bottom) return;
+    this.animator.run('insets', 0.35, (k) => {
+      this.insets.right = from.right + (right - from.right) * k;
+      this.insets.bottom = from.bottom + (bottom - from.bottom) * k;
+      this.applyViewOffset();
+    });
+  }
+
+  private applyViewOffset() {
+    if (!this.container) return;
+    const w = this.container.clientWidth;
+    const h = this.container.clientHeight;
+    const cam = this.rig.camera;
+    if (this.insets.right || this.insets.bottom) cam.setViewOffset(w, h, this.insets.right / 2, this.insets.bottom / 2, w, h);
+    else cam.clearViewOffset();
+    cam.updateProjectionMatrix();
+    this.invalidate();
+  }
+
   private resize() {
     if (!this.container || !this.renderer) return;
     const w = this.container.clientWidth;
     const h = this.container.clientHeight;
     this.renderer.setSize(w, h, false);
     this.rig.camera.aspect = w / Math.max(h, 1);
-    this.rig.camera.updateProjectionMatrix();
-    this.invalidate();
+    this.applyViewOffset();
   }
 
   private loop = () => {
@@ -655,7 +696,7 @@ export class Engine {
     const fx = this.tickVisuals(dt);
     this.updateHover();
     if (controlsChanged || animating) this.rig.updateClipping();
-    if (getState().clip.axis === 'view' && getState().clip.enabled && (controlsChanged || animating)) this.refreshClip();
+    if (getState().clip.enabled && (controlsChanged || animating)) this.refreshClip();
 
     if (!(this.needsRender || controlsChanged || animating || fx)) return;
     this.needsRender = false;
