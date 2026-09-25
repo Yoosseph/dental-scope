@@ -6,7 +6,7 @@ import { DetailPanel } from './DetailPanel';
 import { Dock } from './Dock';
 import { IconLayers, IconSearch, IconSection } from './icons';
 import { LayersPanel } from './LayersPanel';
-import { AboutDialog, Footer, LoadingCard } from './Overlays';
+import { AboutDialog, Footer, LoadingCard, StartHint } from './Overlays';
 import { SearchPanel } from './SearchPanel';
 import { Identity, TopActions } from './TopBar';
 import { useKeyboard } from './useKeyboard';
@@ -60,6 +60,7 @@ export function App() {
         <Dock />
         <Footer />
         <LoadingCard />
+        <StartHint />
         <nav className="ds-mobile-bar ds-panel" aria-label="Mobile controls">
           <button type="button" className={sheet === 'layers' ? 'is-active' : ''} onClick={() => actions.setMobileSheet(sheet === 'layers' ? 'none' : 'layers')} aria-pressed={sheet === 'layers'}>
             <IconLayers /> <span>Layers</span>
