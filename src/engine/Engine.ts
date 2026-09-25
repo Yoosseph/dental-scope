@@ -774,11 +774,11 @@ function nextFrame() {
 
 /** A dissection level at which a given tooth part is fully visible. */
 function levelShowing(id: string): number {
+  if (id.startsWith('canal-') || id.startsWith('root-canals-') || id.startsWith('apical-')) return 4;
   if (id.startsWith('enamel-') || id.startsWith('crown-') || id.startsWith('cej-')) return 0;
   if (id.startsWith('pdl-') || id.startsWith('cementum-') || id.startsWith('root-') || id.startsWith('apex-')) return 1;
   if (id.startsWith('dentin')) return 2;
   if (id.startsWith('pulp-chamber') || id.startsWith('pulp-horn') || id.startsWith('pulp-')) return 3;
-  if (id.startsWith('canal-') || id.startsWith('root-canals-') || id.startsWith('apical-')) return 4;
   return 0;
 }
 
