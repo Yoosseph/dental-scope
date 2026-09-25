@@ -1,0 +1,142 @@
+/**
+ * Hierarchy browser (role="tree"): the accessible, non-canvas path to every structure.
+ */
+import { memo, useEffect, useRef, useState } from 'react';
+import { formatTooth } from '../anatomy/notation';
+import type { Structure } from '../anatomy/types';
+import { pathFor, pushPath } from '../app/router';
+import { actions, getState, useApp } from '../state/store';
+import { useServices } from './context';
+import { IconChevron, IconEye, IconEyeOff } from './icons';
+
+export function StructureTree() {
+  const { registry } = useServices();
+  const selectedId = useApp((s) => s.selectedId);
+  const [open, setOpen] = useState<Set<string>>(() => new Set(['dental-anatomy', 'maxilla', 'mandible']));
+  const ref = useRef<HTMLDivElement>(null);
+
+  // expand to reveal the selection
+  useEffect(() => {
+    if (!selectedId) return;
+    const anc = registry.ancestors(selectedId).map((a) => a.id);
+    setOpen((o) => {
+      if (anc.every((a) => o.has(a))) return o;
+      const n = new Set(o);
+      anc.forEach((a) => n.add(a));
+      return n;
+    });
+    requestAnimationFrame(() => ref.current?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' }));
+  }, [selectedId, registry]);
+
+  const toggle = (id: string) =>
+    setOpen((o) => {
+      const n = new Set(o);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+
+  const root = registry.require(registry.rootId);
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    const items = [...(ref.current?.querySelectorAll<HTMLElement>('[role="treeitem"] > .ds-tree-row') ?? [])];
+    const i = items.indexOf(document.activeElement as HTMLElement);
+    if (i < 0) return;
+    const id = items[i].dataset.id!;
+    if (e.key === 'ArrowDown') items[Math.min(items.length - 1, i + 1)]?.focus();
+    else if (e.key === 'ArrowUp') items[Math.max(0, i - 1)]?.focus();
+    else if (e.key === 'ArrowRight') setOpen((o) => new Set(o).add(id));
+    else if (e.key === 'ArrowLeft') setOpen((o) => {
+      const n = new Set(o);
+      n.delete(id);
+      return n;
+    });
+    else return;
+    e.preventDefault();
+  };
+
+  return (
+    <div className="ds-tree" role="tree" aria-label="Anatomical hierarchy" ref={ref} onKeyDown={onKeyDown}>
+      {root.children.map((c) => (
+        <TreeNode key={c} id={c} depth={0} open={open} toggle={toggle} />
+      ))}
+    </div>
+  );
+}
+
+const TreeNode = memo(function TreeNode({ id, depth, open, toggle }: { id: string; depth: number; open: Set<string>; toggle: (id: string) => void }) {
+  const { registry, engine } = useServices();
+  const s = registry.require(id);
+  const selected = useApp((st) => st.selectedId === id);
+  const hidden = useApp((st) => !!st.hidden[id]);
+  const numbering = useApp((st) => st.numbering);
+  const children = s.children.filter((c) => registry.get(c)?.kind !== 'landmark' || depth > 1);
+  const expandable = children.length > 0;
+  const isOpen = open.has(id);
+
+  const select = async () => {
+    await engine.selectFromUI(id, { focus: true });
+    const st = getState();
+    pushPath(pathFor(st.selectedId, st.dissectFdi, registry));
+  };
+
+  return (
+    <div role="treeitem" aria-expanded={expandable ? isOpen : undefined} aria-selected={selected} aria-level={depth + 1}>
+      <div
+        className={`ds-tree-row${selected ? ' is-selected' : ''}${hidden ? ' is-hidden' : ''}`}
+        style={{ paddingLeft: 6 + depth * 14 }}
+        data-id={id}
+        tabIndex={0}
+        onClick={select}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            void select();
+          }
+        }}
+      >
+        <button
+          type="button"
+          tabIndex={-1}
+          className={`ds-tree-caret${isOpen ? ' is-open' : ''}`}
+          style={{ visibility: expandable ? 'visible' : 'hidden' }}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggle(id);
+          }}
+          aria-label={isOpen ? 'Collapse' : 'Expand'}
+        >
+          <IconChevron size={12} />
+        </button>
+        <span className="ds-tree-name">{label(s, numbering)}</span>
+        {s.tooth && <span className="ds-chip ds-chip--mono ds-chip--sm">{formatTooth(s.tooth.fdi, numbering)}</span>}
+        {s.kind !== 'landmark' && (
+          <button
+            type="button"
+            tabIndex={-1}
+            className="ds-tree-eye"
+            aria-label={hidden ? `Show ${s.name}` : `Hide ${s.name}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (hidden) actions.unhide(id);
+              else actions.hide(id);
+            }}
+          >
+            {hidden ? <IconEyeOff size={13} /> : <IconEye size={13} />}
+          </button>
+        )}
+      </div>
+      {expandable && isOpen && (
+        <div role="group">
+          {children.map((c) => (
+            <TreeNode key={c} id={c} depth={depth + 1} open={open} toggle={toggle} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+});
+
+function label(s: Structure, _n: string): string {
+  if (s.tooth) return s.name.replace(/^(Maxillary|Mandibular) (right|left) /, '').replace(/^./, (c) => c.toUpperCase());
+  return s.name;
+}
