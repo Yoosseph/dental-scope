@@ -20,7 +20,11 @@ function currentPath(): string {
   return HASH ? location.hash.replace(/^#/, '') || '/' : location.pathname;
 }
 
+/** `VITE_DS_URL=off` disables URL updates (for embedding in hosts that own the URL). */
+const WRITE_URL = import.meta.env.VITE_DS_URL !== 'off';
+
 function writeUrl(path: string, push: boolean) {
+  if (!WRITE_URL) return;
   const url = HASH ? `#${path.replace(/^\.?/, '')}` : path + location.search;
   if (push) history.pushState(null, '', url);
   else history.replaceState(null, '', url);
