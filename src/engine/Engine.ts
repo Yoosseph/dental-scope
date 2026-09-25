@@ -130,14 +130,15 @@ export class Engine {
     };
     this.rig.controls.addEventListener('change', () => this.invalidate());
     const reduce = matchMedia('(prefers-reduced-motion: reduce)');
-    this.animator.reducedMotion = reduce.matches;
+    // ?motion=reduce forces reduced motion (useful for screenshots and slow devices)
+    this.animator.reducedMotion = reduce.matches || new URLSearchParams(location.search).get('motion') === 'reduce';
     reduce.addEventListener?.('change', (e) => (this.animator.reducedMotion = e.matches));
 
     // initial framing: the dentition, three-quarter view
     const [lo, hi] = this.registry.manifest.bounds;
     const teethBox = new THREE.Box3(new THREE.Vector3(...lo).min(new THREE.Vector3(...hi)), new THREE.Vector3(...lo).max(new THREE.Vector3(...hi)));
     const sphere = teethBox.getBoundingSphere(new THREE.Sphere());
-    this.rig.home = { target: sphere.center.clone().add(new THREE.Vector3(0, 0.1, -0.2)), radius: sphere.radius * 1.12 };
+    this.rig.home = { target: sphere.center.clone().add(new THREE.Vector3(0, -0.15, -0.2)), radius: sphere.radius * 1.28 };
     this.resize();
     this.rig.preset('three-quarter', this.rig.home.target, this.rig.home.radius, 0);
 
@@ -266,8 +267,20 @@ export class Engine {
     if (s.dissectFdi !== p.dissectFdi && s.dissectFdi !== null) void this.ensureTooth(s.dissectFdi);
     if (s.autoRotate !== p.autoRotate) this.rig.controls.autoRotate = s.autoRotate;
     if (visChanged || s.labels !== p.labels || s.numbering !== p.numbering || s.selectedId !== p.selectedId) this.refreshLabels();
+    if (s.explode !== p.explode) this.reframeForExplode(s);
     if (s.explode !== p.explode || s.toothExplode !== p.toothExplode) this.invalidate();
     this.invalidate();
+  }
+
+  private explodeTimer = 0;
+  /** While a view preset is active, widen the framing so the exploded anatomy stays in view. */
+  private reframeForExplode(s: AppState) {
+    if (!s.view || s.dissectFdi !== null || s.isolateId) return;
+    const view = s.view;
+    clearTimeout(this.explodeTimer);
+    this.explodeTimer = window.setTimeout(() => {
+      this.rig.preset(view, this.rig.home.target, this.rig.home.radius * (1 + 0.75 * getState().explode), 0.6);
+    }, 120);
   }
 
   private refreshAll() {
@@ -655,7 +668,7 @@ export class Engine {
     const fx = this.tickVisuals(dt);
     this.updateHover();
     if (controlsChanged || animating) this.rig.updateClipping();
-    if (getState().clip.axis === 'view' && getState().clip.enabled && (controlsChanged || animating)) this.refreshClip();
+    if (getState().clip.enabled && (controlsChanged || animating)) this.refreshClip();
 
     if (!(this.needsRender || controlsChanged || animating || fx)) return;
     this.needsRender = false;
