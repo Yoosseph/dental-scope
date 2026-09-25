@@ -596,6 +596,9 @@ button.ds-layer-name:hover {
     transform: translateY(6px);
   }
 }
+.ds-app.is-dissecting .ds-detail {
+  max-height: calc(100% - 76px - 220px);
+}
 .ds-detail-head {
   position: relative;
   padding: 18px 20px 12px;

@@ -6,7 +6,7 @@ import { pathFor, pushPath } from '../app/router';
 import { resolveContent } from '../content/content';
 import { actions, getState, useApp } from '../state/store';
 import { useServices } from './context';
-import { IconClose, IconEyeOff, IconFocus, IconGhost, IconIsolate, IconTooth } from './icons';
+import { IconArrowLeft, IconClose, IconEyeOff, IconFocus, IconGhost, IconIsolate, IconTooth } from './icons';
 
 const PROVENANCE: Record<Provenance, { label: string; text: string }> = {
   source: { label: 'Source geometry', text: 'Mesh from BodyParts3D (DBCLS), simplified for the web.' },
@@ -132,7 +132,11 @@ export function DetailPanel() {
       </div>
 
       <div className="ds-detail-actions">
-        {s.tooth && dissectFdi !== s.tooth.fdi ? (
+        {s.tooth && dissectFdi === s.tooth.fdi ? (
+          <button type="button" className="ds-primary" onClick={leaveTooth}>
+            <IconArrowLeft /> Back to the full mouth
+          </button>
+        ) : s.tooth ? (
           <button type="button" className="ds-primary" onClick={() => void enterDissect(s.tooth!.fdi)}>
             <IconTooth /> Explore inside this tooth
           </button>
@@ -163,6 +167,13 @@ export function DetailPanel() {
   function isolate(id: string) {
     actions.isolate(id);
     requestAnimationFrame(() => engine.focus(id));
+  }
+
+  function leaveTooth() {
+    const f = dissectFdi!;
+    actions.exitDissect();
+    engine.focus(`tooth-${f}`);
+    pushPath(pathFor(getState().selectedId, null, registry));
   }
 
   async function enterDissect(f: number) {
