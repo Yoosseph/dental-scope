@@ -343,7 +343,9 @@ export class Engine {
   }
 
   private refreshClip() {
-    const { clip } = getState();
+    const { clip, dissectFdi } = getState();
+    const frame = dissectFdi !== null ? this.registry.get(`tooth-${dissectFdi}`)?.tooth?.frame : undefined;
+    this.section.setFrame(frame ? { sagittal: frame.buccal, coronal: frame.mesial, axial: frame.axis } : null);
     this.section.update(clip, this.activeBounds(), this.rig.camera, this.rig.controls.target);
     const planes = clip.enabled ? this.section.planes : null;
     for (const e of this.entries.values()) {
@@ -407,7 +409,7 @@ export class Engine {
           kind: 'landmark',
           priority: d.labelPriority + 2,
           radius: 0.2,
-          owners: new Set([d.id]),
+          owners: new Set([d.id, ...(parentKey ? [this.registry.meshOwner.get(parentKey)!] : [])]),
           anchor: () => (parentEntry ? anchor.clone().add(parentEntry.mesh.position) : anchor),
         });
       }

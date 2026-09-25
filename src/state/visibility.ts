@@ -85,7 +85,11 @@ export function resolveMesh(meshKey: string, ctx: VisibilityContext): MeshVisual
     if (isShell && active) return 'off';
     if (!isShell) {
       if (!active) return 'off';
-      if (state.dissectFdi === fdi) v = minVis(v, dissectRule(state.dissectLevel, layerKind(meshKey)));
+      if (state.dissectFdi === fdi) {
+        const rule = dissectRule(state.dissectLevel, layerKind(meshKey));
+        // with a section active every remaining tissue is opaque, so the cut shows all layers
+        v = minVis(v, state.clip.enabled && rule === 'ghost' ? 'on' : rule);
+      }
       else if (layerKind(meshKey) === 'pdl') return 'off';
     }
   }

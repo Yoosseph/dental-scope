@@ -85,7 +85,7 @@ function DissectControls({ fdi }: { fdi: number }) {
       <p className="ds-step-hint">{DISSECT_LEVELS[level].hint}</p>
       <Slider label="Separate layers" icon={<IconExplode size={15} />} value={tex} onChange={actions.setToothExplode} left="Together" right="Apart" />
       <div className="ds-dock-tools">
-        <ToolToggle active={clip} onClick={() => actions.setClip({ enabled: !clip, axis: getState().clip.axis === 'axial' ? 'axial' : 'view' })} icon={<IconSection />} label="Section" title="Cross-section (C)" />
+        <ToolToggle active={clip} onClick={() => actions.setClip({ enabled: !clip, axis: 'sagittal', offset: 0 })} icon={<IconSection />} label="Section" title="Cross-section (C)" />
         <ToolToggle active={labels} onClick={() => actions.toggleLabels()} icon={<IconLabel />} label="Labels" title="Labels (L)" />
         <ToolToggle active={ctx} onClick={() => actions.setIsolateContext(!ctx)} icon={<IconExplode />} label="Context" title="Show neighbouring anatomy" />
       </div>
@@ -93,15 +93,23 @@ function DissectControls({ fdi }: { fdi: number }) {
   );
 }
 
+const TOOTH_AXIS_LABEL: Record<ClipAxis, [string, string]> = {
+  sagittal: ['Mesiodistal', 'Mesiodistal plane of the tooth'],
+  coronal: ['Buccolingual', 'Buccolingual plane of the tooth'],
+  axial: ['Horizontal', 'Horizontal cross-section of the tooth'],
+  view: ['View', 'Plane facing the camera'],
+};
+
 function SectionControls() {
   const clip = useApp((s) => s.clip);
+  const inTooth = useApp((s) => s.dissectFdi !== null);
   if (!clip.enabled) return null;
   return (
     <div className="ds-panel ds-section-panel" role="group" aria-label="Cross-section">
       <div className="ds-segmented ds-segmented--fill" role="radiogroup" aria-label="Section plane">
         {AXES.map((a) => (
-          <button key={a.id} type="button" role="radio" aria-checked={clip.axis === a.id} className={clip.axis === a.id ? 'is-active' : ''} onClick={() => actions.setClip({ axis: a.id, offset: 0 })} title={a.title}>
-            {a.label}
+          <button key={a.id} type="button" role="radio" aria-checked={clip.axis === a.id} className={clip.axis === a.id ? 'is-active' : ''} onClick={() => actions.setClip({ axis: a.id, offset: 0 })} title={inTooth ? TOOTH_AXIS_LABEL[a.id][1] : a.title}>
+            {inTooth ? TOOTH_AXIS_LABEL[a.id][0] : a.label}
           </button>
         ))}
       </div>

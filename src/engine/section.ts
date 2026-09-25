@@ -5,7 +5,8 @@
 import * as THREE from 'three';
 import type { ClipState } from '../state/store';
 
-const AXES = {
+type PlaneAxis = 'sagittal' | 'coronal' | 'axial';
+const WORLD_AXES: Record<PlaneAxis, THREE.Vector3> = {
   sagittal: new THREE.Vector3(1, 0, 0),
   coronal: new THREE.Vector3(0, 0, 1),
   axial: new THREE.Vector3(0, 1, 0),
@@ -17,6 +18,18 @@ export class SectionTool {
   readonly outline: THREE.LineLoop;
   private normal = new THREE.Vector3(1, 0, 0);
   private lastKey = '';
+  private axes: Record<PlaneAxis, THREE.Vector3> = WORLD_AXES;
+
+  /**
+   * Use a tooth's own frame while dissecting: "sagittal" becomes the
+   * mesiodistal plane, "coronal" the buccolingual plane, "axial" a horizontal
+   * cross-section of the tooth. Pass null for anatomical (world) planes.
+   */
+  setFrame(f: Record<PlaneAxis, [number, number, number]> | null) {
+    this.axes = f
+      ? { sagittal: new THREE.Vector3(...f.sagittal).normalize(), coronal: new THREE.Vector3(...f.coronal).normalize(), axial: new THREE.Vector3(...f.axial).normalize() }
+      : WORLD_AXES;
+  }
 
   constructor() {
     const g = new THREE.BufferGeometry().setFromPoints([
@@ -39,13 +52,13 @@ export class SectionTool {
     const center = bounds.getCenter(new THREE.Vector3());
     const size = bounds.getSize(new THREE.Vector3());
     // the removed half is always the one facing the camera, so the cut surface faces the viewer
-    const camSide = clip.axis === 'view' ? 0 : Math.sign(AXES[clip.axis].dot(camera.position.clone().sub(center))) || 1;
-    const key = `${clip.axis}|${clip.flip}|${camSide}|${center.toArray().map((v) => v.toFixed(2)).join(',')}`;
+    const camSide = clip.axis === 'view' ? 0 : Math.sign(this.axes[clip.axis].dot(camera.position.clone().sub(center))) || 1;
+    const key = `${clip.axis}|${clip.flip}|${camSide}|${this.axes[clip.axis === 'view' ? 'axial' : clip.axis].toArray().map((v) => v.toFixed(2)).join(',')}|${center.toArray().map((v) => v.toFixed(2)).join(',')}`;
     if (key !== this.lastKey || clip.axis === 'view') {
       if (clip.axis === 'view') {
         this.normal.copy(target).sub(camera.position).normalize();
       } else {
-        this.normal.copy(AXES[clip.axis]);
+        this.normal.copy(this.axes[clip.axis]);
         const toCam = camera.position.clone().sub(center);
         if (this.normal.dot(toCam) > 0) this.normal.negate();
       }
@@ -54,7 +67,7 @@ export class SectionTool {
     }
     const extent = Math.abs(this.normal.x) * size.x + Math.abs(this.normal.y) * size.y + Math.abs(this.normal.z) * size.z;
     // the slider moves along the fixed anatomical axis, independent of which half is removed
-    const along = clip.axis === 'view' ? this.normal : AXES[clip.axis];
+    const along = clip.axis === 'view' ? this.normal : this.axes[clip.axis];
     const point = center.clone().addScaledVector(along, (clip.offset * extent) / 2);
     this.plane.setFromNormalAndCoplanarPoint(this.normal, point);
 
