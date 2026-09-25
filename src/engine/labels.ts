@@ -143,7 +143,7 @@ export class LabelLayer {
       if (!hit) continue;
       const dist = camera.position.distanceTo(p);
       // landmarks sit on or just inside surfaces: allow a small tolerance
-      const tol = c.kind === 'landmark' ? 0.35 : c.radius * 0.9;
+      const tol = c.kind === 'landmark' ? 0.35 : Math.min(c.radius * 0.9, 0.3);
       if (hit.distance < dist - tol && !c.owners.has(hit.id)) this.occluded.add(c.id);
     }
   }
