@@ -7,3 +7,5 @@ dist/
 coverage/
 tools/pipeline/raw/
 tools/pipeline/.cache/
+__pycache__/
+*.pyc

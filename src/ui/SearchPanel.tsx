@@ -23,7 +23,10 @@ export function SearchPanel() {
   useEffect(() => {
     if (open) {
       setActive(0);
-      requestAnimationFrame(() => input.current?.select());
+      requestAnimationFrame(() => {
+        input.current?.focus();
+        input.current?.select();
+      });
     }
   }, [open]);
   useEffect(() => setActive(0), [q]);
@@ -63,6 +66,7 @@ export function SearchPanel() {
           <IconSearch size={18} />
           <input
             ref={input}
+            autoFocus
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={onKey}

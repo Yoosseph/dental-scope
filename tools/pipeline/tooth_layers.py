@@ -319,10 +319,12 @@ def build_tooth_layers(mesh: trimesh.Trimesh, arch: str, ttype: str, frame: Fram
     half = np.percentile(np.abs(vl[np.abs(vl[:, 2] - z_cej) < 0.6][:, :2]), 90, axis=0).min()
     # dentin wall at the cervix ~ 60 % of the smaller half-width, thicker toward the roof
     wall = 0.6 * half
-    w = wall + 0.30 * wall * np.clip(hc / max(crown_len, 1e-3), 0, 1.5)
+    # the wall thickens toward the occlusal surface; because `sd` is the distance to the
+    # outer surface, the roof of the chamber follows the cusps and forms pulp horns
+    roof_depth = wall + (0.9 if multi else 0.5)
+    t = np.clip((hc / max(crown_len, 1e-3) - 0.1) / 0.45, 0, 1)
+    w = wall + (roof_depth - wall) * t * t * (3 - 2 * t)
     f_chamber = smin(sd - w, (ZZ - (z_cej + floor)) * 1.0, 1.2)
-    # never above ~70 % of the crown
-    f_chamber = np.minimum(f_chamber, (z_cej + 0.72 * crown_len) - ZZ)
 
     # ---- canals ----------------------------------------------------------
     z_furc = z_cej + floor - 0.3
