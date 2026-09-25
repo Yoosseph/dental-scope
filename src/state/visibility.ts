@@ -1,0 +1,136 @@
+/**
+ * Pure visibility resolution: (registry, state, loaded teeth) → per-mesh visual.
+ * One function decides visibility so modes/timeline/procedures can plug in
+ * extra filters without touching UI code (see docs/architecture.md §5).
+ */
+import type { Registry } from '../anatomy/registry';
+import type { CategoryState } from '../anatomy/categories';
+import type { AppState } from './store';
+
+export type MeshVisual = 'on' | 'ghost' | 'off';
+
+const RANK: Record<MeshVisual, number> = { off: 0, ghost: 1, on: 2 };
+const minVis = (a: MeshVisual, b: MeshVisual): MeshVisual => (RANK[a] <= RANK[b] ? a : b);
+
+export type VisibilityFilter = (meshKey: string, ownerId: string, state: AppState) => MeshVisual;
+const extraFilters: VisibilityFilter[] = [];
+
+/** Register an additional filter (e.g. a mode or a future eruption timeline). */
+export function registerVisibilityFilter(f: VisibilityFilter): () => void {
+  extraFilters.push(f);
+  return () => {
+    const i = extraFilters.indexOf(f);
+    if (i >= 0) extraFilters.splice(i, 1);
+  };
+}
+
+/** Which tissue a tooth-layer mesh key represents, e.g. "dentin-coronal-36" → "dentin-coronal". */
+export function layerKind(meshKey: string): string {
+  return meshKey.replace(/-\d{2}$/, '').replace(/^canal-.*/, 'canal');
+}
+
+/** Per dissection level, how each tooth layer is shown. */
+export function dissectRule(level: number, kind: string): MeshVisual {
+  const L: Record<number, Partial<Record<string, MeshVisual>>> = {
+    0: { pdl: 'off' },
+    1: { pdl: 'ghost' },
+    2: { enamel: 'off', pdl: 'off', cementum: 'ghost' },
+    3: { enamel: 'off', pdl: 'off', cementum: 'off', 'dentin-coronal': 'ghost', 'dentin-radicular': 'ghost' },
+    4: { enamel: 'off', pdl: 'off', cementum: 'off', 'dentin-coronal': 'ghost', 'dentin-radicular': 'ghost' },
+  };
+  return L[level]?.[kind] ?? 'on';
+}
+
+export interface VisibilityContext {
+  registry: Registry;
+  state: AppState;
+  loadedTeeth: Set<number>;
+}
+
+/** Are the internal layers of this tooth what should be displayed (instead of its outer shell)? */
+export function layersActive(fdi: number, ctx: VisibilityContext): boolean {
+  const { state, loadedTeeth } = ctx;
+  if (!loadedTeeth.has(fdi)) return false;
+  if (state.dissectFdi === fdi) return true;
+  return state.dissectFdi === null && state.clip.enabled;
+}
+
+export function resolveMesh(meshKey: string, ctx: VisibilityContext): MeshVisual {
+  const { registry, state } = ctx;
+  const ownerId = registry.meshOwner.get(meshKey);
+  if (!ownerId) return 'off';
+  const owner = registry.require(ownerId);
+
+  let v: MeshVisual = 'on';
+
+  // categories: every category the mesh belongs to must allow it
+  for (const c of registry.categoriesOfMesh(meshKey)) {
+    const cs: CategoryState = state.categories[c] ?? 'on';
+    v = minVis(v, cs);
+  }
+
+  // explicit hide / ghost on the structure or any ancestor
+  const chain = [owner, ...registry.ancestors(ownerId)];
+  for (const s of chain) {
+    if (state.hidden[s.id]) return 'off';
+    if (state.ghosted[s.id]) v = minVis(v, 'ghost');
+  }
+
+  // tooth shell vs internal layers
+  const fdi = owner.toothFdi;
+  if (fdi !== undefined) {
+    const active = layersActive(fdi, ctx);
+    const isShell = meshKey === `tooth-${fdi}`;
+    if (isShell && active) return 'off';
+    if (!isShell) {
+      if (!active) return 'off';
+      if (state.dissectFdi === fdi) v = minVis(v, dissectRule(state.dissectLevel, layerKind(meshKey)));
+      else if (layerKind(meshKey) === 'pdl') return 'off';
+    }
+  }
+
+  // isolation
+  if (state.isolateId) {
+    const inside = registry.isDescendant(ownerId, state.isolateId) || regionContains(registry, state.isolateId, meshKey);
+    if (!inside) {
+      if (!state.isolateContext) return 'off';
+      // dissect context: keep only the neighbourhood of the jaw faint
+      v = minVis(v, 'ghost');
+      if (state.dissectFdi !== null && fdi !== undefined && fdi !== state.dissectFdi && Math.floor(fdi / 10) !== Math.floor(state.dissectFdi / 10)) return 'off';
+      if (state.dissectFdi !== null && fdi === undefined) {
+        const cats = registry.categoriesOfMesh(meshKey);
+        if (cats.includes('skull') || cats.includes('muscles') || cats.includes('nerves') || cats.includes('arteries') || cats.includes('veins') || cats.includes('tmj')) return 'off';
+      }
+    }
+  }
+
+  for (const f of extraFilters) {
+    v = minVis(v, f(meshKey, ownerId, state));
+    if (v === 'off') return v;
+  }
+  return v;
+}
+
+function regionContains(registry: Registry, id: string, meshKey: string): boolean {
+  const s = registry.get(id);
+  return !!s && s.kind === 'region' && s.meshes.includes(meshKey);
+}
+
+/** Make a structure reachable: unhide it and its ancestors, enable its categories, relax isolation. */
+export function revealPatch(registry: Registry, id: string, state: AppState): Partial<AppState> {
+  const hidden = { ...state.hidden };
+  const chain = [id, ...registry.ancestors(id).map((a) => a.id)];
+  for (const c of chain) delete hidden[c];
+  const categories = { ...state.categories };
+  const meshes = registry.meshesOf(id);
+  const s = registry.get(id);
+  const cats = new Set(s?.categories ?? []);
+  for (const m of meshes) for (const c of registry.categoriesOfMesh(m)) cats.add(c);
+  for (const c of cats) if (categories[c] === 'off') categories[c] = 'on';
+  const patch: Partial<AppState> = { hidden, categories };
+  if (state.isolateId && !registry.isDescendant(id, state.isolateId)) {
+    patch.isolateId = null;
+    patch.isolateContext = false;
+  }
+  return patch;
+}
