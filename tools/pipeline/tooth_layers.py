@@ -441,13 +441,17 @@ def build_tooth_layers(mesh: trimesh.Trimesh, arch: str, ttype: str, frame: Fram
     below = -hc
     depth_frac = np.clip(below / max(root_len, 1e-3), 0, 1)
     c = 0.22 + 0.35 * depth_frac
-    f_cementum = np.minimum.reduce([sd, c - sd, below, -f_pulp])
+    # Adjacent tissues are separated by a hair-thin gap (EPS). Coincident surfaces
+    # would z-fight when a section exposes them; with the gap, the inner tissue's
+    # cut face always wins and sections read as clean coloured bands.
+    EPS = 0.1
+    f_cementum = np.minimum.reduce([sd, c - sd, below, -f_pulp - EPS])
     outer = np.where(hc > 0, e, c)
-    f_dentin = np.minimum(sd - outer, -f_pulp)
+    f_dentin = np.minimum(sd - outer - EPS, -f_pulp - EPS)
     f_dentin_cor = np.minimum(f_dentin, hc)
-    f_dentin_rad = np.minimum(f_dentin, below)
+    f_dentin_rad = np.minimum(f_dentin, below - EPS * 0.5)
     crest = 1.6
-    f_pdl = np.minimum.reduce([-sd, 0.28 + sd, below - crest])
+    f_pdl = np.minimum.reduce([-sd - EPS, 0.28 + sd, below - crest])
 
     L = ToothLayers(frame=frame)
     fb = faces_budget
