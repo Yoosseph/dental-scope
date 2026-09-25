@@ -645,14 +645,40 @@ export class Engine {
 
   /* ============================================================== loop */
 
+  private insets = { right: 0, bottom: 0 };
+
+  /**
+   * Shift the optical centre away from UI that covers the canvas (detail panel,
+   * mobile bottom sheet) so the focused anatomy stays visible. Animated.
+   */
+  setInsets(right: number, bottom: number) {
+    const from = { ...this.insets };
+    if (from.right === right && from.bottom === bottom) return;
+    this.animator.run('insets', 0.35, (k) => {
+      this.insets.right = from.right + (right - from.right) * k;
+      this.insets.bottom = from.bottom + (bottom - from.bottom) * k;
+      this.applyViewOffset();
+    });
+  }
+
+  private applyViewOffset() {
+    if (!this.container) return;
+    const w = this.container.clientWidth;
+    const h = this.container.clientHeight;
+    const cam = this.rig.camera;
+    if (this.insets.right || this.insets.bottom) cam.setViewOffset(w, h, this.insets.right / 2, this.insets.bottom / 2, w, h);
+    else cam.clearViewOffset();
+    cam.updateProjectionMatrix();
+    this.invalidate();
+  }
+
   private resize() {
     if (!this.container || !this.renderer) return;
     const w = this.container.clientWidth;
     const h = this.container.clientHeight;
     this.renderer.setSize(w, h, false);
     this.rig.camera.aspect = w / Math.max(h, 1);
-    this.rig.camera.updateProjectionMatrix();
-    this.invalidate();
+    this.applyViewOffset();
   }
 
   private loop = () => {

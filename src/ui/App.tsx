@@ -36,6 +36,18 @@ export function App() {
 
   useKeyboard(engine);
 
+  // keep the focused anatomy clear of the panels that cover the canvas
+  useEffect(() => {
+    const update = () => {
+      const mobile = window.innerWidth <= 767;
+      if (mobile) engine.setInsets(0, sheet !== 'none' ? window.innerHeight * 0.5 : 0);
+      else engine.setInsets(selected && window.innerWidth > 980 ? 360 : 0, dissect ? 120 : 0);
+    };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, [engine, selected, dissect, sheet]);
+
   return (
     <div className={`ds-app${selected ? ' has-selection' : ''}${dissect ? ' is-dissecting' : ''}`}>
       <div className="ds-stage" ref={stage} />
