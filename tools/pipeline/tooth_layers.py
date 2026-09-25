@@ -310,6 +310,9 @@ def build_tooth_layers(mesh: trimesh.Trimesh, arch: str, ttype: str, frame: Fram
     e_ax, e_tip = P["enamel"]
     up = np.clip(hc / max(crown_len, 1e-3), 0, 1)
     e = (np.clip(hc / 1.8, 0, 1) ** 0.8) * (e_ax + (e_tip - e_ax) * np.clip((up - 0.55) / 0.45, 0, 1))
+    # keep a minimum (slightly exaggerated) thickness so the enamel margin meets the
+    # cementum cleanly at the cervical line instead of breaking up below voxel size
+    e = np.maximum(e, 0.3)
     f_enamel = np.minimum.reduce([sd, e - sd, hc])
 
     # ---- pulp chamber -----------------------------------------------------
