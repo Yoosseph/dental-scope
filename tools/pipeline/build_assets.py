@@ -245,7 +245,8 @@ def main():
     upper_r = [f for f in teeth if f // 10 == 1]
     upper_l = [f for f in teeth if f // 10 == 2]
 
-    mand = load_stl(args.bp3d, BONES["mandible"])
+    # decimate before partitioning so the pieces share identical borders (no cracks)
+    mand = decimate(load_stl(args.bp3d, BONES["mandible"]), 17000)
     tree = cKDTree(root_points(lower))
     fc = mand.triangles_center
     alv = tree.query(fc, distance_upper_bound=4.0)[0] < 4.0
@@ -256,18 +257,18 @@ def main():
     cond_r = condyle & (fc[:, 0] < 0)
     cond_l = condyle & (fc[:, 0] > 0)
     body = ~alv & ~condyle
-    add("core", "mandible-body", decimate(submesh(mand, body), 9000), "source", 52748)
-    add("core", "mandibular-alveolar-process", decimate(submesh(mand, alv), 5000), "derived", 52748)
-    add("core", "mandibular-condyle-right", decimate(submesh(mand, cond_r), 1200), "derived", 52748)
-    add("core", "mandibular-condyle-left", decimate(submesh(mand, cond_l), 1200), "derived", 52748)
+    add("core", "mandible-body", submesh(mand, body), "source", 52748)
+    add("core", "mandibular-alveolar-process", submesh(mand, alv), "derived", 52748)
+    add("core", "mandibular-condyle-right", submesh(mand, cond_r), "derived", 52748)
+    add("core", "mandibular-condyle-left", submesh(mand, cond_l), "derived", 52748)
 
     for side, ups in (("right", upper_r), ("left", upper_l)):
-        mx = load_stl(args.bp3d, BONES[f"maxilla-{side}"])
+        mx = decimate(load_stl(args.bp3d, BONES[f"maxilla-{side}"]), 9000)
         tr = cKDTree(root_points(ups))
         c = mx.triangles_center
         a = tr.query(c, distance_upper_bound=4.0)[0] < 4.0
-        add("core", f"maxilla-{side}", decimate(submesh(mx, ~a), 6000), "source", BONES[f"maxilla-{side}"])
-        add("core", f"maxillary-alveolar-process-{side}", decimate(submesh(mx, a), 3000), "derived", BONES[f"maxilla-{side}"])
+        add("core", f"maxilla-{side}", submesh(mx, ~a), "source", BONES[f"maxilla-{side}"])
+        add("core", f"maxillary-alveolar-process-{side}", submesh(mx, a), "derived", BONES[f"maxilla-{side}"])
 
     # ---- context ------------------------------------------------------------
     print("Context: skull & muscles…")
@@ -276,7 +277,7 @@ def main():
         m = load_stl(args.bp3d, fma)
         budget = next((v for k, v in CONTEXT_BUDGET.items() if key.startswith(k)), CONTEXT_BUDGET["default"])
         if key.startswith("temporal-bone"):
-            temporal[key.split("-")[-1]] = m
+            temporal[key.split("-")[-1]] = decimate(m, 6500)
             continue
         add("context", key, decimate(m, budget), "source", fma)
 
@@ -299,9 +300,9 @@ def main():
         tb = temporal[side]
         tc = tb.triangles_center
         fossa = (np.linalg.norm(tc - (top + np.array([0, 0, 2.0])), axis=1) < max(ml, 12) * 0.62) & (tc[:, 2] > top[2] - 1.0)
-        add("context", f"temporal-bone-{side}", decimate(submesh(tb, ~fossa), 5000), "source",
+        add("context", f"temporal-bone-{side}", submesh(tb, ~fossa), "source",
             CONTEXT[f"temporal-bone-{side}"])
-        add("context", f"articular-fossa-{side}", decimate(submesh(tb, fossa), 1200), "derived",
+        add("context", f"articular-fossa-{side}", submesh(tb, fossa), "derived",
             CONTEXT[f"temporal-bone-{side}"])
         disc = ellipsoid_disc(top + np.array([0, 0, 1.4]), axes, (ml * 0.55, apw * 0.75, 1.1), concavity=0.45)
         add("context", f"articular-disc-{side}", disc, "schematic")
@@ -347,8 +348,8 @@ def main():
         add_path(f"inferior-alveolar-vein-{side}",
                  [p + np.array([sgn * 0.3, 0.4, -1.1]) for p in canal[1:]] + [inner_mf + np.array([0, 0, -1.0])], 0.6, 0.45)
         # mental nerve: exits the foramen and fans toward lip & chin
-        mout = mental_f + np.array([sgn * 2.0, -0.8, 0.5])
-        for i, d in enumerate([np.array([sgn * 1.5, -6, 9]), np.array([sgn * 2.5, -8, 4]), np.array([sgn * 2, -7, -3])]):
+        mout = mental_f + np.array([sgn * 1.2, -0.6, 0.3])
+        for i, d in enumerate([np.array([sgn * 1.2, -3.5, 5]), np.array([sgn * 1.8, -4.5, 2.2]), np.array([sgn * 1.5, -4, -1.5])]):
             add_path(f"mental-nerve-{side}" if i == 0 else f"mental-nerve-{side}-branch-{i}",
                      [inner_mf, mental_f, mout, mout + d * 0.5 + np.array([sgn, 0, 0]), mout + d], 0.6 if i == 0 else 0.4, 0.25)
         # incisive nerve continues in bone beneath the anterior apices
@@ -379,7 +380,7 @@ def main():
         io_back1 = io_f + np.array([-sgn * 1, 16, 4])
         io_back2 = io_f + np.array([-sgn * 2, 32, 6])
         add_path(f"infraorbital-nerve-{side}", [io_back2, io_back1, io_in, io_f,
-                                                io_f + np.array([sgn * 2, -2.5, -1]), io_f + np.array([sgn * 4, -5, -4])], 1.1, 0.7)
+                                                io_f + np.array([sgn * 1.2, -1.5, -0.8]), io_f + np.array([sgn * 2.2, -2.6, -2.4])], 1.0, 0.6)
         # posterior superior alveolar: from behind the tuberosity into the molar apices
         t8 = teeth[q * 10 + 8].vertices
         tub = np.array([ap_[8][0] + sgn * 3, t8[:, 1].max() + 4, ap_[8][2] + 10])
