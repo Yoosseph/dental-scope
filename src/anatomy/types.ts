@@ -1,0 +1,122 @@
+/** Core anatomical data types. See docs/architecture.md §4. */
+
+export type Provenance = 'source' | 'derived' | 'modeled' | 'schematic';
+export type StructureKind = 'group' | 'mesh' | 'region' | 'landmark';
+export type Arch = 'maxillary' | 'mandibular';
+export type Side = 'right' | 'left';
+export type ToothType =
+  | 'central-incisor'
+  | 'lateral-incisor'
+  | 'canine'
+  | 'first-premolar'
+  | 'second-premolar'
+  | 'first-molar'
+  | 'second-molar'
+  | 'third-molar';
+
+export type NumberingSystem = 'fdi' | 'universal' | 'palmer';
+
+export type CategoryId =
+  | 'permanent-teeth'
+  | 'primary-teeth'
+  | 'enamel'
+  | 'dentin'
+  | 'cementum'
+  | 'dental-pulp'
+  | 'root-canals'
+  | 'gingiva'
+  | 'periodontal-ligament'
+  | 'alveolar-bone'
+  | 'maxilla'
+  | 'mandible'
+  | 'nerves'
+  | 'arteries'
+  | 'veins'
+  | 'tmj'
+  | 'salivary'
+  | 'muscles'
+  | 'skull';
+
+export type Vec3 = [number, number, number];
+
+export interface ToothNotation {
+  fdi: string;
+  universal: string;
+  palmer: string;
+}
+
+export interface RootInfo {
+  label: string; // "mesial", "distal", "palatal", "mesiobuccal", "single", …
+  canals: string[]; // structure ids of canals in this root
+}
+
+export interface ToothMeta {
+  fdi: number;
+  notation: ToothNotation;
+  arch: Arch;
+  side: Side;
+  type: ToothType;
+  dentition: 'permanent' | 'primary';
+  roots: RootInfo[];
+  /** layer structure ids available once the tooth asset is loaded */
+  layers: string[];
+  asset?: string;
+  frame?: { origin: Vec3; axis: Vec3; mesial: Vec3; buccal: Vec3 };
+}
+
+export interface Structure {
+  id: string;
+  name: string;
+  kind: StructureKind;
+  parent: string | null;
+  children: string[];
+  categories: CategoryId[];
+  /** scene mesh keys owned directly by this structure */
+  meshes: string[];
+  aliases: string[];
+  provenance: Provenance;
+  sourceRef?: string;
+  stage: 1 | 2 | 3 | 4;
+  /** tooth FDI number this structure belongs to (tooth or tooth part) */
+  toothFdi?: number;
+  tooth?: ToothMeta;
+  /** point for landmarks / label anchor override */
+  anchor?: Vec3;
+  labelPriority: number;
+  /** short label used on the 3D label chip */
+  shortName?: string;
+}
+
+/* ---------- manifest produced by tools/pipeline ---------- */
+
+export interface ManifestMesh {
+  stage: 1 | 2 | 3 | 4;
+  file: string;
+  bounds: [Vec3, Vec3];
+  triangles: number;
+  provenance: Provenance;
+  sourceRef?: string;
+}
+
+export interface ManifestTooth {
+  arch: Arch;
+  side: Side;
+  type: ToothType;
+  provenance: Provenance;
+  frame: { origin: Vec3; axis: Vec3; mesial: Vec3; buccal: Vec3 };
+  roots?: { label: string; canals: string[] }[];
+  landmarks?: Record<string, Vec3>;
+  layers?: string[];
+  asset?: string;
+}
+
+export interface Manifest {
+  units: string;
+  source: string;
+  meshes: Record<string, ManifestMesh>;
+  teeth: Record<string, ManifestTooth>;
+  paths: Record<string, Vec3[]>;
+  landmarks: Record<string, Vec3>;
+  bounds: [Vec3, Vec3];
+  files?: Record<string, number>;
+}
