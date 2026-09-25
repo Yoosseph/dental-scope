@@ -1144,8 +1144,7 @@ button.ds-layer-name:hover {
     font-size: 11.5px;
     white-space: nowrap;
   }
-  .ds-start-hint kbd,
-  .ds-start-hint kbd + * {
+  .ds-hint-extra {
     display: none;
   }
 }

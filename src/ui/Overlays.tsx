@@ -142,7 +142,7 @@ export function StartHint() {
   if (!ready || done) return null;
   return (
     <div className="ds-start-hint" role="note">
-      <span className="ds-pulse" aria-hidden="true" /> Click any tooth to explore it — or press <kbd>/</kbd> to search
+      <span className="ds-pulse" aria-hidden="true" /> Click any tooth to explore it<span className="ds-hint-extra"> — or press <kbd>/</kbd> to search</span>
     </div>
   );
 }
