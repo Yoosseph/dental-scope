@@ -1,0 +1,152 @@
+import { formatTooth } from '../anatomy/notation';
+import { pathFor, pushPath } from '../app/router';
+import { actions, DISSECT_LEVELS, getState, useApp, type ClipAxis } from '../state/store';
+import { useServices } from './context';
+import { IconArrowLeft, IconExplode, IconFlip, IconLabel, IconSection } from './icons';
+
+const AXES: { id: ClipAxis; label: string; title: string }[] = [
+  { id: 'sagittal', label: 'Sagittal', title: 'Sagittal plane (left–right cut)' },
+  { id: 'coronal', label: 'Coronal', title: 'Coronal plane (front–back cut)' },
+  { id: 'axial', label: 'Axial', title: 'Axial plane (horizontal cut)' },
+  { id: 'view', label: 'View', title: 'Plane facing the camera' },
+];
+
+export function Dock() {
+  const dissectFdi = useApp((s) => s.dissectFdi);
+  const mobileOpen = useApp((s) => s.mobileSheet === 'tools');
+  return (
+    <div className={`ds-dock${mobileOpen ? ' is-mobile-open' : ''}`} role="toolbar" aria-label={dissectFdi !== null ? 'Tooth dissection tools' : 'Scene tools'}>
+      {dissectFdi !== null ? <DissectControls fdi={dissectFdi} /> : <ArchControls />}
+      <SectionControls />
+    </div>
+  );
+}
+
+function ArchControls() {
+  const explode = useApp((s) => s.explode);
+  const labels = useApp((s) => s.labels);
+  const loading = useApp((s) => s.loading.teeth);
+  const clip = useApp((s) => s.clip.enabled);
+  return (
+    <div className="ds-panel ds-dock-main">
+      <Slider
+        label="Explode anatomy"
+        icon={<IconExplode size={15} />}
+        value={explode}
+        onChange={actions.setExplode}
+        left="Assembled"
+        right="Separated"
+      />
+      <div className="ds-dock-tools">
+        <ToolToggle active={clip} onClick={() => actions.setClip({ enabled: !clip })} icon={<IconSection />} label="Section" title="Cross-section (C)" />
+        <ToolToggle active={labels} onClick={() => actions.toggleLabels()} icon={<IconLabel />} label="Labels" title="Labels (L)" />
+      </div>
+      {clip && loading !== undefined && loading < 1 && <div className="ds-dock-note">Loading internal tooth anatomy… {Math.round(loading * 100)}%</div>}
+    </div>
+  );
+}
+
+function DissectControls({ fdi }: { fdi: number }) {
+  const { registry, engine } = useServices();
+  const level = useApp((s) => s.dissectLevel);
+  const tex = useApp((s) => s.toothExplode);
+  const numbering = useApp((s) => s.numbering);
+  const labels = useApp((s) => s.labels);
+  const clip = useApp((s) => s.clip.enabled);
+  const ctx = useApp((s) => s.isolateContext);
+  const tooth = registry.get(`tooth-${fdi}`)!;
+  const exit = () => {
+    actions.exitDissect();
+    actions.select(`tooth-${fdi}`);
+    engine.focus(`tooth-${fdi}`);
+    pushPath(pathFor(getState().selectedId, null, registry));
+  };
+  return (
+    <div className="ds-panel ds-dock-main ds-dissect">
+      <div className="ds-dissect-head">
+        <button type="button" className="ds-icon-btn ds-icon-btn--ghost" onClick={exit} aria-label="Back to full mouth" title="Back to full mouth (Esc)">
+          <IconArrowLeft />
+        </button>
+        <div>
+          <div className="ds-label-sm">Inside the tooth</div>
+          <div className="ds-dissect-title">
+            <span className="ds-chip ds-chip--mono">{formatTooth(fdi, numbering)}</span> {tooth.name}
+          </div>
+        </div>
+      </div>
+      <div className="ds-steps" role="radiogroup" aria-label="Dissection level">
+        {DISSECT_LEVELS.map((l) => (
+          <button key={l.id} type="button" role="radio" aria-checked={level === l.id} className={`ds-step${level === l.id ? ' is-active' : ''}${level > l.id ? ' is-past' : ''}`} onClick={() => actions.setDissectLevel(l.id)} title={l.hint}>
+            <span className="ds-step-dot" aria-hidden="true" />
+            <span className="ds-step-label">{l.label}</span>
+          </button>
+        ))}
+      </div>
+      <p className="ds-step-hint">{DISSECT_LEVELS[level].hint}</p>
+      <Slider label="Separate layers" icon={<IconExplode size={15} />} value={tex} onChange={actions.setToothExplode} left="Together" right="Apart" />
+      <div className="ds-dock-tools">
+        <ToolToggle active={clip} onClick={() => actions.setClip({ enabled: !clip, axis: getState().clip.axis === 'axial' ? 'axial' : 'view' })} icon={<IconSection />} label="Section" title="Cross-section (C)" />
+        <ToolToggle active={labels} onClick={() => actions.toggleLabels()} icon={<IconLabel />} label="Labels" title="Labels (L)" />
+        <ToolToggle active={ctx} onClick={() => actions.setIsolateContext(!ctx)} icon={<IconExplode />} label="Context" title="Show neighbouring anatomy" />
+      </div>
+    </div>
+  );
+}
+
+function SectionControls() {
+  const clip = useApp((s) => s.clip);
+  if (!clip.enabled) return null;
+  return (
+    <div className="ds-panel ds-section-panel" role="group" aria-label="Cross-section">
+      <div className="ds-segmented ds-segmented--fill" role="radiogroup" aria-label="Section plane">
+        {AXES.map((a) => (
+          <button key={a.id} type="button" role="radio" aria-checked={clip.axis === a.id} className={clip.axis === a.id ? 'is-active' : ''} onClick={() => actions.setClip({ axis: a.id, offset: 0 })} title={a.title}>
+            {a.label}
+          </button>
+        ))}
+      </div>
+      <div className="ds-section-row">
+        <input
+          type="range"
+          min={-1}
+          max={1}
+          step={0.005}
+          value={clip.offset}
+          onChange={(e) => actions.setClip({ offset: Number(e.target.value) })}
+          aria-label="Section position"
+          className="ds-range"
+        />
+        <button type="button" className="ds-icon-btn" onClick={() => actions.setClip({ flip: !clip.flip })} aria-label="Flip section side" title="Flip side">
+          <IconFlip />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function Slider({ label, icon, value, onChange, left, right }: { label: string; icon: React.ReactNode; value: number; onChange: (v: number) => void; left: string; right: string }) {
+  return (
+    <div className="ds-slider">
+      <div className="ds-slider-head">
+        <span className="ds-slider-label">
+          {icon} {label}
+        </span>
+        <span className="ds-slider-value">{Math.round(value * 100)}%</span>
+      </div>
+      <input type="range" min={0} max={1} step={0.01} value={value} onChange={(e) => onChange(Number(e.target.value))} aria-label={label} aria-valuetext={`${Math.round(value * 100)} percent`} className="ds-range" />
+      <div className="ds-slider-ends" aria-hidden="true">
+        <span>{left}</span>
+        <span>{right}</span>
+      </div>
+    </div>
+  );
+}
+
+function ToolToggle({ active, onClick, icon, label, title }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string; title: string }) {
+  return (
+    <button type="button" className={`ds-tool${active ? ' is-active' : ''}`} onClick={onClick} aria-pressed={active} title={title}>
+      {icon}
+      <span>{label}</span>
+    </button>
+  );
+}

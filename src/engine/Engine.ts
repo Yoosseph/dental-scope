@@ -80,6 +80,14 @@ export class Engine {
     );
     this.marker.renderOrder = 1000;
     this.marker.visible = false;
+    const key = new THREE.DirectionalLight('#fff7ec', 1.6);
+    key.position.set(4, 8, 7);
+    const fill = new THREE.DirectionalLight('#dfe9ff', 0.55);
+    fill.position.set(-6, 2, 4);
+    const rim = new THREE.DirectionalLight('#ffffff', 0.5);
+    rim.position.set(0, 3, -8);
+    this.scene.add(new THREE.HemisphereLight('#ffffff', '#8b8478', 0.55), key, fill, rim);
+    this.scene.add(this.root, this.marker, this.section.outline);
     const [lo, hi] = registry.manifest.bounds;
     this.sceneBounds.set(new THREE.Vector3(...lo).min(new THREE.Vector3(...hi)), new THREE.Vector3(...lo).max(new THREE.Vector3(...hi)));
   }
@@ -87,6 +95,7 @@ export class Engine {
   /* ================================================================ setup */
 
   mount(container: HTMLElement) {
+    this.disposed = false;
     this.container = container;
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
     const mobile = matchMedia('(pointer: coarse)').matches;
@@ -113,14 +122,6 @@ export class Engine {
     const pmrem = new THREE.PMREMGenerator(renderer);
     this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
     this.scene.environmentIntensity = 0.55;
-    const key = new THREE.DirectionalLight('#fff7ec', 1.6);
-    key.position.set(4, 8, 7);
-    const fill = new THREE.DirectionalLight('#dfe9ff', 0.55);
-    fill.position.set(-6, 2, 4);
-    const rim = new THREE.DirectionalLight('#ffffff', 0.5);
-    rim.position.set(0, 3, -8);
-    this.scene.add(new THREE.HemisphereLight('#ffffff', '#8b8478', 0.55), key, fill, rim);
-    this.scene.add(this.root, this.marker, this.section.outline);
 
     const camera = new THREE.PerspectiveCamera(32, 1, 0.05, 200);
     this.rig = new CameraRig(camera, renderer.domElement, this.animator);
@@ -158,9 +159,11 @@ export class Engine {
     this.resizeObs?.disconnect();
     this.labels?.dispose();
     this.rig?.controls.dispose();
+    this.scene.environment?.dispose();
     this.renderer?.dispose();
     this.renderer?.domElement.remove();
     this.overlay?.remove();
+    this.unsub = [];
   }
 
   /* ============================================================== loading */

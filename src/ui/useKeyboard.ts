@@ -1,0 +1,105 @@
+import { useEffect } from 'react';
+import type { Engine } from '../engine/Engine';
+import { actions, getState } from '../state/store';
+
+/** Global shortcuts (ignored while typing in inputs). */
+export function useKeyboard(engine: Engine) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement;
+      if (t.closest('input, textarea, select, [contenteditable="true"], dialog')) return;
+      if (e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented) return;
+      if (e.key.startsWith('Arrow') && t.closest('[role="tree"], [role="radiogroup"], [role="listbox"]')) return;
+      const s = getState();
+      const sel = s.selectedId;
+      const step = Math.PI / 18;
+      switch (e.key) {
+        case '/':
+          e.preventDefault();
+          actions.openSearch(true);
+          break;
+        case 'Escape':
+          if (s.searchOpen) actions.openSearch(false);
+          else if (sel) actions.select(null);
+          else if (s.dissectFdi !== null) actions.exitDissect();
+          else if (s.isolateId) actions.isolate(null);
+          break;
+        case 'f':
+        case 'F':
+          if (sel) engine.focus(sel);
+          break;
+        case 'i':
+        case 'I':
+          if (sel) {
+            actions.isolate(s.isolateId === sel ? null : sel);
+            if (s.isolateId !== sel) requestAnimationFrame(() => engine.focus(sel));
+          }
+          break;
+        case 'h':
+        case 'H':
+          if (sel) actions.hide(sel);
+          break;
+        case 'g':
+        case 'G':
+          if (sel) actions.toggleGhost(sel);
+          break;
+        case 'd':
+        case 'D': {
+          const fdi = sel ? engine.registry.get(sel)?.toothFdi : undefined;
+          if (fdi !== undefined) {
+            actions.enterDissect(fdi);
+            void engine.ensureTooth(fdi).then(() => engine.focus(`tooth-${fdi}`));
+          }
+          break;
+        }
+        case '[':
+          actions.setDissectLevel(s.dissectLevel - 1);
+          break;
+        case ']':
+          actions.setDissectLevel(s.dissectLevel + 1);
+          break;
+        case 'e':
+        case 'E':
+          if (s.dissectFdi !== null) actions.setToothExplode(s.toothExplode > 0.5 ? 0 : 1);
+          else actions.setExplode(s.explode > 0.5 ? 0 : 1);
+          break;
+        case 'c':
+        case 'C':
+          actions.setClip({ enabled: !s.clip.enabled });
+          break;
+        case 'l':
+        case 'L':
+          actions.toggleLabels();
+          break;
+        case 'r':
+        case 'R':
+          engine.resetCamera();
+          break;
+        case '+':
+        case '=':
+          engine.zoom(0.8);
+          break;
+        case '-':
+        case '_':
+          engine.zoom(1.25);
+          break;
+        case 'ArrowLeft':
+          engine.orbit(-step, 0);
+          break;
+        case 'ArrowRight':
+          engine.orbit(step, 0);
+          break;
+        case 'ArrowUp':
+          engine.orbit(0, -step);
+          break;
+        case 'ArrowDown':
+          engine.orbit(0, step);
+          break;
+        default:
+          return;
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [engine]);
+}
