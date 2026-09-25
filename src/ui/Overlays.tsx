@@ -135,14 +135,18 @@ export function AboutDialog() {
 export function StartHint() {
   const ready = useApp((s) => s.ready);
   const selected = useApp((s) => s.selectedId);
+  const busy = useApp((s) => s.clip.enabled || s.explode > 0 || s.searchOpen || s.dissectFdi !== null);
   const [done, setDone] = useState(false);
   useEffect(() => {
     if (selected) setDone(true);
   }, [selected]);
-  if (!ready || done) return null;
+  if (!ready || done || busy) return null;
   return (
     <div className="ds-start-hint" role="note">
-      <span className="ds-pulse" aria-hidden="true" /> Click any tooth to explore it — or press <kbd>/</kbd> to search
+      <span className="ds-pulse" aria-hidden="true" />
+      <span>
+        Click any tooth to explore it<span className="ds-hint-extra"> — or press <kbd>/</kbd> to search</span>
+      </span>
     </div>
   );
 }
