@@ -48,7 +48,7 @@ npm run typecheck
 npm run build      # static site in dist/ (includes a 404.html SPA fallback)
 ```
 
-The built site is fully static. For a sub-path deployment set `DS_BASE`, e.g. `DS_BASE=/dental-scope/ npm run build`. A GitHub Pages workflow is included.
+The built site is fully static. For a sub-path deployment set `DS_BASE`, e.g. `DS_BASE=/dental-scope/ npm run build`; with a relative base (`DS_BASE=./`) deep links switch to hash URLs (`#/tooth/36`) so the build works from any folder. A GitHub Pages workflow is included.
 
 ### Keyboard
 
