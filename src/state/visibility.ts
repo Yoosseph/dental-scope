@@ -7,9 +7,10 @@ import type { Registry } from '../anatomy/registry';
 import type { CategoryState } from '../anatomy/categories';
 import type { AppState } from './store';
 
-export type MeshVisual = 'on' | 'ghost' | 'off';
+/** 'faint' is a quieter ghost used for surrounding context. */
+export type MeshVisual = 'on' | 'ghost' | 'faint' | 'off';
 
-const RANK: Record<MeshVisual, number> = { off: 0, ghost: 1, on: 2 };
+const RANK: Record<MeshVisual, number> = { off: 0, faint: 1, ghost: 2, on: 3 };
 const minVis = (a: MeshVisual, b: MeshVisual): MeshVisual => (RANK[a] <= RANK[b] ? a : b);
 
 export type VisibilityFilter = (meshKey: string, ownerId: string, state: AppState) => MeshVisual;
@@ -94,13 +95,15 @@ export function resolveMesh(meshKey: string, ctx: VisibilityContext): MeshVisual
     const inside = registry.isDescendant(ownerId, state.isolateId) || regionContains(registry, state.isolateId, meshKey);
     if (!inside) {
       if (!state.isolateContext) return 'off';
-      // dissect context: keep only the neighbourhood of the jaw faint
-      v = minVis(v, 'ghost');
-      if (state.dissectFdi !== null && fdi !== undefined && fdi !== state.dissectFdi && Math.floor(fdi / 10) !== Math.floor(state.dissectFdi / 10)) return 'off';
-      if (state.dissectFdi !== null && fdi === undefined) {
-        const cats = registry.categoriesOfMesh(meshKey);
-        if (cats.includes('skull') || cats.includes('muscles') || cats.includes('nerves') || cats.includes('arteries') || cats.includes('veins') || cats.includes('tmj')) return 'off';
+      if (state.dissectFdi !== null) {
+        // tooth view: only the neighbouring teeth of the same quadrant and the tooth-bearing bone, very faint
+        const q = Math.floor(state.dissectFdi / 10);
+        const upper = q <= 2;
+        if (fdi !== undefined) return Math.floor(fdi / 10) === q ? minVis(v, 'faint') : 'off';
+        const alveolar = upper ? meshKey.startsWith('maxillary-alveolar-process') : meshKey === 'mandibular-alveolar-process';
+        return alveolar ? minVis(v, 'faint') : 'off';
       }
+      v = minVis(v, 'ghost');
     }
   }
 

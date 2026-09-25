@@ -104,7 +104,7 @@ export function createTissueMaterial(styleKey: string): TissueMaterial {
         {
           vec3 vdir = normalize(vViewPosition);
           float fres = pow(1.0 - clamp(abs(dot(normalize(vNormal), vdir)), 0.0, 1.0), 2.2);
-          gl_FragColor.rgb = mix(gl_FragColor.rgb, uHiColor, uHi * (0.28 + 0.62 * fres));
+          gl_FragColor.rgb = mix(gl_FragColor.rgb, uHiColor, uHi * (0.16 + 0.7 * fres));
           if (!gl_FrontFacing) {
             vec3 cap = mix(uCap, uHiColor, uHi * 0.35);
             gl_FragColor = vec4(cap, gl_FragColor.a);

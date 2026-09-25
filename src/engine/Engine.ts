@@ -137,7 +137,7 @@ export class Engine {
     const [lo, hi] = this.registry.manifest.bounds;
     const teethBox = new THREE.Box3(new THREE.Vector3(...lo).min(new THREE.Vector3(...hi)), new THREE.Vector3(...lo).max(new THREE.Vector3(...hi)));
     const sphere = teethBox.getBoundingSphere(new THREE.Sphere());
-    this.rig.home = { target: sphere.center.clone().add(new THREE.Vector3(0, 0.1, -0.2)), radius: sphere.radius * 1.35 };
+    this.rig.home = { target: sphere.center.clone().add(new THREE.Vector3(0, 0.1, -0.2)), radius: sphere.radius * 1.12 };
     this.resize();
     this.rig.preset('three-quarter', this.rig.home.target, this.rig.home.radius, 0);
 
@@ -260,7 +260,7 @@ export class Engine {
       s.clip.enabled !== p.clip.enabled ||
       s.ghostOpacity !== p.ghostOpacity;
     if (visChanged) this.refreshVisibility();
-    if (s.selectedId !== p.selectedId || s.hoveredId !== p.hoveredId) this.refreshHighlight();
+    if (s.selectedId !== p.selectedId || s.hoveredId !== p.hoveredId || s.dissectFdi !== p.dissectFdi) this.refreshHighlight();
     if (s.clip !== p.clip || s.dissectFdi !== p.dissectFdi) this.refreshClip();
     if (s.clip.enabled && !p.clip.enabled && s.dissectFdi === null) void this.ensureAllTeeth();
     if (s.dissectFdi !== p.dissectFdi && s.dissectFdi !== null) void this.ensureTooth(s.dissectFdi);
@@ -289,7 +289,10 @@ export class Engine {
 
   private refreshHighlight() {
     const { selectedId, hoveredId } = getState();
-    const sel = new Set(selectedId ? this.highlightMeshes(selectedId) : []);
+    const { dissectFdi } = getState();
+    // inside a tooth, selecting the tooth itself shouldn't tint every layer
+    const tintSel = selectedId && !(dissectFdi !== null && selectedId === `tooth-${dissectFdi}`);
+    const sel = new Set(tintSel ? this.highlightMeshes(selectedId) : []);
     const hov = new Set(hoveredId && hoveredId !== selectedId ? this.highlightMeshes(hoveredId) : []);
     for (const e of this.entries.values()) {
       e.hiTarget = sel.has(e.key) ? 1 : hov.has(e.key) ? 0.55 : 0;
@@ -681,7 +684,7 @@ export class Engine {
     }
 
     for (const e of this.entries.values()) {
-      const target = e.visual === 'on' ? 1 : e.visual === 'ghost' ? s.ghostOpacity : 0;
+      const target = e.visual === 'on' ? 1 : e.visual === 'ghost' ? s.ghostOpacity : e.visual === 'faint' ? s.ghostOpacity * 0.45 : 0;
       if (Math.abs(e.opacity - target) > 1e-3) {
         e.opacity += (target - e.opacity) * (this.animator.reducedMotion ? 1 : k);
         if (Math.abs(e.opacity - target) < 0.01) e.opacity = target;
