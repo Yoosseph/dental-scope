@@ -30,6 +30,9 @@ export class LabelLayer {
   private candidates: LabelCandidate[] = [];
   private occluded = new Set<string>();
   private lastOcclusion = 0;
+  private blocked: { x0: number; y0: number; x1: number; y1: number }[] = [];
+  /** CSS selector for UI elements labels must not sit under */
+  blockSelector = '.ds-panel, .ds-identity, .ds-top-actions';
   enabled = false;
   selectedId: string | null = null;
   onClick?: (id: string) => void;
@@ -79,6 +82,7 @@ export class LabelLayer {
     if (force || now - this.lastOcclusion > 180) {
       this.lastOcclusion = now;
       this.computeOcclusion(camera);
+      this.computeBlocked();
     }
     const placed: { x0: number; y0: number; x1: number; y1: number }[] = [];
     const tmp = new THREE.Vector3();
@@ -111,7 +115,8 @@ export class LabelLayer {
       const w = l.el.offsetWidth || 60;
       const h = l.el.offsetHeight || 20;
       const rect = { x0: x - w / 2 - PAD, y0: y - h - 8 - PAD, x1: x + w / 2 + PAD, y1: y - 8 + PAD };
-      if (!selected && placed.some((r) => r.x0 < rect.x1 && r.x1 > rect.x0 && r.y0 < rect.y1 && r.y1 > rect.y0)) {
+      const overlaps = (r: { x0: number; y0: number; x1: number; y1: number }) => r.x0 < rect.x1 && r.x1 > rect.x0 && r.y0 < rect.y1 && r.y1 > rect.y0;
+      if (this.blocked.some(overlaps) || (!selected && placed.some(overlaps))) {
         this.show(l, false);
         continue;
       }
@@ -133,13 +138,25 @@ export class LabelLayer {
     this.occluded.clear();
     if (!this.raycastOwner) return;
     for (const c of this.candidates) {
-      if (c.kind === 'landmark') continue; // landmarks sit on/inside surfaces by design
       const p = c.anchor();
       const hit = this.raycastOwner(camera.position, p);
       if (!hit) continue;
       const dist = camera.position.distanceTo(p);
-      if (hit.distance < dist - c.radius * 0.9 && !c.owners.has(hit.id)) this.occluded.add(c.id);
+      // landmarks sit on or just inside surfaces: allow a small tolerance
+      const tol = c.kind === 'landmark' ? 0.35 : c.radius * 0.9;
+      if (hit.distance < dist - tol && !c.owners.has(hit.id)) this.occluded.add(c.id);
     }
+  }
+
+  private computeBlocked() {
+    const host = this.root.getBoundingClientRect();
+    const els = document.querySelectorAll<HTMLElement>(this.blockSelector);
+    this.blocked = [];
+    els.forEach((el) => {
+      const r = el.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      this.blocked.push({ x0: r.left - host.left, y0: r.top - host.top, x1: r.right - host.left, y1: r.bottom - host.top });
+    });
   }
 
   dispose() {
