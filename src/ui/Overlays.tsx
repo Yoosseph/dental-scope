@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { actions, useApp } from '../state/store';
 import { IconClose } from './icons';
 
@@ -128,5 +128,21 @@ export function AboutDialog() {
         </a>
       </p>
     </dialog>
+  );
+}
+
+/** First-run nudge: disappears after the first selection. */
+export function StartHint() {
+  const ready = useApp((s) => s.ready);
+  const selected = useApp((s) => s.selectedId);
+  const [done, setDone] = useState(false);
+  useEffect(() => {
+    if (selected) setDone(true);
+  }, [selected]);
+  if (!ready || done) return null;
+  return (
+    <div className="ds-start-hint" role="note">
+      <span className="ds-pulse" aria-hidden="true" /> Click any tooth to explore it — or press <kbd>/</kbd> to search
+    </div>
   );
 }
