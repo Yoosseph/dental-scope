@@ -22,7 +22,7 @@
   /* ink */
   --ink: #17150f;
   --muted: #58534a;
-  --faint: #8a8477;
+  --faint: #6f695d;
   --line: rgba(28, 24, 18, 0.12);
   --hover: rgba(28, 24, 18, 0.05);
   --press: rgba(28, 24, 18, 0.1);
@@ -61,7 +61,7 @@
   --panel-shadow: 0 1px 0 rgba(0, 0, 0, 0.3), 0 10px 28px rgba(0, 0, 0, 0.4);
   --ink: #eeeae1;
   --muted: #aca597;
-  --faint: #7c766a;
+  --faint: #8f897c;
   --line: rgba(240, 234, 222, 0.12);
   --hover: rgba(240, 234, 222, 0.06);
   --press: rgba(240, 234, 222, 0.1);

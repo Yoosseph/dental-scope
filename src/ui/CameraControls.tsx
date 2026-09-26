@@ -182,6 +182,8 @@ function ViewPicker() {
               onClick={() => {
                 engine.setView(v.id);
                 setOpen(false);
+                // the grid unmounts: keep keyboard focus on the View button
+                root.current?.querySelector<HTMLButtonElement>('.ds-view-picker-btn')?.focus();
               }}
             >
               {v.icon}

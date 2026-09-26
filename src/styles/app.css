@@ -1156,7 +1156,7 @@ button.ds-layer-name:hover {
   justify-content: flex-end;
   gap: 16px;
   font-size: 11px;
-  color: var(--faint);
+  color: var(--muted);
   pointer-events: none;
 }
 .ds-footer p {
