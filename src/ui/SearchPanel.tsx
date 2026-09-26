@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { CATEGORY_BY_ID } from '../anatomy/categories';
-import { formatTooth } from '../anatomy/notation';
+import { formatTooth, NUMBERING_LABEL } from '../anatomy/notation';
 import { pathFor, pushPath } from '../app/router';
 import { search } from '../search/search';
 import { actions, getState, useApp } from '../state/store';
@@ -126,7 +126,7 @@ export function SearchPanel() {
               ))}
             </div>
             <p className="ds-search-tip">
-              Numbers follow the active system ({numbering === 'fdi' ? 'FDI' : numbering === 'universal' ? 'Universal' : 'Palmer'}). Prefix with <kbd>fdi</kbd> or <kbd>#</kbd> to be explicit.
+              Numbers follow the active system ({NUMBERING_LABEL[numbering]}). Prefix with <kbd>fdi</kbd> or <kbd>#</kbd> to be explicit.
             </p>
           </div>
         )}

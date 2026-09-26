@@ -1,10 +1,7 @@
-import { NUMBERING_LABEL } from '../anatomy/notation';
-import type { NumberingSystem } from '../anatomy/types';
+import { NUMBERING_LABEL, NUMBERING_SHORT, NUMBERING_SYSTEMS } from '../anatomy/notation';
 import { REPO_URL } from '../app/repo';
 import { actions, useApp } from '../state/store';
 import { IconExternal, IconInfo, IconMoon, IconSearch, IconSun } from './icons';
-
-const SYSTEMS: NumberingSystem[] = ['fdi', 'universal', 'palmer'];
 
 export function Identity() {
   return (
@@ -31,9 +28,9 @@ export function TopActions() {
   return (
     <div className="ds-top-actions">
       <div className="ds-segmented ds-segmented--mono" role="radiogroup" aria-label="Tooth numbering system">
-        {SYSTEMS.map((s) => (
+        {NUMBERING_SYSTEMS.map((s) => (
           <button key={s} type="button" role="radio" aria-checked={numbering === s} className={numbering === s ? 'is-active' : ''} onClick={() => actions.setNumbering(s)} title={`${NUMBERING_LABEL[s]} tooth numbering`}>
-            {s === 'fdi' ? 'FDI' : s === 'universal' ? 'UNI' : 'PAL'}
+            {NUMBERING_SHORT[s]}
           </button>
         ))}
       </div>
