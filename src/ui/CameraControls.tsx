@@ -122,6 +122,12 @@ export function CameraControls() {
           <IconReset />
         </ToolbarButton>
       </div>
+      {/* phones: side tooltips would run off the screen, so the tapped control is named above the toolbar */}
+      {tipLabel && (
+        <div className="ds-tb-caption" aria-hidden="true">
+          {tipLabel}
+        </div>
+      )}
     </div>
   );
 }
