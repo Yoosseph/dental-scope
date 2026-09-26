@@ -26,11 +26,11 @@ export const CATEGORIES: CategoryDef[] = [
   { id: 'maxilla', label: 'Maxilla', color: '#e6dfcd', group: 'Bone', initial: 'on' },
   { id: 'mandible', label: 'Mandible', color: '#e6dfcd', group: 'Bone', initial: 'on' },
   { id: 'tmj', label: 'Temporomandibular joint', color: '#7fa9bd', group: 'Bone', initial: 'on' },
-  { id: 'nerves', label: 'Nerves', color: '#e2b93b', group: 'Neurovascular', initial: 'on' },
-  { id: 'arteries', label: 'Arteries', color: '#c9423a', group: 'Neurovascular', initial: 'on' },
-  { id: 'veins', label: 'Veins', color: '#4d6fb0', group: 'Neurovascular', initial: 'on' },
+  { id: 'nerves', label: 'Nerves', color: '#d9b347', group: 'Neurovascular', initial: 'on' },
+  { id: 'arteries', label: 'Arteries', color: '#b8433b', group: 'Neurovascular', initial: 'on' },
+  { id: 'veins', label: 'Veins', color: '#51639a', group: 'Neurovascular', initial: 'on' },
   { id: 'skull', label: 'Skull (context)', color: '#d8d2c3', group: 'Supporting anatomy', initial: 'ghost' },
-  { id: 'muscles', label: 'Muscles of mastication', color: '#b65a50', group: 'Supporting anatomy', initial: 'off' },
+  { id: 'muscles', label: 'Muscles of mastication', color: '#a34d44', group: 'Supporting anatomy', initial: 'off' },
   { id: 'salivary', label: 'Salivary glands', color: '#c9a3b8', group: 'Supporting anatomy', initial: 'off', planned: true },
 ];
 
