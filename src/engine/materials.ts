@@ -5,6 +5,7 @@
  */
 import * as THREE from 'three';
 import type { CategoryId } from '../anatomy/types';
+import type { AppState } from '../state/store';
 
 export interface TissueStyle {
   color: string;
@@ -57,6 +58,26 @@ export function styleKeyFor(meshKey: string, cats: CategoryId[]): string {
 
 export function styleFor(key: string): TissueStyle {
   return STYLES[key] ?? STYLES.bone;
+}
+
+export type SceneTheme = AppState['theme'];
+
+/**
+ * Renderer settings per UI theme. On the pale light-theme stage, ivory teeth and
+ * bone wash out together; slightly lower exposure brings back surface shading.
+ */
+export const THEME_LIGHTING: Record<SceneTheme, { exposure: number; environment: number }> = {
+  light: { exposure: 0.95, environment: 0.5 },
+  dark: { exposure: 1.05, environment: 0.55 },
+};
+
+/** Light theme only: shade bone a touch so the teeth read against the jaws. */
+const LIGHT_THEME_SHADE: Record<string, number> = { bone: 0.91, alveolar: 0.91, condyle: 0.91, skull: 0.93 };
+
+export function themedColor(styleKey: string, theme: SceneTheme, which: 'color' | 'cap' = 'color'): THREE.Color {
+  const st = styleFor(styleKey);
+  const c = new THREE.Color(which === 'cap' ? (st.cap ?? st.color) : st.color);
+  return theme === 'light' ? c.multiplyScalar(LIGHT_THEME_SHADE[styleKey] ?? 1) : c;
 }
 
 export interface FxUniforms {
@@ -118,6 +139,13 @@ export function createTissueMaterial(styleKey: string): TissueMaterial {
   };
   mat.customProgramCacheKey = () => 'ds-tissue';
   return mat;
+}
+
+/** Surface and cut-surface colours for the given theme. */
+export function applyThemeToMaterial(mat: TissueMaterial, theme: SceneTheme) {
+  const key = mat.userData.styleKey;
+  mat.color.copy(themedColor(key, theme));
+  mat.userData.fx.uCap.value.copy(themedColor(key, theme, 'cap'));
 }
 
 /** Apply opacity with sensible transparency settings. */
