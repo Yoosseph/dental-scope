@@ -1,4 +1,4 @@
-/** Core anatomical data types. See docs/architecture.md §4. */
+/** Core anatomical data types. See docs/architecture.md §8. */
 
 export type Provenance = 'source' | 'derived' | 'modeled' | 'schematic';
 export type StructureKind = 'group' | 'mesh' | 'region' | 'landmark';
