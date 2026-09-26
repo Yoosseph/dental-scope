@@ -849,6 +849,28 @@ button.ds-layer-name:hover {
 .ds-slider {
   width: 260px;
 }
+.ds-dock-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ds-phase-switch button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.ds-phase-num {
+  display: inline-grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  opacity: 0.8;
+}
 .ds-slider-head {
   display: flex;
   justify-content: space-between;
@@ -1149,7 +1171,7 @@ button.ds-layer-name:hover {
 .ds-start-hint {
   position: absolute;
   left: 50%;
-  bottom: 146px;
+  bottom: 186px;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
