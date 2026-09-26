@@ -74,6 +74,9 @@ export class Engine {
   private phaseCur = 0;
   private boardTimer = 0;
   private boardAspect = 1;
+  private explodeTimer = 0;
+  /** canvas area covered by panels (px), animated; shifts the optical centre */
+  private insets = { right: 0, bottom: 0 };
   private marker: THREE.Mesh;
   private root = new THREE.Group();
   private sceneBounds = new THREE.Box3();
@@ -143,9 +146,7 @@ export class Engine {
     reduce.addEventListener?.('change', (e) => (this.animator.reducedMotion = e.matches));
 
     // initial framing: the dentition, three-quarter view
-    const [lo, hi] = this.registry.manifest.bounds;
-    const teethBox = new THREE.Box3(new THREE.Vector3(...lo).min(new THREE.Vector3(...hi)), new THREE.Vector3(...lo).max(new THREE.Vector3(...hi)));
-    const sphere = teethBox.getBoundingSphere(new THREE.Sphere());
+    const sphere = this.sceneBounds.getBoundingSphere(new THREE.Sphere());
     this.rig.home = { target: sphere.center.clone().add(new THREE.Vector3(0, -0.15, -0.2)), radius: sphere.radius * 1.28 };
     this.updatePivot();
     this.resize();
@@ -307,11 +308,8 @@ export class Engine {
       this.rig.preset('three-quarter', this.rig.home.target, this.rig.home.radius * (1 + 0.75 * s.explode), 0.8);
       if (s.view !== 'three-quarter') setState({ view: 'three-quarter' });
     } else if (s.explode !== p.explode && s.explodePhase === 1) this.reframeForExplode(s);
-    if (s.explode !== p.explode || s.toothExplode !== p.toothExplode) this.invalidate();
     this.invalidate();
   }
-
-  private explodeTimer = 0;
 
   /**
    * Phase 2: lay every fully visible structure out on a board facing the viewer
@@ -389,8 +387,7 @@ export class Engine {
   }
 
   private refreshHighlight() {
-    const { selectedId, hoveredId } = getState();
-    const { dissectFdi } = getState();
+    const { selectedId, hoveredId, dissectFdi } = getState();
     // inside a tooth, selecting the tooth itself shouldn't tint every layer
     const tintSel = selectedId && !(dissectFdi !== null && selectedId === `tooth-${dissectFdi}`);
     const sel = new Set(tintSel ? this.highlightMeshes(selectedId) : []);
@@ -405,14 +402,10 @@ export class Engine {
     this.invalidate();
   }
 
-  /** meshes to tint for a structure: its meshes, or the parent mesh for landmarks */
+  /** Meshes to tint for a structure (landmarks are shown by the marker instead). */
   private highlightMeshes(id: string): string[] {
     const s = this.registry.get(id);
-    if (!s) return [];
-    if (s.kind === 'landmark') return [];
-    const ms = this.registry.meshesOf(id);
-    // a tooth whose layers are active: tint the layers instead of the hidden shell
-    return ms;
+    return s && s.kind !== 'landmark' ? this.registry.meshesOf(id) : [];
   }
 
   private activeBounds(): THREE.Box3 {
@@ -516,7 +509,7 @@ export class Engine {
           const ok = st.categories.every((c) => s.categories[c] !== 'off');
           if (!ok) continue;
           const a = new THREE.Vector3(...st.anchor);
-          const jaw = [...this.entries.values()].find((e) => e.key === 'mandible-body');
+          const jaw = this.entries.get('mandible-body');
           out.push({ id: st.id, text: st.name, kind: 'landmark', priority: st.labelPriority, radius: 0.35, owners: new Set([st.id]), anchor: () => (jaw ? a.clone().add(jaw.mesh.position) : a) });
         }
       }
@@ -616,7 +609,7 @@ export class Engine {
       const s = this.registry.get(id)!;
       const n = getState().numbering;
       const fdi = s.toothFdi;
-      this.tip.textContent = s.id === `tooth-${fdi}` && fdi ? `${s.name} · ${formatTooth(fdi, n)}` : fdi ? `${s.name} · ${formatTooth(fdi, n)}` : s.name;
+      this.tip.textContent = fdi ? `${s.name} · ${formatTooth(fdi, n)}` : s.name;
       this.tip.style.transform = `translate3d(${this.pointerPx.x + 14}px, ${this.pointerPx.y + 16}px, 0)`;
       this.tip.classList.add('is-visible');
       this.renderer.domElement.style.cursor = 'pointer';
@@ -736,8 +729,6 @@ export class Engine {
   }
 
   /* ============================================================== loop */
-
-  private insets = { right: 0, bottom: 0 };
 
   /**
    * Shift the optical centre away from UI that covers the canvas (detail panel,
