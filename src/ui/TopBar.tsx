@@ -1,7 +1,8 @@
 import { NUMBERING_LABEL } from '../anatomy/notation';
 import type { NumberingSystem } from '../anatomy/types';
+import { REPO_URL } from '../app/repo';
 import { actions, useApp } from '../state/store';
-import { IconInfo, IconMoon, IconSearch, IconSun } from './icons';
+import { IconExternal, IconInfo, IconMoon, IconSearch, IconSun } from './icons';
 
 const SYSTEMS: NumberingSystem[] = ['fdi', 'universal', 'palmer'];
 
@@ -10,6 +11,16 @@ export function Identity() {
     <header className="ds-identity">
       <h1 className="ds-title">Dental Scope</h1>
       <p className="ds-subtitle">Dental anatomy in 3D</p>
+      <p className="ds-credit">
+        {REPO_URL ? (
+          <a href={REPO_URL} target="_blank" rel="noopener noreferrer" aria-label="Made by Yoseph – Dental Scope on GitHub (opens in a new tab)">
+            Made by Yoseph
+            <IconExternal size={11} />
+          </a>
+        ) : (
+          'Made by Yoseph'
+        )}
+      </p>
     </header>
   );
 }

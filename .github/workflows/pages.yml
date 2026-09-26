@@ -23,6 +23,8 @@ jobs:
       - run: npm run build
         env:
           DS_BASE: /${{ github.event.repository.name }}/
+          # link the repository from the app only while it is public
+          VITE_DS_REPO_URL: ${{ !github.event.repository.private && github.event.repository.html_url || '' }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
