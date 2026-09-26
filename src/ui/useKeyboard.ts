@@ -13,7 +13,9 @@ export function useKeyboard(engine: Engine) {
       const s = getState();
       const sel = s.selectedId;
       const step = Math.PI / 18;
-      switch (e.key) {
+      // letter shortcuts work with or without Shift / Caps Lock
+      const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+      switch (key) {
         case '/':
           e.preventDefault();
           actions.openSearch(true);
@@ -25,26 +27,21 @@ export function useKeyboard(engine: Engine) {
           else if (s.isolateId) actions.isolate(null);
           break;
         case 'f':
-        case 'F':
           if (sel) engine.focus(sel);
           break;
         case 'i':
-        case 'I':
           if (sel) {
             actions.isolate(s.isolateId === sel ? null : sel);
             if (s.isolateId !== sel) requestAnimationFrame(() => engine.focus(sel));
           }
           break;
         case 'h':
-        case 'H':
           if (sel) actions.hide(sel);
           break;
         case 'g':
-        case 'G':
           if (sel) actions.toggleGhost(sel);
           break;
-        case 'd':
-        case 'D': {
+        case 'd': {
           const fdi = sel ? engine.registry.get(sel)?.toothFdi : undefined;
           if (fdi !== undefined) {
             actions.enterDissect(fdi);
@@ -59,20 +56,16 @@ export function useKeyboard(engine: Engine) {
           actions.setDissectLevel(s.dissectLevel + 1);
           break;
         case 'e':
-        case 'E':
           if (s.dissectFdi !== null) actions.setToothExplode(s.toothExplode > 0.5 ? 0 : 1);
           else actions.setExplode(s.explode > 0.5 ? 0 : 1);
           break;
         case 'c':
-        case 'C':
           actions.setClip({ enabled: !s.clip.enabled });
           break;
         case 'l':
-        case 'L':
           actions.toggleLabels();
           break;
         case 'r':
-        case 'R':
           engine.resetCamera();
           break;
         case '+':
