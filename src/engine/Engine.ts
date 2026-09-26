@@ -741,6 +741,14 @@ export class Engine {
     this.rig.home_();
   }
 
+  /** Fresh start: orbit centred on the dentition again and a straight-on front view of the whole mouth. */
+  resetToStart() {
+    this.updatePivot();
+    setState({ view: 'front' });
+    this.rig.preset('front', this.rig.home.target, this.rig.home.radius);
+    this.invalidate();
+  }
+
   zoom(f: number) {
     this.rig.zoom(f);
   }

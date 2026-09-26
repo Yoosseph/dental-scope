@@ -86,13 +86,13 @@ function ResetButton() {
   const { engine, registry } = useServices();
   const reset = () => {
     actions.resetAll();
-    engine.resetCamera();
+    engine.resetToStart();
     pushCurrentPath(registry);
   };
   return (
-    <button type="button" className="ds-reset-all" onClick={reset} title="Reset everything to the start" aria-label="Reset everything to the start">
+    <button type="button" className="ds-reset-all" onClick={reset} title="Reset all: start view and default settings" aria-label="Reset all: start view and default settings">
       <IconReset size={15} />
-      <span>Reset</span>
+      <span>Reset all</span>
     </button>
   );
 }
