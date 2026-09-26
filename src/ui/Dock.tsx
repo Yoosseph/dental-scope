@@ -56,6 +56,13 @@ function ArchControls() {
     setPlaying(false);
   };
   useEffect(() => () => cancelAnimationFrame(raf.current), []);
+  // the global Reset button stops playback and clears the local dot position
+  const resetId = useApp((s) => s.resetId);
+  useEffect(() => {
+    cancelAnimationFrame(raf.current);
+    setPlaying(false);
+    setLocal(null);
+  }, [resetId]);
 
   const tween = (from: number, to: number, seconds: number, apply: (v: number) => void, done: () => void) => {
     const t0 = performance.now();

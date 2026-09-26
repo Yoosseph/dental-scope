@@ -1205,6 +1205,48 @@ button.ds-layer-name:hover {
   text-underline-offset: 2px;
 }
 
+.ds-reset-all {
+  position: absolute;
+  left: 24px;
+  bottom: 16px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 14px 0 12px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--panel-solid);
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: var(--panel-shadow);
+  transition: transform var(--dur), opacity var(--dur);
+}
+.ds-reset-all:hover {
+  opacity: 0.88;
+}
+.ds-reset-all:active {
+  transform: scale(0.97);
+}
+@media (max-width: 767px) {
+  /* icon only, above the mobile bar; hidden while the tooth dissection tools take the bottom */
+  .ds-reset-all {
+    left: 12px;
+    bottom: calc(66px + env(safe-area-inset-bottom));
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    justify-content: center;
+  }
+  .ds-reset-all span {
+    display: none;
+  }
+  .ds-app.is-dissecting .ds-reset-all {
+    display: none;
+  }
+}
+
 /* ------------------------------------------------------------------ loading */
 .ds-loading {
   position: absolute;

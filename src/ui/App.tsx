@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react';
-import { startRouter } from '../app/router';
+import { pushCurrentPath, startRouter } from '../app/router';
 import { actions, useApp } from '../state/store';
 import { useServices } from './context';
 import { DetailPanel } from './DetailPanel';
 import { Dock } from './Dock';
-import { IconLayers, IconSearch, IconSection } from './icons';
+import { IconLayers, IconReset, IconSearch, IconSection } from './icons';
 import { LayersPanel } from './LayersPanel';
 import { AboutDialog, Footer, LoadingCard, StartHint } from './Overlays';
 import { SearchPanel } from './SearchPanel';
@@ -59,6 +59,7 @@ export function App() {
         <DetailPanel />
         <Dock />
         <Footer />
+        <ResetButton />
         <LoadingCard />
         <StartHint />
         <nav className="ds-mobile-bar ds-panel" aria-label="Mobile controls">
@@ -77,5 +78,21 @@ export function App() {
       <SearchPanel />
       <AboutDialog />
     </div>
+  );
+}
+
+/** Bottom-left: back to the start view with every setting at its default. */
+function ResetButton() {
+  const { engine, registry } = useServices();
+  const reset = () => {
+    actions.resetAll();
+    engine.resetCamera();
+    pushCurrentPath(registry);
+  };
+  return (
+    <button type="button" className="ds-reset-all" onClick={reset} title="Reset everything to the start" aria-label="Reset everything to the start">
+      <IconReset size={15} />
+      <span>Reset</span>
+    </button>
   );
 }
