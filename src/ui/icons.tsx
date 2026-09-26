@@ -155,3 +155,19 @@ export const IconExternal = (p: P) => (
     <path d="M14 5h5v5M19 5l-8 8M17 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h4" />
   </Svg>
 );
+/** Fixed orbit: a ring around a fixed centre point. */
+export const IconOrbitFixed = (p: P) => (
+  <Svg {...p}>
+    <ellipse cx="12" cy="12" rx="8.5" ry="4" />
+    <circle cx="12" cy="12" r="1.8" fill="currentColor" stroke="none" />
+    <path d="m18.5 6.8 1.6 1.6-2.2.6" />
+  </Svg>
+);
+/** Free orbit: a pivot that can be moved. */
+export const IconOrbitFree = (p: P) => (
+  <Svg {...p}>
+    <circle cx="12" cy="12" r="1.8" fill="currentColor" stroke="none" />
+    <path d="M12 3.5v4M12 16.5v4M3.5 12h4M16.5 12h4" />
+    <path d="m10.5 5 1.5-1.5L13.5 5M10.5 19l1.5 1.5 1.5-1.5M5 10.5 3.5 12 5 13.5M19 10.5l1.5 1.5-1.5 1.5" />
+  </Svg>
+);

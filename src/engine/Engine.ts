@@ -124,6 +124,7 @@ export class Engine {
 
     const camera = new THREE.PerspectiveCamera(32, 1, 0.05, 200);
     this.rig = new CameraRig(camera, renderer.domElement, this.animator);
+    this.rig.setMode(getState().orbitMode);
     this.rig.onUserInteract = () => {
       if (getState().view) setState({ view: null });
     };
@@ -138,6 +139,7 @@ export class Engine {
     const teethBox = new THREE.Box3(new THREE.Vector3(...lo).min(new THREE.Vector3(...hi)), new THREE.Vector3(...lo).max(new THREE.Vector3(...hi)));
     const sphere = teethBox.getBoundingSphere(new THREE.Sphere());
     this.rig.home = { target: sphere.center.clone().add(new THREE.Vector3(0, -0.15, -0.2)), radius: sphere.radius * 1.28 };
+    this.updatePivot();
     this.resize();
     this.rig.preset('three-quarter', this.rig.home.target, this.rig.home.radius, 0);
 
@@ -250,6 +252,14 @@ export class Engine {
 
   /* ========================================================= state sync */
 
+  /** Fixed-orbit centre: the tooth being dissected, otherwise the dentition (camera home). */
+  private updatePivot() {
+    const { dissectFdi } = getState();
+    const tooth = dissectFdi !== null ? this.boundsOf(`tooth-${dissectFdi}`, false) : null;
+    this.rig.setPivot(tooth && !tooth.isEmpty() ? tooth.getCenter(new THREE.Vector3()) : this.rig.home.target);
+    this.invalidate();
+  }
+
   /** Match lighting and bone shading to the UI theme (see THEME_LIGHTING). */
   private applyTheme(theme: SceneTheme) {
     this.renderer.toneMappingExposure = THEME_LIGHTING[theme].exposure;
@@ -276,6 +286,8 @@ export class Engine {
     if (s.dissectFdi !== p.dissectFdi && s.dissectFdi !== null) void this.ensureTooth(s.dissectFdi);
     if (s.autoRotate !== p.autoRotate) this.rig.controls.autoRotate = s.autoRotate;
     if (s.theme !== p.theme) this.applyTheme(s.theme);
+    if (s.orbitMode !== p.orbitMode) this.rig.setMode(s.orbitMode);
+    if (s.dissectFdi !== p.dissectFdi) this.updatePivot();
     if (visChanged || s.labels !== p.labels || s.numbering !== p.numbering || s.selectedId !== p.selectedId) this.refreshLabels();
     if (s.explode !== p.explode) this.reframeForExplode(s);
     if (s.explode !== p.explode || s.toothExplode !== p.toothExplode) this.invalidate();
@@ -637,7 +649,9 @@ export class Engine {
     }
   }
 
+  /** Default framing: the whole dentition, or the dissected tooth (setView frames it). */
   resetCamera() {
+    if (getState().dissectFdi !== null) return this.setView('three-quarter');
     setState({ view: 'three-quarter' });
     this.rig.home_();
   }
@@ -700,7 +714,9 @@ export class Engine {
     const dt = Math.min(0.05, (now - this.lastT) / 1000);
     this.lastT = now;
 
-    const controlsChanged = this.rig.controls.update(dt);
+    const controlsMoved = this.rig.controls.update(dt);
+    const pivotMoved = this.rig.tick(dt, controlsMoved);
+    const controlsChanged = controlsMoved || pivotMoved;
     const animating = this.animator.active;
     this.animator.tick(dt);
     const fx = this.tickVisuals(dt);
