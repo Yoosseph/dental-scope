@@ -157,7 +157,7 @@ export function AboutDialog() {
 export function StartHint() {
   const ready = useApp((s) => s.ready);
   const selected = useApp((s) => s.selectedId);
-  const busy = useApp((s) => s.clip.enabled || s.explode > 0 || s.searchOpen || s.dissectFdi !== null);
+  const busy = useApp((s) => s.clip.enabled || s.explode > 0 || s.searchOpen || s.dissectFdi !== null || s.mobileSheet !== 'none');
   const [done, setDone] = useState(false);
   useEffect(() => {
     if (selected) setDone(true);

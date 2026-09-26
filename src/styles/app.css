@@ -569,6 +569,7 @@ button.ds-layer-name:hover {
   align-items: center;
 }
 .ds-camera {
+  position: relative;
   align-self: stretch;
   display: flex;
   align-items: center;
@@ -646,9 +647,11 @@ button.ds-layer-name:hover {
   opacity: 1;
   transform: translate(-50%, 0);
 }
+.ds-tb-caption {
+  display: none;
+}
 /* collapsed view picker (narrow screens) */
 .ds-view-picker {
-  position: relative;
   display: none;
 }
 .ds-view-picker-btn {
@@ -664,10 +667,10 @@ button.ds-layer-name:hover {
   color: var(--ink);
 }
 .ds-view-grid {
+  /* centred on the toolbar (4 × 72px columns + gaps, padding and border = 308px) */
   position: absolute;
-  left: 50%;
-  bottom: calc(100% + 12px);
-  transform: translateX(-50%);
+  left: calc(50% - 154px);
+  bottom: calc(100% + 10px);
   z-index: 3;
   display: grid;
   grid-template-columns: repeat(4, 72px);
@@ -1659,6 +1662,38 @@ button.ds-layer-name:hover {
     gap: 10px;
     padding: 12px;
   }
+  /* camera row: 40px touch targets that still fit a 360px screen */
+  .ds-camera {
+    padding: 4px;
+  }
+  .ds-tb-sep {
+    margin: 6px 3px;
+  }
+  .ds-tb-btn {
+    width: 40px;
+    height: 40px;
+  }
+  .ds-view-picker-btn {
+    width: auto;
+  }
+  .ds-tb-tip {
+    display: none;
+  }
+  .ds-tb-caption {
+    display: block;
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 8px);
+    transform: translateX(-50%);
+    padding: 5px 10px;
+    border-radius: var(--radius-sm);
+    background: var(--ink);
+    color: var(--panel-solid);
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    pointer-events: none;
+  }
   .ds-slider {
     flex: 1;
     min-width: 180px;
@@ -1685,6 +1720,15 @@ button.ds-layer-name:hover {
   }
   .ds-loading.is-compact {
     bottom: 130px;
+  }
+}
+
+@media (max-width: 400px) {
+  .ds-view-picker-text {
+    display: none;
+  }
+  .ds-view-picker-btn {
+    padding: 0 8px;
   }
 }
 
