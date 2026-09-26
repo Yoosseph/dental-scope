@@ -29,7 +29,7 @@ Build-time environment variables:
 | `VITE_DS_REPO_URL` | Links the "Made by Yoseph" credit and the About dialog to the repository. When unset these show as plain text, so a build never advertises a private repository. |
 | `VITE_DS_URL=off` | Stop the app from writing to the address bar (for embedding). |
 
-CI (`.github/workflows/ci.yml`) runs typecheck, test and build on pushes and PRs. `.github/workflows/pages.yml` deploys `main` to GitHub Pages. It takes `DS_BASE` and `DS_SITE_URL` from `actions/configure-pages`, and passes `VITE_DS_REPO_URL` only while the repository is public.
+CI (`.github/workflows/ci.yml`) runs typecheck, test and build on pushes and PRs. Vercel deploys `main` to production and every other branch to a preview. `DS_SITE_URL` and `VITE_DS_REPO_URL` come from the Vercel project's environment variables; unknown deep links fall back to the generated `404.html` app shell.
 
 ## 2. Principles
 
