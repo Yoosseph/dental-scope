@@ -84,10 +84,19 @@ export function formatTooth(fdi: number, system: NumberingSystem): string {
   return fdiToPalmer(fdi);
 }
 
+export const NUMBERING_SYSTEMS: readonly NumberingSystem[] = ['fdi', 'universal', 'palmer'];
+
 export const NUMBERING_LABEL: Record<NumberingSystem, string> = {
   fdi: 'FDI',
   universal: 'Universal',
   palmer: 'Palmer',
+};
+
+/** Three-letter chip labels. */
+export const NUMBERING_SHORT: Record<NumberingSystem, string> = {
+  fdi: 'FDI',
+  universal: 'UNI',
+  palmer: 'PAL',
 };
 
 export const TYPE_NAME: Record<ToothType, string> = {
