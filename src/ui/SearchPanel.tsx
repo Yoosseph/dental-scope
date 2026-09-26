@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { CATEGORY_BY_ID } from '../anatomy/categories';
 import { formatTooth, NUMBERING_LABEL } from '../anatomy/notation';
-import { pathFor, pushPath } from '../app/router';
+import { pushCurrentPath } from '../app/router';
 import { search } from '../search/search';
-import { actions, getState, useApp } from '../state/store';
+import { actions, useApp } from '../state/store';
 import { useServices } from './context';
 import { IconClose, IconSearch } from './icons';
 
@@ -39,8 +39,7 @@ export function SearchPanel() {
   const choose = async (id: string) => {
     actions.openSearch(false);
     await engine.selectFromUI(id, { focus: true });
-    const s = getState();
-    pushPath(pathFor(s.selectedId, s.dissectFdi, registry));
+    pushCurrentPath(registry);
   };
 
   const onKey = (e: React.KeyboardEvent) => {

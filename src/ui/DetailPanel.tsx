@@ -3,9 +3,9 @@ import { CATEGORY_BY_ID } from '../anatomy/categories';
 import { formatTooth, NUMBERING_SHORT, NUMBERING_SYSTEMS } from '../anatomy/notation';
 import type { NumberingSystem, Provenance, Structure } from '../anatomy/types';
 import type { ContentStatus } from '../content/content';
-import { pathFor, pushPath } from '../app/router';
+import { pushCurrentPath } from '../app/router';
 import { resolveContent } from '../content/content';
-import { actions, getState, useApp } from '../state/store';
+import { actions, useApp } from '../state/store';
 import { useServices } from './context';
 import { IconArrowLeft, IconClose, IconEyeOff, IconFocus, IconGhost, IconIsolate, IconTooth } from './icons';
 
@@ -46,8 +46,7 @@ export function DetailPanel() {
 
   const go = async (id: string) => {
     await engine.selectFromUI(id, { focus: true });
-    const st = getState();
-    pushPath(pathFor(st.selectedId, st.dissectFdi, registry));
+    pushCurrentPath(registry);
   };
 
   return (
@@ -182,14 +181,14 @@ export function DetailPanel() {
     const f = dissectFdi!;
     actions.exitDissect();
     engine.focus(`tooth-${f}`);
-    pushPath(pathFor(getState().selectedId, null, registry));
+    pushCurrentPath(registry);
   }
 
   async function enterDissect(f: number) {
     actions.enterDissect(f);
     await engine.ensureTooth(f);
     engine.focus(`tooth-${f}`);
-    pushPath(pathFor(getState().selectedId, f, registry));
+    pushCurrentPath(registry);
   }
 }
 

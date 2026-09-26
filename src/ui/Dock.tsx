@@ -1,6 +1,6 @@
 import { formatTooth } from '../anatomy/notation';
-import { pathFor, pushPath } from '../app/router';
-import { actions, DISSECT_LEVELS, getState, useApp, type ClipAxis, type ExplodePhase } from '../state/store';
+import { pushCurrentPath } from '../app/router';
+import { actions, DISSECT_LEVELS, useApp, type ClipAxis, type ExplodePhase } from '../state/store';
 import { useServices } from './context';
 import { IconArrowLeft, IconExplode, IconFlip, IconLabel, IconSection } from './icons';
 
@@ -70,7 +70,7 @@ function DissectControls({ fdi }: { fdi: number }) {
     actions.exitDissect();
     actions.select(`tooth-${fdi}`);
     engine.focus(`tooth-${fdi}`);
-    pushPath(pathFor(getState().selectedId, null, registry));
+    pushCurrentPath(registry);
   };
   return (
     <div className="ds-panel ds-dock-main ds-dissect">
