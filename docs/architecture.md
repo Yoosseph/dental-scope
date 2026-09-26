@@ -127,7 +127,7 @@ One Zustand store; slices are plain data (Sets as arrays/records) and actions ar
 |---|---|
 | selection | `selectedId`, `hoveredId` |
 | visibility | `hidden: Record<id,true>`, `ghosted: Record<id,true>`, `categoryOff: Record<cat,true>`, `isolateId`, `globalOpacity` |
-| view | `explode` (0–1), `labels`, `clip: {enabled, axis, offset, flip}`, `numbering`, `orbitMode` (`fixed` / `free`) |
+| view | `explode` (0–1), `explodePhase` (1 in position / 2 laid out), `labels`, `clip: {enabled, axis, offset, flip}`, `numbering`, `orbitMode` (`fixed` / `free`) |
 | tooth | `dissectToothId`, `dissectLevel` (0 whole → 4 canals), `toothExplode` |
 | mode | `mode: 'explore' | 'learn' | 'quiz' | 'compare'` |
 | loading | per-stage progress |
@@ -163,6 +163,7 @@ Materials use `clippingPlanes`; `side: DoubleSide`; a small `onBeforeCompile` pa
 
 ### Explode
 - **Arch level:** maxillary complex moves up, mandibular complex down, teeth move outward along their arch normal, gingiva lifts off, nerves/vessels move medially/laterally by side, muscles move outward by side (orbicularis oris, which spans the midline in front of the incisors, moves forward and down in front of the chin instead).
+- **Arch level, phase 2 ("Laid out"):** `explodePhase: 2` lays every fully visible structure out on a board facing the viewer (`engine/layout.ts`: shelf packing in bands that read top to bottom like the head, teeth in arch order); ghosted context fades out and the camera frames the board. Moving the slider back or turning on a section returns to phase 1.
 - **Tooth level:** layers separate along the tooth's long axis in anatomical order (enamel shell → dentin → pulp → canals), cementum/PDL radially.
 
 Offsets are computed once from bounds; animation interpolates a scalar.

@@ -18,6 +18,8 @@ export interface FocusOptions {
   direction?: THREE.Vector3;
   /** multiply the fitted distance */
   padding?: number;
+  /** explicit camera distance (overrides the sphere fit) */
+  distance?: number;
   duration?: number;
 }
 
@@ -74,7 +76,7 @@ export class CameraRig {
     c.screenSpacePanning = true;
     c.zoomToCursor = true;
     c.minDistance = 0.9;
-    c.maxDistance = 90;
+    c.maxDistance = 160; // room to frame the whole phase-2 board on a phone
     c.autoRotateSpeed = 0.9;
     c.addEventListener('start', () => {
       this.interacting = true;
@@ -128,7 +130,7 @@ export class CameraRig {
     const target0 = this.controls.target.clone();
     const pos0 = cam.position.clone();
     const dir = (opts.direction?.clone() ?? pos0.clone().sub(target0)).normalize();
-    const dist = Math.max(this.distanceFor(Math.max(radius, 0.15), opts.padding ?? 1.3), this.controls.minDistance * 1.05);
+    const dist = Math.max(opts.distance ?? this.distanceFor(Math.max(radius, 0.15), opts.padding ?? 1.3), this.controls.minDistance * 1.05);
     let target1 = center.clone();
     let pos1 = center.clone().addScaledVector(dir, dist);
     if (this.mode === 'fixed') ({ target: target1, position: pos1 } = fixedFocusPose(this.pivot, center, radius, dist, dir));

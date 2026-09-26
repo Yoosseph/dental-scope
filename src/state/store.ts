@@ -12,6 +12,8 @@ export type ClipAxis = 'sagittal' | 'coronal' | 'axial' | 'view';
 export type ModeId = 'explore' | 'learn' | 'quiz' | 'compare';
 /** Camera navigation: fixed turntable around the model centre, or free pivot that follows pan/focus. */
 export type OrbitMode = 'fixed' | 'free';
+/** Arch dissection phase: 1 = pulled apart in position, 2 = every structure laid out on a board. */
+export type ExplodePhase = 1 | 2;
 export type ViewPreset =
   | 'three-quarter'
   | 'front'
@@ -56,6 +58,7 @@ export interface AppState {
   ghostOpacity: number;
 
   explode: number; // 0…1 arch level
+  explodePhase: ExplodePhase;
   labels: boolean;
   clip: ClipState;
   numbering: NumberingSystem;
@@ -89,6 +92,7 @@ export const initialState: AppState = {
   isolateContext: false,
   ghostOpacity: 0.18,
   explode: 0,
+  explodePhase: 1,
   labels: false,
   clip: { enabled: false, axis: 'sagittal', offset: 0, flip: false },
   numbering: 'fdi',
@@ -183,7 +187,12 @@ export const actions = {
     setState({ hidden: {}, ghosted: {}, isolateId: null, isolateContext: false, categories: { ...INITIAL_CATEGORY_STATE } });
   },
   setExplode(v: number) {
-    setState({ explode: Math.max(0, Math.min(1, v)) });
+    const explode = Math.max(0, Math.min(1, v));
+    // scrubbing the slider back leaves the laid-out phase
+    setState((s) => ({ explode, explodePhase: explode < 1 ? 1 : s.explodePhase }));
+  },
+  setExplodePhase(phase: ExplodePhase) {
+    setState((s) => (phase === 2 ? { explodePhase: 2, explode: 1, clip: { ...s.clip, enabled: false } } : { explodePhase: 1 }));
   },
   setToothExplode(v: number) {
     setState({ toothExplode: Math.max(0, Math.min(1, v)) });
@@ -192,7 +201,8 @@ export const actions = {
     setState((s) => ({ labels: !s.labels }));
   },
   setClip(patch: Partial<ClipState>) {
-    setState((s) => ({ clip: { ...s.clip, ...patch } }));
+    // a section plane cuts through the scene in place, so it leaves the laid-out phase
+    setState((s) => ({ clip: { ...s.clip, ...patch }, explodePhase: patch.enabled ? 1 : s.explodePhase }));
   },
   setNumbering(n: NumberingSystem) {
     setState({ numbering: n });
@@ -209,7 +219,7 @@ export const actions = {
     persist('ds.orbit', m);
   },
   enterDissect(fdi: number) {
-    setState({ dissectFdi: fdi, dissectLevel: 0, toothExplode: 0, isolateId: `tooth-${fdi}`, isolateContext: true, explode: 0 });
+    setState({ dissectFdi: fdi, dissectLevel: 0, toothExplode: 0, isolateId: `tooth-${fdi}`, isolateContext: true, explode: 0, explodePhase: 1 });
   },
   exitDissect() {
     setState((s) => ({
