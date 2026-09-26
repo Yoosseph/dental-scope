@@ -20,9 +20,13 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - id: pages
+        uses: actions/configure-pages@v5
       - run: npm run build
         env:
-          DS_BASE: /${{ github.event.repository.name }}/
+          DS_BASE: ${{ steps.pages.outputs.base_path }}/
+          # absolute site URL for canonical links, social previews and sitemap.xml
+          DS_SITE_URL: ${{ steps.pages.outputs.base_url }}
           # link the repository from the app only while it is public
           VITE_DS_REPO_URL: ${{ !github.event.repository.private && github.event.repository.html_url || '' }}
       - uses: actions/upload-pages-artifact@v3

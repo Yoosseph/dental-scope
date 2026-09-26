@@ -204,7 +204,7 @@ Loading stages:
 | `/tooth/36/dissect` | Enter dissection of tooth 36 |
 | `/structure/<id>` | Select & focus any structure |
 
-Selection changes `replaceState`; explicit navigations (search, tree) `pushState`. `popstate` restores. The static host needs an SPA fallback (`404.html` copy is generated at build for GitHub Pages).
+Selection changes `replaceState`; explicit navigations (search, tree) `pushState`. `popstate` restores. The build (SEO plugin in `vite.config.ts`, metadata in `src/app/seo.ts`) writes a static entry page per tooth (`tooth/36/index.html`, own title/description/canonical) and a `noindex` `404.html` app shell that static hosts such as GitHub Pages serve for every other deep link; also `robots.txt` and, with `DS_SITE_URL`, `sitemap.xml`.
 
 ## 10. Modes
 
