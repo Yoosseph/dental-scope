@@ -559,139 +559,153 @@ button.ds-layer-name:hover {
   margin-bottom: 6px;
 }
 
-/* ------------------------------------------------------------------ rail */
-.ds-rail {
-  position: absolute;
-  right: 24px;
-  top: 50%;
-  transform: translateY(-50%);
-  /* above the detail panel so the control labels are never hidden behind it */
-  z-index: 2;
+/* ------------------------------------------------------------------ toolbar
+   One bottom toolbar: a camera row (orbit, views, zoom, rotate, reset) above the scene or
+   dissection tools. Views are pictograms; on narrow screens they fold into a View button. */
+.ds-toolbar {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 5px;
-  border-radius: 14px;
+  align-items: center;
 }
-.ds-rail-btn {
+.ds-camera {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--line);
+}
+.ds-tb-group {
+  display: flex;
+  gap: 2px;
+}
+.ds-tb-sep {
+  width: 1px;
+  align-self: stretch;
+  margin: 5px 6px;
+  background: var(--line);
+}
+.ds-tb-btn {
+  position: relative;
   display: grid;
   place-items: center;
   width: 34px;
   height: 32px;
-  border-radius: 9px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
+  border-radius: var(--radius-sm);
   color: var(--muted);
-  transition: background var(--dur), color var(--dur);
+  transition:
+    background var(--dur),
+    color var(--dur);
 }
-.ds-rail-btn:hover {
+.ds-tb-btn:hover {
   background: var(--hover);
   color: var(--ink);
 }
-.ds-rail-btn.is-active {
+.ds-tb-btn.is-active {
   background: var(--ink);
   color: var(--panel-solid);
 }
-.ds-rail-sep {
-  height: 1px;
-  background: var(--line);
-  margin: 4px 6px;
-}
-.ds-rail-btn {
-  position: relative;
-}
-.ds-rail-group {
+/* the control's name, just above it, on hover, keyboard focus, a touch tap or the first-visit peek */
+.ds-tb-tip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 9px);
+  z-index: 3;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-/* action label: on hover, keyboard focus or a touch tap the button grows into a dark pill that
-   slides out to the left and names the action (the icon stays in place at its right end) */
-.ds-rail-btn {
-  isolation: isolate;
-}
-.ds-rail-btn:hover,
-.ds-rail-btn:focus-visible,
-.ds-rail-btn.is-tip-shown {
-  color: var(--panel-solid);
-}
-.ds-rail-tip,
-.ds-rail-caption {
-  border-radius: 9px;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 9px;
+  border-radius: var(--radius-sm);
   background: var(--ink);
-  box-shadow: var(--panel-shadow);
-  font-family: var(--font-ui);
+  color: var(--panel-solid);
   font-size: 12px;
   font-weight: 500;
-  color: var(--panel-solid);
   white-space: nowrap;
   pointer-events: none;
-}
-.ds-rail-caption {
-  padding: 5px 10px;
-}
-.ds-rail-tip {
-  position: absolute;
-  z-index: -1;
-  top: 0;
-  right: 0;
-  height: 100%;
-  /* the right-hand part sits behind the button's own icon */
-  padding: 0 44px 0 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  clip-path: inset(0 0 0 calc(100% - 34px) round 9px);
   opacity: 0;
-  transition: clip-path 220ms var(--ease), opacity 120ms;
+  transform: translate(-50%, 4px);
+  transition:
+    opacity 120ms,
+    transform 180ms var(--ease);
 }
-.ds-rail-tip-text {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transform: translateX(10px);
-  transition: transform 220ms var(--ease);
-}
-.ds-rail-tip kbd {
+.ds-tb-tip kbd {
   font-size: 10px;
   color: inherit;
   background: rgba(255, 255, 255, 0.14);
   border-color: rgba(255, 255, 255, 0.22);
 }
-:root[data-theme='dark'] .ds-rail-tip kbd {
+:root[data-theme='dark'] .ds-tb-tip kbd {
   background: rgba(0, 0, 0, 0.08);
   border-color: rgba(0, 0, 0, 0.18);
 }
-.ds-rail-btn:hover .ds-rail-tip,
-.ds-rail-btn:focus-visible .ds-rail-tip,
-.ds-rail-btn.is-tip-shown .ds-rail-tip,
-.ds-rail.is-peek .ds-rail-tip {
+.ds-tb-btn:hover .ds-tb-tip,
+.ds-tb-btn:focus-visible .ds-tb-tip,
+.ds-tb-btn.is-tip-shown .ds-tb-tip {
   opacity: 1;
-  clip-path: inset(0 round 9px);
+  transform: translate(-50%, 0);
 }
-.ds-rail-btn:hover .ds-rail-tip-text,
-.ds-rail-btn:focus-visible .ds-rail-tip-text,
-.ds-rail-btn.is-tip-shown .ds-rail-tip-text,
-.ds-rail.is-peek .ds-rail-tip-text {
-  transform: none;
+/* collapsed view picker (narrow screens) */
+.ds-view-picker {
+  position: relative;
+  display: none;
 }
-/* first visit: every label slides out once, one after another, so people see what the rail does */
-.ds-rail.is-peek .ds-rail-btn {
+.ds-view-picker-btn {
+  display: flex;
+  width: auto;
+  gap: 6px;
+  padding: 0 10px 0 8px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.ds-view-picker-btn.is-open {
+  background: var(--hover);
+  color: var(--ink);
+}
+.ds-view-grid {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 12px);
+  transform: translateX(-50%);
+  z-index: 3;
+  display: grid;
+  grid-template-columns: repeat(4, 72px);
+  gap: 2px;
+  padding: 6px;
+  background: var(--panel-solid);
+  animation: ds-in 180ms var(--ease);
+}
+.ds-view-grid button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 9px 2px 7px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  color: var(--muted);
+}
+.ds-view-grid button:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+.ds-view-grid button.is-active {
+  background: var(--ink);
   color: var(--panel-solid);
 }
-.ds-rail.is-peek .ds-rail-tip,
-.ds-rail.is-peek .ds-rail-tip-text {
-  transition-delay: calc(var(--i, 0) * 45ms);
-}
-.ds-rail-caption {
-  display: none;
+@media (max-width: 1100px) {
+  .ds-views {
+    display: none;
+  }
+  .ds-view-picker {
+    display: block;
+  }
 }
 
 /* ------------------------------------------------------------------ detail */
 .ds-detail {
   position: absolute;
-  right: 84px;
+  right: 24px;
   top: 76px;
   width: 340px;
   max-height: calc(100% - 76px - 150px);
@@ -706,7 +720,7 @@ button.ds-layer-name:hover {
   }
 }
 .ds-app.is-dissecting .ds-detail {
-  max-height: calc(100% - 76px - 220px);
+  max-height: calc(100% - 76px - 260px);
 }
 .ds-detail-head {
   position: relative;
@@ -983,11 +997,12 @@ button.ds-layer-name:hover {
   position: relative;
 }
 .ds-tool-wrap {
+  position: relative;
   display: flex;
 }
 .ds-tool-warn {
   position: absolute;
-  right: 12px;
+  right: 0;
   bottom: calc(100% + 8px);
   display: flex;
   align-items: center;
@@ -1021,7 +1036,7 @@ button.ds-layer-name:hover {
 }
 .ds-dock-note {
   position: absolute;
-  top: -22px;
+  top: calc(100% + 8px);
   left: 18px;
   font-size: 11px;
   color: var(--muted);
@@ -1167,7 +1182,7 @@ button.ds-layer-name:hover {
 }
 .ds-loading.is-compact {
   top: auto;
-  bottom: 150px;
+  bottom: 232px;
   transform: translateX(-50%);
   width: auto;
   padding: 8px 14px;
@@ -1229,7 +1244,7 @@ button.ds-layer-name:hover {
 .ds-start-hint {
   position: absolute;
   left: 50%;
-  bottom: 186px;
+  bottom: 232px;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
@@ -1626,51 +1641,6 @@ button.ds-layer-name:hover {
       transform: translateY(24px);
       opacity: 0;
     }
-  }
-  .ds-rail {
-    display: none;
-  }
-  .ds-rail.is-mobile-open {
-    display: flex;
-    flex-direction: row;
-    top: auto;
-    right: 8px;
-    left: 8px;
-    bottom: calc(66px + env(safe-area-inset-bottom));
-    transform: none;
-    overflow-x: auto;
-    z-index: 5;
-  }
-  .ds-rail.is-mobile-open .ds-rail-group {
-    flex-direction: row;
-  }
-  .ds-rail.is-mobile-open .ds-rail-sep {
-    width: 1px;
-    height: auto;
-    margin: 6px 4px;
-  }
-  .ds-rail-btn {
-    flex: none;
-    width: 38px;
-    height: 36px;
-  }
-  /* the mobile rail scrolls sideways and would clip side labels: name the tapped control above it instead */
-  .ds-rail-tip {
-    display: none;
-  }
-  .ds-rail-btn:hover:not(.is-active),
-  .ds-rail-btn:focus-visible:not(.is-active),
-  .ds-rail-btn.is-tip-shown:not(.is-active) {
-    color: var(--ink);
-  }
-  /* sits just above the rail row (rail bottom 66px + 46px row); may briefly overlap the dock's lower edge */
-  .ds-rail-caption {
-    display: block;
-    position: absolute;
-    left: 50%;
-    bottom: calc(66px + 46px + 6px + env(safe-area-inset-bottom));
-    transform: translateX(-50%);
-    z-index: 6;
   }
   .ds-dock {
     display: none;

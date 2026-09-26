@@ -176,3 +176,74 @@ export const IconOrbitFree = (p: P) => (
     <path d="m10.5 5 1.5-1.5L13.5 5M10.5 19l1.5 1.5 1.5-1.5M5 10.5 3.5 12 5 13.5M19 10.5l1.5 1.5-1.5 1.5" />
   </Svg>
 );
+
+/* ---- view pictograms: what the camera will face, drawn as the teeth and jaws it will show ---- */
+
+/** Upper and lower incisors seen head-on. */
+export const IconViewFront = (p: P) => (
+  <Svg {...p}>
+    <path d="M5.5 5.5h13v4.2c0 .7-.6 1.3-1.3 1.3H6.8c-.7 0-1.3-.6-1.3-1.3zM9.8 5.5V11M14.2 5.5V11" />
+    <path d="M6.5 18.5h11v-4.2c0-.7-.6-1.3-1.3-1.3H7.8c-.7 0-1.3.6-1.3 1.3zM10.2 18.5V13M13.8 18.5V13" />
+  </Svg>
+);
+/** The same rows receding to the side: a three-quarter view. */
+export const IconViewThreeQuarter = (p: P) => (
+  <Svg {...p}>
+    <path d="M4.5 5 19.5 7.2v2.6c0 .7-.6 1.2-1.3 1.2H5.8c-.7 0-1.3-.6-1.3-1.3zM10.4 5.9V11M15.3 6.6V11" />
+    <path d="M5.5 19 18.5 16.8v-2.5c0-.7-.6-1.3-1.3-1.3H6.8c-.7 0-1.3.6-1.3 1.3zM10.6 18.1V13M14.9 17.4V13" />
+  </Svg>
+);
+/** Lower jaw in profile, chin to the left: the patient's left side faces the camera. */
+export const IconViewLeft = (p: P) => (
+  <Svg {...p}>
+    <path d="M4.5 12.5v3.2c0 1.6 1.1 2.8 2.7 2.8h8.3c1.2 0 2.1-.6 2.6-1.7L19.5 12V4.5l-1.8 1.4" />
+    <path d="M6 12.5c0-1.2.6-2 1.6-2s1.6.8 1.6 2M9.9 12.5c0-1.2.6-2 1.6-2s1.6.8 1.6 2M13.8 12.5c0-1.2.6-2 1.6-2s1.6.8 1.6 2" />
+  </Svg>
+);
+/** Lower jaw in profile, chin to the right. */
+export const IconViewRight = (p: P) => (
+  <Svg {...p} style={{ transform: 'scaleX(-1)' }}>
+    <path d="M4.5 12.5v3.2c0 1.6 1.1 2.8 2.7 2.8h8.3c1.2 0 2.1-.6 2.6-1.7L19.5 12V4.5l-1.8 1.4" />
+    <path d="M6 12.5c0-1.2.6-2 1.6-2s1.6.8 1.6 2M9.9 12.5c0-1.2.6-2 1.6-2s1.6.8 1.6 2M13.8 12.5c0-1.2.6-2 1.6-2s1.6.8 1.6 2" />
+  </Svg>
+);
+/** Skull seen from above: the crown of the head with the face at the bottom. */
+export const IconViewSuperior = (p: P) => (
+  <Svg {...p}>
+    <path d="M12 3.5c4.2 0 7 3.4 7 7.6 0 4.6-3.2 8.6-7 9.4-3.8-.8-7-4.8-7-9.4 0-4.2 2.8-7.6 7-7.6z" />
+    <path d="M9.5 10.5c.8-.9 1.6-1.3 2.5-1.3s1.7.4 2.5 1.3" />
+    <circle cx="12" cy="13.5" r="1" fill="currentColor" stroke="none" />
+  </Svg>
+);
+/** Skull seen from below: the lower jaw's horseshoe inside the outline. */
+export const IconViewInferior = (p: P) => (
+  <Svg {...p}>
+    <path d="M12 3.5c4.2 0 7 3.4 7 7.6 0 4.6-3.2 8.6-7 9.4-3.8-.8-7-4.8-7-9.4 0-4.2 2.8-7.6 7-7.6z" />
+    <path d="M8.5 8.5v4c0 2.6 1.6 4.6 3.5 4.6s3.5-2 3.5-4.6v-4" />
+  </Svg>
+);
+/** Upper arch from the biting side: front teeth at the top, the palate side open below. */
+export const IconViewOcclusalUpper = (p: P) => (
+  <Svg {...p}>
+    <path d="M5.5 20v-8a6.5 6.5 0 0 1 13 0v8" />
+    <path d="M9 20v-7.5a3 3 0 0 1 6 0V20" />
+    <path d="M7.4 7.6 9.6 10M16.6 7.6 14.4 10M12 5.5v3" />
+  </Svg>
+);
+/** Lower arch from the biting side: front teeth at the bottom. */
+export const IconViewOcclusalLower = (p: P) => (
+  <Svg {...p}>
+    <path d="M5.5 4v8a6.5 6.5 0 0 0 13 0V4" />
+    <path d="M9 4v7.5a3 3 0 0 0 6 0V4" />
+    <path d="M7.4 16.4 9.6 14M16.6 16.4 14.4 14M12 18.5v-3" />
+  </Svg>
+);
+/** Generic "camera view" button used when the view picker is collapsed. */
+export const IconView = (p: P) => (
+  <Svg {...p}>
+    <rect x="3.5" y="3.5" width="7" height="7" rx="1.5" />
+    <rect x="13.5" y="3.5" width="7" height="7" rx="1.5" />
+    <rect x="3.5" y="13.5" width="7" height="7" rx="1.5" />
+    <rect x="13.5" y="13.5" width="7" height="7" rx="1.5" />
+  </Svg>
+);

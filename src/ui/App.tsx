@@ -10,7 +10,6 @@ import { AboutDialog, Footer, LoadingCard, StartHint } from './Overlays';
 import { SearchPanel } from './SearchPanel';
 import { Identity, TopActions } from './TopBar';
 import { useKeyboard } from './useKeyboard';
-import { ViewRail } from './ViewRail';
 
 export function App() {
   const { engine, registry } = useServices();
@@ -42,8 +41,8 @@ export function App() {
     const update = () => {
       const mobile = window.innerWidth <= 767;
       if (mobile) engine.setInsets(0, sheet !== 'none' ? window.innerHeight * 0.5 : 0);
-      // the dissection dock (and the taller dock under the phase-2 board) covers the bottom of the canvas
-      else engine.setInsets(selected && window.innerWidth > 980 ? 360 : 0, dissect || laidOut ? 120 : 0);
+      // the bottom toolbar covers the lower edge of the canvas; the dissection tools and the phase-2 board make it taller
+      else engine.setInsets(selected && window.innerWidth > 980 ? 360 : 0, dissect || laidOut ? 170 : 70);
     };
     update();
     window.addEventListener('resize', update);
@@ -57,7 +56,6 @@ export function App() {
         <Identity />
         <TopActions />
         <LayersPanel />
-        <ViewRail />
         <DetailPanel />
         <Dock />
         <Footer />
