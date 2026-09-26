@@ -7,12 +7,12 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import type { Registry } from '../anatomy/registry';
 import type { Structure } from '../anatomy/types';
 import { formatTooth } from '../anatomy/notation';
-import { store, getState, setState, actions, type AppState, type ViewPreset } from '../state/store';
+import { store, getState, setState, actions, DISSECT_LEVELS, type AppState, type ViewPreset } from '../state/store';
 import { resolveMesh, revealPatch, layersActive, type MeshVisual } from '../state/visibility';
 import { Animator } from './animator';
 import { AssetLoader } from './assets';
 import { CameraRig } from './camera';
-import { archOffset, toothLayerOffset } from './explode';
+import { archOffset, pulpLayerOffset, toothLayerOffset } from './explode';
 import { boardSlot, shelfLayout, type LayoutItem } from './layout';
 import { LabelLayer, type LabelCandidate } from './labels';
 import { HOVER, HIGHLIGHT, THEME_LIGHTING, applyThemeToMaterial, createTissueMaterial, setFibreAxis, setMaterialOpacity, styleKeyFor, type SceneTheme, type TissueMaterial } from './materials';
@@ -24,6 +24,8 @@ interface MeshEntry {
   mesh: THREE.Mesh<THREE.BufferGeometry, TissueMaterial>;
   archOffset: THREE.Vector3;
   toothOffset: THREE.Vector3;
+  /** tooth offset on the Root canals level (pulp only) */
+  pulpOffset: THREE.Vector3;
   visual: MeshVisual;
   opacity: number; // animated
   hi: number; // animated highlight
@@ -76,6 +78,9 @@ export class Engine {
   private unsub: (() => void)[] = [];
   private explodeCur = 0;
   private toothExplodeCur = 0;
+  /** 0…1 blend from the normal layer separation to the pulp-only one (Root canals level) */
+  private pulpModeCur = 0;
+  private readonly tmpOffset = new THREE.Vector3();
   /** 0…1 blend from the in-position explode (phase 1) to the laid-out board (phase 2) */
   private phaseCur = 0;
   private boardTimer = 0;
@@ -151,12 +156,12 @@ export class Engine {
     this.animator.reducedMotion = reduce.matches || new URLSearchParams(location.search).get('motion') === 'reduce';
     reduce.addEventListener?.('change', (e) => (this.animator.reducedMotion = e.matches));
 
-    // initial framing: the dentition, three-quarter view
+    // initial framing: the whole skull, straight on (see startView)
     const sphere = this.sceneBounds.getBoundingSphere(new THREE.Sphere());
     this.rig.home = { target: sphere.center.clone().add(new THREE.Vector3(0, -0.15, -0.2)), radius: sphere.radius * 1.28 };
     this.updatePivot();
     this.resize();
-    this.rig.preset('three-quarter', this.rig.home.target, this.rig.home.radius, 0);
+    this.startView(0);
 
     this.labels = new LabelLayer(this.overlay);
     this.labels.onClick = (id) => this.selectFromUI(id, { focus: false });
@@ -257,6 +262,7 @@ export class Engine {
         mesh,
         archOffset: archOffset(this.registry, key, center),
         toothOffset: toothLayerOffset(this.registry, key),
+        pulpOffset: pulpLayerOffset(this.registry, key),
         visual: 'off',
         opacity: 0,
         hi: 0,
@@ -744,8 +750,17 @@ export class Engine {
   /** Fresh start: orbit centred on the dentition again and a straight-on front view of the whole mouth. */
   resetToStart() {
     this.updatePivot();
-    setState({ view: 'front' });
-    this.rig.preset('front', this.rig.home.target, this.rig.home.radius);
+    this.startView();
+  }
+
+  /** Start framing: the whole skull from the front, centred in the free area of the canvas. */
+  private startView(duration = 0.9) {
+    const center = this.sceneBounds.getCenter(new THREE.Vector3());
+    const size = this.sceneBounds.getSize(new THREE.Vector3());
+    // fit the skull's height (not its bounding sphere, which would leave it small)
+    const radius = Math.max(size.y, size.x) / 2;
+    if (getState().view !== 'front') setState({ view: 'front' });
+    this.rig.focusSphere(center, radius, { direction: new THREE.Vector3(0, 0.02, 1), padding: 1.04, duration });
     this.invalidate();
   }
 
@@ -853,6 +868,12 @@ export class Engine {
       moving = true;
     }
 
+    const pulpMode = s.dissectFdi !== null && s.dissectLevel === DISSECT_LEVELS.length - 1 ? 1 : 0;
+    if (Math.abs(this.pulpModeCur - pulpMode) > 1e-4) {
+      this.pulpModeCur = stepToward(this.pulpModeCur, pulpMode, rate, 1e-3);
+      moving = true;
+    }
+
     // label occlusion only needs recomputing when meshes move or appear/disappear
     let layoutChanged = false;
     const prevPos = new THREE.Vector3();
@@ -880,7 +901,7 @@ export class Engine {
       const toothPart = s.dissectFdi !== null && this.registry.get(e.owner)?.toothFdi === s.dissectFdi;
       prevPos.copy(e.mesh.position);
       e.mesh.position.copy(e.archOffset).multiplyScalar(this.explodeCur);
-      if (toothPart) e.mesh.position.addScaledVector(e.toothOffset, this.toothExplodeCur);
+      if (toothPart) e.mesh.position.addScaledVector(this.tmpOffset.lerpVectors(e.toothOffset, e.pulpOffset, this.pulpModeCur), this.toothExplodeCur);
       if (e.boardPos && this.phaseCur > 0) {
         if (e.boardTarget && e.boardPos.distanceToSquared(e.boardTarget) > 1e-8) {
           e.boardPos.lerp(e.boardTarget, boardK);

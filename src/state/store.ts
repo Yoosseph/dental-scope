@@ -98,7 +98,7 @@ export const initialState: AppState = {
   labels: false,
   clip: { enabled: false, axis: 'sagittal', offset: 0, flip: false },
   numbering: 'fdi',
-  view: 'three-quarter',
+  view: 'front',
   autoRotate: false,
   orbitMode: 'free',
   dissectFdi: null,

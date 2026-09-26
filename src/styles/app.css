@@ -1397,51 +1397,6 @@ button.ds-layer-name:hover {
   color: var(--accent);
 }
 
-/* ------------------------------------------------------------------ start hint */
-.ds-start-hint {
-  position: absolute;
-  left: 50%;
-  bottom: 232px;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 7px 14px 7px 12px;
-  border-radius: 999px;
-  background: var(--panel);
-  border: 1px solid var(--panel-border);
-  box-shadow: var(--panel-shadow);
-  font-size: 12.5px;
-  color: var(--muted);
-  pointer-events: none;
-  animation: ds-in 600ms var(--ease) 400ms both;
-}
-.ds-pulse {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--highlight);
-  animation: ds-pulse 1.8s ease-out infinite;
-}
-@keyframes ds-pulse {
-  0% {
-    box-shadow: 0 0 0 0 var(--accent-glow);
-  }
-  100% {
-    box-shadow: 0 0 0 10px transparent;
-  }
-}
-@media (max-width: 767px) {
-  .ds-start-hint {
-    bottom: calc(112px + env(safe-area-inset-bottom));
-    font-size: 11.5px;
-    white-space: nowrap;
-  }
-  .ds-hint-extra {
-    display: none;
-  }
-}
-
 /* ------------------------------------------------------------------ search */
 .ds-search-layer {
   position: fixed;

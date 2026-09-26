@@ -77,3 +77,29 @@ export function toothLayerOffset(registry: Registry, meshKey: string): THREE.Vec
   if (kind === 'pulp-chamber' || kind.startsWith('canal-')) return mesial.clone().multiplyScalar(-1.25).addScaledVector(axis, 0.12);
   return V();
 }
+
+/**
+ * Tooth-level offset at toothExplode = 1 on the Root canals level, where only the pulp is shown:
+ * the pulp chamber lifts toward the crown, the canals drop toward the apex and fan out by root
+ * (mesial/distal, buccal/palatal-lingual), so the chamber–canal boundary and each canal read on their own.
+ */
+export function pulpLayerOffset(registry: Registry, meshKey: string): THREE.Vector3 {
+  const fdi = registry.get(registry.meshOwner.get(meshKey) ?? '')?.toothFdi;
+  if (fdi === undefined) return V();
+  const axis = toothVec(registry, fdi, 'axis');
+  const kind = meshKey.replace(/-\d{2}$/, '');
+  if (kind === 'pulp-chamber') return axis.clone().multiplyScalar(0.9);
+  if (!kind.startsWith('canal-')) return V();
+  const mesial = toothVec(registry, fdi, 'mesial');
+  const buccal = toothVec(registry, fdi, 'buccal');
+  const out = axis.clone().multiplyScalar(-0.35);
+  const name = kind.slice('canal-'.length);
+  if (name.includes('mesio') || name.startsWith('mesial')) out.addScaledVector(mesial, 0.5);
+  if (name.includes('disto') || name.startsWith('distal')) out.addScaledVector(mesial, -0.5);
+  if (name.includes('buccal')) out.addScaledVector(buccal, 0.5);
+  if (name.includes('palatal') || name.includes('lingual')) out.addScaledVector(buccal, -0.5);
+  // second canal in the same root (e.g. mesial-1 / mesial-2): nudge apart along the buccal direction
+  if (/-1$/.test(name)) out.addScaledVector(buccal, 0.3);
+  if (/-2$/.test(name)) out.addScaledVector(buccal, -0.3);
+  return out;
+}
