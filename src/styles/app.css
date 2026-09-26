@@ -575,40 +575,83 @@ button.ds-layer-name:hover {
   flex-direction: column;
   gap: 2px;
 }
-/* action label: appears to the left of the rail on hover, keyboard focus or a touch tap */
+/* action label: on hover, keyboard focus or a touch tap the button grows into a dark pill that
+   slides out to the left and names the action (the icon stays in place at its right end) */
+.ds-rail-btn {
+  isolation: isolate;
+}
+.ds-rail-btn:hover,
+.ds-rail-btn:focus-visible,
+.ds-rail-btn.is-tip-shown {
+  color: var(--panel-solid);
+}
 .ds-rail-tip,
 .ds-rail-caption {
-  padding: 5px 9px;
-  border-radius: 8px;
-  background: var(--panel-solid);
-  border: 1px solid var(--panel-border);
+  border-radius: 9px;
+  background: var(--ink);
   box-shadow: var(--panel-shadow);
   font-family: var(--font-ui);
   font-size: 12px;
   font-weight: 500;
-  color: var(--ink);
+  color: var(--panel-solid);
   white-space: nowrap;
   pointer-events: none;
 }
+.ds-rail-caption {
+  padding: 5px 10px;
+}
 .ds-rail-tip {
   position: absolute;
-  right: calc(100% + 12px);
-  top: 50%;
+  z-index: -1;
+  top: 0;
+  right: 0;
+  height: 100%;
+  /* the right-hand part sits behind the button's own icon */
+  padding: 0 44px 0 12px;
   display: flex;
   align-items: center;
   gap: 8px;
+  clip-path: inset(0 0 0 calc(100% - 34px) round 9px);
   opacity: 0;
-  transform: translate(4px, -50%);
-  transition: opacity var(--dur), transform var(--dur);
+  transition: clip-path 220ms var(--ease), opacity 120ms;
+}
+.ds-rail-tip-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transform: translateX(10px);
+  transition: transform 220ms var(--ease);
 }
 .ds-rail-tip kbd {
   font-size: 10px;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+:root[data-theme='dark'] .ds-rail-tip kbd {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.18);
 }
 .ds-rail-btn:hover .ds-rail-tip,
 .ds-rail-btn:focus-visible .ds-rail-tip,
-.ds-rail-btn.is-tip-shown .ds-rail-tip {
+.ds-rail-btn.is-tip-shown .ds-rail-tip,
+.ds-rail.is-peek .ds-rail-tip {
   opacity: 1;
-  transform: translate(0, -50%);
+  clip-path: inset(0 round 9px);
+}
+.ds-rail-btn:hover .ds-rail-tip-text,
+.ds-rail-btn:focus-visible .ds-rail-tip-text,
+.ds-rail-btn.is-tip-shown .ds-rail-tip-text,
+.ds-rail.is-peek .ds-rail-tip-text {
+  transform: none;
+}
+/* first visit: every label slides out once, one after another, so people see what the rail does */
+.ds-rail.is-peek .ds-rail-btn {
+  color: var(--panel-solid);
+}
+.ds-rail.is-peek .ds-rail-tip,
+.ds-rail.is-peek .ds-rail-tip-text {
+  transition-delay: calc(var(--i, 0) * 45ms);
 }
 .ds-rail-caption {
   display: none;
@@ -1583,6 +1626,11 @@ button.ds-layer-name:hover {
   /* the mobile rail scrolls sideways and would clip side labels: name the tapped control above it instead */
   .ds-rail-tip {
     display: none;
+  }
+  .ds-rail-btn:hover:not(.is-active),
+  .ds-rail-btn:focus-visible:not(.is-active),
+  .ds-rail-btn.is-tip-shown:not(.is-active) {
+    color: var(--ink);
   }
   /* sits just above the rail row (rail bottom 66px + 46px row); may briefly overlap the dock's lower edge */
   .ds-rail-caption {
