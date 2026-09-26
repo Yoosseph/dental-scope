@@ -7,7 +7,6 @@ export function Identity() {
   return (
     <header className="ds-identity">
       <h1 className="ds-title">Dental Scope</h1>
-      <p className="ds-subtitle">Dental anatomy in 3D</p>
       <p className="ds-credit">
         {REPO_URL ? (
           <a href={REPO_URL} target="_blank" rel="noopener noreferrer" aria-label="Made by Yoseph – Dental Scope on GitHub (opens in a new tab)">
