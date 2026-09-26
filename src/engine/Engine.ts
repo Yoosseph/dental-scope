@@ -12,8 +12,9 @@ import { Animator } from './animator';
 import { AssetLoader } from './assets';
 import { CameraRig } from './camera';
 import { archOffset, toothLayerOffset } from './explode';
+import { boardSlot, shelfLayout, type LayoutItem } from './layout';
 import { LabelLayer, type LabelCandidate } from './labels';
-import { HOVER, HIGHLIGHT, createTissueMaterial, setMaterialOpacity, styleKeyFor, type TissueMaterial } from './materials';
+import { HOVER, HIGHLIGHT, THEME_LIGHTING, applyThemeToMaterial, createTissueMaterial, setFibreAxis, setMaterialOpacity, styleKeyFor, type SceneTheme, type TissueMaterial } from './materials';
 import { SectionTool } from './section';
 
 interface MeshEntry {
@@ -28,6 +29,9 @@ interface MeshEntry {
   hiTarget: number;
   hover: boolean;
   labelPoint?: THREE.Vector3; // geometry-space label anchor
+  /** phase-2 board slot (world offset) and the eased current offset */
+  boardTarget?: THREE.Vector3;
+  boardPos?: THREE.Vector3;
 }
 
 const STAGES = [
@@ -66,6 +70,10 @@ export class Engine {
   private unsub: (() => void)[] = [];
   private explodeCur = 0;
   private toothExplodeCur = 0;
+  /** 0…1 blend from the in-position explode (phase 1) to the laid-out board (phase 2) */
+  private phaseCur = 0;
+  private boardTimer = 0;
+  private boardAspect = 1;
   private marker: THREE.Mesh;
   private root = new THREE.Group();
   private sceneBounds = new THREE.Box3();
@@ -102,7 +110,6 @@ export class Engine {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, mobile ? 1.5 : 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.05;
     renderer.localClippingEnabled = true;
     renderer.setClearColor(0x000000, 0);
     renderer.domElement.className = 'ds-canvas';
@@ -121,10 +128,11 @@ export class Engine {
 
     const pmrem = new THREE.PMREMGenerator(renderer);
     this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-    this.scene.environmentIntensity = 0.55;
+    this.applyTheme(getState().theme);
 
     const camera = new THREE.PerspectiveCamera(32, 1, 0.05, 200);
     this.rig = new CameraRig(camera, renderer.domElement, this.animator);
+    this.rig.setMode(getState().orbitMode);
     this.rig.onUserInteract = () => {
       if (getState().view) setState({ view: null });
     };
@@ -139,6 +147,7 @@ export class Engine {
     const teethBox = new THREE.Box3(new THREE.Vector3(...lo).min(new THREE.Vector3(...hi)), new THREE.Vector3(...lo).max(new THREE.Vector3(...hi)));
     const sphere = teethBox.getBoundingSphere(new THREE.Sphere());
     this.rig.home = { target: sphere.center.clone().add(new THREE.Vector3(0, -0.15, -0.2)), radius: sphere.radius * 1.28 };
+    this.updatePivot();
     this.resize();
     this.rig.preset('three-quarter', this.rig.home.target, this.rig.home.radius, 0);
 
@@ -157,6 +166,8 @@ export class Engine {
   dispose() {
     this.disposed = true;
     cancelAnimationFrame(this.raf);
+    clearTimeout(this.boardTimer);
+    clearTimeout(this.explodeTimer);
     this.unsub.forEach((u) => u());
     this.resizeObs?.disconnect();
     this.labels?.dispose();
@@ -226,6 +237,8 @@ export class Engine {
       if (!owner) continue;
       const cats = this.registry.categoriesOfMesh(key);
       const mat = createTissueMaterial(styleKeyFor(key, cats));
+      applyThemeToMaterial(mat, getState().theme);
+      setFibreAxis(mat, geo.boundingBox!);
       const mesh = new THREE.Mesh(geo, mat);
       mesh.name = key;
       mesh.userData.key = key;
@@ -250,6 +263,22 @@ export class Engine {
 
   /* ========================================================= state sync */
 
+  /** Fixed-orbit centre: the tooth being dissected, otherwise the dentition (camera home). */
+  private updatePivot() {
+    const { dissectFdi } = getState();
+    const tooth = dissectFdi !== null ? this.boundsOf(`tooth-${dissectFdi}`, false) : null;
+    this.rig.setPivot(tooth && !tooth.isEmpty() ? tooth.getCenter(new THREE.Vector3()) : this.rig.home.target);
+    this.invalidate();
+  }
+
+  /** Match lighting and bone shading to the UI theme (see THEME_LIGHTING). */
+  private applyTheme(theme: SceneTheme) {
+    this.renderer.toneMappingExposure = THEME_LIGHTING[theme].exposure;
+    this.scene.environmentIntensity = THEME_LIGHTING[theme].environment;
+    for (const e of this.entries.values()) applyThemeToMaterial(e.mesh.material, theme);
+    this.invalidate();
+  }
+
   private onState(s: AppState, p: AppState) {
     const visChanged =
       s.categories !== p.categories ||
@@ -267,13 +296,69 @@ export class Engine {
     if (s.clip.enabled && !p.clip.enabled && s.dissectFdi === null) void this.ensureAllTeeth();
     if (s.dissectFdi !== p.dissectFdi && s.dissectFdi !== null) void this.ensureTooth(s.dissectFdi);
     if (s.autoRotate !== p.autoRotate) this.rig.controls.autoRotate = s.autoRotate;
+    if (s.theme !== p.theme) this.applyTheme(s.theme);
+    if (s.orbitMode !== p.orbitMode) this.rig.setMode(s.orbitMode);
+    if (s.dissectFdi !== p.dissectFdi) this.updatePivot();
     if (visChanged || s.labels !== p.labels || s.numbering !== p.numbering || s.selectedId !== p.selectedId) this.refreshLabels();
-    if (s.explode !== p.explode) this.reframeForExplode(s);
+    // a new phase or a changed set of visible structures re-packs the board and frames it
+    if (s.explodePhase !== p.explodePhase || (s.explodePhase === 2 && visChanged)) this.layoutBoard(true);
+    if (s.explodePhase === 1 && p.explodePhase === 2 && s.dissectFdi === null && !s.isolateId) {
+      // back from the board: frame the in-position dissection again
+      this.rig.preset('three-quarter', this.rig.home.target, this.rig.home.radius * (1 + 0.75 * s.explode), 0.8);
+      if (s.view !== 'three-quarter') setState({ view: 'three-quarter' });
+    } else if (s.explode !== p.explode && s.explodePhase === 1) this.reframeForExplode(s);
     if (s.explode !== p.explode || s.toothExplode !== p.toothExplode) this.invalidate();
     this.invalidate();
   }
 
   private explodeTimer = 0;
+
+  /**
+   * Phase 2: lay every fully visible structure out on a board facing the viewer
+   * (see layout.ts); ghosted context fades out. `frame` also points the camera at it.
+   */
+  private layoutBoard(frame: boolean) {
+    clearTimeout(this.boardTimer);
+    clearTimeout(this.explodeTimer);
+    if (getState().explodePhase !== 2) return;
+    const items: LayoutItem[] = [];
+    const boxes = new Map<string, THREE.Box3>();
+    for (const e of this.entries.values()) {
+      if (e.visual !== 'on') {
+        e.boardTarget = e.boardPos = undefined;
+        continue;
+      }
+      const box = e.mesh.geometry.boundingBox!;
+      boxes.set(e.key, box);
+      const size = box.getSize(new THREE.Vector3());
+      items.push({ key: e.key, w: size.x, h: size.y, ...boardSlot(e.key, this.registry.categoriesOfMesh(e.key), this.registry.get(e.owner)?.toothFdi) });
+    }
+    const { centers, bounds } = shelfLayout(items, this.rig.camera.aspect, 0.35);
+    this.boardAspect = this.rig.camera.aspect;
+    const origin = this.rig.home.target;
+    for (const [key, c] of centers) {
+      const e = this.entries.get(key)!;
+      const center = boxes.get(key)!.getCenter(new THREE.Vector3());
+      e.boardTarget = new THREE.Vector3(origin.x + c.x, origin.y + c.y, origin.z).sub(center);
+      // new slots are taken directly (the move from phase 1 is blended by phaseCur);
+      // existing ones glide to their new place in tickVisuals
+      e.boardPos ??= e.boardTarget.clone();
+      if (this.phaseCur < 1e-3) e.boardPos.copy(e.boardTarget);
+    }
+    if (frame) {
+      // fit the board rectangle (not its bounding sphere); the margin keeps it clear of the
+      // side panels, the dock and the mobile bar
+      const cam = this.rig.camera;
+      const tanV = Math.tan(THREE.MathUtils.degToRad(cam.fov) / 2);
+      const halfW = (bounds.x1 - bounds.x0) / 2;
+      const halfH = (bounds.y1 - bounds.y0) / 2;
+      const distance = Math.max((halfH * 1.5) / tanV, (halfW * 1.45) / (tanV * cam.aspect));
+      setState({ view: null });
+      this.rig.focusSphere(new THREE.Vector3(origin.x, origin.y, origin.z), Math.hypot(halfW, halfH), { direction: new THREE.Vector3(0, 0.02, 1), distance, duration: 0.9 });
+    }
+    this.invalidate();
+  }
+
   /** While a view preset is active, widen the framing so the exploded anatomy stays in view. */
   private reframeForExplode(s: AppState) {
     if (!s.view || s.dissectFdi !== null || s.isolateId) return;
@@ -289,6 +374,8 @@ export class Engine {
     this.refreshHighlight();
     this.refreshClip();
     this.refreshLabels();
+    // geometry that arrives while the board is shown gets a slot too
+    if (getState().explodePhase === 2) this.layoutBoard(false);
   }
 
   private visibilityCtx() {
@@ -628,7 +715,9 @@ export class Engine {
     }
   }
 
+  /** Default framing: the whole dentition, or the dissected tooth (setView frames it). */
   resetCamera() {
+    if (getState().dissectFdi !== null) return this.setView('three-quarter');
     setState({ view: 'three-quarter' });
     this.rig.home_();
   }
@@ -682,6 +771,12 @@ export class Engine {
     this.renderer.setSize(w, h, false);
     this.rig.camera.aspect = w / Math.max(h, 1);
     this.applyViewOffset();
+    // re-pack the phase-2 board when the viewport shape really changes (e.g. a phone is rotated),
+    // not for small resizes such as a mobile address bar, so the user's own camera move is kept
+    if (getState().explodePhase === 2 && Math.abs(Math.log(this.rig.camera.aspect / this.boardAspect)) > 0.2) {
+      clearTimeout(this.boardTimer);
+      this.boardTimer = window.setTimeout(() => this.layoutBoard(true), 250);
+    }
   }
 
   private loop = () => {
@@ -691,7 +786,9 @@ export class Engine {
     const dt = Math.min(0.05, (now - this.lastT) / 1000);
     this.lastT = now;
 
-    const controlsChanged = this.rig.controls.update(dt);
+    const controlsMoved = this.rig.controls.update(dt);
+    const pivotMoved = this.rig.tick(dt, controlsMoved);
+    const controlsChanged = controlsMoved || pivotMoved;
     const animating = this.animator.active;
     this.animator.tick(dt);
     const fx = this.tickVisuals(dt);
@@ -718,6 +815,13 @@ export class Engine {
       if (Math.abs(this.explodeCur - ex) < 1e-3) this.explodeCur = ex;
       moving = true;
     }
+    const boardK = this.animator.reducedMotion ? 1 : k * 0.55; // board moves are a little slower
+    const phase = s.explodePhase === 2 ? 1 : 0;
+    if (Math.abs(this.phaseCur - phase) > 1e-4) {
+      this.phaseCur += (phase - this.phaseCur) * boardK;
+      if (Math.abs(this.phaseCur - phase) < 1e-3) this.phaseCur = phase;
+      moving = true;
+    }
     const tex = s.dissectFdi !== null ? s.toothExplode : 0;
     if (Math.abs(this.toothExplodeCur - tex) > 1e-4) {
       this.toothExplodeCur += (tex - this.toothExplodeCur) * (this.animator.reducedMotion ? 1 : k);
@@ -726,7 +830,8 @@ export class Engine {
     }
 
     for (const e of this.entries.values()) {
-      const target = e.visual === 'on' ? 1 : e.visual === 'ghost' ? s.ghostOpacity : e.visual === 'faint' ? s.ghostOpacity * 0.45 : 0;
+      let target = e.visual === 'on' ? 1 : e.visual === 'ghost' ? s.ghostOpacity : e.visual === 'faint' ? s.ghostOpacity * 0.45 : 0;
+      if (s.explodePhase === 2 && !e.boardTarget) target = 0; // context is not laid out: fade it away
       if (Math.abs(e.opacity - target) > 1e-3) {
         e.opacity += (target - e.opacity) * (this.animator.reducedMotion ? 1 : k);
         if (Math.abs(e.opacity - target) < 0.01) e.opacity = target;
@@ -747,6 +852,13 @@ export class Engine {
       const toothPart = s.dissectFdi !== null && this.registry.get(e.owner)?.toothFdi === s.dissectFdi;
       e.mesh.position.copy(e.archOffset).multiplyScalar(this.explodeCur);
       if (toothPart) e.mesh.position.addScaledVector(e.toothOffset, this.toothExplodeCur);
+      if (e.boardPos && this.phaseCur > 0) {
+        if (e.boardTarget && e.boardPos.distanceToSquared(e.boardTarget) > 1e-8) {
+          e.boardPos.lerp(e.boardTarget, boardK);
+          moving = true;
+        }
+        e.mesh.position.lerp(e.boardPos, this.phaseCur);
+      }
     }
 
     if (this.marker.visible && s.selectedId) {

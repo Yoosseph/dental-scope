@@ -85,19 +85,30 @@ export function AboutDialog() {
       <h3>How the anatomy is made</h3>
       <ul>
         <li>
-          <strong>Source</strong> — jaws, teeth, gingiva, skull and muscles come from <em>BodyParts3D</em>, © The Database Center for Life Science, licensed under CC Attribution-Share Alike 2.1 Japan.
+          <strong>Source</strong> — jaws, teeth, gingiva, skull and muscles come from <em>BodyParts3D</em> 3.0, © The Database Center for Life Science, licensed under CC Attribution-Share Alike 2.1 Japan.
         </li>
         <li>
           <strong>Derived</strong> — third molars, alveolar bone, condyles and joint fossae are derived from those meshes.
         </li>
         <li>
-          <strong>Modeled</strong> — enamel, dentin, cementum, periodontal ligament, pulp and canals are modeled inside each real tooth shape using typical proportions.
+          <strong>Modeled</strong> — enamel, dentin, cementum, periodontal ligament, pulp and canals are modeled inside each real tooth shape using simplified, approximate proportions, not measurements.
         </li>
         <li>
           <strong>Schematic</strong> — nerves, vessels and joint discs are placed from anatomical landmarks to show relationships, not measured paths.
         </li>
       </ul>
-      <p>Each structure’s details show which of these applies, and whether its text is reviewed or still an unreviewed draft.</p>
+      <p>
+        Each structure’s details show which of these applies, and whether its text is reviewed or still an unreviewed draft.
+        {REPO_URL && (
+          <>
+            {' '}
+            <a href={`${REPO_URL}/blob/main/docs/sources.md`} target="_blank" rel="noopener noreferrer" aria-label="Sources for these statements (opens in a new tab)">
+              Sources for these statements
+            </a>
+            .
+          </>
+        )}
+      </p>
       <h3>Controls</h3>
       <dl className="ds-keys">
         <dt>Drag</dt>
@@ -108,6 +119,8 @@ export function AboutDialog() {
         <dd>Zoom (touch: pinch)</dd>
         <dt>Click</dt>
         <dd>Select · double-click to focus</dd>
+        <dt>Orbit mode</dt>
+        <dd>Fixed: always turn around the model centre · Free: pan and focus move the pivot (right-hand toolbar)</dd>
         <dt>/</dt>
         <dd>Search</dd>
         <dt>Esc</dt>
@@ -127,7 +140,7 @@ export function AboutDialog() {
         <dt>Arrows · + −</dt>
         <dd>Orbit · zoom</dd>
         <dt>R</dt>
-        <dd>Reset camera</dd>
+        <dd>Reset view</dd>
       </dl>
       <p className="ds-about-foot">
         Code MIT · Models CC BY-SA 2.1 JP · Text CC BY-SA 4.0

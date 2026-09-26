@@ -13,7 +13,8 @@
 
 All geometry in `public/models/` is derived from BodyParts3D and is therefore
 distributed under the same licence (share-alike). The per-asset list with
-modifications is in [docs/assets.md](docs/assets.md).
+modifications is in [docs/assets.md](docs/assets.md). The social preview image
+`public/og-image.png` is a render of these models and carries the same licence.
 
 ## Modifications made by Dental Scope
 

@@ -5,6 +5,9 @@
 
   --bg-0: #e9edee;
   --bg-1: #f7f8f8;
+  /* 3D stage: a slightly deeper grey than the panels so ivory teeth and bone keep their edges */
+  --stage-0: #d9dfe2;
+  --stage-1: #e3e8ea;
   --panel: rgba(255, 255, 255, 0.9);
   --panel-solid: #ffffff;
   --panel-border: rgba(22, 38, 48, 0.08);
@@ -37,6 +40,8 @@
 :root[data-theme='dark'] {
   --bg-0: #0c1013;
   --bg-1: #151c21;
+  --stage-0: var(--bg-0);
+  --stage-1: var(--bg-1);
   --panel: rgba(20, 27, 32, 0.9);
   --panel-solid: #161d22;
   --panel-border: rgba(210, 230, 240, 0.08);

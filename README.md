@@ -50,6 +50,8 @@ npm run build      # static site in dist/ (includes a 404.html SPA fallback)
 
 The built site is fully static. For a sub-path deployment set `DS_BASE`, e.g. `DS_BASE=/dental-scope/ npm run build`; with a relative base (`DS_BASE=./`) deep links switch to hash URLs (`#/tooth/36`) so the build works from any folder. Set `VITE_DS_REPO_URL` to link the “Made by Yoseph” credit and the About dialog to the repository; when it is unset the credit is plain text, so a build never advertises a private repository. A GitHub Pages workflow is included; it passes the repository URL only while the repository is public, so re-run it after making the repository public.
 
+Set `DS_SITE_URL` to the public address of the deployment (e.g. `https://user.github.io/dental-scope/`) to add canonical URLs, social-preview tags with `og-image.png`, structured data and `sitemap.xml`; the Pages workflow sets it automatically. Every build also writes `robots.txt` and a static entry page per tooth (`tooth/36/`) so those deep links return their own title and description instead of the 404 fallback. Crawlers only read `robots.txt` at the domain root, so for a project site under a sub-path submit `sitemap.xml` in the search engine's webmaster tools instead.
+
 ### Keyboard
 
 `/` search · `Esc` clear / leave tooth · `F` focus · `I` isolate · `H` hide · `G` ghost · `D` inside tooth · `[` `]` dissection level · `E` dissect anatomy / separate tooth layers · `C` section · `L` labels · arrows orbit · `+` `−` zoom · `R` reset
@@ -76,7 +78,7 @@ Details: [docs/architecture.md](docs/architecture.md). Design research: [docs/hu
 
 ## Anatomical data and attribution
 
-3D anatomy is derived from **BodyParts3D**, © The Database Center for Life Science, licensed under [CC BY-SA 2.1 Japan](https://creativecommons.org/licenses/by-sa/2.1/jp/deed.en). Third molars, alveolar bone and TMJ regions are derived from it; internal tooth anatomy is modeled inside each real tooth shape; nerves, vessels and joint discs are schematic. See [CREDITS.md](CREDITS.md) and [docs/assets.md](docs/assets.md).
+3D anatomy is derived from **BodyParts3D**, © The Database Center for Life Science, licensed under [CC BY-SA 2.1 Japan](https://creativecommons.org/licenses/by-sa/2.1/jp/deed.en). Third molars, alveolar bone and TMJ regions are derived from it; internal tooth anatomy is modeled inside each real tooth shape; nerves, vessels and joint discs are schematic. See [CREDITS.md](CREDITS.md) and [docs/assets.md](docs/assets.md); the statements in the app's About dialog are sourced in [docs/sources.md](docs/sources.md).
 
 ## Roadmap
 

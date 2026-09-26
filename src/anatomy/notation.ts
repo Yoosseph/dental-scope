@@ -1,4 +1,4 @@
-import type { Arch, NumberingSystem, Side, ToothNotation, ToothType } from './types';
+import type { Arch, NumberingSystem, Side, ToothNotation, ToothType } from './types.ts';
 
 export const TOOTH_TYPES: ToothType[] = [
   'central-incisor',

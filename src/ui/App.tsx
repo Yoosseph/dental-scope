@@ -19,6 +19,7 @@ export function App() {
   const selected = useApp((s) => !!s.selectedId);
   const dissect = useApp((s) => s.dissectFdi !== null);
   const sheet = useApp((s) => s.mobileSheet);
+  const laidOut = useApp((s) => s.explodePhase === 2);
 
   useEffect(() => {
     engine.mount(stage.current!);
@@ -41,12 +42,13 @@ export function App() {
     const update = () => {
       const mobile = window.innerWidth <= 767;
       if (mobile) engine.setInsets(0, sheet !== 'none' ? window.innerHeight * 0.5 : 0);
-      else engine.setInsets(selected && window.innerWidth > 980 ? 360 : 0, dissect ? 120 : 0);
+      // the dissection dock (and the taller dock under the phase-2 board) covers the bottom of the canvas
+      else engine.setInsets(selected && window.innerWidth > 980 ? 360 : 0, dissect || laidOut ? 120 : 0);
     };
     update();
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
-  }, [engine, selected, dissect, sheet]);
+  }, [engine, selected, dissect, laidOut, sheet]);
 
   return (
     <div className={`ds-app${selected ? ' has-selection' : ''}${dissect ? ' is-dissecting' : ''}`}>

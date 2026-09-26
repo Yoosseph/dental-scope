@@ -52,8 +52,8 @@ kbd {
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(1200px 800px at 55% 42%, var(--bg-1) 0%, transparent 70%),
-    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 100%);
+    radial-gradient(1200px 800px at 55% 42%, var(--stage-1) 0%, transparent 70%),
+    linear-gradient(180deg, var(--stage-1) 0%, var(--stage-0) 100%);
 }
 .ds-stage {
   position: absolute;
@@ -540,6 +540,8 @@ button.ds-layer-name:hover {
   right: 24px;
   top: 50%;
   transform: translateY(-50%);
+  /* above the detail panel so the control labels are never hidden behind it */
+  z-index: 2;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -573,6 +575,11 @@ button.ds-layer-name:hover {
 }
 .ds-rail-btn {
   position: relative;
+}
+.ds-rail-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 /* action label: appears to the left of the rail on hover, keyboard focus or a touch tap */
 .ds-rail-tip,
@@ -841,6 +848,28 @@ button.ds-layer-name:hover {
 }
 .ds-slider {
   width: 260px;
+}
+.ds-dock-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ds-phase-switch button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.ds-phase-num {
+  display: inline-grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  opacity: 0.8;
 }
 .ds-slider-head {
   display: flex;
@@ -1142,7 +1171,7 @@ button.ds-layer-name:hover {
 .ds-start-hint {
   position: absolute;
   left: 50%;
-  bottom: 146px;
+  bottom: 186px;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
@@ -1331,7 +1360,7 @@ button.ds-layer-name:hover {
   box-shadow: none;
   border-color: transparent;
   color: var(--muted);
-  text-shadow: 0 0 3px var(--bg-1), 0 0 3px var(--bg-1);
+  text-shadow: 0 0 3px var(--stage-1), 0 0 3px var(--stage-1);
 }
 .ds-tip {
   position: absolute;
@@ -1554,6 +1583,9 @@ button.ds-layer-name:hover {
     transform: none;
     overflow-x: auto;
     z-index: 5;
+  }
+  .ds-rail.is-mobile-open .ds-rail-group {
+    flex-direction: row;
   }
   .ds-rail.is-mobile-open .ds-rail-sep {
     width: 1px;

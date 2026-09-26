@@ -1,8 +1,13 @@
 import { formatTooth } from '../anatomy/notation';
 import { pathFor, pushPath } from '../app/router';
-import { actions, DISSECT_LEVELS, getState, useApp, type ClipAxis } from '../state/store';
+import { actions, DISSECT_LEVELS, getState, useApp, type ClipAxis, type ExplodePhase } from '../state/store';
 import { useServices } from './context';
 import { IconArrowLeft, IconExplode, IconFlip, IconLabel, IconSection } from './icons';
+
+const PHASES: { id: ExplodePhase; label: string; title: string }[] = [
+  { id: 1, label: 'In position', title: 'Structures pulled apart but kept in anatomical position' },
+  { id: 2, label: 'Laid out', title: 'Every structure fully separated and laid out side by side for inspection' },
+];
 
 const AXES: { id: ClipAxis; label: string; title: string }[] = [
   { id: 'sagittal', label: 'Sagittal', title: 'Sagittal plane (left–right cut)' },
@@ -24,19 +29,25 @@ export function Dock() {
 
 function ArchControls() {
   const explode = useApp((s) => s.explode);
+  const phase = useApp((s) => s.explodePhase);
   const labels = useApp((s) => s.labels);
   const loading = useApp((s) => s.loading.teeth);
   const clip = useApp((s) => s.clip.enabled);
   return (
     <div className="ds-panel ds-dock-main">
-      <Slider
-        label="Dissect anatomy"
-        icon={<IconExplode size={15} />}
-        value={explode}
-        onChange={actions.setExplode}
-        left="Assembled"
-        right="Separated"
-      />
+      <div className="ds-dock-stack">
+        <Slider label="Dissect anatomy" icon={<IconExplode size={15} />} value={explode} onChange={actions.setExplode} left="Assembled" right="Separated" />
+        <div className="ds-segmented ds-segmented--fill ds-phase-switch" role="group" aria-label="Dissection phase">
+          {PHASES.map((st) => (
+            <button key={st.id} type="button" className={phase === st.id ? 'is-active' : ''} aria-pressed={phase === st.id} onClick={() => actions.setExplodePhase(st.id)} title={st.title}>
+              <span className="ds-phase-num" aria-hidden="true">
+                {st.id}
+              </span>
+              {st.label}
+            </button>
+          ))}
+        </div>
+      </div>
       <div className="ds-dock-tools">
         <ToolToggle active={clip} onClick={() => actions.setClip({ enabled: !clip })} icon={<IconSection />} label="Section" title="Cross-section (C)" />
         <ToolToggle active={labels} onClick={() => actions.toggleLabels()} icon={<IconLabel />} label="Labels" title="Labels (L)" />
