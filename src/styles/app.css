@@ -118,12 +118,6 @@ kbd {
   letter-spacing: -0.025em;
   line-height: 1.05;
 }
-.ds-subtitle {
-  margin: 5px 0 0;
-  font-size: 13.5px;
-  color: var(--ink);
-  opacity: 0.8;
-}
 .ds-credit {
   margin: 4px 0 0;
   font-size: 11.5px;
@@ -1402,9 +1396,6 @@ button.ds-layer-name:hover {
 }
 
 @media (max-width: 980px) {
-  .ds-subtitle {
-    display: none;
-  }
   .ds-layers {
     width: 240px;
     top: 96px;
@@ -1612,9 +1603,6 @@ button.ds-layer-name:hover {
 @media (max-height: 560px) and (orientation: landscape) {
   .ds-layers {
     top: 96px;
-  }
-  .ds-subtitle {
-    display: none;
   }
 }
 
