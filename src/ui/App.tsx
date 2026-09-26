@@ -19,6 +19,8 @@ export function App() {
   const dissect = useApp((s) => s.dissectFdi !== null);
   const sheet = useApp((s) => s.mobileSheet);
   const laidOut = useApp((s) => s.explodePhase === 2);
+  const detailHidden = useApp((s) => s.collapsed.detail);
+  const dockHidden = useApp((s) => s.collapsed.dock);
 
   useEffect(() => {
     engine.mount(stage.current!);
@@ -42,12 +44,12 @@ export function App() {
       const mobile = window.innerWidth <= 767;
       if (mobile) engine.setInsets(0, sheet !== 'none' ? window.innerHeight * 0.5 : 0);
       // the bottom toolbar covers the lower edge of the canvas; the dissection tools and the phase-2 board make it taller
-      else engine.setInsets(selected && window.innerWidth > 980 ? 360 : 0, dissect ? 210 : laidOut ? 170 : 70);
+      else engine.setInsets(selected && !detailHidden && window.innerWidth > 980 ? 360 : 0, dockHidden ? 0 : dissect ? 210 : laidOut ? 170 : 70);
     };
     update();
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
-  }, [engine, selected, dissect, laidOut, sheet]);
+  }, [engine, selected, dissect, laidOut, sheet, detailHidden, dockHidden]);
 
   return (
     <div className={`ds-app${selected ? ' has-selection' : ''}${dissect ? ' is-dissecting' : ''}`}>

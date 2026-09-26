@@ -1327,6 +1327,98 @@ button.ds-layer-name:hover {
   }
 }
 
+/* ------------------------------------------------------------------ collapsible panels
+   Desktop: each panel has a tab on its inner edge; collapsed, the panel slides off-screen
+   and only the tab stays in view to bring it back. */
+.ds-panel-handle {
+  display: none;
+}
+@media (min-width: 768px) {
+  .ds-layers,
+  .ds-detail,
+  .ds-dock {
+    transition: transform 320ms var(--ease);
+  }
+  .ds-panel-handle {
+    position: absolute;
+    z-index: 3;
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+    background: var(--panel-solid);
+    border: 1px solid var(--panel-border);
+    box-shadow: var(--panel-shadow);
+    cursor: grab;
+    touch-action: none;
+    transition: color var(--dur), background var(--dur);
+  }
+  .ds-panel-handle:hover {
+    color: var(--panel-solid);
+    background: var(--ink);
+  }
+  .ds-panel-handle:active {
+    cursor: grabbing;
+  }
+  .ds-panel-handle svg {
+    transition: transform 320ms var(--ease);
+  }
+  /* side tabs: vertical pills on the panel's inner edge */
+  .ds-panel-handle--layers,
+  .ds-panel-handle--detail {
+    top: 50%;
+    width: 20px;
+    height: 48px;
+    margin-top: -24px;
+  }
+  .ds-panel-handle--layers {
+    left: 100%;
+    border-radius: 0 10px 10px 0;
+    border-left: 0;
+  }
+  .ds-panel-handle--detail {
+    right: 100%;
+    border-radius: 10px 0 0 10px;
+    border-right: 0;
+  }
+  .ds-panel-handle--detail svg {
+    transform: rotate(180deg);
+  }
+  /* dock tab: horizontal pill on top, centred */
+  .ds-panel-handle--dock {
+    bottom: 100%;
+    left: 50%;
+    width: 48px;
+    height: 18px;
+    margin-left: -24px;
+    margin-bottom: -1px;
+    border-radius: 10px 10px 0 0;
+    border-bottom: 0;
+  }
+  .ds-panel-handle--dock svg {
+    transform: rotate(-90deg);
+  }
+  /* collapsed: slide out past the screen edge, arrow points back in */
+  .ds-layers.is-collapsed {
+    transform: translateX(calc(-100% - 25px));
+  }
+  .ds-detail.is-collapsed {
+    transform: translateX(calc(100% + 25px));
+    animation: none;
+  }
+  .ds-dock.is-collapsed {
+    transform: translate(-50%, calc(100% + 41px));
+  }
+  .ds-panel-handle--layers.is-collapsed svg {
+    transform: rotate(180deg);
+  }
+  .ds-panel-handle--detail.is-collapsed svg {
+    transform: none;
+  }
+  .ds-panel-handle--dock.is-collapsed svg {
+    transform: rotate(90deg);
+  }
+}
+
 /* ------------------------------------------------------------------ loading */
 .ds-loading {
   position: absolute;

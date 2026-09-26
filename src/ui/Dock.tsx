@@ -4,6 +4,7 @@ import { pushCurrentPath } from '../app/router';
 import { actions, DISSECT_LEVELS, getState, useApp, type ClipAxis } from '../state/store';
 import { CameraControls } from './CameraControls';
 import { useServices } from './context';
+import { PanelHandle } from './PanelHandle';
 import { IconArrowLeft, IconExplode, IconFlip, IconLabel, IconPause, IconPlay, IconReplay, IconSection, IconWarning } from './icons';
 
 const AXES: { id: ClipAxis; label: string; title: string }[] = [
@@ -16,8 +17,10 @@ const AXES: { id: ClipAxis; label: string; title: string }[] = [
 export function Dock() {
   const dissectFdi = useApp((s) => s.dissectFdi);
   const mobileOpen = useApp((s) => s.mobileSheet === 'tools');
+  const collapsed = useApp((s) => s.collapsed.dock);
   return (
-    <div className={`ds-dock${mobileOpen ? ' is-mobile-open' : ''}`}>
+    <div className={`ds-dock${mobileOpen ? ' is-mobile-open' : ''}${collapsed ? ' is-collapsed' : ''}`}>
+      <PanelHandle panel="dock" />
       <div className="ds-panel ds-toolbar" role="toolbar" aria-label={dissectFdi !== null ? 'Camera and tooth dissection tools' : 'Camera and scene tools'}>
         <CameraControls />
         {dissectFdi !== null ? <DissectControls fdi={dissectFdi} /> : <ArchControls />}

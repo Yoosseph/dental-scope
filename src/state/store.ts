@@ -78,7 +78,11 @@ export interface AppState {
   theme: 'light' | 'dark';
   /** bumped by resetAll, so UI with its own local state (e.g. the dissect player) can reset too */
   resetId: number;
+  /** desktop panels tucked away off-screen (a handle stays visible to bring them back) */
+  collapsed: Record<CollapsiblePanel, boolean>;
 }
+
+export type CollapsiblePanel = 'layers' | 'detail' | 'dock';
 
 const prefersDark = typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches;
 
@@ -111,6 +115,7 @@ export const initialState: AppState = {
   mobileSheet: 'none',
   theme: prefersDark ? 'dark' : 'light',
   resetId: 0,
+  collapsed: { layers: false, detail: false, dock: false },
 };
 
 export const store = createStore<AppState>()(() => ({ ...initialState }));
@@ -139,6 +144,9 @@ function persist(key: string, value: string) {
 }
 
 export const actions = {
+  setCollapsed(panel: CollapsiblePanel, v: boolean) {
+    setState((s) => ({ collapsed: { ...s.collapsed, [panel]: v } }));
+  },
   /** Back to the start: every scene setting and preference to its default. Theme and loading progress are kept. */
   resetAll() {
     setState((s) => ({ ...initialState, ready: s.ready, loading: s.loading, error: s.error, theme: s.theme, resetId: s.resetId + 1 }));
