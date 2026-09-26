@@ -394,6 +394,7 @@ export class Engine {
   private refreshVisibility() {
     const ctx = this.visibilityCtx();
     for (const e of this.entries.values()) e.visual = resolveMesh(e.key, ctx);
+    this.labels?.markSceneChanged();
     this.invalidate();
   }
 
@@ -447,6 +448,7 @@ export class Engine {
         m.needsUpdate = true;
       }
     }
+    this.labels?.markSceneChanged();
     this.invalidate();
   }
 
@@ -605,8 +607,14 @@ export class Engine {
 
   private raycastOwner(from: THREE.Vector3, to: THREE.Vector3): { id: string; distance: number } | null {
     this.raycaster.set(from, to.clone().sub(from).normalize());
-    for (const { entry, distance } of this.rayHits()) if (entry.visual === 'on') return { id: entry.owner, distance };
-    return null;
+    // only hits in front of the label anchor can hide it: stop the ray there
+    this.raycaster.far = from.distanceTo(to);
+    try {
+      for (const { entry, distance } of this.rayHits()) if (entry.visual === 'on') return { id: entry.owner, distance };
+      return null;
+    } finally {
+      this.raycaster.far = Infinity;
+    }
   }
 
   private updateHover() {
@@ -837,6 +845,9 @@ export class Engine {
       moving = true;
     }
 
+    // label occlusion only needs recomputing when meshes move or appear/disappear
+    let layoutChanged = false;
+    const prevPos = new THREE.Vector3();
     for (const e of this.entries.values()) {
       let target = e.visual === 'on' ? 1 : e.visual === 'ghost' ? s.ghostOpacity : e.visual === 'faint' ? s.ghostOpacity * 0.45 : 0;
       if (s.explodePhase === 2 && !e.boardTarget) target = 0; // context is not laid out: fade it away
@@ -845,7 +856,10 @@ export class Engine {
         moving = true;
       }
       const vis = e.opacity > 0.005;
-      if (e.mesh.visible !== vis) e.mesh.visible = vis;
+      if (e.mesh.visible !== vis) {
+        e.mesh.visible = vis;
+        layoutChanged = true;
+      }
       if (vis) {
         setMaterialOpacity(e.mesh.material, e.opacity);
         e.mesh.renderOrder = e.opacity < 0.999 ? 10 : 0;
@@ -856,6 +870,7 @@ export class Engine {
         moving = true;
       }
       const toothPart = s.dissectFdi !== null && this.registry.get(e.owner)?.toothFdi === s.dissectFdi;
+      prevPos.copy(e.mesh.position);
       e.mesh.position.copy(e.archOffset).multiplyScalar(this.explodeCur);
       if (toothPart) e.mesh.position.addScaledVector(e.toothOffset, this.toothExplodeCur);
       if (e.boardPos && this.phaseCur > 0) {
@@ -865,7 +880,9 @@ export class Engine {
         }
         e.mesh.position.lerp(e.boardPos, this.phaseCur);
       }
+      if (!layoutChanged && !prevPos.equals(e.mesh.position)) layoutChanged = true;
     }
+    if (layoutChanged) this.labels?.markSceneChanged();
 
     const st = this.marker.visible && s.selectedId ? this.registry.get(s.selectedId) : undefined;
     const markerAt = st ? this.landmarkPosition(st) : null;
