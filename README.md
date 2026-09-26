@@ -75,7 +75,7 @@ tools/pipeline/   BodyParts3D → production GLB
 - One pure function decides every mesh's visibility (categories, hide/ghost, isolation, dissection level, section) and accepts extra filters — the hook for future timeline and procedure modes.
 - Loading is staged: jaws & teeth → skull & muscles → nerves & vessels → a tooth's internals on demand.
 
-Details and a handoff guide (commands, runtime flows, where to start): [docs/architecture.md](docs/architecture.md). Design research: [docs/human-atlas-reference-analysis.md](docs/human-atlas-reference-analysis.md), [docs/dental-data-research.md](docs/dental-data-research.md), [docs/comparison.md](docs/comparison.md).
+Details and a handoff guide (commands, runtime flows, where to start): [docs/architecture.md](docs/architecture.md). Data research: [docs/dental-data-research.md](docs/dental-data-research.md).
 
 ## Anatomical data and attribution
 
