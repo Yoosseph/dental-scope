@@ -161,7 +161,7 @@ Selected meshes blend toward a cool highlight colour with a faint emissive lift;
 Materials use `clippingPlanes`; `side: DoubleSide`; a small `onBeforeCompile` patch renders back faces as an unlit, slightly darkened tissue colour. Because every tissue is a closed solid, the back faces seen through a cut read as solid cut surfaces — enamel thickness, dentin, pulp and canals appear as clean coloured bands without stencil passes.
 
 ### Explode
-- **Arch level:** maxillary complex moves up, mandibular complex down, teeth move outward along their arch normal, gingiva lifts off, nerves/vessels move medially/laterally by side.
+- **Arch level:** maxillary complex moves up, mandibular complex down, teeth move outward along their arch normal, gingiva lifts off, nerves/vessels move medially/laterally by side, muscles move outward by side (orbicularis oris, which spans the midline in front of the incisors, moves forward and down in front of the chin instead).
 - **Tooth level:** layers separate along the tooth's long axis in anatomical order (enamel shell → dentin → pulp → canals), cementum/PDL radially.
 
 Offsets are computed once from bounds; animation interpolates a scalar.
