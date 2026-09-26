@@ -1,5 +1,5 @@
 /**
- * Deep links (docs/architecture.md §9):
+ * Deep links (docs/architecture.md §4):
  *   /tooth/36            select & focus tooth 36 (FDI)
  *   /tooth/36/dissect    open the dissection of tooth 36
  *   /structure/<id>      select & focus any structure

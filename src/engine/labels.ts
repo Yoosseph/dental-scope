@@ -24,13 +24,23 @@ interface LabelEl {
 
 const PAD = 4;
 
+/** Screen-space rectangle in canvas pixels. */
+interface Rect {
+  x0: number;
+  y0: number;
+  x1: number;
+  y1: number;
+}
+
+const overlaps = (a: Rect, b: Rect) => a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0;
+
 export class LabelLayer {
   private root: HTMLElement;
   private els = new Map<string, LabelEl>();
   private candidates: LabelCandidate[] = [];
   private occluded = new Set<string>();
   private lastOcclusion = 0;
-  private blocked: { x0: number; y0: number; x1: number; y1: number }[] = [];
+  private blocked: Rect[] = [];
   /** CSS selector for UI elements labels must not sit under */
   blockSelector = '.ds-panel, .ds-identity, .ds-top-actions';
   enabled = false;
@@ -86,7 +96,7 @@ export class LabelLayer {
       this.computeOcclusion(camera);
       this.computeBlocked();
     }
-    const placed: { x0: number; y0: number; x1: number; y1: number }[] = [];
+    const placed: Rect[] = [];
     const tmp = new THREE.Vector3();
     const camDir = camera.getWorldDirection(new THREE.Vector3());
     const pxPerUnitAt = (d: number) => height / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2) * d);
@@ -120,9 +130,9 @@ export class LabelLayer {
       const y = (-tmp.y * 0.5 + 0.5) * height;
       const w = l.el.offsetWidth || 60;
       const h = l.el.offsetHeight || 20;
-      const rect = { x0: x - w / 2 - PAD, y0: y - h - 8 - PAD, x1: x + w / 2 + PAD, y1: y - 8 + PAD };
-      const overlaps = (r: { x0: number; y0: number; x1: number; y1: number }) => r.x0 < rect.x1 && r.x1 > rect.x0 && r.y0 < rect.y1 && r.y1 > rect.y0;
-      if (this.blocked.some(overlaps) || (!selected && placed.some(overlaps))) {
+      const rect: Rect = { x0: x - w / 2 - PAD, y0: y - h - 8 - PAD, x1: x + w / 2 + PAD, y1: y - 8 + PAD };
+      const hits = (r: Rect) => overlaps(r, rect);
+      if (this.blocked.some(hits) || (!selected && placed.some(hits))) {
         this.show(l, false);
         continue;
       }
@@ -148,8 +158,7 @@ export class LabelLayer {
       const hit = this.raycastOwner(camera.position, p);
       if (!hit) continue;
       const dist = camera.position.distanceTo(p);
-      // landmarks sit on or just inside surfaces: allow a small tolerance
-      // anchors sit on the structure's surface (landmarks just inside it)
+      // anchors sit on the structure's surface (landmarks just inside it): allow a small tolerance
       const tol = c.kind === 'landmark' ? 0.08 : 0.04;
       if (hit.distance < dist - tol && !c.owners.has(hit.id)) this.occluded.add(c.id);
     }

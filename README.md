@@ -43,7 +43,7 @@ npm run dev        # http://localhost:5173
 ```
 
 ```bash
-npm test           # notation, registry and search tests
+npm test           # unit tests (Vitest)
 npm run typecheck
 npm run build      # static site in dist/ (includes a 404.html SPA fallback)
 ```
@@ -60,6 +60,7 @@ Set `DS_SITE_URL` to the public address of the deployment (e.g. `https://user.gi
 
 ```
 src/
+  app/       routing, search/sharing metadata, repository link
   anatomy/   structure registry, tooth tables, notation     ← anatomy is data
   content/   educational text (JSON) + resolver
   search/    index + scorer
@@ -74,7 +75,7 @@ tools/pipeline/   BodyParts3D → production GLB
 - One pure function decides every mesh's visibility (categories, hide/ghost, isolation, dissection level, section) and accepts extra filters — the hook for future timeline and procedure modes.
 - Loading is staged: jaws & teeth → skull & muscles → nerves & vessels → a tooth's internals on demand.
 
-Details: [docs/architecture.md](docs/architecture.md). Design research: [docs/human-atlas-reference-analysis.md](docs/human-atlas-reference-analysis.md), [docs/dental-data-research.md](docs/dental-data-research.md), [docs/comparison.md](docs/comparison.md).
+Details and a handoff guide (commands, runtime flows, where to start): [docs/architecture.md](docs/architecture.md). Design research: [docs/human-atlas-reference-analysis.md](docs/human-atlas-reference-analysis.md), [docs/dental-data-research.md](docs/dental-data-research.md), [docs/comparison.md](docs/comparison.md).
 
 ## Anatomical data and attribution
 

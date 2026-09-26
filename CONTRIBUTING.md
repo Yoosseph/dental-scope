@@ -9,7 +9,7 @@ git clone https://github.com/Yoosseph/dental-scope
 cd dental-scope
 npm install
 npm run dev          # http://localhost:5173
-npm test             # unit tests (notation, registry, search)
+npm test             # unit tests (Vitest)
 npm run typecheck
 ```
 
@@ -19,11 +19,14 @@ The production models are committed in `public/models/`, so you don't need the a
 
 See [docs/architecture.md](docs/architecture.md). In short:
 
+- `src/app` — routing, search/sharing metadata, repository link.
 - `src/anatomy` — structure registry, tooth tables, notation. **Add anatomy here, not in components.**
 - `src/content` — educational text (JSON).
+- `src/search` — search index and scorer.
 - `src/engine` — Three.js engine (no React).
 - `src/state` — store and the visibility resolver.
 - `src/ui` — React components.
+- `src/modes` — scaffolds for Learn / Quiz / Compare (not wired up yet).
 - `tools/pipeline` — Python + Node asset pipeline.
 
 ## Guidelines

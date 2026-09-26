@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import type { Registry } from '../anatomy/registry';
+import type { Structure } from '../anatomy/types';
 import { formatTooth } from '../anatomy/notation';
 import { store, getState, setState, actions, type AppState, type ViewPreset } from '../state/store';
 import { resolveMesh, revealPatch, layersActive, type MeshVisual } from '../state/visibility';
@@ -42,6 +43,10 @@ const STAGES = [
 
 const EXEMPLAR_TOOTH = 36;
 
+/** Phase-2 board: gap between laid-out parts (cm) and framing margins (height, width). */
+const BOARD_GAP = 0.35;
+const BOARD_MARGIN = { h: 1.5, w: 1.45 };
+
 export class Engine {
   readonly registry: Registry;
   readonly scene = new THREE.Scene();
@@ -74,6 +79,9 @@ export class Engine {
   private phaseCur = 0;
   private boardTimer = 0;
   private boardAspect = 1;
+  private explodeTimer = 0;
+  /** canvas area covered by panels (px), animated; shifts the optical centre */
+  private insets = { right: 0, bottom: 0 };
   private marker: THREE.Mesh;
   private root = new THREE.Group();
   private sceneBounds = new THREE.Box3();
@@ -143,9 +151,7 @@ export class Engine {
     reduce.addEventListener?.('change', (e) => (this.animator.reducedMotion = e.matches));
 
     // initial framing: the dentition, three-quarter view
-    const [lo, hi] = this.registry.manifest.bounds;
-    const teethBox = new THREE.Box3(new THREE.Vector3(...lo).min(new THREE.Vector3(...hi)), new THREE.Vector3(...lo).max(new THREE.Vector3(...hi)));
-    const sphere = teethBox.getBoundingSphere(new THREE.Sphere());
+    const sphere = this.sceneBounds.getBoundingSphere(new THREE.Sphere());
     this.rig.home = { target: sphere.center.clone().add(new THREE.Vector3(0, -0.15, -0.2)), radius: sphere.radius * 1.28 };
     this.updatePivot();
     this.resize();
@@ -304,14 +310,11 @@ export class Engine {
     if (s.explodePhase !== p.explodePhase || (s.explodePhase === 2 && visChanged)) this.layoutBoard(true);
     if (s.explodePhase === 1 && p.explodePhase === 2 && s.dissectFdi === null && !s.isolateId) {
       // back from the board: frame the in-position dissection again
-      this.rig.preset('three-quarter', this.rig.home.target, this.rig.home.radius * (1 + 0.75 * s.explode), 0.8);
+      this.rig.preset('three-quarter', this.rig.home.target, this.explodedHomeRadius(s.explode), 0.8);
       if (s.view !== 'three-quarter') setState({ view: 'three-quarter' });
     } else if (s.explode !== p.explode && s.explodePhase === 1) this.reframeForExplode(s);
-    if (s.explode !== p.explode || s.toothExplode !== p.toothExplode) this.invalidate();
     this.invalidate();
   }
-
-  private explodeTimer = 0;
 
   /**
    * Phase 2: lay every fully visible structure out on a board facing the viewer
@@ -333,7 +336,7 @@ export class Engine {
       const size = box.getSize(new THREE.Vector3());
       items.push({ key: e.key, w: size.x, h: size.y, ...boardSlot(e.key, this.registry.categoriesOfMesh(e.key), this.registry.get(e.owner)?.toothFdi) });
     }
-    const { centers, bounds } = shelfLayout(items, this.rig.camera.aspect, 0.35);
+    const { centers, bounds } = shelfLayout(items, this.rig.camera.aspect, BOARD_GAP);
     this.boardAspect = this.rig.camera.aspect;
     const origin = this.rig.home.target;
     for (const [key, c] of centers) {
@@ -352,7 +355,7 @@ export class Engine {
       const tanV = Math.tan(THREE.MathUtils.degToRad(cam.fov) / 2);
       const halfW = (bounds.x1 - bounds.x0) / 2;
       const halfH = (bounds.y1 - bounds.y0) / 2;
-      const distance = Math.max((halfH * 1.5) / tanV, (halfW * 1.45) / (tanV * cam.aspect));
+      const distance = Math.max((halfH * BOARD_MARGIN.h) / tanV, (halfW * BOARD_MARGIN.w) / (tanV * cam.aspect));
       setState({ view: null });
       this.rig.focusSphere(new THREE.Vector3(origin.x, origin.y, origin.z), Math.hypot(halfW, halfH), { direction: new THREE.Vector3(0, 0.02, 1), distance, duration: 0.9 });
     }
@@ -365,8 +368,13 @@ export class Engine {
     const view = s.view;
     clearTimeout(this.explodeTimer);
     this.explodeTimer = window.setTimeout(() => {
-      this.rig.preset(view, this.rig.home.target, this.rig.home.radius * (1 + 0.75 * getState().explode), 0.6);
+      this.rig.preset(view, this.rig.home.target, this.explodedHomeRadius(getState().explode), 0.6);
     }, 120);
+  }
+
+  /** Home framing radius widened for the arch explode (up to +75 % when fully exploded). */
+  private explodedHomeRadius(explode: number): number {
+    return this.rig.home.radius * (1 + 0.75 * explode);
   }
 
   private refreshAll() {
@@ -389,8 +397,7 @@ export class Engine {
   }
 
   private refreshHighlight() {
-    const { selectedId, hoveredId } = getState();
-    const { dissectFdi } = getState();
+    const { selectedId, hoveredId, dissectFdi } = getState();
     // inside a tooth, selecting the tooth itself shouldn't tint every layer
     const tintSel = selectedId && !(dissectFdi !== null && selectedId === `tooth-${dissectFdi}`);
     const sel = new Set(tintSel ? this.highlightMeshes(selectedId) : []);
@@ -405,14 +412,10 @@ export class Engine {
     this.invalidate();
   }
 
-  /** meshes to tint for a structure: its meshes, or the parent mesh for landmarks */
+  /** Meshes to tint for a structure (landmarks are shown by the marker instead). */
   private highlightMeshes(id: string): string[] {
     const s = this.registry.get(id);
-    if (!s) return [];
-    if (s.kind === 'landmark') return [];
-    const ms = this.registry.meshesOf(id);
-    // a tooth whose layers are active: tint the layers instead of the hidden shell
-    return ms;
+    return s && s.kind !== 'landmark' ? this.registry.meshesOf(id) : [];
   }
 
   private activeBounds(): THREE.Box3 {
@@ -516,7 +519,7 @@ export class Engine {
           const ok = st.categories.every((c) => s.categories[c] !== 'off');
           if (!ok) continue;
           const a = new THREE.Vector3(...st.anchor);
-          const jaw = [...this.entries.values()].find((e) => e.key === 'mandible-body');
+          const jaw = this.entries.get('mandible-body');
           out.push({ id: st.id, text: st.name, kind: 'landmark', priority: st.labelPriority, radius: 0.35, owners: new Set([st.id]), anchor: () => (jaw ? a.clone().add(jaw.mesh.position) : a) });
         }
       }
@@ -578,32 +581,30 @@ export class Engine {
     return out;
   }
 
+  /** Entries hit by the current raycaster ray, nearest first, skipping parts cut away by the section. */
+  private *rayHits(): Generator<{ entry: MeshEntry; distance: number }> {
+    const clip = getState().clip.enabled;
+    for (const h of this.raycaster.intersectObjects(this.pickables(), false)) {
+      if (clip && !this.section.keeps(h.point)) continue;
+      const entry = this.entries.get(h.object.userData.key as string);
+      if (entry) yield { entry, distance: h.distance };
+    }
+  }
+
   /** Structure id under the pointer: first opaque hit; ghosts only if nothing opaque is hit. */
   private pick(): string | null {
     this.raycaster.setFromCamera(this.pointer, this.rig.camera);
-    const hits = this.raycaster.intersectObjects(this.pickables(), false);
-    const clip = getState().clip.enabled;
     let ghost: string | null = null;
-    for (const h of hits) {
-      if (clip && !this.section.keeps(h.point)) continue;
-      const e = this.entries.get(h.object.userData.key as string);
-      if (!e) continue;
-      if (e.visual === 'on') return e.owner;
-      ghost ??= e.owner;
+    for (const { entry } of this.rayHits()) {
+      if (entry.visual === 'on') return entry.owner;
+      ghost ??= entry.owner;
     }
     return ghost;
   }
 
   private raycastOwner(from: THREE.Vector3, to: THREE.Vector3): { id: string; distance: number } | null {
-    const dir = to.clone().sub(from).normalize();
-    this.raycaster.set(from, dir);
-    const hits = this.raycaster.intersectObjects(this.pickables(), false);
-    const clip = getState().clip.enabled;
-    for (const h of hits) {
-      if (clip && !this.section.keeps(h.point)) continue;
-      const e = this.entries.get(h.object.userData.key as string);
-      if (e && e.visual === 'on') return { id: e.owner, distance: h.distance };
-    }
+    this.raycaster.set(from, to.clone().sub(from).normalize());
+    for (const { entry, distance } of this.rayHits()) if (entry.visual === 'on') return { id: entry.owner, distance };
     return null;
   }
 
@@ -616,7 +617,7 @@ export class Engine {
       const s = this.registry.get(id)!;
       const n = getState().numbering;
       const fdi = s.toothFdi;
-      this.tip.textContent = s.id === `tooth-${fdi}` && fdi ? `${s.name} · ${formatTooth(fdi, n)}` : fdi ? `${s.name} · ${formatTooth(fdi, n)}` : s.name;
+      this.tip.textContent = fdi ? `${s.name} · ${formatTooth(fdi, n)}` : s.name;
       this.tip.style.transform = `translate3d(${this.pointerPx.x + 14}px, ${this.pointerPx.y + 16}px, 0)`;
       this.tip.classList.add('is-visible');
       this.renderer.domElement.style.cursor = 'pointer';
@@ -639,14 +640,15 @@ export class Engine {
     const fdi = s.toothFdi;
     const isToothPart = fdi !== undefined && s.id !== `tooth-${fdi}`;
     if (reveal) setState(revealPatch(this.registry, id, getState()));
-    if (isToothPart && getState().dissectFdi !== fdi && !(getState().clip.enabled && this.loadedTeeth.has(fdi))) {
-      actions.enterDissect(fdi);
-      // pick a dissection level that shows the structure
-      const lvl = levelShowing(id);
-      actions.setDissectLevel(lvl);
-    } else if (isToothPart && getState().dissectFdi === fdi) {
-      const lvl = levelShowing(id);
-      if (!levelShows(getState().dissectLevel, id)) actions.setDissectLevel(lvl);
+    if (isToothPart) {
+      const st = getState();
+      const inTooth = st.dissectFdi === fdi;
+      // a tooth part is shown inside the tooth, at a dissection level that reveals it
+      // (unless an overview section already shows this tooth's layers)
+      if (!inTooth && !(st.clip.enabled && this.loadedTeeth.has(fdi))) {
+        actions.enterDissect(fdi);
+        actions.setDissectLevel(levelShowing(id));
+      } else if (inTooth && !levelShows(st.dissectLevel, id)) actions.setDissectLevel(levelShowing(id));
     }
     if (fdi !== undefined) await this.ensureTooth(fdi);
     actions.select(id);
@@ -665,10 +667,9 @@ export class Engine {
       const f = this.registry.get(`tooth-${fdi}`)?.tooth?.frame;
       if (f) dir = new THREE.Vector3(...f.buccal).add(new THREE.Vector3(...f.axis).multiplyScalar(0.25));
     }
-    if (s.kind === 'landmark' && s.anchor) {
-      const parentKey = s.parent ? this.registry.get(s.parent)?.meshes[0] : undefined;
-      const off = parentKey ? this.entries.get(parentKey)?.mesh.position ?? new THREE.Vector3() : new THREE.Vector3();
-      this.rig.focusSphere(new THREE.Vector3(...s.anchor).add(off), 0.6, { direction: dir });
+    const landmark = s.kind === 'landmark' ? this.landmarkPosition(s) : null;
+    if (landmark) {
+      this.rig.focusSphere(landmark, 0.6, { direction: dir });
       return;
     }
     const box = this.boundsOf(id, true);
@@ -676,6 +677,15 @@ export class Engine {
     const sphere = box.getBoundingSphere(new THREE.Sphere());
     const padding = s.kind === 'group' && sphere.radius > 2 ? 1.1 : 1.45;
     this.rig.focusSphere(sphere.center, sphere.radius, { direction: dir, padding });
+  }
+
+  /** World position of a landmark: its anchor, moved with its parent mesh (explode offsets). */
+  private landmarkPosition(s: Structure): THREE.Vector3 | null {
+    if (!s.anchor) return null;
+    const parentKey = s.parent ? this.registry.get(s.parent)?.meshes[0] : undefined;
+    const pos = new THREE.Vector3(...s.anchor);
+    const parent = parentKey ? this.entries.get(parentKey) : undefined;
+    return parent ? pos.add(parent.mesh.position) : pos;
   }
 
   /** World bounds of a structure's meshes (current exploded positions). */
@@ -736,8 +746,6 @@ export class Engine {
   }
 
   /* ============================================================== loop */
-
-  private insets = { right: 0, bottom: 0 };
 
   /**
    * Shift the optical centre away from UI that covers the canvas (detail panel,
@@ -808,24 +816,23 @@ export class Engine {
     const s = getState();
     let moving = false;
     const k = 1 - Math.exp(-dt * 14);
+    const instant = this.animator.reducedMotion;
+    const rate = instant ? 1 : k;
+    const boardK = instant ? 1 : k * 0.55; // board moves are a little slower
 
     const ex = s.explode;
     if (Math.abs(this.explodeCur - ex) > 1e-4) {
-      this.explodeCur += (ex - this.explodeCur) * (this.animator.reducedMotion ? 1 : k);
-      if (Math.abs(this.explodeCur - ex) < 1e-3) this.explodeCur = ex;
+      this.explodeCur = stepToward(this.explodeCur, ex, rate, 1e-3);
       moving = true;
     }
-    const boardK = this.animator.reducedMotion ? 1 : k * 0.55; // board moves are a little slower
     const phase = s.explodePhase === 2 ? 1 : 0;
     if (Math.abs(this.phaseCur - phase) > 1e-4) {
-      this.phaseCur += (phase - this.phaseCur) * boardK;
-      if (Math.abs(this.phaseCur - phase) < 1e-3) this.phaseCur = phase;
+      this.phaseCur = stepToward(this.phaseCur, phase, boardK, 1e-3);
       moving = true;
     }
     const tex = s.dissectFdi !== null ? s.toothExplode : 0;
     if (Math.abs(this.toothExplodeCur - tex) > 1e-4) {
-      this.toothExplodeCur += (tex - this.toothExplodeCur) * (this.animator.reducedMotion ? 1 : k);
-      if (Math.abs(this.toothExplodeCur - tex) < 1e-3) this.toothExplodeCur = tex;
+      this.toothExplodeCur = stepToward(this.toothExplodeCur, tex, rate, 1e-3);
       moving = true;
     }
 
@@ -833,8 +840,7 @@ export class Engine {
       let target = e.visual === 'on' ? 1 : e.visual === 'ghost' ? s.ghostOpacity : e.visual === 'faint' ? s.ghostOpacity * 0.45 : 0;
       if (s.explodePhase === 2 && !e.boardTarget) target = 0; // context is not laid out: fade it away
       if (Math.abs(e.opacity - target) > 1e-3) {
-        e.opacity += (target - e.opacity) * (this.animator.reducedMotion ? 1 : k);
-        if (Math.abs(e.opacity - target) < 0.01) e.opacity = target;
+        e.opacity = stepToward(e.opacity, target, rate, 0.01);
         moving = true;
       }
       const vis = e.opacity > 0.005;
@@ -844,8 +850,7 @@ export class Engine {
         e.mesh.renderOrder = e.opacity < 0.999 ? 10 : 0;
       }
       if (Math.abs(e.hi - e.hiTarget) > 1e-3) {
-        e.hi += (e.hiTarget - e.hi) * (this.animator.reducedMotion ? 1 : Math.min(1, k * 1.6));
-        if (Math.abs(e.hi - e.hiTarget) < 0.01) e.hi = e.hiTarget;
+        e.hi = stepToward(e.hi, e.hiTarget, instant ? 1 : Math.min(1, k * 1.6), 0.01);
         e.mesh.material.userData.fx.uHi.value = e.hi;
         moving = true;
       }
@@ -861,24 +866,26 @@ export class Engine {
       }
     }
 
-    if (this.marker.visible && s.selectedId) {
-      const st = this.registry.get(s.selectedId);
-      if (st?.anchor) {
-        const parentKey = st.parent ? this.registry.get(st.parent)?.meshes[0] : undefined;
-        const off = parentKey ? this.entries.get(parentKey)?.mesh.position : undefined;
-        this.marker.position.set(...st.anchor);
-        if (off) this.marker.position.add(off);
-        const d = this.rig.camera.position.distanceTo(this.marker.position);
-        const pulse = 1 + 0.18 * Math.sin(performance.now() / 260);
-        this.marker.scale.setScalar(d * 0.0075 * pulse);
-        moving = true;
-      }
+    const st = this.marker.visible && s.selectedId ? this.registry.get(s.selectedId) : undefined;
+    const markerAt = st ? this.landmarkPosition(st) : null;
+    if (markerAt) {
+      this.marker.position.copy(markerAt);
+      const d = this.rig.camera.position.distanceTo(this.marker.position);
+      const pulse = 1 + 0.18 * Math.sin(performance.now() / 260);
+      this.marker.scale.setScalar(d * 0.0075 * pulse);
+      moving = true;
     }
     return moving;
   }
 }
 
 /* ------------------------------------------------------------------ helpers */
+
+/** One easing step from `cur` toward `target`, snapping to the target once within `snap`. */
+function stepToward(cur: number, target: number, rate: number, snap: number): number {
+  const next = cur + (target - cur) * rate;
+  return Math.abs(next - target) < snap ? target : next;
+}
 
 function nextFrame() {
   return new Promise((r) => requestAnimationFrame(() => r(null)));
