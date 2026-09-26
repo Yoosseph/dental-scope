@@ -1,15 +1,10 @@
-import { useId } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { formatTooth } from '../anatomy/notation';
 import { pushCurrentPath } from '../app/router';
-import { actions, DISSECT_LEVELS, useApp, type ClipAxis, type ExplodePhase } from '../state/store';
+import { actions, DISSECT_LEVELS, getState, useApp, type ClipAxis } from '../state/store';
 import { CameraControls } from './CameraControls';
 import { useServices } from './context';
-import { IconArrowLeft, IconExplode, IconFlip, IconLabel, IconSection, IconWarning } from './icons';
-
-const PHASES: { id: ExplodePhase; label: string; title: string }[] = [
-  { id: 1, label: 'In position', title: 'Structures pulled apart but kept in anatomical position' },
-  { id: 2, label: 'Laid out', title: 'Every structure fully separated and laid out side by side for inspection' },
-];
+import { IconArrowLeft, IconExplode, IconFlip, IconLabel, IconPause, IconPlay, IconReplay, IconSection, IconWarning } from './icons';
 
 const AXES: { id: ClipAxis; label: string; title: string }[] = [
   { id: 'sagittal', label: 'Sagittal', title: 'Sagittal plane (left–right cut)' },
@@ -32,25 +27,131 @@ export function Dock() {
   );
 }
 
+/**
+ * Arch dissection on one track: 0 → 1 pulls the structures apart in position (store `explode`),
+ * the checkpoint at 1 is "In position", and 1 → 2 lays them out on the board (phase 2).
+ * Play runs to the next stop: from anywhere before the checkpoint it stops at the checkpoint,
+ * from the checkpoint it continues to "Laid out", and at the end it replays from the start.
+ */
+const PLAY_SECONDS_TO_CHECKPOINT = 2.2;
+const PLAY_SECONDS_TO_LAYOUT = 1.2;
+
 function ArchControls() {
   const explode = useApp((s) => s.explode);
   const phase = useApp((s) => s.explodePhase);
   const labels = useApp((s) => s.labels);
   const loading = useApp((s) => s.loading.teeth);
   const clip = useApp((s) => s.clip.enabled);
+  // UI-only positions on the right half, where the store is discrete (phase 1 or 2)
+  const [local, setLocal] = useState<number | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const raf = useRef(0);
+
+  const stored = phase === 2 ? 2 : explode;
+  const value = local ?? stored;
+  const atEnd = phase === 2 && local === null;
+
+  const stop = () => {
+    cancelAnimationFrame(raf.current);
+    setPlaying(false);
+  };
+  useEffect(() => () => cancelAnimationFrame(raf.current), []);
+
+  const tween = (from: number, to: number, seconds: number, apply: (v: number) => void, done: () => void) => {
+    const t0 = performance.now();
+    const ms = Math.max(1, seconds * 1000);
+    const tick = (now: number) => {
+      const k = Math.min(1, (now - t0) / ms);
+      const eased = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+      apply(from + (to - from) * eased);
+      if (k < 1) raf.current = requestAnimationFrame(tick);
+      else done();
+    };
+    raf.current = requestAnimationFrame(tick);
+  };
+
+  const play = () => {
+    if (playing) return stop();
+    const s = getState();
+    let from = s.explodePhase === 2 ? 2 : s.explode;
+    if (from >= 2) {
+      // replay from the start
+      actions.setExplode(0);
+      from = 0;
+    }
+    setPlaying(true);
+    if (from < 1) {
+      tween(from, 1, (1 - from) * PLAY_SECONDS_TO_CHECKPOINT, actions.setExplode, () => {
+        actions.setExplode(1);
+        setPlaying(false); // pause at the checkpoint
+      });
+    } else {
+      actions.setExplodePhase(2);
+      tween(1, 2, PLAY_SECONDS_TO_LAYOUT, setLocal, () => {
+        setLocal(null);
+        setPlaying(false);
+      });
+    }
+  };
+
+  const scrub = (v: number) => {
+    stop();
+    if (v <= 1) {
+      setLocal(null);
+      actions.setExplode(v);
+      return;
+    }
+    setLocal(v);
+    const s = getState();
+    if (v >= 1.5 && s.explodePhase !== 2) actions.setExplodePhase(2);
+    else if (v < 1.5 && s.explodePhase === 2) {
+      actions.setExplodePhase(1);
+      actions.setExplode(1);
+    }
+  };
+  // releasing on the right half snaps to the nearer stop
+  const release = () => {
+    if (local === null || playing) return;
+    setLocal(null);
+  };
+
+  const readout = value < 1 ? `${Math.round(value * 100)}%` : value < 1.5 ? 'In position' : 'Laid out';
+  const playLabel = playing ? 'Pause' : atEnd ? 'Replay dissection' : value >= 1 ? 'Play: lay out every structure' : 'Play: pull apart to in position';
+
   return (
     <div className="ds-dock-main">
-      <div className="ds-dock-stack">
-        <Slider label="Dissect anatomy" icon={<IconExplode size={15} />} value={explode} onChange={actions.setExplode} left="Assembled" right="Separated" />
-        <div className="ds-segmented ds-segmented--fill ds-phase-switch" role="group" aria-label="Dissection phase">
-          {PHASES.map((st) => (
-            <button key={st.id} type="button" className={phase === st.id ? 'is-active' : ''} aria-pressed={phase === st.id} onClick={() => actions.setExplodePhase(st.id)} title={st.title}>
-              <span className="ds-phase-num" aria-hidden="true">
-                {st.id}
-              </span>
-              {st.label}
-            </button>
-          ))}
+      <button type="button" className={`ds-play${playing ? ' is-playing' : ''}`} onClick={play} aria-label={playLabel} title={playLabel}>
+        {playing ? <IconPause size={16} /> : atEnd ? <IconReplay size={16} /> : <IconPlay size={16} />}
+      </button>
+      <div className="ds-slider ds-slider--dissect">
+        <div className="ds-slider-head">
+          <span className="ds-slider-label">
+            <IconExplode size={15} /> Dissect anatomy
+          </span>
+          <span className="ds-slider-value">{readout}</span>
+        </div>
+        <div className="ds-range-wrap">
+          <span className={`ds-checkpoint${value >= 1 ? ' is-past' : ''}${Math.abs(value - 1) < 0.04 ? ' is-under-thumb' : ''}`} aria-hidden="true" />
+          <input
+            type="range"
+            min={0}
+            max={2}
+            step={0.01}
+            value={value}
+            onChange={(e) => scrub(Number(e.target.value))}
+            onPointerUp={release}
+            onKeyUp={release}
+            onBlur={release}
+            aria-label="Dissect anatomy"
+            aria-valuetext={readout}
+            className="ds-range"
+            style={{ ['--fill' as string]: `${(value / 2) * 100}%` }}
+          />
+        </div>
+        <div className="ds-slider-ends ds-slider-ends--three" aria-hidden="true">
+          <span>Assembled</span>
+          <span>In position</span>
+          <span>Laid out</span>
         </div>
       </div>
       <div className="ds-dock-tools">

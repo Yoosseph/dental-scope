@@ -879,28 +879,6 @@ button.ds-layer-name:hover {
 .ds-slider {
   width: 260px;
 }
-.ds-dock-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.ds-phase-switch button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-.ds-phase-num {
-  display: inline-grid;
-  place-items: center;
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  border: 1px solid currentColor;
-  font-family: var(--font-mono);
-  font-size: 9px;
-  opacity: 0.8;
-}
 .ds-slider-head {
   display: flex;
   justify-content: space-between;
@@ -965,6 +943,64 @@ button.ds-layer-name:hover {
   border-radius: 50%;
   background: var(--panel-solid);
   border: 2px solid var(--ink);
+}
+/* Dissect play button + one track with an "In position" checkpoint in the middle */
+.ds-play {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--panel-solid);
+  transition: transform var(--dur), opacity var(--dur);
+}
+.ds-play:hover {
+  transform: scale(1.06);
+}
+.ds-play:active {
+  transform: scale(0.96);
+}
+.ds-range-wrap {
+  position: relative;
+}
+.ds-slider--dissect .ds-range::-webkit-slider-runnable-track {
+  background: linear-gradient(to right, var(--ink) var(--fill, 0%), var(--line) var(--fill, 0%));
+}
+.ds-slider--dissect .ds-range::-moz-range-progress {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--ink);
+}
+.ds-checkpoint {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--panel-solid);
+  border: 2px solid var(--line);
+  pointer-events: none;
+  z-index: 1;
+  transition: border-color var(--dur);
+}
+.ds-checkpoint.is-past {
+  border-color: var(--ink);
+}
+.ds-checkpoint.is-under-thumb {
+  opacity: 0;
+}
+.ds-slider-ends--three span {
+  flex: 1;
+}
+.ds-slider-ends--three span:nth-child(2) {
+  text-align: center;
+}
+.ds-slider-ends--three span:last-child {
+  text-align: right;
 }
 .ds-dock-tools {
   display: flex;
@@ -1517,12 +1553,44 @@ button.ds-layer-name:hover {
   display: none;
 }
 
+/* Desktop dock: wide and short, so it covers less of the model. The slider and phase switch
+   sit side by side, and tools are icon + label pills instead of stacked tiles. */
+@media (min-width: 768px) {
+  .ds-dock-main {
+    gap: 16px;
+    padding: 6px 12px 6px 16px;
+  }
+  .ds-slider {
+    width: 340px;
+  }
+  .ds-slider-head {
+    margin-bottom: 0;
+  }
+  .ds-slider--dissect {
+    width: 420px;
+  }
+  .ds-dock-tools {
+    gap: 2px;
+    padding-left: 12px;
+  }
+  .ds-tool {
+    flex-direction: row;
+    gap: 6px;
+    width: auto;
+    padding: 7px 10px;
+    font-size: 11.5px;
+  }
+}
+
 @media (max-width: 1180px) {
   .ds-detail {
     width: 310px;
   }
   .ds-slider {
     width: 200px;
+  }
+  .ds-slider--dissect {
+    width: 300px;
   }
 }
 
