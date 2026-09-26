@@ -1,26 +1,15 @@
 import { NUMBERING_LABEL } from '../anatomy/notation';
 import type { NumberingSystem } from '../anatomy/types';
 import { actions, useApp } from '../state/store';
-import { useServices } from './context';
 import { IconInfo, IconMoon, IconSearch, IconSun } from './icons';
 
 const SYSTEMS: NumberingSystem[] = ['fdi', 'universal', 'palmer'];
 
 export function Identity() {
-  const { registry } = useServices();
-  const count = registry.byId.size;
   return (
     <header className="ds-identity">
-      <div className="ds-eyebrow">
-        <span className="ds-status-dot" aria-hidden="true" /> Open dental atlas
-      </div>
-      <h1 className="ds-title">
-        Dental Scope <span className="ds-edition">3D</span>
-      </h1>
-      <p className="ds-subtitle">Explore Dental Anatomy in 3D</p>
-      <p className="ds-meta">
-        32 teeth · {count.toLocaleString()} structures · BodyParts3D
-      </p>
+      <h1 className="ds-title">Dental Scope</h1>
+      <p className="ds-subtitle">Dental anatomy in 3D</p>
     </header>
   );
 }

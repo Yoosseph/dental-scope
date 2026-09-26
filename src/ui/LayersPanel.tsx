@@ -36,7 +36,7 @@ function Categories() {
     for (const c of CATEGORIES) m.set(c.group, [...(m.get(c.group) ?? []), c]);
     return [...m.entries()];
   }, []);
-  const onCount = CATEGORIES.filter((c) => cats[c.id] !== 'off' && !c.planned).length;
+  const visibilityNote = [hiddenCount ? `${hiddenCount} adjusted` : '', isolate ? 'Isolated' : ''].filter(Boolean).join(' · ');
 
   return (
     <>
@@ -58,10 +58,7 @@ function Categories() {
         ))}
       </div>
       <div className="ds-panel-footer">
-        <span>
-          {onCount} layers on{hiddenCount ? ` · ${hiddenCount} adjusted` : ''}
-          {isolate ? ' · isolated' : ''}
-        </span>
+        <span>{visibilityNote}</span>
         <button type="button" className="ds-link-btn" onClick={() => actions.resetVisibility()}>
           <IconReset size={13} /> Reset
         </button>
@@ -73,7 +70,7 @@ function Categories() {
 function CategoryRow({ id, label, color, count, state, planned }: { id: CategoryId; label: string; color: string; count: number; state: CategoryState; planned: boolean }) {
   if (planned) {
     return (
-      <div className="ds-layer-row is-planned" role="listitem" title="Not yet modeled — planned for a future release">
+      <div className="ds-layer-row is-planned" role="listitem" title="Not modeled yet">
         <span className="ds-dot" style={{ background: color }} aria-hidden="true" />
         <span className="ds-layer-name">{label}</span>
         <span className="ds-soon">planned</span>

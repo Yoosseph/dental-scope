@@ -114,7 +114,7 @@ export function SearchPanel() {
             })}
           </ul>
         ) : q.trim() ? (
-          <p className="ds-search-empty">No structures match “{q}”. Try a tooth number, a tooth name or a tissue.</p>
+          <p className="ds-search-empty">No matches for “{q}”.</p>
         ) : (
           <div className="ds-search-suggest">
             <p className="ds-label-sm">Try</p>
