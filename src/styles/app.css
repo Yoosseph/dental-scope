@@ -111,32 +111,12 @@ kbd {
 .ds-eyebrow--plain {
   letter-spacing: 0.1em;
 }
-.ds-status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--highlight);
-  box-shadow: 0 0 0 3px var(--accent-soft);
-}
 .ds-title {
-  margin: 6px 0 0;
+  margin: 0;
   font-size: 30px;
   font-weight: 600;
   letter-spacing: -0.025em;
   line-height: 1.05;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-}
-.ds-edition {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  color: var(--muted);
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 2px 6px;
 }
 .ds-subtitle {
   margin: 5px 0 0;
@@ -144,11 +124,24 @@ kbd {
   color: var(--ink);
   opacity: 0.8;
 }
-.ds-meta {
-  margin: 3px 0 0;
-  font-size: 11px;
-  color: var(--faint);
-  font-variant-numeric: tabular-nums;
+.ds-credit {
+  margin: 4px 0 0;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.ds-credit a {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--line);
+  text-underline-offset: 2px;
+}
+.ds-credit a:hover {
+  color: var(--accent);
+  text-decoration-color: currentColor;
 }
 
 /* ------------------------------------------------------------------ top actions */
@@ -261,7 +254,7 @@ kbd {
 .ds-layers {
   position: absolute;
   left: 24px;
-  top: 158px;
+  top: 124px;
   bottom: 64px;
   width: 272px;
   max-height: 640px;
@@ -577,6 +570,47 @@ button.ds-layer-name:hover {
   height: 1px;
   background: var(--line);
   margin: 4px 6px;
+}
+.ds-rail-btn {
+  position: relative;
+}
+/* action label: appears to the left of the rail on hover, keyboard focus or a touch tap */
+.ds-rail-tip,
+.ds-rail-caption {
+  padding: 5px 9px;
+  border-radius: 8px;
+  background: var(--panel-solid);
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--panel-shadow);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.ds-rail-tip {
+  position: absolute;
+  right: calc(100% + 12px);
+  top: 50%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  transform: translate(4px, -50%);
+  transition: opacity var(--dur), transform var(--dur);
+}
+.ds-rail-tip kbd {
+  font-size: 10px;
+}
+.ds-rail-btn:hover .ds-rail-tip,
+.ds-rail-btn:focus-visible .ds-rail-tip,
+.ds-rail-btn.is-tip-shown .ds-rail-tip {
+  opacity: 1;
+  transform: translate(0, -50%);
+}
+.ds-rail-caption {
+  display: none;
 }
 
 /* ------------------------------------------------------------------ detail */
@@ -1018,7 +1052,7 @@ button.ds-layer-name:hover {
   right: 28px;
   bottom: 12px;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 16px;
   font-size: 11px;
   color: var(--faint);
@@ -1393,13 +1427,12 @@ button.ds-layer-name:hover {
 }
 
 @media (max-width: 980px) {
-  .ds-subtitle,
-  .ds-hints {
+  .ds-subtitle {
     display: none;
   }
   .ds-layers {
     width: 240px;
-    top: 128px;
+    top: 96px;
   }
   .ds-search-trigger {
     min-width: 0;
@@ -1421,8 +1454,7 @@ button.ds-layer-name:hover {
   .ds-title {
     font-size: 20px;
   }
-  .ds-eyebrow,
-  .ds-meta {
+  .ds-eyebrow {
     display: none;
   }
   .ds-top-actions {
@@ -1533,6 +1565,19 @@ button.ds-layer-name:hover {
     width: 38px;
     height: 36px;
   }
+  /* the mobile rail scrolls sideways and would clip side labels: name the tapped control above it instead */
+  .ds-rail-tip {
+    display: none;
+  }
+  /* sits just above the rail row (rail bottom 66px + 46px row); may briefly overlap the dock's lower edge */
+  .ds-rail-caption {
+    display: block;
+    position: absolute;
+    left: 50%;
+    bottom: calc(66px + 46px + 6px + env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    z-index: 6;
+  }
   .ds-dock {
     display: none;
     left: 8px;
@@ -1590,8 +1635,7 @@ button.ds-layer-name:hover {
   .ds-layers {
     top: 96px;
   }
-  .ds-subtitle,
-  .ds-meta {
+  .ds-subtitle {
     display: none;
   }
 }

@@ -9,6 +9,26 @@ import type { Engine } from '../engine/Engine';
 import { actions, getState, store } from '../state/store';
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
+/**
+ * With a relative base (e.g. `DS_BASE=./` for static hosting in an unknown
+ * sub-folder) path URLs would break relative asset loading, so routes live in
+ * the hash instead: `#/tooth/36`.
+ */
+const HASH = import.meta.env.BASE_URL.startsWith('.');
+
+function currentPath(): string {
+  return HASH ? location.hash.replace(/^#/, '') || '/' : location.pathname;
+}
+
+/** `VITE_DS_URL=off` disables URL updates (for embedding in hosts that own the URL). */
+const WRITE_URL = import.meta.env.VITE_DS_URL !== 'off';
+
+function writeUrl(path: string, push: boolean) {
+  if (!WRITE_URL) return;
+  const url = HASH ? `#${path.replace(/^\.?/, '')}` : path + location.search;
+  if (push) history.pushState(null, '', url);
+  else history.replaceState(null, '', url);
+}
 
 export interface Route {
   id: string | null;
@@ -16,7 +36,7 @@ export interface Route {
 }
 
 export function parsePath(path: string, registry: Registry): Route {
-  const p = path.startsWith(BASE) ? path.slice(BASE.length) : path;
+  const p = !HASH && path.startsWith(BASE) ? path.slice(BASE.length) : path;
   let m = /^\/tooth\/(\d{2})(\/dissect)?\/?$/.exec(p);
   if (m && registry.get(`tooth-${m[1]}`)) return { id: `tooth-${m[1]}`, dissect: !!m[2] };
   m = /^\/structure\/([a-z0-9-]+)\/?$/.exec(p);
@@ -25,11 +45,12 @@ export function parsePath(path: string, registry: Registry): Route {
 }
 
 export function pathFor(id: string | null, dissectFdi: number | null, registry: Registry): string {
-  if (!id && dissectFdi === null) return `${BASE}/`;
-  if (!id && dissectFdi !== null) return `${BASE}/tooth/${dissectFdi}/dissect`;
+  const base = HASH ? '' : BASE;
+  if (!id && dissectFdi === null) return `${base}/`;
+  if (!id && dissectFdi !== null) return `${base}/tooth/${dissectFdi}/dissect`;
   const s = registry.get(id!);
-  if (s?.tooth) return `${BASE}/tooth/${s.tooth.fdi}${dissectFdi === s.tooth.fdi ? '/dissect' : ''}`;
-  return `${BASE}/structure/${id}`;
+  if (s?.tooth) return `${base}/tooth/${s.tooth.fdi}${dissectFdi === s.tooth.fdi ? '/dissect' : ''}`;
+  return `${base}/structure/${id}`;
 }
 
 export function startRouter(engine: Engine, registry: Registry): () => void {
@@ -59,18 +80,20 @@ export function startRouter(engine: Engine, registry: Registry): () => void {
     if (applying) return;
     if (s.selectedId === p.selectedId && s.dissectFdi === p.dissectFdi) return;
     const next = pathFor(s.selectedId, s.dissectFdi, registry);
-    if (next !== location.pathname) history.replaceState(null, '', next + location.search);
+    if (next !== currentPath()) writeUrl(next, false);
   });
-  const onPop = () => void apply(location.pathname);
+  const onPop = () => void apply(currentPath());
   window.addEventListener('popstate', onPop);
-  void apply(location.pathname);
+  if (HASH) window.addEventListener('hashchange', onPop);
+  void apply(currentPath());
   return () => {
     unsub();
     window.removeEventListener('popstate', onPop);
+    window.removeEventListener('hashchange', onPop);
   };
 }
 
 /** Explicit navigation (search, tree): pushes a history entry. */
 export function pushPath(path: string) {
-  if (path !== location.pathname) history.pushState(null, '', path);
+  if (path !== currentPath()) writeUrl(path, true);
 }

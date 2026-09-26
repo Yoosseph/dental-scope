@@ -1,25 +1,25 @@
 import { NUMBERING_LABEL } from '../anatomy/notation';
 import type { NumberingSystem } from '../anatomy/types';
+import { REPO_URL } from '../app/repo';
 import { actions, useApp } from '../state/store';
-import { useServices } from './context';
-import { IconInfo, IconMoon, IconSearch, IconSun } from './icons';
+import { IconExternal, IconInfo, IconMoon, IconSearch, IconSun } from './icons';
 
 const SYSTEMS: NumberingSystem[] = ['fdi', 'universal', 'palmer'];
 
 export function Identity() {
-  const { registry } = useServices();
-  const count = registry.byId.size;
   return (
     <header className="ds-identity">
-      <div className="ds-eyebrow">
-        <span className="ds-status-dot" aria-hidden="true" /> Open dental atlas
-      </div>
-      <h1 className="ds-title">
-        Dental Scope <span className="ds-edition">3D</span>
-      </h1>
-      <p className="ds-subtitle">Explore Dental Anatomy in 3D</p>
-      <p className="ds-meta">
-        32 teeth · {count.toLocaleString()} structures · BodyParts3D
+      <h1 className="ds-title">Dental Scope</h1>
+      <p className="ds-subtitle">Dental anatomy in 3D</p>
+      <p className="ds-credit">
+        {REPO_URL ? (
+          <a href={REPO_URL} target="_blank" rel="noopener noreferrer" aria-label="Made by Yoseph – Dental Scope on GitHub (opens in a new tab)">
+            Made by Yoseph
+            <IconExternal size={11} />
+          </a>
+        ) : (
+          'Made by Yoseph'
+        )}
       </p>
     </header>
   );

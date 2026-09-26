@@ -150,3 +150,8 @@ export const IconCube = (p: P) => (
     <path d="M12 12 4 7.5M12 12l8-4.5M12 12v9" />
   </Svg>
 );
+export const IconExternal = (p: P) => (
+  <Svg {...p}>
+    <path d="M14 5h5v5M19 5l-8 8M17 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h4" />
+  </Svg>
+);

@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { CATEGORY_BY_ID } from '../anatomy/categories';
 import { formatTooth } from '../anatomy/notation';
 import type { Provenance, Structure } from '../anatomy/types';
+import type { ContentStatus } from '../content/content';
 import { pathFor, pushPath } from '../app/router';
 import { resolveContent } from '../content/content';
 import { actions, getState, useApp } from '../state/store';
@@ -9,10 +10,16 @@ import { useServices } from './context';
 import { IconArrowLeft, IconClose, IconEyeOff, IconFocus, IconGhost, IconIsolate, IconTooth } from './icons';
 
 const PROVENANCE: Record<Provenance, { label: string; text: string }> = {
-  source: { label: 'Source geometry', text: 'Mesh from BodyParts3D (DBCLS), simplified for the web.' },
-  derived: { label: 'Derived geometry', text: 'Derived from BodyParts3D meshes by the Dental Scope pipeline (partitioned or approximated).' },
-  modeled: { label: 'Modeled', text: 'Internal anatomy modeled from the real external tooth shape using typical proportions. Schematic, not measured.' },
-  schematic: { label: 'Schematic', text: 'Illustrative path or shape placed from anatomical landmarks. Not measured anatomy.' },
+  source: { label: 'Source mesh', text: 'BodyParts3D (DBCLS), simplified.' },
+  derived: { label: 'Derived mesh', text: 'Partitioned or approximated from BodyParts3D meshes.' },
+  modeled: { label: 'Modeled', text: 'Built inside the real tooth shape from typical proportions. Not measured.' },
+  schematic: { label: 'Schematic', text: 'Placed from anatomical landmarks. Not measured.' },
+};
+
+const STATUS_LABEL: Record<ContentStatus, string> = {
+  reviewed: 'Reviewed text',
+  draft: 'Unreviewed draft',
+  placeholder: 'No text yet',
 };
 
 export function DetailPanel() {
@@ -74,7 +81,7 @@ export function DetailPanel() {
       </div>
 
       <div className="ds-detail-body">
-        {content.summary ? <p className="ds-detail-summary">{content.summary}</p> : <p className="ds-detail-summary is-muted">No description yet. Content for this structure can be contributed — see docs/content.md.</p>}
+        {content.summary ? <p className="ds-detail-summary">{content.summary}</p> : <p className="ds-detail-summary is-muted">No description yet.</p>}
         {content.function && <Section title="Function">{content.function}</Section>}
         {content.clinical && <Section title="Clinical relevance">{content.clinical}</Section>}
 
@@ -126,7 +133,7 @@ export function DetailPanel() {
 
         <div className="ds-provenance">
           <span className={`ds-badge ds-badge--${s.provenance}`}>{PROVENANCE[s.provenance].label}</span>
-          <span className={`ds-badge ds-badge--status-${content.status}`}>{content.status === 'reviewed' ? 'Reviewed' : content.status === 'draft' ? 'Draft text · pending review' : 'No text yet'}</span>
+          <span className={`ds-badge ds-badge--status-${content.status}`}>{STATUS_LABEL[content.status]}</span>
           <p>{PROVENANCE[s.provenance].text}</p>
         </div>
       </div>

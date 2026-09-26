@@ -8,9 +8,9 @@ Dental Scope is an open-source, interactive 3D dental anatomy explorer. Start wi
 
 ![Dental Scope overview](docs/screenshots/overview.png)
 
-| Inside a tooth | Cross-section through the arch | Exploded view |
+| Inside a tooth | Cross-section through the arch | Dissected anatomy |
 |---|---|---|
-| ![Root canals of tooth 36](docs/screenshots/tooth-canals.png) | ![Axial section through the lower crowns](docs/screenshots/section-axial.png) | ![Exploded anatomy](docs/screenshots/exploded.png) |
+| ![Root canals of tooth 36](docs/screenshots/tooth-canals.png) | ![Axial section through the lower crowns](docs/screenshots/section-axial.png) | ![Dissected anatomy](docs/screenshots/exploded.png) |
 
 <p align="center"><img src="docs/screenshots/mobile.png" alt="Dental Scope on a phone" width="260"></p>
 
@@ -19,7 +19,7 @@ Dental Scope is an open-source, interactive 3D dental anatomy explorer. Start wi
 - **Mouth → jaw → dentition → tooth → tissue.** One continuous scene; no separate "tooth viewer".
 - **All 32 permanent teeth**, individually selectable, named anatomically, with **FDI, Universal and Palmer** numbering (switchable).
 - **Inside every tooth:** enamel, coronal and radicular dentin, cementum, periodontal ligament, pulp chamber with pulp horns, and one canal per root in its most common configuration (e.g. MB2 in maxillary first molars, two mesial canals in mandibular first molars). Five dissection levels peel the tooth layer by layer.
-- **Exploded views** at two levels: the whole mouth (jaws apart, teeth out of their sockets, nerves and vessels fanned out) and a single tooth (enamel shell, dentin, pulp and canals separate).
+- **Dissection** at two levels: the whole mouth (*Dissect anatomy*: jaws apart, teeth out of their sockets, nerves and vessels fanned out) and a single tooth (*Separate layers*: enamel shell, dentin, pulp and canals apart).
 - **Cross-sections:** sagittal, coronal, axial or view-aligned planes; inside a tooth they switch to mesiodistal, buccolingual and horizontal. Cut surfaces render as solid tissue, so enamel thickness, dentin and pulp read clearly — across all 32 teeth at once.
 - **Search** by name, tooth number in any system (`11`, `#8`, `UR6`, `fdi 36`), tissue, synonym (`gums`, `wisdom tooth`, `IAN`, `cuspid`).
 - **Layers** for 19 dental categories with show, show-only, translucent and hide; plus hide/ghost/isolate per structure and a full hierarchy tree.
@@ -48,11 +48,11 @@ npm run typecheck
 npm run build      # static site in dist/ (includes a 404.html SPA fallback)
 ```
 
-The built site is fully static. For a sub-path deployment set `DS_BASE`, e.g. `DS_BASE=/dental-scope/ npm run build`. A GitHub Pages workflow is included.
+The built site is fully static. For a sub-path deployment set `DS_BASE`, e.g. `DS_BASE=/dental-scope/ npm run build`; with a relative base (`DS_BASE=./`) deep links switch to hash URLs (`#/tooth/36`) so the build works from any folder. Set `VITE_DS_REPO_URL` to link the “Made by Yoseph” credit and the About dialog to the repository; when it is unset the credit is plain text, so a build never advertises a private repository. A GitHub Pages workflow is included; it passes the repository URL only while the repository is public, so re-run it after making the repository public.
 
 ### Keyboard
 
-`/` search · `Esc` clear / leave tooth · `F` focus · `I` isolate · `H` hide · `G` ghost · `D` inside tooth · `[` `]` dissection level · `E` explode · `C` section · `L` labels · arrows orbit · `+` `−` zoom · `R` reset
+`/` search · `Esc` clear / leave tooth · `F` focus · `I` isolate · `H` hide · `G` ghost · `D` inside tooth · `[` `]` dissection level · `E` dissect anatomy / separate tooth layers · `C` section · `L` labels · arrows orbit · `+` `−` zoom · `R` reset
 
 ## Architecture
 

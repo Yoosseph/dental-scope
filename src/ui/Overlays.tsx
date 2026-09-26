@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { REPO_URL } from '../app/repo';
 import { actions, useApp } from '../state/store';
 import { IconClose } from './icons';
 
@@ -51,13 +52,10 @@ export function LoadingCard() {
 export function Footer() {
   return (
     <footer className="ds-footer">
-      <p className="ds-hints" aria-hidden="true">
-        Drag to orbit · Scroll to zoom · Right-drag to pan · Click to inspect · Double-click to focus
-      </p>
       <p className="ds-disclaimer">
         Educational anatomical reference. Not intended for diagnosis or treatment.{' '}
         <button type="button" className="ds-link-btn" onClick={() => actions.openAbout(true)}>
-          Sources &amp; credits
+          Controls &amp; credits
         </button>
       </p>
     </footer>
@@ -99,9 +97,17 @@ export function AboutDialog() {
           <strong>Schematic</strong> — nerves, vessels and joint discs are placed from anatomical landmarks to show relationships, not measured paths.
         </li>
       </ul>
-      <p>Every structure shows which of these applies. Text marked “draft” is pending expert review.</p>
-      <h3>Keyboard</h3>
+      <p>Each structure’s details show which of these applies, and whether its text is reviewed or still an unreviewed draft.</p>
+      <h3>Controls</h3>
       <dl className="ds-keys">
+        <dt>Drag</dt>
+        <dd>Orbit (touch: one finger)</dd>
+        <dt>Right-drag</dt>
+        <dd>Pan (touch: two fingers)</dd>
+        <dt>Scroll</dt>
+        <dd>Zoom (touch: pinch)</dd>
+        <dt>Click</dt>
+        <dd>Select · double-click to focus</dd>
         <dt>/</dt>
         <dd>Search</dd>
         <dt>Esc</dt>
@@ -113,19 +119,26 @@ export function AboutDialog() {
         <dt>D</dt>
         <dd>Explore inside the selected tooth</dd>
         <dt>[ · ]</dt>
-        <dd>Dissection level</dd>
-        <dt>E · C · L</dt>
-        <dd>Explode · section · labels</dd>
+        <dd>Dissection level (inside a tooth)</dd>
+        <dt>E</dt>
+        <dd>Dissect anatomy (in a tooth: separate layers)</dd>
+        <dt>C · L</dt>
+        <dd>Section · labels</dd>
         <dt>Arrows · + −</dt>
         <dd>Orbit · zoom</dd>
         <dt>R</dt>
         <dd>Reset camera</dd>
       </dl>
       <p className="ds-about-foot">
-        Code MIT · Models CC BY-SA 2.1 JP · Text CC BY-SA 4.0 ·{' '}
-        <a href="https://github.com/Yoosseph/dental-scope" target="_blank" rel="noreferrer">
-          Source on GitHub
-        </a>
+        Code MIT · Models CC BY-SA 2.1 JP · Text CC BY-SA 4.0
+        {REPO_URL && (
+          <>
+            {' · '}
+            <a href={REPO_URL} target="_blank" rel="noopener noreferrer">
+              Source on GitHub
+            </a>
+          </>
+        )}
       </p>
     </dialog>
   );
@@ -145,7 +158,7 @@ export function StartHint() {
     <div className="ds-start-hint" role="note">
       <span className="ds-pulse" aria-hidden="true" />
       <span>
-        Click any tooth to explore it<span className="ds-hint-extra"> — or press <kbd>/</kbd> to search</span>
+        Select a tooth to inspect it<span className="ds-hint-extra"> · <kbd>/</kbd> to search</span>
       </span>
     </div>
   );
