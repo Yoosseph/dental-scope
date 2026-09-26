@@ -97,18 +97,14 @@ export function AboutDialog() {
           <strong>Schematic</strong> — nerves, vessels and joint discs are placed from anatomical landmarks to show relationships, not measured paths.
         </li>
       </ul>
-      <p>
-        Each structure’s details show which of these applies, and whether its text is reviewed or still an unreviewed draft.
-        {REPO_URL && (
-          <>
-            {' '}
-            <a href={`${REPO_URL}/blob/main/docs/sources.md`} target="_blank" rel="noopener noreferrer" aria-label="Sources for these statements (opens in a new tab)">
-              Sources for these statements
-            </a>
-            .
-          </>
-        )}
-      </p>
+      {REPO_URL && (
+        <p>
+          <a href={`${REPO_URL}/blob/main/docs/sources.md`} target="_blank" rel="noopener noreferrer" aria-label="Sources for these statements (opens in a new tab)">
+            Sources for these statements
+          </a>
+          .
+        </p>
+      )}
       <h3>Controls</h3>
       <dl className="ds-keys">
         <dt>Drag</dt>

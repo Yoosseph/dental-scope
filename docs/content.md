@@ -29,7 +29,7 @@ The resolver (`src/content/content.ts`) tries the most specific key first and th
 
 ## Status and verification
 
-All current text is **draft**: written from standard dental anatomy knowledge and shown with an “Unreviewed draft” badge. Per-entry status is not wired up yet: `src/content/content.ts` shows every entry as draft, whatever the JSON says (see [architecture.md](architecture.md) §8). Until it is, record reviews in the pull request. Once it is wired up, verify an entry against at least one of these before changing its status to `reviewed`:
+All current text is **draft**: written from standard dental anatomy knowledge. Per-entry status is not wired up yet: `src/content/content.ts` shows every entry as draft, whatever the JSON says (see [architecture.md](architecture.md) §8). Until it is, record reviews in the pull request. Once it is wired up, verify an entry against at least one of these before changing its status to `reviewed`:
 
 - Nelson SJ. *Wheeler’s Dental Anatomy, Physiology and Occlusion* (current edition)
 - Scheid RC, Weiss G. *Woelfel’s Dental Anatomy*
