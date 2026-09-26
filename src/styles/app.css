@@ -879,28 +879,6 @@ button.ds-layer-name:hover {
 .ds-slider {
   width: 260px;
 }
-.ds-dock-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.ds-phase-switch button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-.ds-phase-num {
-  display: inline-grid;
-  place-items: center;
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  border: 1px solid currentColor;
-  font-family: var(--font-mono);
-  font-size: 9px;
-  opacity: 0.8;
-}
 .ds-slider-head {
   display: flex;
   justify-content: space-between;
@@ -965,6 +943,64 @@ button.ds-layer-name:hover {
   border-radius: 50%;
   background: var(--panel-solid);
   border: 2px solid var(--ink);
+}
+/* Dissect play button + one track with an "In position" checkpoint in the middle */
+.ds-play {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--panel-solid);
+  transition: transform var(--dur), opacity var(--dur);
+}
+.ds-play:hover {
+  transform: scale(1.06);
+}
+.ds-play:active {
+  transform: scale(0.96);
+}
+.ds-range-wrap {
+  position: relative;
+}
+.ds-slider--dissect .ds-range::-webkit-slider-runnable-track {
+  background: linear-gradient(to right, var(--ink) var(--fill, 0%), var(--line) var(--fill, 0%));
+}
+.ds-slider--dissect .ds-range::-moz-range-progress {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--ink);
+}
+.ds-checkpoint {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--panel-solid);
+  border: 2px solid var(--line);
+  pointer-events: none;
+  z-index: 1;
+  transition: border-color var(--dur);
+}
+.ds-checkpoint.is-past {
+  border-color: var(--ink);
+}
+.ds-checkpoint.is-under-thumb {
+  opacity: 0;
+}
+.ds-slider-ends--three span {
+  flex: 1;
+}
+.ds-slider-ends--three span:nth-child(2) {
+  text-align: center;
+}
+.ds-slider-ends--three span:last-child {
+  text-align: right;
 }
 .ds-dock-tools {
   display: flex;
@@ -1064,9 +1100,34 @@ button.ds-layer-name:hover {
 
 /* dissection bar */
 .ds-dissect {
-  flex-wrap: wrap;
-  max-width: min(980px, calc(100vw - 48px));
-  gap: 12px 18px;
+  flex-direction: column;
+  align-items: stretch;
+  width: min(760px, calc(100vw - 48px));
+  gap: 10px;
+}
+/* header: tooth name on the left, tools on the right */
+.ds-dissect-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.ds-dissect-bar .ds-dock-tools {
+  border-left: 0;
+  padding-left: 0;
+}
+/* play button + control, one per row, all controls sharing the same left and right edge */
+.ds-play-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.ds-play-body {
+  flex: 1;
+  min-width: 0;
+}
+.ds-play-body .ds-slider {
+  width: 100%;
 }
 .ds-dissect-head {
   display: flex;
@@ -1143,7 +1204,62 @@ button.ds-layer-name:hover {
   color: var(--ink);
 }
 .ds-step-hint {
-  display: none;
+  margin: 0;
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* desktop: the level steps span the full row like a slider, first dot at the left edge, last at the right */
+@media (min-width: 768px) {
+  .ds-dissect {
+    padding: 10px 16px 10px 12px;
+  }
+  .ds-dissect .ds-steps {
+    height: 40px;
+  }
+  .ds-dissect .ds-steps::before,
+  .ds-dissect .ds-steps::after {
+    content: '';
+    position: absolute;
+    left: 5.5px;
+    top: 8.5px;
+    height: 2px;
+    border-radius: 1px;
+  }
+  .ds-dissect .ds-steps::before {
+    right: 5.5px;
+    background: var(--line);
+  }
+  .ds-dissect .ds-steps::after {
+    width: calc((100% - 11px) * var(--progress, 0));
+    background: var(--accent);
+    transition: width var(--dur);
+  }
+  .ds-dissect .ds-step {
+    position: absolute;
+    top: 0;
+    left: var(--at);
+    transform: translateX(-50%);
+    width: auto;
+    padding: 4px 4px 3px;
+    white-space: nowrap;
+    z-index: 1;
+  }
+  .ds-dissect .ds-step::before {
+    display: none;
+  }
+  .ds-dissect .ds-step:first-child {
+    transform: none;
+    align-items: flex-start;
+    padding-left: 0;
+  }
+  .ds-dissect .ds-step:last-child {
+    transform: translateX(-100%);
+    align-items: flex-end;
+    padding-right: 0;
+  }
 }
 
 /* ------------------------------------------------------------------ footer */
@@ -1167,6 +1283,140 @@ button.ds-layer-name:hover {
   text-decoration: underline;
   text-decoration-color: var(--line);
   text-underline-offset: 2px;
+}
+
+.ds-reset-all {
+  position: absolute;
+  left: 24px;
+  bottom: 16px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 14px 0 12px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--panel-solid);
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: var(--panel-shadow);
+  transition: transform var(--dur), opacity var(--dur);
+}
+.ds-reset-all:hover {
+  opacity: 0.88;
+}
+.ds-reset-all:active {
+  transform: scale(0.97);
+}
+@media (max-width: 767px) {
+  /* icon only, above the mobile bar; hidden while the tooth dissection tools take the bottom */
+  .ds-reset-all {
+    left: 12px;
+    bottom: calc(66px + env(safe-area-inset-bottom));
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    justify-content: center;
+  }
+  .ds-reset-all span {
+    display: none;
+  }
+  .ds-app.is-dissecting .ds-reset-all {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------------ collapsible panels
+   Desktop: each panel has a tab on its inner edge; collapsed, the panel slides off-screen
+   and only the tab stays in view to bring it back. */
+.ds-panel-handle {
+  display: none;
+}
+@media (min-width: 768px) {
+  .ds-layers,
+  .ds-detail,
+  .ds-dock {
+    transition: transform 320ms var(--ease);
+  }
+  .ds-panel-handle {
+    position: absolute;
+    z-index: 3;
+    display: grid;
+    place-items: center;
+    color: var(--muted);
+    background: var(--panel-solid);
+    border: 1px solid var(--panel-border);
+    box-shadow: var(--panel-shadow);
+    cursor: grab;
+    touch-action: none;
+    transition: color var(--dur), background var(--dur);
+  }
+  .ds-panel-handle:hover {
+    color: var(--panel-solid);
+    background: var(--ink);
+  }
+  .ds-panel-handle:active {
+    cursor: grabbing;
+  }
+  .ds-panel-handle svg {
+    transition: transform 320ms var(--ease);
+  }
+  /* side tabs: vertical pills on the panel's inner edge */
+  .ds-panel-handle--layers,
+  .ds-panel-handle--detail {
+    top: 50%;
+    width: 30px;
+    height: 72px;
+    margin-top: -36px;
+  }
+  .ds-panel-handle--layers {
+    left: 100%;
+    border-radius: 0 12px 12px 0;
+    border-left: 0;
+  }
+  .ds-panel-handle--detail {
+    right: 100%;
+    border-radius: 12px 0 0 12px;
+    border-right: 0;
+  }
+  .ds-panel-handle--detail svg {
+    transform: rotate(180deg);
+  }
+  /* dock tab: horizontal pill on top, centred */
+  .ds-panel-handle--dock {
+    bottom: 100%;
+    left: 50%;
+    width: 72px;
+    height: 28px;
+    margin-left: -36px;
+    margin-bottom: -1px;
+    border-radius: 12px 12px 0 0;
+    border-bottom: 0;
+  }
+  .ds-panel-handle--dock svg {
+    transform: rotate(-90deg);
+  }
+  /* collapsed: slide out past the screen edge, arrow points back in */
+  .ds-layers.is-collapsed {
+    transform: translateX(calc(-100% - 25px));
+  }
+  .ds-detail.is-collapsed {
+    transform: translateX(calc(100% + 25px));
+    animation: none;
+  }
+  .ds-dock.is-collapsed {
+    transform: translate(-50%, calc(100% + 41px));
+  }
+  .ds-panel-handle--layers.is-collapsed svg {
+    transform: rotate(180deg);
+  }
+  .ds-panel-handle--detail.is-collapsed svg {
+    transform: none;
+  }
+  .ds-panel-handle--dock.is-collapsed svg {
+    transform: rotate(90deg);
+  }
 }
 
 /* ------------------------------------------------------------------ loading */
@@ -1237,51 +1487,6 @@ button.ds-layer-name:hover {
 .ds-loading-stages li.is-done::before {
   content: '● ';
   color: var(--accent);
-}
-
-/* ------------------------------------------------------------------ start hint */
-.ds-start-hint {
-  position: absolute;
-  left: 50%;
-  bottom: 232px;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 7px 14px 7px 12px;
-  border-radius: 999px;
-  background: var(--panel);
-  border: 1px solid var(--panel-border);
-  box-shadow: var(--panel-shadow);
-  font-size: 12.5px;
-  color: var(--muted);
-  pointer-events: none;
-  animation: ds-in 600ms var(--ease) 400ms both;
-}
-.ds-pulse {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--highlight);
-  animation: ds-pulse 1.8s ease-out infinite;
-}
-@keyframes ds-pulse {
-  0% {
-    box-shadow: 0 0 0 0 var(--accent-glow);
-  }
-  100% {
-    box-shadow: 0 0 0 10px transparent;
-  }
-}
-@media (max-width: 767px) {
-  .ds-start-hint {
-    bottom: calc(112px + env(safe-area-inset-bottom));
-    font-size: 11.5px;
-    white-space: nowrap;
-  }
-  .ds-hint-extra {
-    display: none;
-  }
 }
 
 /* ------------------------------------------------------------------ search */
@@ -1517,12 +1722,44 @@ button.ds-layer-name:hover {
   display: none;
 }
 
+/* Desktop dock: wide and short, so it covers less of the model. The slider and phase switch
+   sit side by side, and tools are icon + label pills instead of stacked tiles. */
+@media (min-width: 768px) {
+  .ds-dock-main {
+    gap: 16px;
+    padding: 6px 12px 6px 16px;
+  }
+  .ds-slider {
+    width: 340px;
+  }
+  .ds-slider-head {
+    margin-bottom: 0;
+  }
+  .ds-slider--dissect {
+    width: 420px;
+  }
+  .ds-dock-tools {
+    gap: 2px;
+    padding-left: 12px;
+  }
+  .ds-tool {
+    flex-direction: row;
+    gap: 6px;
+    width: auto;
+    padding: 7px 10px;
+    font-size: 11.5px;
+  }
+}
+
 @media (max-width: 1180px) {
   .ds-detail {
     width: 310px;
   }
   .ds-slider {
     width: 200px;
+  }
+  .ds-slider--dissect {
+    width: 300px;
   }
 }
 

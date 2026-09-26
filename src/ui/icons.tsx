@@ -247,3 +247,19 @@ export const IconView = (p: P) => (
     <rect x="13.5" y="13.5" width="7" height="7" rx="1.5" />
   </Svg>
 );
+export const IconPlay = (p: P) => (
+  <Svg {...p}>
+    <path d="M8 5.5v13l10.5-6.5z" fill="currentColor" />
+  </Svg>
+);
+export const IconPause = (p: P) => (
+  <Svg {...p}>
+    <path d="M8.5 5.5v13M15.5 5.5v13" strokeWidth={2.6} />
+  </Svg>
+);
+export const IconReplay = (p: P) => (
+  <Svg {...p}>
+    <path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3" />
+    <path d="M4.5 4.5v4h4" />
+  </Svg>
+);

@@ -1,12 +1,12 @@
 import { useEffect, useRef } from 'react';
-import { startRouter } from '../app/router';
+import { pushCurrentPath, startRouter } from '../app/router';
 import { actions, useApp } from '../state/store';
 import { useServices } from './context';
 import { DetailPanel } from './DetailPanel';
 import { Dock } from './Dock';
-import { IconLayers, IconSearch, IconSection } from './icons';
+import { IconLayers, IconReset, IconSearch, IconSection } from './icons';
 import { LayersPanel } from './LayersPanel';
-import { AboutDialog, Footer, LoadingCard, StartHint } from './Overlays';
+import { AboutDialog, Footer, LoadingCard } from './Overlays';
 import { SearchPanel } from './SearchPanel';
 import { Identity, TopActions } from './TopBar';
 import { useKeyboard } from './useKeyboard';
@@ -19,6 +19,9 @@ export function App() {
   const dissect = useApp((s) => s.dissectFdi !== null);
   const sheet = useApp((s) => s.mobileSheet);
   const laidOut = useApp((s) => s.explodePhase === 2);
+  const detailHidden = useApp((s) => s.collapsed.detail);
+  const dockHidden = useApp((s) => s.collapsed.dock);
+  const layersHidden = useApp((s) => s.collapsed.layers);
 
   useEffect(() => {
     engine.mount(stage.current!);
@@ -42,12 +45,22 @@ export function App() {
       const mobile = window.innerWidth <= 767;
       if (mobile) engine.setInsets(0, sheet !== 'none' ? window.innerHeight * 0.5 : 0);
       // the bottom toolbar covers the lower edge of the canvas; the dissection tools and the phase-2 board make it taller
-      else engine.setInsets(selected && window.innerWidth > 980 ? 360 : 0, dissect || laidOut ? 170 : 70);
+      else {
+        // the layers panel on the left (offsetLeft/offsetWidth ignore its slide-out transform)
+        const layers = document.querySelector<HTMLElement>('.ds-layers');
+        const left = layers && !layersHidden && layers.offsetParent ? layers.offsetLeft + layers.offsetWidth : 0;
+        // the bottom toolbar: measured, since its height depends on what it shows
+        const dock = document.querySelector<HTMLElement>('.ds-dock');
+        const parent = dock?.offsetParent as HTMLElement | null;
+        const measured = dock && parent ? parent.clientHeight - dock.offsetTop : 0;
+        const bottom = dockHidden ? 0 : measured > 0 ? measured : dissect ? 210 : laidOut ? 170 : 70;
+        engine.setInsets(selected && !detailHidden && window.innerWidth > 980 ? 360 : 0, bottom, left);
+      }
     };
     update();
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
-  }, [engine, selected, dissect, laidOut, sheet]);
+  }, [engine, selected, dissect, laidOut, sheet, detailHidden, dockHidden, layersHidden]);
 
   return (
     <div className={`ds-app${selected ? ' has-selection' : ''}${dissect ? ' is-dissecting' : ''}`}>
@@ -59,8 +72,8 @@ export function App() {
         <DetailPanel />
         <Dock />
         <Footer />
+        <ResetButton />
         <LoadingCard />
-        <StartHint />
         <nav className="ds-mobile-bar ds-panel" aria-label="Mobile controls">
           <button type="button" className={sheet === 'layers' ? 'is-active' : ''} onClick={() => actions.setMobileSheet(sheet === 'layers' ? 'none' : 'layers')} aria-pressed={sheet === 'layers'}>
             <IconLayers /> <span>Layers</span>
@@ -77,5 +90,21 @@ export function App() {
       <SearchPanel />
       <AboutDialog />
     </div>
+  );
+}
+
+/** Bottom-left: back to the start view with every setting at its default. */
+function ResetButton() {
+  const { engine, registry } = useServices();
+  const reset = () => {
+    actions.resetAll();
+    engine.resetToStart();
+    pushCurrentPath(registry);
+  };
+  return (
+    <button type="button" className="ds-reset-all" onClick={reset} title="Reset all: start view and default settings" aria-label="Reset all: start view and default settings">
+      <IconReset size={15} />
+      <span>Reset all</span>
+    </button>
   );
 }

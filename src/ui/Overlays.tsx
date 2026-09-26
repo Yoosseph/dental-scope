@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { REPO_URL } from '../app/repo';
 import { actions, useApp } from '../state/store';
 import { IconClose } from './icons';
@@ -154,21 +154,3 @@ export function AboutDialog() {
 }
 
 /** First-run nudge: disappears after the first selection. */
-export function StartHint() {
-  const ready = useApp((s) => s.ready);
-  const selected = useApp((s) => s.selectedId);
-  const busy = useApp((s) => s.clip.enabled || s.explode > 0 || s.searchOpen || s.dissectFdi !== null || s.mobileSheet !== 'none');
-  const [done, setDone] = useState(false);
-  useEffect(() => {
-    if (selected) setDone(true);
-  }, [selected]);
-  if (!ready || done || busy) return null;
-  return (
-    <div className="ds-start-hint" role="note">
-      <span className="ds-pulse" aria-hidden="true" />
-      <span>
-        Select a tooth to inspect it<span className="ds-hint-extra"> · <kbd>/</kbd> to search</span>
-      </span>
-    </div>
-  );
-}

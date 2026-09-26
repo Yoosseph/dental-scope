@@ -7,6 +7,7 @@ import { resolveContent } from '../content/content';
 import { actions, useApp } from '../state/store';
 import { useServices } from './context';
 import { IconArrowLeft, IconClose, IconEyeOff, IconFocus, IconGhost, IconIsolate, IconTooth } from './icons';
+import { PanelHandle } from './PanelHandle';
 
 const NUMBERING_TITLE: Record<NumberingSystem, string> = { fdi: 'FDI (ISO 3950)', universal: 'Universal (ADA)', palmer: 'Palmer' };
 
@@ -18,6 +19,7 @@ export function DetailPanel() {
   const dissectFdi = useApp((s) => s.dissectFdi);
   const ghosted = useApp((s) => (selectedId ? !!s.ghosted[selectedId] : false));
   const mobileOpen = useApp((s) => s.mobileSheet === 'detail');
+  const collapsed = useApp((s) => s.collapsed.detail);
   const s = selectedId ? registry.get(selectedId) : undefined;
   const content = useMemo(() => (s ? resolveContent(registry, s.id) : null), [registry, s]);
   if (!s || !content) return null;
@@ -36,7 +38,8 @@ export function DetailPanel() {
   };
 
   return (
-    <aside className={`ds-panel ds-detail${mobileOpen ? ' is-mobile-open' : ''}`} aria-label={`${s.name} details`} aria-live="polite">
+    <aside className={`ds-panel ds-detail${mobileOpen ? ' is-mobile-open' : ''}${collapsed ? ' is-collapsed' : ''}`} aria-label={`${s.name} details`} aria-live="polite">
+      <PanelHandle panel="detail" />
       <div className="ds-detail-head">
         <span className="ds-detail-bar" style={{ background: catDef?.color ?? 'var(--accent)' }} aria-hidden="true" />
         <div className="ds-eyebrow">{catDef?.label ?? kindLabel(s)}</div>

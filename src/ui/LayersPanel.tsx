@@ -4,13 +4,16 @@ import type { CategoryId } from '../anatomy/types';
 import { actions, useApp } from '../state/store';
 import { useServices } from './context';
 import { IconCheck, IconGhost, IconLayers, IconReset, IconTree } from './icons';
+import { PanelHandle } from './PanelHandle';
 import { StructureTree } from './StructureTree';
 
 export function LayersPanel() {
   const panel = useApp((s) => s.panel);
   const mobileOpen = useApp((s) => s.mobileSheet === 'layers');
+  const collapsed = useApp((s) => s.collapsed.layers);
   return (
-    <aside className={`ds-panel ds-layers${mobileOpen ? ' is-mobile-open' : ''}`} aria-label="Layers and structures">
+    <aside className={`ds-panel ds-layers${mobileOpen ? ' is-mobile-open' : ''}${collapsed ? ' is-collapsed' : ''}`} aria-label="Layers and structures">
+      <PanelHandle panel="layers" />
       <div className="ds-tabs" role="tablist" aria-label="Panel">
         <button type="button" role="tab" aria-selected={panel === 'layers'} className={panel === 'layers' ? 'is-active' : ''} onClick={() => actions.setPanel('layers')}>
           <IconLayers size={14} /> Layers
