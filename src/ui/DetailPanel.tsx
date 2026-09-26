@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { CATEGORY_BY_ID } from '../anatomy/categories';
-import { formatTooth } from '../anatomy/notation';
-import type { Provenance, Structure } from '../anatomy/types';
+import { formatTooth, NUMBERING_SHORT, NUMBERING_SYSTEMS } from '../anatomy/notation';
+import type { NumberingSystem, Provenance, Structure } from '../anatomy/types';
 import type { ContentStatus } from '../content/content';
 import { pathFor, pushPath } from '../app/router';
 import { resolveContent } from '../content/content';
@@ -15,6 +15,8 @@ const PROVENANCE: Record<Provenance, { label: string; text: string }> = {
   modeled: { label: 'Modeled', text: 'Built inside the real tooth shape from simplified proportions. Not measured.' },
   schematic: { label: 'Schematic', text: 'Placed from anatomical landmarks. Not measured.' },
 };
+
+const NUMBERING_TITLE: Record<NumberingSystem, string> = { fdi: 'FDI (ISO 3950)', universal: 'Universal (ADA)', palmer: 'Palmer' };
 
 const STATUS_LABEL: Record<ContentStatus, string> = {
   reviewed: 'Reviewed text',
@@ -59,9 +61,9 @@ export function DetailPanel() {
         <h2 className="ds-detail-title">{s.name}</h2>
         {tooth?.tooth && fdi !== undefined && (
           <div className="ds-notation" aria-label="Tooth notation">
-            {(['fdi', 'universal', 'palmer'] as const).map((n) => (
-              <span key={n} className={`ds-chip ds-chip--mono${numbering === n ? ' is-active' : ''}`} title={n === 'fdi' ? 'FDI (ISO 3950)' : n === 'universal' ? 'Universal (ADA)' : 'Palmer'}>
-                <em>{n === 'fdi' ? 'FDI' : n === 'universal' ? 'UNI' : 'PAL'}</em> {formatTooth(fdi, n).replace('#', '')}
+            {NUMBERING_SYSTEMS.map((n) => (
+              <span key={n} className={`ds-chip ds-chip--mono${numbering === n ? ' is-active' : ''}`} title={NUMBERING_TITLE[n]}>
+                <em>{NUMBERING_SHORT[n]}</em> {formatTooth(fdi, n).replace('#', '')}
               </span>
             ))}
           </div>
@@ -99,7 +101,7 @@ export function DetailPanel() {
               <Fact key={f.label} label={f.label} value={f.value} />
             ))}
             {s.tooth && s.tooth.roots.length > 0 && (
-              <Fact label="Modeled here" value={`${s.tooth.roots.length} root${s.tooth.roots.length > 1 ? 's' : ''} · ${s.tooth.roots.reduce((a, r) => a + r.canals.length, 0)} canal${s.tooth.roots.reduce((a, r) => a + r.canals.length, 0) > 1 ? 's' : ''}`} />
+              <Fact label="Modeled here" value={modeledSummary(s.tooth.roots)} />
             )}
             {s.sourceRef && <Fact label="Atlas reference" value={s.sourceRef} />}
           </dl>
@@ -207,6 +209,12 @@ function Fact({ label, value }: { label: string; value: string }) {
       <dd>{value}</dd>
     </>
   );
+}
+
+const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? 's' : ''}`;
+/** "2 roots · 3 canals" */
+function modeledSummary(roots: { canals: string[] }[]): string {
+  return `${plural(roots.length, 'root')} · ${plural(roots.reduce((a, r) => a + r.canals.length, 0), 'canal')}`;
 }
 
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1);

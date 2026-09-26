@@ -28,13 +28,7 @@ export function StructureTree() {
     requestAnimationFrame(() => ref.current?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' }));
   }, [selectedId, registry]);
 
-  const toggle = (id: string) =>
-    setOpen((o) => {
-      const n = new Set(o);
-      if (n.has(id)) n.delete(id);
-      else n.add(id);
-      return n;
-    });
+  const toggle = (id: string) => setOpen((o) => withOpen(o, id, !o.has(id)));
 
   const root = registry.require(registry.rootId);
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -44,12 +38,8 @@ export function StructureTree() {
     const id = items[i].dataset.id!;
     if (e.key === 'ArrowDown') items[Math.min(items.length - 1, i + 1)]?.focus();
     else if (e.key === 'ArrowUp') items[Math.max(0, i - 1)]?.focus();
-    else if (e.key === 'ArrowRight') setOpen((o) => new Set(o).add(id));
-    else if (e.key === 'ArrowLeft') setOpen((o) => {
-      const n = new Set(o);
-      n.delete(id);
-      return n;
-    });
+    else if (e.key === 'ArrowRight') setOpen((o) => withOpen(o, id, true));
+    else if (e.key === 'ArrowLeft') setOpen((o) => withOpen(o, id, false));
     else return;
     e.preventDefault();
   };
@@ -107,7 +97,7 @@ const TreeNode = memo(function TreeNode({ id, depth, open, toggle }: { id: strin
         >
           <IconChevron size={12} />
         </button>
-        <span className="ds-tree-name">{label(s, numbering)}</span>
+        <span className="ds-tree-name">{label(s)}</span>
         {s.tooth && <span className="ds-chip ds-chip--mono ds-chip--sm">{formatTooth(s.tooth.fdi, numbering)}</span>}
         {s.kind !== 'landmark' && (
           <button
@@ -136,7 +126,16 @@ const TreeNode = memo(function TreeNode({ id, depth, open, toggle }: { id: strin
   );
 });
 
-function label(s: Structure, _n: string): string {
+/** Copy of the set of expanded ids with `id` opened or closed. */
+function withOpen(open: Set<string>, id: string, isOpen: boolean): Set<string> {
+  const next = new Set(open);
+  if (isOpen) next.add(id);
+  else next.delete(id);
+  return next;
+}
+
+/** Tree label: teeth drop the arch/side prefix, which the quadrant row above already shows. */
+function label(s: Structure): string {
   if (s.tooth) return s.name.replace(/^(Maxillary|Mandibular) (right|left) /, '').replace(/^./, (c) => c.toUpperCase());
   return s.name;
 }

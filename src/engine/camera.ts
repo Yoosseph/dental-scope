@@ -158,13 +158,7 @@ export class CameraRig {
         cam.lookAt(this.controls.target);
         this.updateClipping();
       },
-      {},
     );
-  }
-
-  focusBox(box: THREE.Box3, opts: FocusOptions = {}) {
-    const sphere = box.getBoundingSphere(new THREE.Sphere());
-    this.focusSphere(sphere.center, sphere.radius, opts);
   }
 
   preset(p: ViewPreset, center = this.home.target, radius = this.home.radius, duration = 0.9) {
