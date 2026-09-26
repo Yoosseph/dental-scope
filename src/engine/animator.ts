@@ -33,6 +33,10 @@ export class Animator {
     this.anims.delete(key);
   }
 
+  isRunning(key: string): boolean {
+    return this.anims.has(key);
+  }
+
   get active(): boolean {
     return this.anims.size > 0;
   }

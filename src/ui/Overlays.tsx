@@ -119,6 +119,8 @@ export function AboutDialog() {
         <dd>Zoom (touch: pinch)</dd>
         <dt>Click</dt>
         <dd>Select · double-click to focus</dd>
+        <dt>Orbit mode</dt>
+        <dd>Fixed: always turn around the model centre · Free: pan and focus move the pivot (right-hand toolbar)</dd>
         <dt>/</dt>
         <dd>Search</dd>
         <dt>Esc</dt>
@@ -138,7 +140,7 @@ export function AboutDialog() {
         <dt>Arrows · + −</dt>
         <dd>Orbit · zoom</dd>
         <dt>R</dt>
-        <dd>Reset camera</dd>
+        <dd>Reset view</dd>
       </dl>
       <p className="ds-about-foot">
         Code MIT · Models CC BY-SA 2.1 JP · Text CC BY-SA 4.0

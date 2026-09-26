@@ -10,6 +10,8 @@ import type { CategoryId, NumberingSystem } from '../anatomy/types';
 
 export type ClipAxis = 'sagittal' | 'coronal' | 'axial' | 'view';
 export type ModeId = 'explore' | 'learn' | 'quiz' | 'compare';
+/** Camera navigation: fixed turntable around the model centre, or free pivot that follows pan/focus. */
+export type OrbitMode = 'fixed' | 'free';
 export type ViewPreset =
   | 'three-quarter'
   | 'front'
@@ -59,6 +61,7 @@ export interface AppState {
   numbering: NumberingSystem;
   view: ViewPreset | null;
   autoRotate: boolean;
+  orbitMode: OrbitMode;
 
   dissectFdi: number | null;
   dissectLevel: number;
@@ -91,6 +94,7 @@ export const initialState: AppState = {
   numbering: 'fdi',
   view: 'three-quarter',
   autoRotate: false,
+  orbitMode: 'free',
   dissectFdi: null,
   dissectLevel: 0,
   toothExplode: 0,
@@ -112,6 +116,15 @@ export const getState = store.getState;
 export const setState = store.setState;
 
 /* ------------------------------------------------------------------ actions */
+
+/** Remember a per-viewer preference (restored by restorePreferences). */
+function persist(key: string, value: string) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    /* storage unavailable */
+  }
+}
 
 export const actions = {
   select(id: string | null) {
@@ -183,17 +196,17 @@ export const actions = {
   },
   setNumbering(n: NumberingSystem) {
     setState({ numbering: n });
-    try {
-      localStorage.setItem('ds.numbering', n);
-    } catch {
-      /* storage unavailable */
-    }
+    persist('ds.numbering', n);
   },
   setView(v: ViewPreset | null) {
     setState({ view: v });
   },
   setAutoRotate(on: boolean) {
     setState({ autoRotate: on });
+  },
+  setOrbitMode(m: OrbitMode) {
+    setState({ orbitMode: m });
+    persist('ds.orbit', m);
   },
   enterDissect(fdi: number) {
     setState({ dissectFdi: fdi, dissectLevel: 0, toothExplode: 0, isolateId: `tooth-${fdi}`, isolateContext: true, explode: 0 });
@@ -225,11 +238,7 @@ export const actions = {
   },
   setTheme(t: AppState['theme']) {
     setState({ theme: t });
-    try {
-      localStorage.setItem('ds.theme', t);
-    } catch {
-      /* storage unavailable */
-    }
+    persist('ds.theme', t);
   },
   setMode(m: ModeId) {
     setState({ mode: m });
@@ -246,6 +255,8 @@ export function restorePreferences() {
     if (n === 'fdi' || n === 'universal' || n === 'palmer') setState({ numbering: n });
     const t = localStorage.getItem('ds.theme');
     if (t === 'light' || t === 'dark') setState({ theme: t });
+    const o = localStorage.getItem('ds.orbit');
+    if (o === 'fixed' || o === 'free') setState({ orbitMode: o });
   } catch {
     /* storage unavailable */
   }

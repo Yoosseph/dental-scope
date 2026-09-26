@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { actions, useApp, type ViewPreset } from '../state/store';
+import { actions, useApp, type OrbitMode, type ViewPreset } from '../state/store';
 import { useServices } from './context';
-import { IconMinus, IconPlus, IconReset, IconRotate } from './icons';
+import { IconMinus, IconOrbitFixed, IconOrbitFree, IconPlus, IconReset, IconRotate } from './icons';
 
 const VIEWS: { id: ViewPreset; short: string; label: string }[] = [
   { id: 'three-quarter', short: '¾', label: 'Three-quarter view' },
@@ -14,6 +14,11 @@ const VIEWS: { id: ViewPreset; short: string; label: string }[] = [
   { id: 'occlusal-lower', short: 'OL', label: 'Occlusal view of the lower arch' },
 ];
 
+const ORBIT_MODES: { id: OrbitMode; label: string; icon: ReactNode }[] = [
+  { id: 'fixed', label: 'Fixed orbit: always turn around the model centre', icon: <IconOrbitFixed /> },
+  { id: 'free', label: 'Free orbit: pan and focus move the pivot', icon: <IconOrbitFree /> },
+];
+
 /** How long a label stays up after a touch tap (touch has no hover). */
 const TOUCH_TIP_MS = 1600;
 
@@ -21,6 +26,7 @@ export function ViewRail() {
   const { engine } = useServices();
   const view = useApp((s) => s.view);
   const auto = useApp((s) => s.autoRotate);
+  const orbit = useApp((s) => s.orbitMode);
   const mobileOpen = useApp((s) => s.mobileSheet === 'tools');
   // label currently shown for touch, hover or focus; drives the tip on touch and the mobile caption
   const [tipLabel, setTipLabel] = useState<string | null>(null);
@@ -36,6 +42,14 @@ export function ViewRail() {
   return (
     <>
       <nav className={`ds-rail ds-panel${mobileOpen ? ' is-mobile-open' : ''}`} aria-label="Camera views">
+        <div className="ds-rail-group" role="group" aria-label="Orbit mode">
+          {ORBIT_MODES.map((m) => (
+            <RailButton key={m.id} {...tipProps(m.label)} pressed={orbit === m.id} onClick={() => actions.setOrbitMode(m.id)}>
+              {m.icon}
+            </RailButton>
+          ))}
+        </div>
+        <span className="ds-rail-sep" aria-hidden="true" />
         {VIEWS.map((v) => (
           <RailButton key={v.id} {...tipProps(v.label)} pressed={view === v.id} onClick={() => engine.setView(v.id)}>
             {v.short}
@@ -51,7 +65,7 @@ export function ViewRail() {
         <RailButton {...tipProps('Auto-rotate')} pressed={auto} onClick={() => actions.setAutoRotate(!auto)}>
           <IconRotate />
         </RailButton>
-        <RailButton {...tipProps('Reset camera', 'R')} onClick={() => engine.resetCamera()}>
+        <RailButton {...tipProps('Reset view', 'R')} onClick={() => engine.resetCamera()}>
           <IconReset />
         </RailButton>
       </nav>

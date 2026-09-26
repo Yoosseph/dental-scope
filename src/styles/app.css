@@ -540,6 +540,8 @@ button.ds-layer-name:hover {
   right: 24px;
   top: 50%;
   transform: translateY(-50%);
+  /* above the detail panel so the control labels are never hidden behind it */
+  z-index: 2;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -573,6 +575,11 @@ button.ds-layer-name:hover {
 }
 .ds-rail-btn {
   position: relative;
+}
+.ds-rail-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 /* action label: appears to the left of the rail on hover, keyboard focus or a touch tap */
 .ds-rail-tip,
@@ -1554,6 +1561,9 @@ button.ds-layer-name:hover {
     transform: none;
     overflow-x: auto;
     z-index: 5;
+  }
+  .ds-rail.is-mobile-open .ds-rail-group {
+    flex-direction: row;
   }
   .ds-rail.is-mobile-open .ds-rail-sep {
     width: 1px;

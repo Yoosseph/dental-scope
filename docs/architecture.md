@@ -127,7 +127,7 @@ One Zustand store; slices are plain data (Sets as arrays/records) and actions ar
 |---|---|
 | selection | `selectedId`, `hoveredId` |
 | visibility | `hidden: Record<id,true>`, `ghosted: Record<id,true>`, `categoryOff: Record<cat,true>`, `isolateId`, `globalOpacity` |
-| view | `explode` (0–1), `labels`, `clip: {enabled, axis, offset, flip}`, `numbering` |
+| view | `explode` (0–1), `labels`, `clip: {enabled, axis, offset, flip}`, `numbering`, `orbitMode` (`fixed` / `free`) |
 | tooth | `dissectToothId`, `dissectLevel` (0 whole → 4 canals), `toothExplode` |
 | mode | `mode: 'explore' | 'learn' | 'quiz' | 'compare'` |
 | loading | per-stage progress |
@@ -146,7 +146,8 @@ Engine
  ├─ Materials       tissue palette; per-mesh material state: base / hover / selected / ghost; back-face cap shader for sections
  ├─ Visibility      store → mesh.visible / opacity (animated fades)
  ├─ Picking         raycast visible meshes on pointer; hover throttled to rAF; click vs drag discrimination
- ├─ CameraRig       OrbitControls + tweened focus (bounds → distance via FOV), presets, reduced motion
+ ├─ CameraRig       OrbitControls + tweened focus (bounds → distance via FOV), presets, reduced motion;
+ │                  orbit modes: fixed (target springs back to a pivot = dentition or dissected tooth) / free
  ├─ Explode         arch-level and tooth-level offset fields, animated
  ├─ Clipping        one global plane (sagittal/coronal/axial/custom-to-view) applied to materials; cut faces rendered as flat tissue colour
  └─ Labels          DOM layer; projected per frame; priority + overlap declutter; click → select
