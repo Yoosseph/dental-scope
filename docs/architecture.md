@@ -77,11 +77,12 @@ src/
     labels.ts           DOM label layer with decluttering
     assets.ts           Manifest fetch + GLB loader (meshopt)
     animator.ts         Tiny keyed tween driver
-  ui/                   React components: App, TopBar, LayersPanel, StructureTree, DetailPanel, Dock,
-                        ViewRail, SearchPanel, Overlays (About, footer, loading, start hint), icons,
+  ui/                   React components: App, TopBar, LayersPanel, StructureTree, DetailPanel, Dock
+                        (bottom toolbar), CameraControls (orbit, view pictograms / View picker, zoom),
+                        SearchPanel, Overlays (About, footer, loading, start hint), icons,
                         useKeyboard, context (ServicesContext)
   modes/modes.ts        🧩 Mode interface, lesson format, quiz picker (not wired to the UI)
-  styles/               tokens.css (design tokens, light/dark), app.css
+  styles/               tokens.css (design tokens: paper and ink, one ultramarine accent, light/dark), app.css
 public/
   models/               Production GLBs + manifest.json (CC BY-SA 2.1 JP, derived from BodyParts3D)
   favicon.svg, og-image.png
@@ -204,7 +205,8 @@ The pipeline (details in [assets.md](assets.md)): BodyParts3D STL → `tools/pip
 - **Accessibility.**
   - Every control is a labelled `<button>`/`<input>`.
   - The structure tree is a keyboard-navigable `role="tree"`, so the canvas isn't the only path to the content.
-  - The view-rail controls show their names on hover, focus and touch.
+  - The camera controls in the bottom toolbar show their names on hover, focus and touch; the View picker returns focus to its button and closes on Escape.
+  - Layer visibility toggles are the colour swatches: buttons with `aria-pressed`, a check mark when on, so state never relies on colour alone.
   - Keyboard shortcuts are handled in `useKeyboard.ts` and listed in the About dialog and the README.
   - `prefers-reduced-motion` (or `?motion=reduce`) makes camera and explode changes instant.
   - Text contrast is at least 4.5:1, with visible focus rings.

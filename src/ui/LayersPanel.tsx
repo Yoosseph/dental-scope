@@ -47,9 +47,9 @@ function Categories() {
           </button>
         ))}
       </div>
-      <div className="ds-layer-list" role="list">
+      <div className="ds-layer-list">
         {groups.map(([group, list]) => (
-          <div key={group} className="ds-layer-group" role="group" aria-label={group}>
+          <div key={group} className="ds-layer-group" role="list" aria-label={group}>
             <div className="ds-layer-group-title">{group}</div>
             {list.map((c) => (
               <CategoryRow key={c.id} id={c.id} label={c.label} color={c.color} planned={!!c.planned} count={counts[c.id] ?? 0} state={cats[c.id]} />
