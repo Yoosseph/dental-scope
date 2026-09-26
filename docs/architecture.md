@@ -29,7 +29,7 @@ Build-time environment variables:
 | `VITE_DS_REPO_URL` | Links the "Made by Yoseph" credit and the About dialog to the repository. When unset these show as plain text, so a build never advertises a private repository. |
 | `VITE_DS_URL=off` | Stop the app from writing to the address bar (for embedding). |
 
-CI (`.github/workflows/ci.yml`) runs typecheck, test and build on pushes and PRs. `.github/workflows/pages.yml` deploys `main` to GitHub Pages. It takes `DS_BASE` and `DS_SITE_URL` from `actions/configure-pages`, and passes `VITE_DS_REPO_URL` only while the repository is public.
+CI (`.github/workflows/ci.yml`) runs typecheck, test and build on pushes and PRs. Vercel deploys `main` to production and every other branch to a preview. `DS_SITE_URL` and `VITE_DS_REPO_URL` come from the Vercel project's environment variables; unknown deep links fall back to the generated `404.html` app shell.
 
 ## 2. Principles
 
@@ -77,11 +77,12 @@ src/
     labels.ts           DOM label layer with decluttering
     assets.ts           Manifest fetch + GLB loader (meshopt)
     animator.ts         Tiny keyed tween driver
-  ui/                   React components: App, TopBar, LayersPanel, StructureTree, DetailPanel, Dock,
-                        ViewRail, SearchPanel, Overlays (About, footer, loading, start hint), icons,
+  ui/                   React components: App, TopBar, LayersPanel, StructureTree, DetailPanel, Dock
+                        (bottom toolbar), CameraControls (orbit, view pictograms / View picker, zoom),
+                        SearchPanel, Overlays (About, footer, loading, start hint), icons,
                         useKeyboard, context (ServicesContext)
   modes/modes.ts        🧩 Mode interface, lesson format, quiz picker (not wired to the UI)
-  styles/               tokens.css (design tokens, light/dark), app.css
+  styles/               tokens.css (design tokens: paper and ink, one ultramarine accent, light/dark), app.css
 public/
   models/               Production GLBs + manifest.json (CC BY-SA 2.1 JP, derived from BodyParts3D)
   favicon.svg, og-image.png
@@ -204,7 +205,8 @@ The pipeline (details in [assets.md](assets.md)): BodyParts3D STL → `tools/pip
 - **Accessibility.**
   - Every control is a labelled `<button>`/`<input>`.
   - The structure tree is a keyboard-navigable `role="tree"`, so the canvas isn't the only path to the content.
-  - The view-rail controls show their names on hover, focus and touch.
+  - The camera controls in the bottom toolbar show their names on hover, focus and touch; the View picker returns focus to its button and closes on Escape.
+  - Layer visibility toggles are the colour swatches: buttons with `aria-pressed`, a check mark when on, so state never relies on colour alone.
   - Keyboard shortcuts are handled in `useKeyboard.ts` and listed in the About dialog and the README.
   - `prefers-reduced-motion` (or `?motion=reduce`) makes camera and explode changes instant.
   - Text contrast is at least 4.5:1, with visible focus rings.

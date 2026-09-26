@@ -81,6 +81,21 @@ kbd {
   pointer-events: auto;
 }
 
+/* ------------------------------------------------------------------ section headings
+   Italic serif captions, like the headings on an anatomy plate. */
+.ds-layer-group-title,
+.ds-label-sm,
+.ds-detail-section h3,
+.ds-about h3 {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--muted);
+}
+
 /* ------------------------------------------------------------------ panels */
 .ds-panel {
   background: var(--panel);
@@ -102,20 +117,18 @@ kbd {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 10.5px;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 13.5px;
   color: var(--muted);
-}
-.ds-eyebrow--plain {
-  letter-spacing: 0.1em;
 }
 .ds-title {
   margin: 0;
-  font-size: 30px;
+  font-family: var(--font-display);
+  font-size: 32px;
   font-weight: 600;
-  letter-spacing: -0.025em;
+  font-variation-settings: 'opsz' 60;
+  letter-spacing: -0.015em;
   line-height: 1.05;
 }
 .ds-credit {
@@ -291,12 +304,7 @@ kbd {
   margin-top: 8px;
 }
 .ds-layer-group-title {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--faint);
-  padding: 6px 6px 4px;
+  padding: 8px 6px 2px;
 }
 .ds-layer-row {
   display: flex;
@@ -364,31 +372,60 @@ button.ds-layer-name:hover {
   color: var(--accent);
   background: var(--accent-soft);
 }
-.ds-switch {
-  position: relative;
-  width: 30px;
-  height: 18px;
+.ds-dot-toggle {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
   flex: none;
-  border-radius: 9px;
-  background: var(--switch-off);
-  transition: background var(--dur) var(--ease);
+  margin-left: -4px;
+  border-radius: 6px;
 }
-.ds-switch span {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 14px;
-  height: 14px;
+.ds-dot-toggle:not(.is-static):hover {
+  background: var(--hover);
+}
+.ds-dot-toggle.is-static .ds-dot-toggle-dot {
+  box-shadow: inset 0 0 0 1.5px var(--dot);
+  opacity: 0.8;
+}
+.ds-dot-toggle-dot {
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
   border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  transition: transform var(--dur) var(--ease);
+  /* off: an outlined ring in the layer colour, with an ink hairline so pale colours stay visible */
+  background: transparent;
+  box-shadow:
+    inset 0 0 0 2px var(--dot),
+    0 0 0 1px var(--line);
+  color: transparent;
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease);
 }
-.ds-switch.is-on {
-  background: var(--accent);
+.ds-dot-toggle.is-on .ds-dot-toggle-dot {
+  background: var(--dot);
+  color: var(--dot-ink);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.14),
+    0 0 0 1px var(--line);
 }
-.ds-switch.is-on span {
-  transform: translateX(12px);
+/* translucent layers: the swatch fades with them */
+.ds-dot-toggle.is-ghost .ds-dot-toggle-dot {
+  background: color-mix(in srgb, var(--dot) 45%, transparent);
+  color: var(--ink);
+}
+.ds-dot-toggle .ds-dot-toggle-dot svg {
+  transform: scale(0.6);
+  opacity: 0;
+  transition:
+    transform var(--dur) var(--ease),
+    opacity var(--dur);
+}
+.ds-dot-toggle.is-on .ds-dot-toggle-dot svg {
+  transform: none;
+  opacity: 1;
 }
 .ds-panel-footer {
   display: flex;
@@ -520,147 +557,159 @@ button.ds-layer-name:hover {
   gap: 5px;
 }
 .ds-label-sm {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--faint);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
-/* ------------------------------------------------------------------ rail */
-.ds-rail {
-  position: absolute;
-  right: 24px;
-  top: 50%;
-  transform: translateY(-50%);
-  /* above the detail panel so the control labels are never hidden behind it */
-  z-index: 2;
+/* ------------------------------------------------------------------ toolbar
+   One bottom toolbar: a camera row (orbit, views, zoom, rotate, reset) above the scene or
+   dissection tools. Views are pictograms; on narrow screens they fold into a View button. */
+.ds-toolbar {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 5px;
-  border-radius: 14px;
+  align-items: center;
 }
-.ds-rail-btn {
+.ds-camera {
+  position: relative;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 5px 10px;
+  border-bottom: 1px solid var(--line);
+}
+.ds-tb-group {
+  display: flex;
+  gap: 2px;
+}
+.ds-tb-sep {
+  width: 1px;
+  align-self: stretch;
+  margin: 5px 6px;
+  background: var(--line);
+}
+.ds-tb-btn {
+  position: relative;
   display: grid;
   place-items: center;
   width: 34px;
   height: 32px;
-  border-radius: 9px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
+  border-radius: var(--radius-sm);
   color: var(--muted);
-  transition: background var(--dur), color var(--dur);
+  transition:
+    background var(--dur),
+    color var(--dur);
 }
-.ds-rail-btn:hover {
+.ds-tb-btn:hover {
   background: var(--hover);
   color: var(--ink);
 }
-.ds-rail-btn.is-active {
+.ds-tb-btn.is-active {
   background: var(--ink);
   color: var(--panel-solid);
 }
-.ds-rail-sep {
-  height: 1px;
-  background: var(--line);
-  margin: 4px 6px;
-}
-.ds-rail-btn {
-  position: relative;
-}
-.ds-rail-group {
+/* the control's name, just above it, on hover, keyboard focus, a touch tap or the first-visit peek */
+.ds-tb-tip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 9px);
+  z-index: 3;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-/* action label: on hover, keyboard focus or a touch tap the button grows into a dark pill that
-   slides out to the left and names the action (the icon stays in place at its right end) */
-.ds-rail-btn {
-  isolation: isolate;
-}
-.ds-rail-btn:hover,
-.ds-rail-btn:focus-visible,
-.ds-rail-btn.is-tip-shown {
-  color: var(--panel-solid);
-}
-.ds-rail-tip,
-.ds-rail-caption {
-  border-radius: 9px;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 9px;
+  border-radius: var(--radius-sm);
   background: var(--ink);
-  box-shadow: var(--panel-shadow);
-  font-family: var(--font-ui);
+  color: var(--panel-solid);
   font-size: 12px;
   font-weight: 500;
-  color: var(--panel-solid);
   white-space: nowrap;
   pointer-events: none;
-}
-.ds-rail-caption {
-  padding: 5px 10px;
-}
-.ds-rail-tip {
-  position: absolute;
-  z-index: -1;
-  top: 0;
-  right: 0;
-  height: 100%;
-  /* the right-hand part sits behind the button's own icon */
-  padding: 0 44px 0 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  clip-path: inset(0 0 0 calc(100% - 34px) round 9px);
   opacity: 0;
-  transition: clip-path 220ms var(--ease), opacity 120ms;
+  transform: translate(-50%, 4px);
+  transition:
+    opacity 120ms,
+    transform 180ms var(--ease);
 }
-.ds-rail-tip-text {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transform: translateX(10px);
-  transition: transform 220ms var(--ease);
-}
-.ds-rail-tip kbd {
+.ds-tb-tip kbd {
   font-size: 10px;
   color: inherit;
   background: rgba(255, 255, 255, 0.14);
   border-color: rgba(255, 255, 255, 0.22);
 }
-:root[data-theme='dark'] .ds-rail-tip kbd {
+:root[data-theme='dark'] .ds-tb-tip kbd {
   background: rgba(0, 0, 0, 0.08);
   border-color: rgba(0, 0, 0, 0.18);
 }
-.ds-rail-btn:hover .ds-rail-tip,
-.ds-rail-btn:focus-visible .ds-rail-tip,
-.ds-rail-btn.is-tip-shown .ds-rail-tip,
-.ds-rail.is-peek .ds-rail-tip {
+.ds-tb-btn:hover .ds-tb-tip,
+.ds-tb-btn:focus-visible .ds-tb-tip,
+.ds-tb-btn.is-tip-shown .ds-tb-tip {
   opacity: 1;
-  clip-path: inset(0 round 9px);
+  transform: translate(-50%, 0);
 }
-.ds-rail-btn:hover .ds-rail-tip-text,
-.ds-rail-btn:focus-visible .ds-rail-tip-text,
-.ds-rail-btn.is-tip-shown .ds-rail-tip-text,
-.ds-rail.is-peek .ds-rail-tip-text {
-  transform: none;
+.ds-tb-caption {
+  display: none;
 }
-/* first visit: every label slides out once, one after another, so people see what the rail does */
-.ds-rail.is-peek .ds-rail-btn {
+/* collapsed view picker (narrow screens) */
+.ds-view-picker {
+  display: none;
+}
+.ds-view-picker-btn {
+  display: flex;
+  width: auto;
+  gap: 6px;
+  padding: 0 10px 0 8px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.ds-view-picker-btn.is-open {
+  background: var(--hover);
+  color: var(--ink);
+}
+.ds-view-grid {
+  /* centred on the toolbar (4 × 72px columns + gaps, padding and border = 308px) */
+  position: absolute;
+  left: calc(50% - 154px);
+  bottom: calc(100% + 10px);
+  z-index: 3;
+  display: grid;
+  grid-template-columns: repeat(4, 72px);
+  gap: 2px;
+  padding: 6px;
+  background: var(--panel-solid);
+  animation: ds-in 180ms var(--ease);
+}
+.ds-view-grid button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 9px 2px 7px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  color: var(--muted);
+}
+.ds-view-grid button:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+.ds-view-grid button.is-active {
+  background: var(--ink);
   color: var(--panel-solid);
 }
-.ds-rail.is-peek .ds-rail-tip,
-.ds-rail.is-peek .ds-rail-tip-text {
-  transition-delay: calc(var(--i, 0) * 45ms);
-}
-.ds-rail-caption {
-  display: none;
+@media (max-width: 1100px) {
+  .ds-views {
+    display: none;
+  }
+  .ds-view-picker {
+    display: block;
+  }
 }
 
 /* ------------------------------------------------------------------ detail */
 .ds-detail {
   position: absolute;
-  right: 84px;
+  right: 24px;
   top: 76px;
   width: 340px;
   max-height: calc(100% - 76px - 150px);
@@ -675,7 +724,7 @@ button.ds-layer-name:hover {
   }
 }
 .ds-app.is-dissecting .ds-detail {
-  max-height: calc(100% - 76px - 220px);
+  max-height: calc(100% - 76px - 260px);
 }
 .ds-detail-head {
   position: relative;
@@ -695,9 +744,10 @@ button.ds-layer-name:hover {
 }
 .ds-detail-title {
   margin: 6px 0 0;
-  font-size: 21px;
+  font-family: var(--font-display);
+  font-size: 23px;
   font-weight: 600;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
   line-height: 1.2;
   padding-right: 20px;
 }
@@ -730,12 +780,7 @@ button.ds-layer-name:hover {
   color: var(--faint);
 }
 .ds-detail-section h3 {
-  margin: 12px 0 3px;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--faint);
+  margin: 14px 0 2px;
 }
 .ds-detail-section p {
   margin: 0;
@@ -951,11 +996,12 @@ button.ds-layer-name:hover {
   position: relative;
 }
 .ds-tool-wrap {
+  position: relative;
   display: flex;
 }
 .ds-tool-warn {
   position: absolute;
-  right: 12px;
+  right: 0;
   bottom: calc(100% + 8px);
   display: flex;
   align-items: center;
@@ -977,10 +1023,7 @@ button.ds-layer-name:hover {
 }
 .ds-tool-warn svg {
   flex: none;
-  color: #c27a1a;
-}
-:root[data-theme='dark'] .ds-tool-warn svg {
-  color: #e7b27a;
+  color: var(--warn);
 }
 .ds-tool-warn kbd {
   font-size: 10px;
@@ -992,7 +1035,7 @@ button.ds-layer-name:hover {
 }
 .ds-dock-note {
   position: absolute;
-  top: -22px;
+  top: calc(100% + 8px);
   left: 18px;
   font-size: 11px;
   color: var(--muted);
@@ -1081,7 +1124,7 @@ button.ds-layer-name:hover {
   width: 11px;
   height: 11px;
   border-radius: 50%;
-  border: 2px solid var(--switch-off);
+  border: 2px solid var(--faint);
   background: var(--panel-solid);
 }
 .ds-step.is-past .ds-step-dot {
@@ -1113,7 +1156,7 @@ button.ds-layer-name:hover {
   justify-content: flex-end;
   gap: 16px;
   font-size: 11px;
-  color: var(--faint);
+  color: var(--muted);
   pointer-events: none;
 }
 .ds-footer p {
@@ -1138,7 +1181,7 @@ button.ds-layer-name:hover {
 }
 .ds-loading.is-compact {
   top: auto;
-  bottom: 150px;
+  bottom: 232px;
   transform: translateX(-50%);
   width: auto;
   padding: 8px 14px;
@@ -1200,7 +1243,7 @@ button.ds-layer-name:hover {
 .ds-start-hint {
   position: absolute;
   left: 50%;
-  bottom: 186px;
+  bottom: 232px;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
@@ -1224,10 +1267,10 @@ button.ds-layer-name:hover {
 }
 @keyframes ds-pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(31, 181, 201, 0.5);
+    box-shadow: 0 0 0 0 var(--accent-glow);
   }
   100% {
-    box-shadow: 0 0 0 10px rgba(31, 181, 201, 0);
+    box-shadow: 0 0 0 10px transparent;
   }
 }
 @media (max-width: 767px) {
@@ -1250,7 +1293,7 @@ button.ds-layer-name:hover {
   justify-content: center;
   align-items: flex-start;
   padding: 11vh 16px 16px;
-  background: rgba(10, 20, 26, 0.12);
+  background: var(--scrim);
   animation: ds-fade 160ms var(--ease);
 }
 @keyframes ds-fade {
@@ -1350,7 +1393,7 @@ button.ds-layer-name:hover {
   background: var(--label-bg);
   color: var(--label-ink);
   border: 1px solid var(--panel-border);
-  box-shadow: 0 2px 8px rgba(18, 32, 40, 0.1);
+  box-shadow: var(--label-shadow);
   font-size: 11.5px;
   white-space: nowrap;
   opacity: 0;
@@ -1419,19 +1462,18 @@ button.ds-layer-name:hover {
   overflow-y: auto;
 }
 .ds-about::backdrop {
-  background: rgba(10, 20, 26, 0.3);
+  background: var(--scrim-strong);
 }
 .ds-about h2 {
   margin: 0 0 8px;
-  font-size: 20px;
-  letter-spacing: -0.02em;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 .ds-about h3 {
   margin: 18px 0 4px;
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--faint);
+  font-size: 14px;
 }
 .ds-about p,
 .ds-about li {
@@ -1561,7 +1603,7 @@ button.ds-layer-name:hover {
     display: block;
     position: absolute;
     inset: 0;
-    background: rgba(10, 20, 26, 0.12);
+    background: var(--scrim);
     z-index: 4;
   }
   /* bottom sheets */
@@ -1596,51 +1638,6 @@ button.ds-layer-name:hover {
       opacity: 0;
     }
   }
-  .ds-rail {
-    display: none;
-  }
-  .ds-rail.is-mobile-open {
-    display: flex;
-    flex-direction: row;
-    top: auto;
-    right: 8px;
-    left: 8px;
-    bottom: calc(66px + env(safe-area-inset-bottom));
-    transform: none;
-    overflow-x: auto;
-    z-index: 5;
-  }
-  .ds-rail.is-mobile-open .ds-rail-group {
-    flex-direction: row;
-  }
-  .ds-rail.is-mobile-open .ds-rail-sep {
-    width: 1px;
-    height: auto;
-    margin: 6px 4px;
-  }
-  .ds-rail-btn {
-    flex: none;
-    width: 38px;
-    height: 36px;
-  }
-  /* the mobile rail scrolls sideways and would clip side labels: name the tapped control above it instead */
-  .ds-rail-tip {
-    display: none;
-  }
-  .ds-rail-btn:hover:not(.is-active),
-  .ds-rail-btn:focus-visible:not(.is-active),
-  .ds-rail-btn.is-tip-shown:not(.is-active) {
-    color: var(--ink);
-  }
-  /* sits just above the rail row (rail bottom 66px + 46px row); may briefly overlap the dock's lower edge */
-  .ds-rail-caption {
-    display: block;
-    position: absolute;
-    left: 50%;
-    bottom: calc(66px + 46px + 6px + env(safe-area-inset-bottom));
-    transform: translateX(-50%);
-    z-index: 6;
-  }
   .ds-dock {
     display: none;
     left: 8px;
@@ -1664,6 +1661,38 @@ button.ds-layer-name:hover {
     flex-wrap: wrap;
     gap: 10px;
     padding: 12px;
+  }
+  /* camera row: 40px touch targets that still fit a 360px screen */
+  .ds-camera {
+    padding: 4px;
+  }
+  .ds-tb-sep {
+    margin: 6px 3px;
+  }
+  .ds-tb-btn {
+    width: 40px;
+    height: 40px;
+  }
+  .ds-view-picker-btn {
+    width: auto;
+  }
+  .ds-tb-tip {
+    display: none;
+  }
+  .ds-tb-caption {
+    display: block;
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 8px);
+    transform: translateX(-50%);
+    padding: 5px 10px;
+    border-radius: var(--radius-sm);
+    background: var(--ink);
+    color: var(--panel-solid);
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    pointer-events: none;
   }
   .ds-slider {
     flex: 1;
@@ -1691,6 +1720,15 @@ button.ds-layer-name:hover {
   }
   .ds-loading.is-compact {
     bottom: 130px;
+  }
+}
+
+@media (max-width: 400px) {
+  .ds-view-picker-text {
+    display: none;
+  }
+  .ds-view-picker-btn {
+    padding: 0 8px;
   }
 }
 

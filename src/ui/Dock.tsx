@@ -2,6 +2,7 @@ import { useId } from 'react';
 import { formatTooth } from '../anatomy/notation';
 import { pushCurrentPath } from '../app/router';
 import { actions, DISSECT_LEVELS, useApp, type ClipAxis, type ExplodePhase } from '../state/store';
+import { CameraControls } from './CameraControls';
 import { useServices } from './context';
 import { IconArrowLeft, IconExplode, IconFlip, IconLabel, IconSection, IconWarning } from './icons';
 
@@ -21,8 +22,11 @@ export function Dock() {
   const dissectFdi = useApp((s) => s.dissectFdi);
   const mobileOpen = useApp((s) => s.mobileSheet === 'tools');
   return (
-    <div className={`ds-dock${mobileOpen ? ' is-mobile-open' : ''}`} role="toolbar" aria-label={dissectFdi !== null ? 'Tooth dissection tools' : 'Scene tools'}>
-      {dissectFdi !== null ? <DissectControls fdi={dissectFdi} /> : <ArchControls />}
+    <div className={`ds-dock${mobileOpen ? ' is-mobile-open' : ''}`}>
+      <div className="ds-panel ds-toolbar" role="toolbar" aria-label={dissectFdi !== null ? 'Camera and tooth dissection tools' : 'Camera and scene tools'}>
+        <CameraControls />
+        {dissectFdi !== null ? <DissectControls fdi={dissectFdi} /> : <ArchControls />}
+      </div>
       <SectionControls />
     </div>
   );
@@ -35,7 +39,7 @@ function ArchControls() {
   const loading = useApp((s) => s.loading.teeth);
   const clip = useApp((s) => s.clip.enabled);
   return (
-    <div className="ds-panel ds-dock-main">
+    <div className="ds-dock-main">
       <div className="ds-dock-stack">
         <Slider label="Dissect anatomy" icon={<IconExplode size={15} />} value={explode} onChange={actions.setExplode} left="Assembled" right="Separated" />
         <div className="ds-segmented ds-segmented--fill ds-phase-switch" role="group" aria-label="Dissection phase">
@@ -74,7 +78,7 @@ function DissectControls({ fdi }: { fdi: number }) {
     pushCurrentPath(registry);
   };
   return (
-    <div className="ds-panel ds-dock-main ds-dissect">
+    <div className="ds-dock-main ds-dissect">
       <div className="ds-dissect-head">
         <button type="button" className="ds-icon-btn ds-icon-btn--ghost" onClick={exit} aria-label="Back to full mouth" title="Back to full mouth (Esc)">
           <IconArrowLeft />
