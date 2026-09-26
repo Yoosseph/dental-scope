@@ -7,6 +7,7 @@
 import type { Registry } from '../anatomy/registry';
 import type { Engine } from '../engine/Engine';
 import { actions, getState, store } from '../state/store';
+import { documentTitle } from './seo';
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
 /**
@@ -49,7 +50,8 @@ export function pathFor(id: string | null, dissectFdi: number | null, registry: 
   if (!id && dissectFdi === null) return `${base}/`;
   if (!id && dissectFdi !== null) return `${base}/tooth/${dissectFdi}/dissect`;
   const s = registry.get(id!);
-  if (s?.tooth) return `${base}/tooth/${s.tooth.fdi}${dissectFdi === s.tooth.fdi ? '/dissect' : ''}`;
+  // trailing slash matches the static tooth pages (tooth/36/index.html) and their canonical URLs
+  if (s?.tooth) return `${base}/tooth/${s.tooth.fdi}${dissectFdi === s.tooth.fdi ? '/dissect' : '/'}`;
   return `${base}/structure/${id}`;
 }
 
@@ -76,7 +78,11 @@ export function startRouter(engine: Engine, registry: Registry): () => void {
     }
   };
 
+  const syncTitle = (id: string | null) => {
+    document.title = documentTitle(id ? registry.get(id) : undefined);
+  };
   const unsub = store.subscribe((s, p) => {
+    if (s.selectedId !== p.selectedId) syncTitle(s.selectedId);
     if (applying) return;
     if (s.selectedId === p.selectedId && s.dissectFdi === p.dissectFdi) return;
     const next = pathFor(s.selectedId, s.dissectFdi, registry);

@@ -12,6 +12,7 @@ Every 3D asset shipped in `public/models/`, where it comes from, its licence and
 | Licence | CC BY-SA 2.1 Japan — <https://creativecommons.org/licenses/by-sa/2.1/jp/deed.en> |
 | Required attribution | "BodyParts3D, © The Database Center for Life Science licensed under CC Attribution-Share Alike 2.1 Japan" |
 | Share-alike | All derived assets in `public/models/` are distributed under the same licence |
+| Derived images | `public/og-image.png` (social preview) is a render of these models and carries the same licence and attribution |
 
 ## Provenance levels
 
