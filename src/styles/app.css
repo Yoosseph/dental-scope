@@ -81,6 +81,21 @@ kbd {
   pointer-events: auto;
 }
 
+/* ------------------------------------------------------------------ section headings
+   Italic serif captions, like the headings on an anatomy plate. */
+.ds-layer-group-title,
+.ds-label-sm,
+.ds-detail-section h3,
+.ds-about h3 {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 13px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--muted);
+}
+
 /* ------------------------------------------------------------------ panels */
 .ds-panel {
   background: var(--panel);
@@ -102,14 +117,10 @@ kbd {
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 10.5px;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 13.5px;
   color: var(--muted);
-}
-.ds-eyebrow--plain {
-  letter-spacing: 0.1em;
 }
 .ds-title {
   margin: 0;
@@ -293,12 +304,7 @@ kbd {
   margin-top: 8px;
 }
 .ds-layer-group-title {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--faint);
-  padding: 6px 6px 4px;
+  padding: 8px 6px 2px;
 }
 .ds-layer-row {
   display: flex;
@@ -551,12 +557,7 @@ button.ds-layer-name:hover {
   gap: 5px;
 }
 .ds-label-sm {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--faint);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 /* ------------------------------------------------------------------ toolbar
@@ -776,12 +777,7 @@ button.ds-layer-name:hover {
   color: var(--faint);
 }
 .ds-detail-section h3 {
-  margin: 12px 0 3px;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--faint);
+  margin: 14px 0 2px;
 }
 .ds-detail-section p {
   margin: 0;
@@ -1474,10 +1470,7 @@ button.ds-layer-name:hover {
 }
 .ds-about h3 {
   margin: 18px 0 4px;
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--faint);
+  font-size: 14px;
 }
 .ds-about p,
 .ds-about li {
