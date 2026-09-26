@@ -37,5 +37,5 @@ modifications is in [docs/assets.md](docs/assets.md). The social preview image
 
 ## Fonts
 
-- [Inter Tight](https://fonts.google.com/specimen/Inter+Tight) and [JetBrains Mono](https://www.jetbrains.com/lp/mono/) — SIL Open Font License 1.1
+- [Inter Tight](https://fonts.google.com/specimen/Inter+Tight), [Source Serif 4](https://github.com/adobe-fonts/source-serif) and [JetBrains Mono](https://www.jetbrains.com/lp/mono/) — SIL Open Font License 1.1, self-hosted via [Fontsource](https://fontsource.org/)
 
