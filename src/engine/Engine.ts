@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import type { Registry } from '../anatomy/registry';
+import type { Structure } from '../anatomy/types';
 import { formatTooth } from '../anatomy/notation';
 import { store, getState, setState, actions, type AppState, type ViewPreset } from '../state/store';
 import { resolveMesh, revealPatch, layersActive, type MeshVisual } from '../state/visibility';
@@ -305,7 +306,7 @@ export class Engine {
     if (s.explodePhase !== p.explodePhase || (s.explodePhase === 2 && visChanged)) this.layoutBoard(true);
     if (s.explodePhase === 1 && p.explodePhase === 2 && s.dissectFdi === null && !s.isolateId) {
       // back from the board: frame the in-position dissection again
-      this.rig.preset('three-quarter', this.rig.home.target, this.rig.home.radius * (1 + 0.75 * s.explode), 0.8);
+      this.rig.preset('three-quarter', this.rig.home.target, this.explodedHomeRadius(s.explode), 0.8);
       if (s.view !== 'three-quarter') setState({ view: 'three-quarter' });
     } else if (s.explode !== p.explode && s.explodePhase === 1) this.reframeForExplode(s);
     this.invalidate();
@@ -363,8 +364,13 @@ export class Engine {
     const view = s.view;
     clearTimeout(this.explodeTimer);
     this.explodeTimer = window.setTimeout(() => {
-      this.rig.preset(view, this.rig.home.target, this.rig.home.radius * (1 + 0.75 * getState().explode), 0.6);
+      this.rig.preset(view, this.rig.home.target, this.explodedHomeRadius(getState().explode), 0.6);
     }, 120);
+  }
+
+  /** Home framing radius widened for the arch explode (up to +75 % when fully exploded). */
+  private explodedHomeRadius(explode: number): number {
+    return this.rig.home.radius * (1 + 0.75 * explode);
   }
 
   private refreshAll() {
@@ -571,32 +577,30 @@ export class Engine {
     return out;
   }
 
+  /** Entries hit by the current raycaster ray, nearest first, skipping parts cut away by the section. */
+  private *rayHits(): Generator<{ entry: MeshEntry; distance: number }> {
+    const clip = getState().clip.enabled;
+    for (const h of this.raycaster.intersectObjects(this.pickables(), false)) {
+      if (clip && !this.section.keeps(h.point)) continue;
+      const entry = this.entries.get(h.object.userData.key as string);
+      if (entry) yield { entry, distance: h.distance };
+    }
+  }
+
   /** Structure id under the pointer: first opaque hit; ghosts only if nothing opaque is hit. */
   private pick(): string | null {
     this.raycaster.setFromCamera(this.pointer, this.rig.camera);
-    const hits = this.raycaster.intersectObjects(this.pickables(), false);
-    const clip = getState().clip.enabled;
     let ghost: string | null = null;
-    for (const h of hits) {
-      if (clip && !this.section.keeps(h.point)) continue;
-      const e = this.entries.get(h.object.userData.key as string);
-      if (!e) continue;
-      if (e.visual === 'on') return e.owner;
-      ghost ??= e.owner;
+    for (const { entry } of this.rayHits()) {
+      if (entry.visual === 'on') return entry.owner;
+      ghost ??= entry.owner;
     }
     return ghost;
   }
 
   private raycastOwner(from: THREE.Vector3, to: THREE.Vector3): { id: string; distance: number } | null {
-    const dir = to.clone().sub(from).normalize();
-    this.raycaster.set(from, dir);
-    const hits = this.raycaster.intersectObjects(this.pickables(), false);
-    const clip = getState().clip.enabled;
-    for (const h of hits) {
-      if (clip && !this.section.keeps(h.point)) continue;
-      const e = this.entries.get(h.object.userData.key as string);
-      if (e && e.visual === 'on') return { id: e.owner, distance: h.distance };
-    }
+    this.raycaster.set(from, to.clone().sub(from).normalize());
+    for (const { entry, distance } of this.rayHits()) if (entry.visual === 'on') return { id: entry.owner, distance };
     return null;
   }
 
@@ -658,10 +662,9 @@ export class Engine {
       const f = this.registry.get(`tooth-${fdi}`)?.tooth?.frame;
       if (f) dir = new THREE.Vector3(...f.buccal).add(new THREE.Vector3(...f.axis).multiplyScalar(0.25));
     }
-    if (s.kind === 'landmark' && s.anchor) {
-      const parentKey = s.parent ? this.registry.get(s.parent)?.meshes[0] : undefined;
-      const off = parentKey ? this.entries.get(parentKey)?.mesh.position ?? new THREE.Vector3() : new THREE.Vector3();
-      this.rig.focusSphere(new THREE.Vector3(...s.anchor).add(off), 0.6, { direction: dir });
+    const landmark = s.kind === 'landmark' ? this.landmarkPosition(s) : null;
+    if (landmark) {
+      this.rig.focusSphere(landmark, 0.6, { direction: dir });
       return;
     }
     const box = this.boundsOf(id, true);
@@ -669,6 +672,15 @@ export class Engine {
     const sphere = box.getBoundingSphere(new THREE.Sphere());
     const padding = s.kind === 'group' && sphere.radius > 2 ? 1.1 : 1.45;
     this.rig.focusSphere(sphere.center, sphere.radius, { direction: dir, padding });
+  }
+
+  /** World position of a landmark: its anchor, moved with its parent mesh (explode offsets). */
+  private landmarkPosition(s: Structure): THREE.Vector3 | null {
+    if (!s.anchor) return null;
+    const parentKey = s.parent ? this.registry.get(s.parent)?.meshes[0] : undefined;
+    const pos = new THREE.Vector3(...s.anchor);
+    const parent = parentKey ? this.entries.get(parentKey) : undefined;
+    return parent ? pos.add(parent.mesh.position) : pos;
   }
 
   /** World bounds of a structure's meshes (current exploded positions). */
@@ -799,24 +811,23 @@ export class Engine {
     const s = getState();
     let moving = false;
     const k = 1 - Math.exp(-dt * 14);
+    const instant = this.animator.reducedMotion;
+    const rate = instant ? 1 : k;
+    const boardK = instant ? 1 : k * 0.55; // board moves are a little slower
 
     const ex = s.explode;
     if (Math.abs(this.explodeCur - ex) > 1e-4) {
-      this.explodeCur += (ex - this.explodeCur) * (this.animator.reducedMotion ? 1 : k);
-      if (Math.abs(this.explodeCur - ex) < 1e-3) this.explodeCur = ex;
+      this.explodeCur = stepToward(this.explodeCur, ex, rate, 1e-3);
       moving = true;
     }
-    const boardK = this.animator.reducedMotion ? 1 : k * 0.55; // board moves are a little slower
     const phase = s.explodePhase === 2 ? 1 : 0;
     if (Math.abs(this.phaseCur - phase) > 1e-4) {
-      this.phaseCur += (phase - this.phaseCur) * boardK;
-      if (Math.abs(this.phaseCur - phase) < 1e-3) this.phaseCur = phase;
+      this.phaseCur = stepToward(this.phaseCur, phase, boardK, 1e-3);
       moving = true;
     }
     const tex = s.dissectFdi !== null ? s.toothExplode : 0;
     if (Math.abs(this.toothExplodeCur - tex) > 1e-4) {
-      this.toothExplodeCur += (tex - this.toothExplodeCur) * (this.animator.reducedMotion ? 1 : k);
-      if (Math.abs(this.toothExplodeCur - tex) < 1e-3) this.toothExplodeCur = tex;
+      this.toothExplodeCur = stepToward(this.toothExplodeCur, tex, rate, 1e-3);
       moving = true;
     }
 
@@ -824,8 +835,7 @@ export class Engine {
       let target = e.visual === 'on' ? 1 : e.visual === 'ghost' ? s.ghostOpacity : e.visual === 'faint' ? s.ghostOpacity * 0.45 : 0;
       if (s.explodePhase === 2 && !e.boardTarget) target = 0; // context is not laid out: fade it away
       if (Math.abs(e.opacity - target) > 1e-3) {
-        e.opacity += (target - e.opacity) * (this.animator.reducedMotion ? 1 : k);
-        if (Math.abs(e.opacity - target) < 0.01) e.opacity = target;
+        e.opacity = stepToward(e.opacity, target, rate, 0.01);
         moving = true;
       }
       const vis = e.opacity > 0.005;
@@ -835,8 +845,7 @@ export class Engine {
         e.mesh.renderOrder = e.opacity < 0.999 ? 10 : 0;
       }
       if (Math.abs(e.hi - e.hiTarget) > 1e-3) {
-        e.hi += (e.hiTarget - e.hi) * (this.animator.reducedMotion ? 1 : Math.min(1, k * 1.6));
-        if (Math.abs(e.hi - e.hiTarget) < 0.01) e.hi = e.hiTarget;
+        e.hi = stepToward(e.hi, e.hiTarget, instant ? 1 : Math.min(1, k * 1.6), 0.01);
         e.mesh.material.userData.fx.uHi.value = e.hi;
         moving = true;
       }
@@ -852,24 +861,26 @@ export class Engine {
       }
     }
 
-    if (this.marker.visible && s.selectedId) {
-      const st = this.registry.get(s.selectedId);
-      if (st?.anchor) {
-        const parentKey = st.parent ? this.registry.get(st.parent)?.meshes[0] : undefined;
-        const off = parentKey ? this.entries.get(parentKey)?.mesh.position : undefined;
-        this.marker.position.set(...st.anchor);
-        if (off) this.marker.position.add(off);
-        const d = this.rig.camera.position.distanceTo(this.marker.position);
-        const pulse = 1 + 0.18 * Math.sin(performance.now() / 260);
-        this.marker.scale.setScalar(d * 0.0075 * pulse);
-        moving = true;
-      }
+    const st = this.marker.visible && s.selectedId ? this.registry.get(s.selectedId) : undefined;
+    const markerAt = st ? this.landmarkPosition(st) : null;
+    if (markerAt) {
+      this.marker.position.copy(markerAt);
+      const d = this.rig.camera.position.distanceTo(this.marker.position);
+      const pulse = 1 + 0.18 * Math.sin(performance.now() / 260);
+      this.marker.scale.setScalar(d * 0.0075 * pulse);
+      moving = true;
     }
     return moving;
   }
 }
 
 /* ------------------------------------------------------------------ helpers */
+
+/** One easing step from `cur` toward `target`, snapping to the target once within `snap`. */
+function stepToward(cur: number, target: number, rate: number, snap: number): number {
+  const next = cur + (target - cur) * rate;
+  return Math.abs(next - target) < snap ? target : next;
+}
 
 function nextFrame() {
   return new Promise((r) => requestAnimationFrame(() => r(null)));
