@@ -775,6 +775,8 @@ button.ds-layer-name:hover {
   left: 50%;
   bottom: 40px;
   transform: translateX(-50%);
+  /* above the start hint, so the Labels performance note is not hidden behind it */
+  z-index: 1;
   display: flex;
   flex-direction: column-reverse;
   align-items: center;
@@ -900,6 +902,50 @@ button.ds-layer-name:hover {
 .ds-tool.is-active {
   background: var(--accent-soft);
   color: var(--accent);
+}
+/* Labels toggle: performance note just above the dock, on hover and keyboard focus */
+.ds-dock-main {
+  position: relative;
+}
+.ds-tool-wrap {
+  display: flex;
+}
+.ds-tool-warn {
+  position: absolute;
+  right: 12px;
+  bottom: calc(100% + 8px);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border-radius: 8px;
+  background: var(--panel-solid);
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--panel-shadow);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity var(--dur), transform var(--dur);
+  z-index: 2;
+}
+.ds-tool-warn svg {
+  flex: none;
+  color: #c27a1a;
+}
+:root[data-theme='dark'] .ds-tool-warn svg {
+  color: #e7b27a;
+}
+.ds-tool-warn kbd {
+  font-size: 10px;
+}
+.ds-tool-wrap:hover .ds-tool-warn,
+.ds-tool:focus-visible + .ds-tool-warn {
+  opacity: 1;
+  transform: none;
 }
 .ds-dock-note {
   position: absolute;

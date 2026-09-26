@@ -1,8 +1,9 @@
+import { useId } from 'react';
 import { formatTooth } from '../anatomy/notation';
 import { pushCurrentPath } from '../app/router';
 import { actions, DISSECT_LEVELS, useApp, type ClipAxis, type ExplodePhase } from '../state/store';
 import { useServices } from './context';
-import { IconArrowLeft, IconExplode, IconFlip, IconLabel, IconSection } from './icons';
+import { IconArrowLeft, IconExplode, IconFlip, IconLabel, IconSection, IconWarning } from './icons';
 
 const PHASES: { id: ExplodePhase; label: string; title: string }[] = [
   { id: 1, label: 'In position', title: 'Structures pulled apart but kept in anatomical position' },
@@ -162,12 +163,37 @@ function Slider({ label, icon, value, onChange, left, right }: { label: string; 
 }
 
 function LabelsToggle({ active }: { active: boolean }) {
-  return <ToolToggle active={active} onClick={() => actions.toggleLabels()} icon={<IconLabel />} label="Labels" title="Labels (L)" />;
+  const warnId = useId();
+  return (
+    <span className="ds-tool-wrap">
+      <ToolToggle active={active} onClick={() => actions.toggleLabels()} icon={<IconLabel />} label="Labels" describedBy={warnId} />
+      {/* styled tooltip instead of a native title, so the performance note is visible on hover and keyboard focus */}
+      <span className="ds-tool-warn" role="tooltip" id={warnId}>
+        <IconWarning size={13} />
+        May cause lag on slower devices
+        <kbd>L</kbd>
+      </span>
+    </span>
+  );
 }
 
-function ToolToggle({ active, onClick, icon, label, title }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string; title: string }) {
+function ToolToggle({
+  active,
+  onClick,
+  icon,
+  label,
+  title,
+  describedBy,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+  title?: string;
+  describedBy?: string;
+}) {
   return (
-    <button type="button" className={`ds-tool${active ? ' is-active' : ''}`} onClick={onClick} aria-pressed={active} title={title}>
+    <button type="button" className={`ds-tool${active ? ' is-active' : ''}`} onClick={onClick} aria-pressed={active} title={title} aria-describedby={describedBy}>
       {icon}
       <span>{label}</span>
     </button>
