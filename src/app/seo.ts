@@ -5,6 +5,8 @@
  */
 import { PERMANENT_FDI, fdiToPalmer, fdiToUniversal, toothName } from '../anatomy/notation.ts';
 import type { Structure } from '../anatomy/types.ts';
+import type { Lang } from '../i18n/lang.ts';
+import { ABOUT_TEXT } from './about-text.ts';
 
 export const SITE_NAME = 'Dental Scope';
 export const AUTHOR = 'Yoseph';
@@ -15,6 +17,10 @@ export interface PageMeta {
   path: string;
   title: string;
   description: string;
+  /** page language (default English) */
+  lang?: Lang;
+  /** the same page in other languages, for hreflang links: language → path */
+  alternates?: Partial<Record<Lang, string>>;
 }
 
 export const HOME: PageMeta = {
@@ -24,12 +30,20 @@ export const HOME: PageMeta = {
     'Free interactive 3D dental anatomy: all 32 permanent teeth with FDI, Universal and Palmer numbers, enamel to root canals, jaws and nerves. Educational tool.',
 };
 
-export const ABOUT: PageMeta = {
-  path: 'about/',
-  title: `About ${SITE_NAME}: Free Interactive 3D Dental Anatomy Atlas`,
-  description:
-    'A free, open-source 3D tooth atlas for dental students: every permanent tooth, tooth numbering systems, tooth tissues, jaws, nerves and muscles, explained.',
-};
+const ABOUT_ALTERNATES: Record<Lang, string> = { en: 'about/', sv: 'about/sv/', de: 'about/de/' };
+const aboutPage = (lang: Lang): PageMeta => ({
+  path: ABOUT_ALTERNATES[lang],
+  title: ABOUT_TEXT[lang].title,
+  description: ABOUT_TEXT[lang].description,
+  lang,
+  alternates: ABOUT_ALTERNATES,
+});
+
+export const ABOUT: PageMeta = aboutPage('en');
+/** The about page in every language: English, Swedish, German. */
+export const ABOUT_PAGES: PageMeta[] = [ABOUT, aboutPage('sv'), aboutPage('de')];
+const LOCALE: Record<Lang, string> = { en: 'en_US', sv: 'sv_SE', de: 'de_DE' };
+const ABOUT_CRUMB: Record<Lang, string> = { en: 'About', sv: 'Om', de: 'Über' };
 
 export const OG_IMAGE = { path: 'og-image.png', width: 1200, height: 630, alt: 'Dental Scope: 3D model of the jaws and permanent teeth' };
 
@@ -111,16 +125,17 @@ export function structuredData(page: PageMeta, siteUrl: string): unknown {
     );
   } else {
     const crumbs: { name: string; url: string }[] = [{ name: SITE_NAME, url: siteUrl }];
+    const isAbout = page.path.startsWith('about/');
     if (page.path.startsWith('tooth/')) crumbs.push({ name: 'Teeth', url: `${siteUrl}${ABOUT.path}#teeth` });
-    crumbs.push({ name: page.path === ABOUT.path ? 'About' : page.title.replace(` — ${SITE_NAME}`, ''), url });
+    crumbs.push({ name: isAbout ? ABOUT_CRUMB[page.lang ?? 'en'] : page.title.replace(` — ${SITE_NAME}`, ''), url });
     const fdi = /^tooth\/(\d{2})\/$/.exec(page.path);
     graph.push({
-      '@type': page.path === ABOUT.path ? 'AboutPage' : 'WebPage',
+      '@type': isAbout ? 'AboutPage' : 'WebPage',
       '@id': url,
       url,
       name: page.title,
       description: page.description,
-      inLanguage: 'en',
+      inLanguage: page.lang ?? 'en',
       isPartOf: website,
       primaryImageOfPage: siteUrl + OG_IMAGE.path,
       breadcrumb: {
@@ -153,7 +168,7 @@ export function headTags(page: PageMeta, siteUrl: string | null, opts: HeadOptio
     `<meta name="author" content="${AUTHOR}" />`,
     `<meta property="og:type" content="website" />`,
     `<meta property="og:site_name" content="${SITE_NAME}" />`,
-    `<meta property="og:locale" content="en_US" />`,
+    `<meta property="og:locale" content="${LOCALE[page.lang ?? 'en']}" />`,
     `<meta property="og:title" content="${esc(page.title)}" />`,
     `<meta property="og:description" content="${esc(page.description)}" />`,
     `<meta name="twitter:title" content="${esc(page.title)}" />`,
@@ -169,6 +184,8 @@ export function headTags(page: PageMeta, siteUrl: string | null, opts: HeadOptio
       `<meta name="robots" content="index, follow, max-image-preview:large" />`,
       `<link rel="canonical" href="${esc(url)}" />`,
       `<meta property="og:url" content="${esc(url)}" />`,
+      ...Object.entries(page.alternates ?? {}).map(([l, p]) => `<link rel="alternate" hreflang="${l}" href="${esc(siteUrl + p)}" />`),
+      ...(page.alternates?.en ? [`<link rel="alternate" hreflang="x-default" href="${esc(siteUrl + page.alternates.en)}" />`] : []),
       `<meta property="og:image" content="${esc(siteUrl + OG_IMAGE.path)}" />`,
       `<meta property="og:image:width" content="${OG_IMAGE.width}" />`,
       `<meta property="og:image:height" content="${OG_IMAGE.height}" />`,

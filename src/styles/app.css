@@ -1695,7 +1695,7 @@ button.ds-layer-name:hover {
 }
 .ds-keys {
   display: grid;
-  grid-template-columns: 110px 1fr;
+  grid-template-columns: minmax(110px, auto) 1fr;
   gap: 5px 12px;
   font-size: 12px;
 }
@@ -1979,5 +1979,49 @@ button.ds-layer-name:hover {
   .ds-panel,
   .ds-label {
     border: 1px solid CanvasText;
+  }
+}
+
+/* ------------------------------------------------------------------ language flags */
+.ds-lang {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  border-radius: var(--radius);
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--panel-shadow);
+}
+.ds-lang button {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 30px;
+  border-radius: 8px;
+  transition: background var(--dur), opacity var(--dur);
+}
+.ds-lang svg {
+  display: block;
+  border-radius: 2.5px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.14);
+  opacity: 0.55;
+  filter: saturate(0.6);
+  transition: opacity var(--dur), filter var(--dur);
+}
+.ds-lang button:hover {
+  background: var(--hover);
+}
+.ds-lang button:hover svg,
+.ds-lang button.is-active svg {
+  opacity: 1;
+  filter: none;
+}
+.ds-lang button.is-active {
+  background: var(--hover);
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+@media (max-width: 767px) {
+  .ds-lang button {
+    width: 30px;
   }
 }

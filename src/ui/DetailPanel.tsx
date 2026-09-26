@@ -1,15 +1,15 @@
 import { useMemo } from 'react';
 import { CATEGORY_BY_ID } from '../anatomy/categories';
 import { formatTooth, NUMBERING_SHORT, NUMBERING_SYSTEMS } from '../anatomy/notation';
-import type { NumberingSystem, Structure } from '../anatomy/types';
+import type { Structure } from '../anatomy/types';
 import { pushCurrentPath } from '../app/router';
 import { resolveContent } from '../content/content';
+import { nameOf, useT, type Lang, type Messages } from '../i18n';
+import { typeLabel } from '../i18n/anatomy';
 import { actions, useApp } from '../state/store';
 import { useServices } from './context';
 import { IconArrowLeft, IconClose, IconEyeOff, IconFocus, IconGhost, IconIsolate, IconTooth } from './icons';
 import { PanelHandle } from './PanelHandle';
-
-const NUMBERING_TITLE: Record<NumberingSystem, string> = { fdi: 'FDI (ISO 3950)', universal: 'Universal (ADA)', palmer: 'Palmer' };
 
 export function DetailPanel() {
   const { registry, engine } = useServices();
@@ -20,8 +20,10 @@ export function DetailPanel() {
   const ghosted = useApp((s) => (selectedId ? !!s.ghosted[selectedId] : false));
   const mobileOpen = useApp((s) => s.mobileSheet === 'detail');
   const collapsed = useApp((s) => s.collapsed.detail);
+  const lang = useApp((s) => s.lang);
+  const m = useT();
   const s = selectedId ? registry.get(selectedId) : undefined;
-  const content = useMemo(() => (s ? resolveContent(registry, s.id) : null), [registry, s]);
+  const content = useMemo(() => (s ? resolveContent(registry, s.id, lang) : null), [registry, s, lang]);
   if (!s || !content) return null;
 
   const cat = s.categories.find((c) => c !== 'permanent-teeth') ?? s.categories[0] ?? registry.ancestors(s.id).find((a) => a.categories.length)?.categories[0];
@@ -38,31 +40,31 @@ export function DetailPanel() {
   };
 
   return (
-    <aside className={`ds-panel ds-detail${mobileOpen ? ' is-mobile-open' : ''}${collapsed ? ' is-collapsed' : ''}`} aria-label={`${s.name} details`} aria-live="polite">
+    <aside className={`ds-panel ds-detail${mobileOpen ? ' is-mobile-open' : ''}${collapsed ? ' is-collapsed' : ''}`} aria-label={m.detailsAria(nameOf(s, lang))} aria-live="polite">
       <PanelHandle panel="detail" />
       <div className="ds-detail-head">
         <span className="ds-detail-bar" style={{ background: catDef?.color ?? 'var(--accent)' }} aria-hidden="true" />
-        <div className="ds-eyebrow">{catDef?.label ?? kindLabel(s)}</div>
-        <button type="button" className="ds-icon-btn ds-icon-btn--ghost ds-detail-close" onClick={() => actions.select(null)} aria-label="Close details">
+        <div className="ds-eyebrow">{catDef ? m.category[catDef.id] : kindLabel(s, m)}</div>
+        <button type="button" className="ds-icon-btn ds-icon-btn--ghost ds-detail-close" onClick={() => actions.select(null)} aria-label={m.closeDetails}>
           <IconClose />
         </button>
-        <h2 className="ds-detail-title">{s.name}</h2>
+        <h2 className="ds-detail-title">{nameOf(s, lang)}</h2>
         {tooth?.tooth && fdi !== undefined && (
-          <div className="ds-notation" aria-label="Tooth notation">
+          <div className="ds-notation" aria-label={m.toothNotation}>
             {NUMBERING_SYSTEMS.map((n) => (
-              <span key={n} className={`ds-chip ds-chip--mono${numbering === n ? ' is-active' : ''}`} title={NUMBERING_TITLE[n]}>
+              <span key={n} className={`ds-chip ds-chip--mono${numbering === n ? ' is-active' : ''}`} title={m.numberingTitleLong[n]}>
                 <em>{NUMBERING_SHORT[n]}</em> {formatTooth(fdi, n).replace('#', '')}
               </span>
             ))}
           </div>
         )}
         {crumbs.length > 0 && (
-          <nav className="ds-crumbs" aria-label="Location in hierarchy">
+          <nav className="ds-crumbs" aria-label={m.hierarchy}>
             {crumbs.map((c, i) => (
               <span key={c.id}>
                 {i > 0 && <span aria-hidden="true"> › </span>}
                 <button type="button" className="ds-link-btn" onClick={() => void go(c.id)}>
-                  {c.tooth ? `${formatTooth(c.tooth.fdi, numbering)} ${shortTooth(c)}` : c.name}
+                  {c.tooth ? `${formatTooth(c.tooth.fdi, numbering)} ${shortTooth(c, lang)}` : nameOf(c, lang)}
                 </button>
               </span>
             ))}
@@ -71,17 +73,17 @@ export function DetailPanel() {
       </div>
 
       <div className="ds-detail-body">
-        {content.summary ? <p className="ds-detail-summary">{content.summary}</p> : <p className="ds-detail-summary is-muted">No description yet.</p>}
-        {content.function && <Section title="Function">{content.function}</Section>}
-        {content.clinical && <Section title="Clinical relevance">{content.clinical}</Section>}
+        {content.summary ? <p className="ds-detail-summary">{content.summary}</p> : <p className="ds-detail-summary is-muted">{m.noDescription}</p>}
+        {content.function && <Section title={m.function}>{content.function}</Section>}
+        {content.clinical && <Section title={m.clinical}>{content.clinical}</Section>}
 
         {(content.facts.length > 0 || tooth?.tooth) && (
           <dl className="ds-facts">
             {s.tooth && (
               <>
-                <dt>Arch · side</dt>
+                <dt>{m.archSide}</dt>
                 <dd>
-                  {cap(s.tooth.arch)} · {s.tooth.side}
+                  {m.arch[s.tooth.arch]} · {m.side[s.tooth.side]}
                 </dd>
               </>
             )}
@@ -89,19 +91,19 @@ export function DetailPanel() {
               <Fact key={f.label} label={f.label} value={f.value} />
             ))}
             {s.tooth && s.tooth.roots.length > 0 && (
-              <Fact label="Modeled here" value={modeledSummary(s.tooth.roots)} />
+              <Fact label={m.modeledHere} value={modeledSummary(s.tooth.roots, m)} />
             )}
-            {s.sourceRef && <Fact label="Atlas reference" value={s.sourceRef} />}
+            {s.sourceRef && <Fact label={m.atlasRef} value={s.sourceRef} />}
           </dl>
         )}
 
         {children.length > 0 && (
           <div className="ds-detail-block">
-            <div className="ds-label-sm">Contains</div>
+            <div className="ds-label-sm">{m.contains}</div>
             <div className="ds-chip-row">
               {children.slice(0, 18).map((c) => (
                 <button key={c.id} type="button" className="ds-chip ds-chip--button" onClick={() => void go(c.id)}>
-                  {c.tooth ? `${formatTooth(c.tooth.fdi, numbering)} · ${shortTooth(c)}` : c.name}
+                  {c.tooth ? `${formatTooth(c.tooth.fdi, numbering)} · ${shortTooth(c, lang)}` : nameOf(c, lang)}
                 </button>
               ))}
               {children.length > 18 && <span className="ds-chip">+{children.length - 18}</span>}
@@ -110,11 +112,11 @@ export function DetailPanel() {
         )}
         {content.related.length > 0 && (
           <div className="ds-detail-block">
-            <div className="ds-label-sm">Related</div>
+            <div className="ds-label-sm">{m.related}</div>
             <div className="ds-chip-row">
               {content.related.map((id) => (
                 <button key={id} type="button" className="ds-chip ds-chip--button" onClick={() => void go(id)}>
-                  {registry.get(id)?.name}
+                  {nameOf(registry.get(id)!, lang)}
                 </button>
               ))}
             </div>
@@ -125,28 +127,28 @@ export function DetailPanel() {
       <div className="ds-detail-actions">
         {s.tooth && dissectFdi === s.tooth.fdi ? (
           <button type="button" className="ds-primary" onClick={leaveTooth}>
-            <IconArrowLeft /> Back to the full mouth
+            <IconArrowLeft /> {m.backToMouth}
           </button>
         ) : s.tooth ? (
           <button type="button" className="ds-primary" onClick={() => void enterDissect(s.tooth!.fdi)}>
-            <IconTooth /> Explore inside this tooth
+            <IconTooth /> {m.exploreInside}
           </button>
         ) : (
           <button type="button" className="ds-primary" onClick={() => (isolated ? actions.isolate(null) : isolate(s.id))}>
-            <IconIsolate /> {isolated ? 'Show surrounding anatomy' : 'Isolate structure'}
+            <IconIsolate /> {isolated ? m.showSurrounding : m.isolateStructure}
           </button>
         )}
         <div className="ds-action-row">
-          <button type="button" className="ds-secondary" onClick={() => engine.focus(s.id)} title="Focus (F)">
-            <IconFocus size={15} /> Focus
+          <button type="button" className="ds-secondary" onClick={() => engine.focus(s.id)} title={m.focusTitle}>
+            <IconFocus size={15} /> {m.focus}
           </button>
           {s.kind !== 'landmark' && (
             <>
-              <button type="button" className={`ds-secondary${ghosted ? ' is-active' : ''}`} onClick={() => actions.toggleGhost(s.id)} aria-pressed={ghosted} title="Translucent (G)">
-                <IconGhost size={15} /> Ghost
+              <button type="button" className={`ds-secondary${ghosted ? ' is-active' : ''}`} onClick={() => actions.toggleGhost(s.id)} aria-pressed={ghosted} title={m.ghostTitle}>
+                <IconGhost size={15} /> {m.ghost}
               </button>
-              <button type="button" className="ds-secondary" onClick={() => actions.hide(s.id)} title="Hide (H)">
-                <IconEyeOff size={15} /> Hide
+              <button type="button" className="ds-secondary" onClick={() => actions.hide(s.id)} title={m.hideTitle}>
+                <IconEyeOff size={15} /> {m.hide}
               </button>
             </>
           )}
@@ -193,14 +195,13 @@ function Fact({ label, value }: { label: string; value: string }) {
   );
 }
 
-const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? 's' : ''}`;
 /** "2 roots · 3 canals" */
-function modeledSummary(roots: { canals: string[] }[]): string {
-  return `${plural(roots.length, 'root')} · ${plural(roots.reduce((a, r) => a + r.canals.length, 0), 'canal')}`;
+function modeledSummary(roots: { canals: string[] }[], m: Messages): string {
+  return m.modeledSummary(roots.length, roots.reduce((a, r) => a + r.canals.length, 0));
 }
 
-const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
-const shortTooth = (s: Structure) => s.name.replace(/^(Maxillary|Mandibular) (right|left) /, '');
-function kindLabel(s: Structure) {
-  return s.kind === 'landmark' ? 'Landmark' : s.kind === 'region' ? 'Region' : 'Structure';
+/** A tooth's type without arch and side ("first molar"), for chips next to its number; German keeps its capitals. */
+const shortTooth = (s: Structure, lang: Lang) => (s.tooth ? (lang === 'de' ? typeLabel(s.tooth.type, lang) : typeLabel(s.tooth.type, lang).toLowerCase()) : nameOf(s, lang));
+function kindLabel(s: Structure, m: Messages) {
+  return s.kind === 'landmark' ? m.kind.landmark : s.kind === 'region' ? m.kind.region : m.kind.structure;
 }

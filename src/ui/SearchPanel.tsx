@@ -2,16 +2,17 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { CATEGORY_BY_ID } from '../anatomy/categories';
 import { formatTooth, NUMBERING_LABEL } from '../anatomy/notation';
 import { pushCurrentPath } from '../app/router';
+import { nameOf, useT } from '../i18n';
 import { search } from '../search/search';
 import { actions, useApp } from '../state/store';
 import { useServices } from './context';
 import { IconClose, IconSearch } from './icons';
 
-const SUGGESTIONS = ['first molar', 'tooth 36', '11', 'pulp', 'root canal', 'enamel', 'inferior alveolar nerve', 'TMJ disc', 'wisdom tooth', 'gingiva'];
-
 export function SearchPanel() {
   const open = useApp((s) => s.searchOpen);
   const numbering = useApp((s) => s.numbering);
+  const lang = useApp((s) => s.lang);
+  const m = useT();
   const { registry, engine, searchIndex } = useServices();
   const [q, setQ] = useState('');
   const [active, setActive] = useState(0);
@@ -35,6 +36,7 @@ export function SearchPanel() {
   }, [active]);
 
   if (!open) return null;
+  const tip = m.searchTip(NUMBERING_LABEL[numbering]);
 
   const choose = async (id: string) => {
     actions.openSearch(false);
@@ -60,7 +62,7 @@ export function SearchPanel() {
 
   return (
     <div className="ds-search-layer" onPointerDown={(e) => e.target === e.currentTarget && actions.openSearch(false)}>
-      <div className="ds-search ds-panel" role="dialog" aria-modal="true" aria-label="Search anatomy">
+      <div className="ds-search ds-panel" role="dialog" aria-modal="true" aria-label={m.searchAnatomy}>
         <div className="ds-search-field">
           <IconSearch size={18} />
           <input
@@ -69,8 +71,8 @@ export function SearchPanel() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={onKey}
-            placeholder="Tooth, number, tissue, nerve…"
-            aria-label="Search anatomy"
+            placeholder={m.searchPlaceholder}
+            aria-label={m.searchAnatomy}
             role="combobox"
             aria-expanded={results.length > 0}
             aria-controls="ds-search-results"
@@ -78,7 +80,7 @@ export function SearchPanel() {
             autoComplete="off"
             spellCheck={false}
           />
-          <button type="button" className="ds-icon-btn ds-icon-btn--ghost" onClick={() => actions.openSearch(false)} aria-label="Close search">
+          <button type="button" className="ds-icon-btn ds-icon-btn--ghost" onClick={() => actions.openSearch(false)} aria-label={m.closeSearch}>
             <IconClose />
           </button>
         </div>
@@ -89,7 +91,8 @@ export function SearchPanel() {
               const cat = s.categories.find((c) => c !== 'permanent-teeth') ?? s.categories[0];
               const catDef = cat ? CATEGORY_BY_ID[cat] : undefined;
               const fdi = s.toothFdi;
-              const context = fdi !== undefined && !s.tooth ? registry.get(`tooth-${fdi}`)?.name : registry.get(s.parent ?? '')?.name;
+              const ctxS = fdi !== undefined && !s.tooth ? registry.get(`tooth-${fdi}`) : registry.get(s.parent ?? '');
+              const context = ctxS ? nameOf(ctxS, lang) : undefined;
               return (
                 <li
                   key={r.id}
@@ -103,7 +106,7 @@ export function SearchPanel() {
                 >
                   <span className="ds-dot" style={{ background: catDef?.color ?? 'var(--faint)' }} aria-hidden="true" />
                   <span className="ds-sr-main">
-                    <span className="ds-sr-name">{s.name}</span>
+                    <span className="ds-sr-name">{nameOf(s, lang)}</span>
                     {context && <span className="ds-sr-context">{context}</span>}
                   </span>
                   {fdi !== undefined && <span className="ds-chip ds-chip--mono">{formatTooth(fdi, numbering)}</span>}
@@ -113,19 +116,19 @@ export function SearchPanel() {
             })}
           </ul>
         ) : q.trim() ? (
-          <p className="ds-search-empty">No matches for “{q}”.</p>
+          <p className="ds-search-empty">{m.noMatches(q)}</p>
         ) : (
           <div className="ds-search-suggest">
-            <p className="ds-label-sm">Try</p>
+            <p className="ds-label-sm">{m.tryLabel}</p>
             <div className="ds-chip-row">
-              {SUGGESTIONS.map((s) => (
+              {m.suggestions.map((s) => (
                 <button key={s} type="button" className="ds-chip ds-chip--button" onClick={() => setQ(s)}>
                   {s}
                 </button>
               ))}
             </div>
             <p className="ds-search-tip">
-              Numbers follow the active system ({NUMBERING_LABEL[numbering]}). Prefix with <kbd>fdi</kbd> or <kbd>#</kbd> to be explicit.
+              {tip[0]} <kbd>fdi</kbd> {tip[1]} <kbd>#</kbd> {tip[2]}
             </p>
           </div>
         )}

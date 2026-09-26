@@ -26,6 +26,7 @@ Dental Scope is an open-source, interactive 3D dental anatomy explorer. Start wi
 - **Premium camera:** arcing focus transitions, bounding-box framing, eight view presets including occlusal views, optical centre that stays clear of panels.
 - **Labels** that anchor to anatomy, declutter by priority, hide when occluded or too small, and select on click.
 - **Deep links:** `/tooth/36`, `/tooth/36/dissect`, `/structure/inferior-alveolar-nerve-left`.
+- **English, Swedish and German:** switch with the flags at the top. Everything is translated by hand, including anatomical names, descriptions, search terms and the about page (`/about/sv/`, `/about/de/`). Add `?lang=sv` or `?lang=de` to a link to open it in that language. Translations live in `src/i18n/` and `src/content/<lang>/`.
 - **Honest data:** every structure shows whether it is *source*, *derived*, *modeled* or *schematic* geometry; all text shows its review status.
 - **Responsive** (bottom sheets on phones), **keyboard-accessible** (tree view, shortcuts, focus rings), **reduced-motion** aware, light and dark themes.
 - **Fast:** ≈0.5 MB of geometry for first paint, the rest streams in; ≈120 KB per tooth's internal anatomy, loaded on demand; render-on-demand loop.

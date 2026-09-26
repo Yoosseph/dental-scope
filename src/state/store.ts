@@ -7,6 +7,7 @@ import { createStore } from 'zustand/vanilla';
 import { useStore } from 'zustand';
 import { INITIAL_CATEGORY_STATE, type CategoryState } from '../anatomy/categories';
 import type { CategoryId, NumberingSystem } from '../anatomy/types';
+import { DEFAULT_LANG, isLang, type Lang } from '../i18n/lang';
 
 export type ClipAxis = 'sagittal' | 'coronal' | 'axial' | 'view';
 export type ModeId = 'explore' | 'learn' | 'quiz' | 'compare';
@@ -32,14 +33,8 @@ export interface ClipState {
   flip: boolean;
 }
 
-/** Dissection levels for a single tooth. */
-export const DISSECT_LEVELS = [
-  { id: 0, label: 'Whole tooth', hint: 'Outer surface: enamel crown and cementum-covered root' },
-  { id: 1, label: 'Crown & root', hint: 'Crown and root regions with the periodontal ligament' },
-  { id: 2, label: 'Enamel removed', hint: 'Enamel lifted away to reveal the dentin' },
-  { id: 3, label: 'Pulp revealed', hint: 'Dentin made translucent to reveal the pulp chamber' },
-  { id: 4, label: 'Root canals', hint: 'Pulp chamber and root canals in isolation' },
-] as const;
+/** Dissection levels for a single tooth (their names and hints are in the i18n messages, `level`). */
+export const DISSECT_LEVELS = [{ id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }] as const;
 
 export interface AppState {
   ready: boolean;
@@ -76,6 +71,8 @@ export interface AppState {
   panel: 'layers' | 'tree';
   mobileSheet: 'none' | 'layers' | 'detail' | 'tools';
   theme: 'light' | 'dark';
+  /** interface language */
+  lang: Lang;
   /** bumped by resetAll, so UI with its own local state (e.g. the dissect player) can reset too */
   resetId: number;
   /** desktop panels tucked away off-screen (a handle stays visible to bring them back) */
@@ -114,6 +111,7 @@ export const initialState: AppState = {
   panel: 'layers',
   mobileSheet: 'none',
   theme: prefersDark ? 'dark' : 'light',
+  lang: DEFAULT_LANG,
   resetId: 0,
   collapsed: { layers: false, detail: false, dock: false },
 };
@@ -132,7 +130,7 @@ export const setState = store.setState;
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 
 /** localStorage keys of the per-viewer preferences. */
-const PREF = { numbering: 'ds.numbering', theme: 'ds.theme', orbit: 'ds.orbit' } as const;
+const PREF = { numbering: 'ds.numbering', theme: 'ds.theme', orbit: 'ds.orbit', lang: 'ds.lang' } as const;
 
 /** Remember a per-viewer preference (restored by restorePreferences). */
 function persist(key: string, value: string) {
@@ -147,9 +145,9 @@ export const actions = {
   setCollapsed(panel: CollapsiblePanel, v: boolean) {
     setState((s) => ({ collapsed: { ...s.collapsed, [panel]: v } }));
   },
-  /** Back to the start: every scene setting and preference to its default. Theme and loading progress are kept. */
+  /** Back to the start: every scene setting and preference to its default. Theme, language and loading progress are kept. */
   resetAll() {
-    setState((s) => ({ ...initialState, ready: s.ready, loading: s.loading, error: s.error, theme: s.theme, resetId: s.resetId + 1 }));
+    setState((s) => ({ ...initialState, ready: s.ready, loading: s.loading, error: s.error, theme: s.theme, lang: s.lang, resetId: s.resetId + 1 }));
     persist(PREF.numbering, initialState.numbering);
     persist(PREF.orbit, initialState.orbitMode);
   },
@@ -272,6 +270,10 @@ export const actions = {
     setState({ theme: t });
     persist(PREF.theme, t);
   },
+  setLang(l: Lang) {
+    setState({ lang: l });
+    persist(PREF.lang, l);
+  },
   setMode(m: ModeId) {
     setState({ mode: m });
   },
@@ -280,15 +282,19 @@ export const actions = {
   },
 };
 
-/** Restore per-viewer preferences. */
+/** Restore per-viewer preferences. A `?lang=sv` / `?lang=de` link sets (and remembers) the language. */
 export function restorePreferences() {
   try {
+    const fromUrl = new URLSearchParams(location.search).get('lang');
+    if (isLang(fromUrl)) persist(PREF.lang, fromUrl);
     const n = localStorage.getItem(PREF.numbering);
     if (n === 'fdi' || n === 'universal' || n === 'palmer') setState({ numbering: n });
     const t = localStorage.getItem(PREF.theme);
     if (t === 'light' || t === 'dark') setState({ theme: t });
     const o = localStorage.getItem(PREF.orbit);
     if (o === 'fixed' || o === 'free') setState({ orbitMode: o });
+    const l = localStorage.getItem(PREF.lang);
+    if (isLang(l)) setState({ lang: l });
   } catch {
     /* storage unavailable */
   }

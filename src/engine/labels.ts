@@ -3,6 +3,7 @@
  * Positions are written directly to the DOM each rendered frame — no React.
  */
 import * as THREE from 'three';
+import { t } from '../i18n';
 
 export interface LabelCandidate {
   id: string;
@@ -109,9 +110,11 @@ export class LabelLayer {
       }
       if (l.el.textContent !== cand.text) {
         l.el.textContent = cand.text;
-        l.el.setAttribute('aria-label', `Select ${cand.text}`);
         l.w = l.h = 0;
       }
+      // the language can change while the text stays the same (tooth numbers)
+      const aria = t().selectX(cand.text);
+      if (l.el.getAttribute('aria-label') !== aria) l.el.setAttribute('aria-label', aria);
     }
   }
 

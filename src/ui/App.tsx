@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { pushCurrentPath, startRouter } from '../app/router';
+import { useT } from '../i18n';
 import { actions, useApp } from '../state/store';
 import { useServices } from './context';
 import { DetailPanel } from './DetailPanel';
@@ -21,6 +22,8 @@ export function App() {
   const laidOut = useApp((s) => s.explodePhase === 2);
   const detailHidden = useApp((s) => s.collapsed.detail);
   const dockHidden = useApp((s) => s.collapsed.dock);
+  const lang = useApp((s) => s.lang);
+  const m = useT();
 
   useEffect(() => {
     engine.mount(stage.current!);
@@ -35,6 +38,10 @@ export function App() {
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
+
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
 
   useKeyboard(engine);
 
@@ -70,18 +77,18 @@ export function App() {
         <Footer />
         <ResetButton />
         <LoadingCard />
-        <nav className="ds-mobile-bar ds-panel" aria-label="Mobile controls">
+        <nav className="ds-mobile-bar ds-panel" aria-label={m.mobileControls}>
           <button type="button" className={sheet === 'layers' ? 'is-active' : ''} onClick={() => actions.setMobileSheet(sheet === 'layers' ? 'none' : 'layers')} aria-pressed={sheet === 'layers'}>
-            <IconLayers /> <span>Layers</span>
+            <IconLayers /> <span>{m.layers}</span>
           </button>
           <button type="button" onClick={() => actions.openSearch(true)}>
-            <IconSearch /> <span>Search</span>
+            <IconSearch /> <span>{m.search}</span>
           </button>
           <button type="button" className={sheet === 'tools' ? 'is-active' : ''} onClick={() => actions.setMobileSheet(sheet === 'tools' ? 'none' : 'tools')} aria-pressed={sheet === 'tools'}>
-            <IconSection /> <span>Tools</span>
+            <IconSection /> <span>{m.tools}</span>
           </button>
         </nav>
-        {sheet !== 'none' && <button type="button" className="ds-scrim" aria-label="Close panel" onClick={() => actions.setMobileSheet('none')} />}
+        {sheet !== 'none' && <button type="button" className="ds-scrim" aria-label={m.closePanel} onClick={() => actions.setMobileSheet('none')} />}
       </div>
       <SearchPanel />
       <AboutDialog />
@@ -92,15 +99,16 @@ export function App() {
 /** Bottom-left: back to the start view with every setting at its default. */
 function ResetButton() {
   const { engine, registry } = useServices();
+  const m = useT();
   const reset = () => {
     actions.resetAll();
     engine.resetToStart();
     pushCurrentPath(registry);
   };
   return (
-    <button type="button" className="ds-reset-all" onClick={reset} title="Reset all: start view and default settings" aria-label="Reset all: start view and default settings">
+    <button type="button" className="ds-reset-all" onClick={reset} title={m.resetAllTitle} aria-label={m.resetAllTitle}>
       <IconReset size={15} />
-      <span>Reset all</span>
+      <span>{m.resetAll}</span>
     </button>
   );
 }

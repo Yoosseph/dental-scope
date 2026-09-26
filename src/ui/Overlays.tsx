@@ -1,35 +1,33 @@
-import { useEffect, useRef } from 'react';
+import { Fragment, useEffect, useRef } from 'react';
 import { REPO_URL } from '../app/repo';
+import { useT } from '../i18n';
 import { actions, useApp } from '../state/store';
 import { IconClose } from './icons';
 
-const STAGE_LABEL: Record<string, string> = {
-  core: 'Jaws & dentition',
-  context: 'Skull & muscles',
-  neurovascular: 'Nerves & vessels',
-};
+/** Loading stages, in order (their names are in the messages, `stage`). */
+const STAGES = ['core', 'context', 'neurovascular'];
 
 export function LoadingCard() {
   const ready = useApp((s) => s.ready);
   const loading = useApp((s) => s.loading);
   const error = useApp((s) => s.error);
+  const m = useT();
   if (error) {
     return (
       <div className="ds-loading ds-panel" role="alert">
-        <strong>Something went wrong</strong>
-        <p>{error}</p>
+        <strong>{m.somethingWrong}</strong>
+        <p>{error === 'load' ? m.loadError : error}</p>
       </div>
     );
   }
-  const stages = Object.keys(STAGE_LABEL);
-  const pending = stages.filter((s) => (loading[s] ?? 0) < 1);
+  const pending = STAGES.filter((s) => (loading[s] ?? 0) < 1);
   if (ready && pending.length === 0) return null;
-  const done = stages.reduce((a, s) => a + (loading[s] ?? 0), 0) / stages.length;
+  const done = STAGES.reduce((a, s) => a + (loading[s] ?? 0), 0) / STAGES.length;
   return (
     <div className={`ds-loading ds-panel${ready ? ' is-compact' : ''}`} role="status" aria-live="polite">
       <div className="ds-loading-head">
         <span className="ds-spinner" aria-hidden="true" />
-        <span>{ready ? `Loading ${STAGE_LABEL[pending[0]]?.toLowerCase()}…` : 'Preparing dental anatomy'}</span>
+        <span>{ready ? m.loadingStage(m.stage[pending[0]] ?? '') : m.preparing}</span>
       </div>
       {!ready && (
         <>
@@ -37,9 +35,9 @@ export function LoadingCard() {
             <span style={{ transform: `scaleX(${Math.max(0.04, done)})` }} />
           </div>
           <ul className="ds-loading-stages">
-            {stages.map((s) => (
+            {STAGES.map((s) => (
               <li key={s} className={(loading[s] ?? 0) >= 1 ? 'is-done' : ''}>
-                {STAGE_LABEL[s]}
+                {m.stage[s]}
               </li>
             ))}
           </ul>
@@ -49,17 +47,37 @@ export function LoadingCard() {
   );
 }
 
+/** `text` with the first `word` set in italics. */
+function withEm(text: string, word: string) {
+  const i = text.indexOf(word);
+  if (i < 0) return text;
+  return (
+    <>
+      {text.slice(0, i)}
+      <em>{word}</em>
+      {text.slice(i + word.length)}
+    </>
+  );
+}
+
+/** The static about page for the active language (English at about/, translations at about/sv/ and about/de/). */
+export function aboutPageHref(lang: string): string {
+  return `${import.meta.env.BASE_URL}about/${lang === 'en' ? '' : `${lang}/`}`;
+}
+
 export function Footer() {
+  const m = useT();
+  const lang = useApp((s) => s.lang);
   return (
     <footer className="ds-footer">
       <p className="ds-disclaimer">
-        Educational anatomical reference. Not intended for diagnosis or treatment.{' '}
+        {m.disclaimer}{' '}
         <button type="button" className="ds-link-btn" onClick={() => actions.openAbout(true)}>
-          Controls &amp; credits
+          {m.controlsCredits}
         </button>
         {' · '}
-        <a className="ds-link-btn" href={`${import.meta.env.BASE_URL}about/`}>
-          About
+        <a className="ds-link-btn" href={aboutPageHref(lang)}>
+          {m.about}
         </a>
       </p>
     </footer>
@@ -68,6 +86,8 @@ export function Footer() {
 
 export function AboutDialog() {
   const open = useApp((s) => s.aboutOpen);
+  const lang = useApp((s) => s.lang);
+  const m = useT();
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const d = ref.current;
@@ -77,81 +97,55 @@ export function AboutDialog() {
   }, [open]);
   return (
     <dialog ref={ref} className="ds-about ds-panel" onClose={() => actions.openAbout(false)} aria-labelledby="ds-about-title">
-      <button type="button" className="ds-icon-btn ds-icon-btn--ghost ds-about-close" onClick={() => actions.openAbout(false)} aria-label="Close">
+      <button type="button" className="ds-icon-btn ds-icon-btn--ghost ds-about-close" onClick={() => actions.openAbout(false)} aria-label={m.close}>
         <IconClose />
       </button>
-      <h2 id="ds-about-title">About Dental Scope</h2>
+      <h2 id="ds-about-title">{m.aboutTitle}</h2>
+      <p>{m.aboutIntro}</p>
       <p>
-        Dental Scope is an open-source, interactive 3D explorer of dental anatomy — from the whole mouth down to the pulp and root canals of a single tooth.
+        <a href={aboutPageHref(lang)}>{m.aboutGuide}</a>
       </p>
-      <p>
-        <a href={`${import.meta.env.BASE_URL}about/`}>Guide to every tooth, numbering systems and FAQ</a>
-      </p>
-      <h3>Educational use only</h3>
-      <p>Dental Scope is an educational reference. It is not a diagnostic tool and must not be used for diagnosis, treatment planning or clinical decisions.</p>
-      <h3>How the anatomy is made</h3>
+      <h3>{m.eduTitle}</h3>
+      <p>{m.eduBody}</p>
+      <h3>{m.madeTitle}</h3>
       <ul>
         <li>
-          <strong>Source</strong> — jaws, teeth, gingiva, skull and muscles come from <em>BodyParts3D</em> 3.0, © The Database Center for Life Science, licensed under CC Attribution-Share Alike 2.1 Japan.
+          <strong>{m.provSource}</strong> — {withEm(m.provSourceBody, 'BodyParts3D')}
         </li>
         <li>
-          <strong>Derived</strong> — third molars, alveolar bone, condyles and joint fossae are derived from those meshes.
+          <strong>{m.provDerived}</strong> — {m.provDerivedBody}
         </li>
         <li>
-          <strong>Modeled</strong> — enamel, dentin, cementum, periodontal ligament, pulp and canals are modeled inside each real tooth shape using simplified, approximate proportions, not measurements.
+          <strong>{m.provModeled}</strong> — {m.provModeledBody}
         </li>
         <li>
-          <strong>Schematic</strong> — nerves, vessels and joint discs are placed from anatomical landmarks to show relationships, not measured paths.
+          <strong>{m.provSchematic}</strong> — {m.provSchematicBody}
         </li>
       </ul>
       {REPO_URL && (
         <p>
-          <a href={`${REPO_URL}/blob/main/docs/sources.md`} target="_blank" rel="noopener noreferrer" aria-label="Sources for these statements (opens in a new tab)">
-            Sources for these statements
+          <a href={`${REPO_URL}/blob/main/docs/sources.md`} target="_blank" rel="noopener noreferrer" aria-label={m.sourcesAria}>
+            {m.sources}
           </a>
           .
         </p>
       )}
-      <h3>Controls</h3>
+      <h3>{m.controlsTitle}</h3>
       <dl className="ds-keys">
-        <dt>Drag</dt>
-        <dd>Orbit (touch: one finger)</dd>
-        <dt>Right-drag</dt>
-        <dd>Pan (touch: two fingers)</dd>
-        <dt>Scroll</dt>
-        <dd>Zoom (touch: pinch)</dd>
-        <dt>Click</dt>
-        <dd>Select · double-click to focus</dd>
-        <dt>Orbit mode</dt>
-        <dd>Fixed: always turn around the model centre · Free: pan and focus move the pivot (right-hand toolbar)</dd>
-        <dt>/</dt>
-        <dd>Search</dd>
-        <dt>Esc</dt>
-        <dd>Clear selection / leave tooth</dd>
-        <dt>F</dt>
-        <dd>Focus selection</dd>
-        <dt>I · H · G</dt>
-        <dd>Isolate · hide · ghost selection</dd>
-        <dt>D</dt>
-        <dd>Explore inside the selected tooth</dd>
-        <dt>[ · ]</dt>
-        <dd>Dissection level (inside a tooth)</dd>
-        <dt>E</dt>
-        <dd>Dissect anatomy (in a tooth: separate layers)</dd>
-        <dt>C · L</dt>
-        <dd>Section · labels</dd>
-        <dt>Arrows · + −</dt>
-        <dd>Orbit · zoom</dd>
-        <dt>R</dt>
-        <dd>Reset view</dd>
+        {m.keys.map(([k, v]) => (
+          <Fragment key={k}>
+            <dt>{k}</dt>
+            <dd>{v}</dd>
+          </Fragment>
+        ))}
       </dl>
       <p className="ds-about-foot">
-        Code MIT · Models CC BY-SA 2.1 JP · Text CC BY-SA 4.0
+        {m.licences}
         {REPO_URL && (
           <>
             {' · '}
             <a href={REPO_URL} target="_blank" rel="noopener noreferrer">
-              Source on GitHub
+              {m.sourceOnGithub}
             </a>
           </>
         )}
@@ -159,5 +153,3 @@ export function AboutDialog() {
     </dialog>
   );
 }
-
-/** First-run nudge: disappears after the first selection. */

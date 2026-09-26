@@ -7,6 +7,7 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import type { Registry } from '../anatomy/registry';
 import type { Structure } from '../anatomy/types';
 import { formatTooth } from '../anatomy/notation';
+import { nameOf, shortOf } from '../i18n';
 import { store, getState, setState, actions, DISSECT_LEVELS, type AppState, type ViewPreset } from '../state/store';
 import { resolveMesh, revealPatch, layersActive, type MeshVisual } from '../state/visibility';
 import { Animator } from './animator';
@@ -218,7 +219,7 @@ export class Engine {
       idle(() => void this.ensureTooth(EXEMPLAR_TOOTH));
     } catch (e) {
       console.error(e);
-      setState({ error: 'The 3D anatomy could not be loaded. Check your connection and reload.' });
+      setState({ error: 'load' }); // shown translated by the loading card
     }
   }
 
@@ -321,7 +322,7 @@ export class Engine {
     if (s.theme !== p.theme) this.applyTheme(s.theme);
     if (s.orbitMode !== p.orbitMode) this.rig.setMode(s.orbitMode);
     if (s.dissectFdi !== p.dissectFdi) this.updatePivot();
-    if (visChanged || s.labels !== p.labels || s.numbering !== p.numbering || s.selectedId !== p.selectedId) this.refreshLabels();
+    if (visChanged || s.labels !== p.labels || s.numbering !== p.numbering || s.selectedId !== p.selectedId || s.lang !== p.lang) this.refreshLabels();
     // a new phase or a changed set of visible structures re-packs the board and frames it
     if (s.explodePhase !== p.explodePhase || (s.explodePhase === 2 && visChanged)) this.layoutBoard(true);
     if (s.explodePhase === 1 && p.explodePhase === 2 && s.dissectFdi === null && !s.isolateId) {
@@ -504,7 +505,7 @@ export class Engine {
       const tooth = this.registry.get(`tooth-${fdi}`)!;
       for (const k of tooth.tooth?.layers ?? []) {
         const st = this.registry.get(k);
-        if (st && this.entries.get(k)?.visual === 'on') addMeshLabel(k, st.shortName ?? st.name, 'structure', st.labelPriority + 3, [k]);
+        if (st && this.entries.get(k)?.visual === 'on') addMeshLabel(k, shortOf(st, s.lang), 'structure', st.labelPriority + 3, [k]);
       }
       for (const d of this.registry.descendants(tooth.id)) {
         if (d.kind !== 'landmark' || !d.anchor || d.id.startsWith('pulp-horn-') && !d.id.startsWith('pulp-horn-1-')) continue;
@@ -514,7 +515,7 @@ export class Engine {
         const anchor = new THREE.Vector3(...d.anchor);
         out.push({
           id: d.id,
-          text: d.shortName ?? d.name,
+          text: shortOf(d, s.lang),
           kind: 'landmark',
           priority: d.labelPriority + 2,
           radius: 0.2,
@@ -532,13 +533,13 @@ export class Engine {
         if (st.toothFdi !== undefined || st.labelPriority < 3) continue;
         if (st.kind === 'mesh') {
           const vis = st.meshes.filter((k) => this.entries.get(k)?.visual === 'on');
-          if (vis.length) addMeshLabel(st.id, st.shortName ?? st.name, 'structure', st.labelPriority, vis);
+          if (vis.length) addMeshLabel(st.id, shortOf(st, s.lang), 'structure', st.labelPriority, vis);
         } else if (st.kind === 'landmark' && st.anchor) {
           const ok = st.categories.every((c) => s.categories[c] !== 'off');
           if (!ok) continue;
           const a = new THREE.Vector3(...st.anchor);
           const jaw = this.entries.get('mandible-body');
-          out.push({ id: st.id, text: st.name, kind: 'landmark', priority: st.labelPriority, radius: 0.35, owners: new Set([st.id]), anchor: () => (jaw ? a.clone().add(jaw.mesh.position) : a) });
+          out.push({ id: st.id, text: nameOf(st, s.lang), kind: 'landmark', priority: st.labelPriority, radius: 0.35, owners: new Set([st.id]), anchor: () => (jaw ? a.clone().add(jaw.mesh.position) : a) });
         }
       }
     }
@@ -639,9 +640,10 @@ export class Engine {
     actions.hover(id);
     if (id) {
       const s = this.registry.get(id)!;
-      const n = getState().numbering;
+      const { numbering: n, lang } = getState();
       const fdi = s.toothFdi;
-      this.tip.textContent = fdi ? `${s.name} · ${formatTooth(fdi, n)}` : s.name;
+      const name = nameOf(s, lang);
+      this.tip.textContent = fdi ? `${name} · ${formatTooth(fdi, n)}` : name;
       this.tip.style.transform = `translate3d(${this.pointerPx.x + 14}px, ${this.pointerPx.y + 16}px, 0)`;
       this.tip.classList.add('is-visible');
       this.renderer.domElement.style.cursor = 'pointer';

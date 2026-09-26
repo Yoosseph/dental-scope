@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { defineConfig, type Plugin } from 'vitest/config';
 import react from '@vitejs/plugin-react';
-import { ABOUT, HOME, TOOTH_PAGES, headTags, normalizeSiteUrl, robotsTxt, sitemapXml } from './src/app/seo.ts';
+import { ABOUT_PAGES, HOME, TOOTH_PAGES, headTags, normalizeSiteUrl, robotsTxt, sitemapXml } from './src/app/seo.ts';
 import { aboutHtml } from './src/app/about.ts';
 
 const base = process.env.DS_BASE ?? '/';
@@ -45,12 +45,15 @@ function seo(): Plugin {
         mkdirSync(`${outDir}/${page.path}`, { recursive: true });
         writeFileSync(`${outDir}/${page.path}index.html`, withTags(headTags(page, siteUrl, seoOpts)));
       }
-      // plain-HTML about page with the readable guide to every tooth (no app bundle)
-      const absBase = base.startsWith('.') ? '../' : base;
-      mkdirSync(`${outDir}/${ABOUT.path}`, { recursive: true });
-      writeFileSync(`${outDir}/${ABOUT.path}index.html`, aboutHtml(headTags(ABOUT, siteUrl, seoOpts), absBase, `${absBase}favicon.svg`));
+      // plain-HTML about page with the readable guide to every tooth (no app bundle), in English, Swedish and German
+      for (const page of ABOUT_PAGES) {
+        // with a relative base, links climb out of about/ (and about/<lang>/)
+        const absBase = base.startsWith('.') ? '../'.repeat(page.path.split('/').filter(Boolean).length) : base;
+        mkdirSync(`${outDir}/${page.path}`, { recursive: true });
+        writeFileSync(`${outDir}/${page.path}index.html`, aboutHtml(headTags(page, siteUrl, seoOpts), absBase, `${absBase}favicon.svg`, page.lang));
+      }
       const today = new Date().toISOString().slice(0, 10);
-      if (siteUrl) writeFileSync(`${outDir}/sitemap.xml`, sitemapXml(siteUrl, [HOME.path, ABOUT.path, ...pages.map((p) => p.path)], today));
+      if (siteUrl) writeFileSync(`${outDir}/sitemap.xml`, sitemapXml(siteUrl, [HOME.path, ...ABOUT_PAGES.map((p) => p.path), ...pages.map((p) => p.path)], today));
     },
   };
 }

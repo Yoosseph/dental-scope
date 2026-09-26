@@ -2,12 +2,15 @@
  * The /about/ page: a plain, fast, text-first HTML page (no WebGL, no app bundle)
  * that search engines and readers can use. It explains the project and carries
  * a readable guide to every permanent tooth, the numbering systems and the
- * structures in the 3D model, with links into the explorer. Built by vite.config.ts.
+ * structures in the 3D model, with links into the explorer. Built by vite.config.ts
+ * in English (about/), Swedish (about/sv/) and German (about/de/).
  */
-import teeth from '../content/en/teeth.json';
-import structures from '../content/en/structures.json';
-import { PERMANENT_FDI, TOOTH_TYPES, TYPE_NAME, archOf, fdiToPalmer, fdiToUniversal, toothName, typeOf } from '../anatomy/notation.ts';
+import { PERMANENT_FDI, TOOTH_TYPES, archOf, fdiToPalmer, fdiToUniversal, sideOf, typeOf } from '../anatomy/notation.ts';
 import type { ToothType } from '../anatomy/types.ts';
+import { CONTENT } from '../content/content.ts';
+import { TYPE_PLURALS, archTypeName, toothNameIn } from '../i18n/anatomy.ts';
+import { LANGS, LANG_NATIVE, type Lang } from '../i18n/lang.ts';
+import { ABOUT_TEXT } from './about-text.ts';
 import { AUTHOR, REPOSITORY, SITE_NAME, jsonLd } from './seo.ts';
 
 interface Entry {
@@ -18,117 +21,86 @@ interface Entry {
   canals?: string;
   eruption?: string;
 }
-const TEETH = teeth as unknown as Record<string, Entry>;
-const STRUCTURES = structures as unknown as Record<string, Entry>;
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-/** Glossary groups: [heading, content keys] */
-const GLOSSARY: [string, string[]][] = [
-  ['Parts of a tooth', ['crown', 'root', 'cej', 'apex']],
-  ['Tooth tissues', ['enamel', 'dentin', 'cementum', 'pulp', 'pulp-chamber', 'pulp-horn', 'root-canals', 'apical-foramen']],
-  ['Periodontium (supporting tissues)', ['periodontium', 'gingiva', 'pdl', 'maxillary-alveolar-process', 'mandibular-alveolar-process']],
-  ['Jaws and joint', ['maxilla', 'mandible', 'mandibular-condyle', 'tmj', 'articular-disc', 'mandibular-foramen', 'mental-foramen']],
+/** Glossary groups (headings are in ABOUT_TEXT.glossaryGroups): content keys per group */
+const GLOSSARY: string[][] = [
+  ['crown', 'root', 'cej', 'apex'],
+  ['enamel', 'dentin', 'cementum', 'pulp', 'pulp-chamber', 'pulp-horn', 'root-canals', 'apical-foramen'],
+  ['periodontium', 'gingiva', 'pdl', 'maxillary-alveolar-process', 'mandibular-alveolar-process'],
+  ['maxilla', 'mandible', 'mandibular-condyle', 'tmj', 'articular-disc', 'mandibular-foramen', 'mental-foramen'],
   [
-    'Nerves and vessels',
-    [
-      'inferior-alveolar-nerve',
-      'mental-nerve',
-      'incisive-nerve',
-      'lingual-nerve',
-      'infraorbital-nerve',
-      'posterior-superior-alveolar-nerve',
-      'middle-superior-alveolar-nerve',
-      'anterior-superior-alveolar-nerve',
-      'inferior-alveolar-artery',
-    ],
+    'inferior-alveolar-nerve',
+    'mental-nerve',
+    'incisive-nerve',
+    'lingual-nerve',
+    'infraorbital-nerve',
+    'posterior-superior-alveolar-nerve',
+    'middle-superior-alveolar-nerve',
+    'anterior-superior-alveolar-nerve',
+    'inferior-alveolar-artery',
   ],
-  ['Muscles of mastication and the face', ['masseter', 'temporalis', 'medial-pterygoid', 'lateral-pterygoid', 'buccinator', 'orbicularis-oris', 'mentalis']],
+  ['masseter', 'temporalis', 'medial-pterygoid', 'lateral-pterygoid', 'buccinator', 'orbicularis-oris', 'mentalis'],
 ];
 
-const GLOSSARY_NAME: Record<string, string> = {
-  cej: 'Cementoenamel junction (CEJ)',
-  pdl: 'Periodontal ligament (PDL)',
-  tmj: 'Temporomandibular joint (TMJ)',
-  'maxillary-alveolar-process': 'Maxillary alveolar process',
-  'mandibular-alveolar-process': 'Mandibular alveolar process',
-};
-const termName = (k: string) => GLOSSARY_NAME[k] ?? cap(k.replace(/-/g, ' '));
+/** The English FAQ (also used as the page's FAQPage structured data). */
+export const FAQ = ABOUT_TEXT.en.faq;
 
-export const FAQ: { q: string; a: string }[] = [
-  {
-    q: 'What is Dental Scope?',
-    a: 'Dental Scope is a free, open-source, interactive 3D model of human dental anatomy that runs in the web browser. You can rotate the skull and jaws, select any of the 32 permanent teeth, peel away enamel and dentin to see the pulp and root canals, and look at the nerves, vessels and muscles around the teeth.',
-  },
-  {
-    q: 'Is Dental Scope free?',
-    a: 'Yes. It is free to use with no account or installation, and its source code is open under the MIT licence. The 3D anatomy is derived from BodyParts3D and shared under CC BY-SA 2.1 Japan.',
-  },
-  {
-    q: 'Who is it for?',
-    a: 'Dental students, dental hygiene and dental assisting students, teachers who want a 3D model to show in class, and anyone curious about how teeth are built and numbered.',
-  },
-  {
-    q: 'Which tooth numbering systems does it support?',
-    a: 'All three common systems. The FDI World Dental Federation system (ISO 3950) uses two digits: quadrant then position, so the lower left first molar is 36. The Universal system used in the United States numbers the teeth 1 to 32, making the same tooth #19. Palmer notation writes the quadrant and position, here LL6. Switch between them with the FDI, UNI and PAL buttons.',
-  },
-  {
-    q: 'Can I see inside a tooth?',
-    a: 'Yes. Select a tooth and open Dissect anatomy to separate it into enamel, dentin, cementum, periodontal ligament, pulp chamber and root canals, or use the Section tool to cut through the model.',
-  },
-  {
-    q: 'Does it work on phones and tablets?',
-    a: 'Yes, in any current version of Chrome, Edge, Firefox or Safari with WebGL, on desktop, tablet or phone.',
-  },
-  {
-    q: 'Can Dental Scope be used for diagnosis?',
-    a: 'No. Dental Scope is an educational reference only. Internal tooth tissues are modeled with simplified proportions and nerves are placed schematically, so it must not be used for diagnosis, treatment planning or clinical decisions.',
-  },
-];
+/** Path of the about page for a language, below the site root. */
+export const aboutPath = (lang: Lang) => (lang === 'en' ? 'about/' : `about/${lang}/`);
 
-function toothRow(fdi: number, base: string): string {
-  return `<li><a href="${base}tooth/${fdi}/">${esc(toothName(fdi))}</a> <span class="num">FDI ${fdi} · Universal ${fdiToUniversal(fdi)} · Palmer ${fdiToPalmer(fdi)}</span></li>`;
+const toothName = (fdi: number, lang: Lang) => toothNameIn(typeOf(fdi), archOf(fdi), sideOf(fdi), lang);
+
+/** Explorer link for a tooth; translated pages open the explorer in their language. */
+const toothHref = (fdi: number, base: string, lang: Lang) => `${base}tooth/${fdi}/${lang === 'en' ? '' : `?lang=${lang}`}`;
+
+function toothRow(fdi: number, base: string, lang: Lang): string {
+  return `<li><a href="${toothHref(fdi, base, lang)}">${esc(toothName(fdi, lang))}</a> <span class="num">FDI ${fdi} · Universal ${fdiToUniversal(fdi)} · Palmer ${fdiToPalmer(fdi)}</span></li>`;
 }
 
-function toothTypeSection(type: ToothType, base: string): string {
+function toothTypeSection(type: ToothType, base: string, lang: Lang): string {
+  const T = ABOUT_TEXT[lang];
+  const content = CONTENT[lang] as Record<string, Entry>;
   const arches = (['maxillary', 'mandibular'] as const)
     .map((arch) => {
-      const e = TEETH[`tooth:${type}:${arch}`];
+      const e = content[`tooth:${type}:${arch}`];
       if (!e) return '';
       const fdis = PERMANENT_FDI.filter((f) => typeOf(f) === type && archOf(f) === arch);
       const facts = [
-        e.roots && `<dt>Roots</dt><dd>${esc(e.roots)}</dd>`,
-        e.canals && `<dt>Root canals</dt><dd>${esc(e.canals)}</dd>`,
-        e.eruption && `<dt>Eruption</dt><dd>${esc(e.eruption)}</dd>`,
+        e.roots && `<dt>${esc(T.rootsLabel)}</dt><dd>${esc(e.roots)}</dd>`,
+        e.canals && `<dt>${esc(T.canalsLabel)}</dt><dd>${esc(e.canals)}</dd>`,
+        e.eruption && `<dt>${esc(T.eruptionLabel)}</dt><dd>${esc(e.eruption)}</dd>`,
       ]
         .filter(Boolean)
         .join('');
       return `
         <article class="tooth" id="${arch}-${type}">
-          <h4>${esc(cap(`${arch} ${TYPE_NAME[type]}`))} <span class="alt">(${arch === 'maxillary' ? 'upper' : 'lower'})</span></h4>
+          <h4>${esc(archTypeName(type, arch, lang))} <span class="alt">(${esc(arch === 'maxillary' ? T.upper : T.lower)})</span></h4>
           ${e.summary ? `<p>${esc(e.summary)}</p>` : ''}
-          ${e.function ? `<p><strong>Function.</strong> ${esc(e.function)}</p>` : ''}
-          ${e.clinical ? `<p><strong>Notes.</strong> ${esc(e.clinical)}</p>` : ''}
+          ${e.function ? `<p><strong>${esc(T.functionLabel)}</strong> ${esc(e.function)}</p>` : ''}
+          ${e.clinical ? `<p><strong>${esc(T.notesLabel)}</strong> ${esc(e.clinical)}</p>` : ''}
           ${facts ? `<dl>${facts}</dl>` : ''}
-          <p class="links">View in 3D: ${fdis.map((f) => `<a href="${base}tooth/${f}/">${esc(toothName(f))} (${f} · #${fdiToUniversal(f)})</a>`).join(', ')}</p>
+          <p class="links">${esc(T.viewIn3d)} ${fdis.map((f) => `<a href="${toothHref(f, base, lang)}">${esc(toothName(f, lang))} (${f} · #${fdiToUniversal(f)})</a>`).join(', ')}</p>
         </article>`;
     })
     .join('');
-  return `<section class="type"><h3>${esc(cap(TYPE_NAME[type]))}s</h3>${arches}</section>`;
+  return `<section class="type"><h3>${esc(TYPE_PLURALS[lang][type])}</h3>${arches}</section>`;
 }
 
-/** Full HTML document for /about/. `head` is the page's generated head tags; `base` the site base path. */
-export function aboutHtml(head: string, base: string, faviconHref: string): string {
-  const quadrants = [
-    { label: 'Upper right (FDI quadrant 1)', q: 1 },
-    { label: 'Upper left (FDI quadrant 2)', q: 2 },
-    { label: 'Lower left (FDI quadrant 3)', q: 3 },
-    { label: 'Lower right (FDI quadrant 4)', q: 4 },
-  ];
+/**
+ * Full HTML document for the about page in `lang`. `head` is the page's generated head tags;
+ * `base` the site base path (for links into the explorer); `faviconHref` the icon URL.
+ */
+export function aboutHtml(head: string, base: string, faviconHref: string, lang: Lang = 'en'): string {
+  const T = ABOUT_TEXT[lang];
+  const STRUCTURES = CONTENT[lang] as Record<string, Entry>;
+  const termName = (k: string) => T.termNames[k] ?? cap(k.replace(/-/g, ' '));
+  const explorer = `${base}${lang === 'en' ? '' : `?lang=${lang}`}`;
   const glossary = GLOSSARY.map(
-    ([heading, keys]) => `
-      <h3>${esc(heading)}</h3>
+    (keys, i) => `
+      <h3>${esc(T.glossaryGroups[i])}</h3>
       <dl class="terms">${keys
         .filter((k) => STRUCTURES[k]?.summary)
         .map((k) => `<dt>${esc(termName(k))}</dt><dd>${esc(STRUCTURES[k].summary!)}${STRUCTURES[k].function ? ` ${esc(STRUCTURES[k].function!)}` : ''}</dd>`)
@@ -137,11 +109,22 @@ export function aboutHtml(head: string, base: string, faviconHref: string): stri
   const faqLd = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    mainEntity: FAQ.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+    inLanguage: T.htmlLang,
+    mainEntity: T.faq.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
   };
+  const ids = ['features', 'teeth', 'numbering', 'types', 'glossary', 'faq', 'credits'];
+  // links to this page in the other languages (relative to the site base)
+  const langNav = LANGS.map((l) =>
+    l === lang ? `<strong lang="${l}">${LANG_NATIVE[l]}</strong>` : `<a href="${base}${aboutPath(l)}" hreflang="${l}" lang="${l}">${LANG_NATIVE[l]}</a>`,
+  ).join(' · ');
+  const credits = T.creditsHtml
+    .replace('{author}', AUTHOR)
+    .replace('{repo}', REPOSITORY)
+    .replace('{bp3d}', 'https://dbarchive.biosciencedbc.jp/en/bodyparts3d/download.html')
+    .replace('{licence}', 'https://creativecommons.org/licenses/by-sa/2.1/jp/deed.en');
 
   return `<!doctype html>
-<html lang="en">
+<html lang="${T.htmlLang}">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -155,76 +138,69 @@ export function aboutHtml(head: string, base: string, faviconHref: string): stri
   </head>
   <body>
     <header class="top">
-      <a class="brand" href="${base}">${SITE_NAME}</a>
-      <a class="cta" href="${base}">Open the 3D explorer →</a>
+      <a class="brand" href="${explorer}">${SITE_NAME}</a>
+      <a class="cta" href="${explorer}">${esc(T.openExplorer)}</a>
     </header>
     <main>
-      <h1>${SITE_NAME}: free interactive 3D dental anatomy</h1>
-      <p class="lede">${SITE_NAME} is a free, open-source 3D dental anatomy explorer. Rotate a full skull and both jaws, pick any of the 32 permanent teeth, and dissect a tooth layer by layer, from enamel and dentin down to the pulp and root canals. It runs in the browser with nothing to install.</p>
-      <p><a class="cta" href="${base}">Open the 3D explorer →</a></p>
+      <p class="langs" aria-label="${esc(T.otherLanguages)}">${langNav}</p>
+      <h1>${esc(T.h1)}</h1>
+      <p class="lede">${esc(T.lede)}</p>
+      <p><a class="cta" href="${explorer}">${esc(T.openExplorer)}</a></p>
 
-      <nav class="toc" aria-label="On this page">
-        <a href="#features">Features</a> · <a href="#teeth">All 32 teeth</a> · <a href="#numbering">Tooth numbering</a> · <a href="#types">Tooth types</a> · <a href="#glossary">Anatomy glossary</a> · <a href="#faq">FAQ</a> · <a href="#credits">Credits</a>
+      <nav class="toc" aria-label="${esc(T.onThisPage)}">
+        ${ids.map((id, i) => `<a href="#${id}">${esc(T.toc[i])}</a>`).join(' · ')}
       </nav>
 
       <section id="features">
-        <h2>What you can do</h2>
+        <h2>${esc(T.featuresTitle)}</h2>
         <ul>
-          <li><strong>Explore the whole mouth in 3D</strong>: skull, maxilla, mandible, gums and all permanent teeth, including third molars (wisdom teeth).</li>
-          <li><strong>See inside every tooth</strong>: enamel, dentin, cementum, periodontal ligament, pulp chamber, pulp horns and root canals.</li>
-          <li><strong>Dissect anatomy</strong>: separate the layers step by step, or lay every structure out side by side.</li>
-          <li><strong>Section view</strong>: cut through the model to see cross-sections of teeth and bone.</li>
-          <li><strong>Three numbering systems</strong>: FDI (ISO 3950), Universal (ADA) and Palmer, switchable at any time.</li>
-          <li><strong>Nerves, vessels and muscles</strong>: inferior alveolar, lingual and superior alveolar nerves, the temporomandibular joint and the muscles of mastication.</li>
-          <li><strong>Search</strong> any structure or tooth by name or number.</li>
+          ${T.features.map(([b, rest]) => `<li><strong>${esc(b)}</strong>: ${esc(rest)}</li>`).join('\n          ')}
         </ul>
       </section>
 
       <section id="teeth">
-        <h2>All 32 permanent teeth</h2>
-        <p>Each link opens the 3D explorer with that tooth selected.</p>
-        <div class="quads">${quadrants
-          .map(({ label, q }) => `<div><h3>${label}</h3><ol>${PERMANENT_FDI.filter((f) => Math.floor(f / 10) === q).map((f) => toothRow(f, base)).join('')}</ol></div>`)
+        <h2>${esc(T.teethTitle)}</h2>
+        <p>${esc(T.teethIntro)}</p>
+        <div class="quads">${T.quadrants
+          .map((label, i) => `<div><h3>${esc(label)}</h3><ol>${PERMANENT_FDI.filter((f) => Math.floor(f / 10) === i + 1).map((f) => toothRow(f, base, lang)).join('')}</ol></div>`)
           .join('')}</div>
       </section>
 
       <section id="numbering">
-        <h2>Tooth numbering systems</h2>
-        <p>Dentists name teeth with a short code. ${SITE_NAME} shows all three systems in common use, so you can learn to read each one. Take the lower left first molar as an example:</p>
+        <h2>${esc(T.numberingTitle)}</h2>
+        <p>${esc(T.numberingIntro)}</p>
         <table>
-          <thead><tr><th>System</th><th>How it works</th><th>Lower left first molar</th></tr></thead>
+          <thead><tr>${T.numberingHead.map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead>
           <tbody>
-            <tr><td>FDI (ISO 3950)</td><td>Two digits: the quadrant (1 upper right, 2 upper left, 3 lower left, 4 lower right), then the position from the midline (1 central incisor to 8 third molar). Used in most of the world.</td><td>36</td></tr>
-            <tr><td>Universal (ADA)</td><td>Numbers 1 to 32, starting at the upper right third molar, running along the upper arch to the upper left, then back along the lower arch from the lower left third molar to the lower right. Used mainly in the United States.</td><td>#19</td></tr>
-            <tr><td>Palmer</td><td>A quadrant symbol with the position number 1 to 8, written here in text form as UR, UL, LL or LR plus the position. Common in the United Kingdom and in orthodontics.</td><td>LL6</td></tr>
+            ${T.numberingRows.map((r) => `<tr>${r.map((c) => `<td>${esc(c)}</td>`).join('')}</tr>`).join('\n            ')}
           </tbody>
         </table>
       </section>
 
       <section id="types">
-        <h2>Tooth types</h2>
-        <p>The permanent dentition has eight teeth in each quadrant: two incisors, one canine, two premolars and three molars. Typical textbook values are shown; individual anatomy varies.</p>
-        ${TOOTH_TYPES.map((t) => toothTypeSection(t, base)).join('')}
+        <h2>${esc(T.typesTitle)}</h2>
+        <p>${esc(T.typesIntro)}</p>
+        ${TOOTH_TYPES.map((t) => toothTypeSection(t, base, lang)).join('')}
       </section>
 
       <section id="glossary">
-        <h2>Dental anatomy glossary</h2>
-        <p>The structures you can select in the 3D model, in short.</p>
+        <h2>${esc(T.glossaryTitle)}</h2>
+        <p>${esc(T.glossaryIntro)}</p>
         ${glossary}
       </section>
 
       <section id="faq">
-        <h2>Frequently asked questions</h2>
-        ${FAQ.map((f) => `<h3>${esc(f.q)}</h3><p>${esc(f.a)}</p>`).join('')}
+        <h2>${esc(T.faqTitle)}</h2>
+        ${T.faq.map((f) => `<h3>${esc(f.q)}</h3><p>${esc(f.a)}</p>`).join('')}
       </section>
 
       <section id="credits">
-        <h2>Credits and licence</h2>
-        <p>Made by ${AUTHOR}. The source code is on <a href="${REPOSITORY}" rel="noopener">GitHub</a>. The jaws, teeth, gums, skull and muscles come from <a href="https://dbarchive.biosciencedbc.jp/en/bodyparts3d/download.html" rel="noopener">BodyParts3D</a>, © The Database Center for Life Science, licensed under <a href="https://creativecommons.org/licenses/by-sa/2.1/jp/deed.en" rel="noopener">CC Attribution-Share Alike 2.1 Japan</a>. Third molars, alveolar bone and the joint are derived from those meshes; enamel, dentin, cementum, periodontal ligament, pulp and canals are modeled with simplified proportions; nerves and vessels are schematic.</p>
-        <p class="note">${SITE_NAME} is an educational reference. It is not intended for diagnosis, treatment planning or clinical decisions.</p>
+        <h2>${esc(T.creditsTitle)}</h2>
+        <p>${credits}</p>
+        <p class="note">${esc(T.note)}</p>
       </section>
     </main>
-    <footer class="bottom"><a href="${base}">${SITE_NAME}</a> · Free 3D dental anatomy · Made by <a href="${REPOSITORY}" rel="noopener">${AUTHOR}</a></footer>
+    <footer class="bottom"><a href="${explorer}">${SITE_NAME}</a> · ${esc(T.footer)} · ${esc(T.madeBy)} <a href="${REPOSITORY}" rel="noopener">${AUTHOR}</a></footer>
   </body>
 </html>
 `;
@@ -247,6 +223,7 @@ h3{font-size:18px;margin:28px 0 8px}
 h4{font-size:16px;margin:0 0 6px}
 .lede{font-size:18px}
 .toc{margin:24px 0;color:var(--muted);font-size:14px}
+.langs{margin:8px 0 0;color:var(--muted);font-size:14px}
 .quads{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:8px 24px}
 .quads ol{padding-left:20px;margin:0}
 .num,.alt{color:var(--muted);font-size:13px;font-weight:400}

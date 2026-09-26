@@ -13,23 +13,31 @@ import {
   typeOf,
 } from './notation';
 import type { CategoryId, Manifest, ManifestMesh, RootInfo, Structure, Vec3 } from './types';
+import {
+  PART_ALIASES,
+  STRUCTURE_SHORT,
+  apicalForamenNames,
+  canalNames,
+  partNames,
+  partShort,
+  pulpHornNames,
+  rootNames,
+  structureAliases,
+  structureNames,
+  toothNameIn,
+  toothSearchAliases,
+  type Names,
+  type PartKey,
+} from '../i18n/anatomy';
+
+/** Translated names as extra search terms. */
+const nameTerms = (n: Names) => [n.sv, n.de];
 
 const QUADRANT_GROUP: Record<number, string> = {
   1: 'upper-right-quadrant',
   2: 'upper-left-quadrant',
   3: 'lower-left-quadrant',
   4: 'lower-right-quadrant',
-};
-
-const ROOT_NAME: Record<string, string> = {
-  single: 'Root',
-  mesial: 'Mesial root',
-  distal: 'Distal root',
-  buccal: 'Buccal root',
-  palatal: 'Palatal root',
-  lingual: 'Lingual root',
-  mesiobuccal: 'Mesiobuccal root',
-  distobuccal: 'Distobuccal root',
 };
 
 const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
@@ -65,21 +73,25 @@ export class Registry {
       const meshes = (d.meshes ?? []).filter((m) => this.meshInfo(m));
       const kind = d.kind ?? (d.landmark ? 'landmark' : meshes.length ? 'mesh' : 'group');
       const info = meshes[0] ? this.meshInfo(meshes[0]) : undefined;
+      const names = structureNames(d.id, d.name) ?? { en: d.name, sv: d.name, de: d.name };
+      const short = d.shortName ? STRUCTURE_SHORT[d.id.replace(/-(right|left)$/, '')] : undefined;
       this.add({
         id: d.id,
         name: d.name,
+        names,
         kind,
         parent: d.parent,
         children: [],
         categories: d.categories ?? [],
         meshes,
-        aliases: d.aliases ?? [],
+        aliases: [...(d.aliases ?? []), ...structureAliases(d.id), ...nameTerms(names)],
         provenance: d.provenance ?? info?.provenance ?? 'source',
         sourceRef: info?.sourceRef,
         stage: info?.stage ?? 1,
         anchor: d.landmark ? this.manifest.landmarks[d.landmark] : undefined,
         labelPriority: d.labelPriority ?? 1,
         shortName: d.shortName,
+        shortNames: d.shortName ? { en: d.shortName, sv: short?.sv ?? d.shortName, de: short?.de ?? d.shortName } : undefined,
       });
     }
   }
@@ -96,6 +108,7 @@ export class Registry {
       const base = { toothFdi: fdi, stage: 4 as const, provenance: 'modeled' as const };
       const shellInfo = this.meshInfo(tId);
       const tName = toothName(fdi);
+      const tNames: Names = { en: tName, sv: toothNameIn(typeOf(fdi), archOf(fdi), sideOf(fdi), 'sv'), de: toothNameIn(typeOf(fdi), archOf(fdi), sideOf(fdi), 'de') };
 
       // roots and canals (typical configuration derived by the pipeline)
       const roots: RootInfo[] = (mt?.roots ?? []).map((r) => ({
@@ -106,6 +119,7 @@ export class Registry {
       this.add({
         id: tId,
         name: tName,
+        names: tNames,
         kind: 'mesh',
         parent: QUADRANT_GROUP[Math.floor(fdi / 10)],
         children: [],
@@ -119,6 +133,8 @@ export class Registry {
           notation.palmer,
           `fdi ${fdi}`,
           `universal ${notation.universal}`,
+          ...toothSearchAliases(typeOf(fdi), archOf(fdi), fdi),
+          ...nameTerms(tNames),
         ],
         provenance: mt?.provenance ?? 'source',
         sourceRef: shellInfo?.sourceRef,
@@ -140,34 +156,38 @@ export class Registry {
       });
 
       if (!layers.length) continue;
-      const ctx = [tName.toLowerCase(), `tooth ${fdi}`, `#${notation.universal}`];
+      // search context: the tooth's name in every language and its numbers
+      const ctx = [tName.toLowerCase(), tNames.sv.toLowerCase(), tNames.de.toLowerCase(), `tooth ${fdi}`, `tand ${fdi}`, `zahn ${fdi}`, `#${notation.universal}`];
+      /** part names (all languages) plus their search terms */
+      const p = (k: PartKey, aliasKey: string = k) => ({ names: partNames(k), extra: [...(PART_ALIASES[aliasKey] ?? []), ...nameTerms(partNames(k))] });
+      type Part = { names: Names; extra: string[] };
 
-      const region = (id: string, name: string, meshKeys: string[], aliases: string[]) =>
-        this.add({ id, name, kind: 'region', parent: tId, children: [], categories: ['permanent-teeth'], meshes: meshKeys.filter((k) => layers.includes(k.replace(`-${fdi}`, ''))), aliases: [...aliases, ...ctx], labelPriority: 3, ...base });
-      region(`crown-${fdi}`, 'Crown', [key('enamel'), key('dentin-coronal')], ['anatomical crown', 'crown']);
-      region(`root-${fdi}`, roots.length > 1 ? 'Roots' : 'Root', [key('dentin-radicular'), key('cementum')], ['root', 'roots', 'radicular']);
+      const region = (id: string, part: Part, meshKeys: string[], aliases: string[]) =>
+        this.add({ id, name: part.names.en, names: part.names, kind: 'region', parent: tId, children: [], categories: ['permanent-teeth'], meshes: meshKeys.filter((k) => layers.includes(k.replace(`-${fdi}`, ''))), aliases: [...aliases, ...part.extra, ...ctx], labelPriority: 3, ...base });
+      region(`crown-${fdi}`, p('crown'), [key('enamel'), key('dentin-coronal')], ['anatomical crown', 'crown']);
+      region(`root-${fdi}`, p(roots.length > 1 ? 'roots' : 'root', 'root'), [key('dentin-radicular'), key('cementum')], ['root', 'roots', 'radicular']);
 
-      const mesh = (layer: string, name: string, parent: string, c: CategoryId[], aliases: string[], prio: number, shortName?: string) => {
+      const mesh = (layer: string, part: Part, parent: string, c: CategoryId[], aliases: string[], prio: number, shortNames?: Names) => {
         if (!has(layer)) return;
-        this.add({ id: key(layer), name, kind: 'mesh', parent, children: [], categories: cats(c), meshes: [key(layer)], aliases: [...aliases, ...ctx], labelPriority: prio, shortName, ...base });
+        this.add({ id: key(layer), name: part.names.en, names: part.names, kind: 'mesh', parent, children: [], categories: cats(c), meshes: [key(layer)], aliases: [...aliases, ...part.extra, ...ctx], labelPriority: prio, shortName: shortNames?.en, shortNames, ...base });
       };
-      const group = (id: string, name: string, parent: string, c: CategoryId[], aliases: string[], prio: number) =>
-        this.add({ id, name, kind: 'group', parent, children: [], categories: cats(c), meshes: [], aliases: [...aliases, ...ctx], labelPriority: prio, ...base });
-      const landmark = (id: string, name: string, parent: string, c: CategoryId[], aliases: string[], anchor: Vec3, prio: number, shortName: string) =>
-        this.add({ id, name, kind: 'landmark', parent, children: [], categories: cats(c), meshes: [], aliases: [...aliases, ...ctx], anchor, labelPriority: prio, shortName, ...base });
+      const group = (id: string, part: Part, parent: string, c: CategoryId[], aliases: string[], prio: number) =>
+        this.add({ id, name: part.names.en, names: part.names, kind: 'group', parent, children: [], categories: cats(c), meshes: [], aliases: [...aliases, ...part.extra, ...ctx], labelPriority: prio, ...base });
+      const landmark = (id: string, part: Part, parent: string, c: CategoryId[], aliases: string[], anchor: Vec3, prio: number, shortNames: Names) =>
+        this.add({ id, name: part.names.en, names: part.names, kind: 'landmark', parent, children: [], categories: cats(c), meshes: [], aliases: [...aliases, ...part.extra, ...ctx], anchor, labelPriority: prio, shortName: shortNames.en, shortNames, ...base });
 
-      mesh('enamel', 'Enamel', tId, ['enamel'], ['enamel', 'tooth enamel', 'enamel cap'], 4);
-      group(`dentin-${fdi}`, 'Dentin', tId, ['dentin'], ['dentin', 'dentine'], 4);
-      mesh('dentin-coronal', 'Coronal dentin', `dentin-${fdi}`, ['dentin'], ['dentin', 'crown dentin'], 3);
-      mesh('dentin-radicular', 'Radicular dentin', `dentin-${fdi}`, ['dentin'], ['dentin', 'root dentin'], 3);
-      mesh('cementum', 'Cementum', tId, ['cementum'], ['cementum', 'root surface'], 3);
-      group(`pulp-${fdi}`, 'Dental pulp', tId, ['dental-pulp'], ['pulp', 'nerve of the tooth', 'pulp tissue'], 4);
-      mesh('pulp-chamber', 'Pulp chamber', `pulp-${fdi}`, ['dental-pulp'], ['pulp chamber', 'coronal pulp', 'pulp'], 4);
-      mesh('pdl', 'Periodontal ligament', tId, ['periodontal-ligament'], ['pdl', 'periodontal ligament', 'periodontal membrane'], 2, 'PDL');
+      mesh('enamel', p('enamel'), tId, ['enamel'], ['enamel', 'tooth enamel', 'enamel cap'], 4);
+      group(`dentin-${fdi}`, p('dentin'), tId, ['dentin'], ['dentin', 'dentine'], 4);
+      mesh('dentin-coronal', p('dentin-coronal', 'dentin'), `dentin-${fdi}`, ['dentin'], ['dentin', 'crown dentin'], 3);
+      mesh('dentin-radicular', p('dentin-radicular', 'dentin'), `dentin-${fdi}`, ['dentin'], ['dentin', 'root dentin'], 3);
+      mesh('cementum', p('cementum'), tId, ['cementum'], ['cementum', 'root surface'], 3);
+      group(`pulp-${fdi}`, p('pulp'), tId, ['dental-pulp'], ['pulp', 'nerve of the tooth', 'pulp tissue'], 4);
+      mesh('pulp-chamber', p('pulp-chamber'), `pulp-${fdi}`, ['dental-pulp'], ['pulp chamber', 'coronal pulp', 'pulp'], 4);
+      mesh('pdl', p('pdl'), tId, ['periodontal-ligament'], ['pdl', 'periodontal ligament', 'periodontal membrane'], 2, partShort('pdl'));
 
       // canals
       const canalIds = roots.flatMap((r) => r.canals);
-      if (canalIds.length) group(`root-canals-${fdi}`, canalIds.length > 1 ? 'Root canals' : 'Root canal', `pulp-${fdi}`, ['dental-pulp', 'root-canals'], ['root canal', 'root canals', 'canal system', 'radicular pulp'], 3);
+      if (canalIds.length) group(`root-canals-${fdi}`, p(canalIds.length > 1 ? 'root-canals' : 'root-canal', 'root-canals'), `pulp-${fdi}`, ['dental-pulp', 'root-canals'], ['root canal', 'root canals', 'canal system', 'radicular pulp'], 3);
       const frame = mt.frame;
       for (const r of mt.roots ?? []) {
         const nCanals = r.canals.length;
@@ -179,28 +199,31 @@ export class Registry {
         });
         withPos.sort((a, b) => b.b - a.b);
         withPos.forEach(({ c, lm }, i) => {
-          const nm = canalName(r.label, nCanals, i, archOf(fdi));
-          mesh(c, nm.name, `root-canals-${fdi}`, ['dental-pulp', 'root-canals'], ['root canal', 'canal', nm.abbr.toLowerCase(), `${r.label} canal`], 3, nm.abbr);
+          const nm = canalNames(r.label, nCanals, i, archOf(fdi));
+          const canalPart = { names: nm.names, extra: [...PART_ALIASES.canal, ...nameTerms(nm.names)] };
+          mesh(c, canalPart, `root-canals-${fdi}`, ['dental-pulp', 'root-canals'], ['root canal', 'canal', nm.abbr.en.toLowerCase(), `${r.label} canal`], 3, nm.abbr);
           if (lm) {
-            landmark(`apical-foramen-${c.replace('canal-', '')}-${fdi}`, `Apical foramen (${nm.abbr})`, key(c), ['dental-pulp', 'root-canals'], ['apical foramen', 'apex', 'foramen'], lm, 2, 'Apical foramen');
+            const af = apicalForamenNames(nm.abbr);
+            landmark(`apical-foramen-${c.replace('canal-', '')}-${fdi}`, { names: af, extra: [...PART_ALIASES['apical-foramen'], ...nameTerms(af)] }, key(c), ['dental-pulp', 'root-canals'], ['apical foramen', 'apex', 'foramen'], lm, 2, partShort('apical-foramen'));
           }
         });
       }
       // landmarks
-      for (const [lk, p] of Object.entries(mt.landmarks ?? {})) {
+      for (const [lk, pos] of Object.entries(mt.landmarks ?? {})) {
         if (lk.startsWith('pulp-horn-')) {
-          landmark(`${lk}-${fdi}`, `Pulp horn ${lk.slice(10)}`, key('pulp-chamber'), ['dental-pulp'], ['pulp horn', 'pulp horns'], p, 1, 'Pulp horn');
+          const ph = pulpHornNames(lk.slice(10));
+          landmark(`${lk}-${fdi}`, { names: ph, extra: [...PART_ALIASES['pulp-horn'], ...nameTerms(ph)] }, key('pulp-chamber'), ['dental-pulp'], ['pulp horn', 'pulp horns'], pos, 1, partShort('pulp-horn'));
         }
       }
       if (mt.landmarks?.['cervical-line']) {
-        landmark(`cej-${fdi}`, 'Cementoenamel junction', tId, [], ['cej', 'cervical line', 'neck of tooth', 'cementoenamel junction'], mt.landmarks['cervical-line'], 2, 'CEJ');
+        landmark(`cej-${fdi}`, p('cej'), tId, [], ['cej', 'cervical line', 'neck of tooth', 'cementoenamel junction'], mt.landmarks['cervical-line'], 2, partShort('cej'));
       }
       if (mt.landmarks?.apex) {
-        landmark(`apex-${fdi}`, 'Root apex', `root-${fdi}`, [], ['apex', 'root apex', 'root tip'], mt.landmarks.apex, 1, 'Apex');
+        landmark(`apex-${fdi}`, p('apex'), `root-${fdi}`, [], ['apex', 'root apex', 'root tip'], mt.landmarks.apex, 1, partShort('apex'));
       }
       // label for root structure
       const rootStruct = this.byId.get(`root-${fdi}`);
-      if (rootStruct && roots.length > 1) rootStruct.aliases.push(...roots.map((r) => ROOT_NAME[r.label]?.toLowerCase() ?? r.label));
+      if (rootStruct && roots.length > 1) rootStruct.aliases.push(...roots.flatMap((r) => { const n = rootNames(r.label); return n ? [n.en.toLowerCase(), n.sv, n.de] : [r.label]; }));
     }
   }
 
@@ -288,18 +311,4 @@ export class Registry {
   teeth(): Structure[] {
     return PERMANENT_FDI.map((f) => this.byId.get(`tooth-${f}`)!).filter(Boolean);
   }
-}
-
-function canalName(root: string, n: number, i: number, arch: 'maxillary' | 'mandibular'): { name: string; abbr: string } {
-  if (root === 'single') return { name: 'Root canal', abbr: 'Canal' };
-  if (n === 1) {
-    const nm = ROOT_NAME[root]?.replace('root', 'canal') ?? `${root} canal`;
-    const abbr = { mesial: 'M', distal: 'D', buccal: 'B', palatal: 'P', lingual: 'L', mesiobuccal: 'MB', distobuccal: 'DB' }[root] ?? root;
-    return { name: nm, abbr };
-  }
-  if (root === 'mesiobuccal') return i === 0 ? { name: 'Mesiobuccal canal (MB1)', abbr: 'MB1' } : { name: 'Second mesiobuccal canal (MB2)', abbr: 'MB2' };
-  if (root === 'mesial') return i === 0 ? { name: 'Mesiobuccal canal', abbr: 'MB' } : { name: 'Mesiolingual canal', abbr: 'ML' };
-  if (root === 'distal') return i === 0 ? { name: 'Distobuccal canal', abbr: 'DB' } : { name: 'Distolingual canal', abbr: 'DL' };
-  const lingual = arch === 'maxillary' ? 'palatal' : 'lingual';
-  return i === 0 ? { name: 'Buccal canal', abbr: 'B' } : { name: `${lingual[0].toUpperCase()}${lingual.slice(1)} canal`, abbr: lingual[0].toUpperCase() };
 }

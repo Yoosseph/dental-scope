@@ -66,7 +66,9 @@ export interface ToothMeta {
 
 export interface Structure {
   id: string;
+  /** English name (the reference); `names` holds it in every interface language */
   name: string;
+  names: Record<'en' | 'sv' | 'de', string>;
   kind: StructureKind;
   parent: string | null;
   children: string[];
@@ -85,6 +87,7 @@ export interface Structure {
   labelPriority: number;
   /** short label used on the 3D label chip */
   shortName?: string;
+  shortNames?: Record<'en' | 'sv' | 'de', string>;
 }
 
 /* ---------- manifest produced by tools/pipeline ---------- */
