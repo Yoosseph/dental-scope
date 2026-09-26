@@ -1,246 +1,210 @@
 # Dental Scope — Architecture
 
-> Phase 3. How the application is organised and why.
+How the app is organised, how data flows through it, and where to start for common kinds of work. It is written for someone picking up a task cold. Each section is short and links to the detailed docs instead of repeating them.
 
-## 1. Principles
+**Status markers.** ✅ implemented · 🧩 scaffolded (code exists, not wired into the UI) · 🗺 planned (only described here).
 
-1. **The 3D explorer is the product.** One full-bleed canvas; UI islands float around it.
-2. **Data drives everything.** Anatomy lives in a structure registry built from data tables. UI components never hardcode structure IDs.
-3. **React never renders per frame.** A small imperative engine owns Three.js; React renders chrome and subscribes to coarse state.
-4. **Render on demand.** The engine renders only when something changed (camera motion, tween, state change).
-5. **Stage everything.** First paint needs only jaws + teeth; context, neurovasculature and internal tooth anatomy stream in afterwards.
-6. **Be honest about data.** Every structure carries provenance (`source`, `derived`, `modeled`, `schematic`) and every text entry a verification status.
+Checked against the code on 2026-09-26.
 
-## 2. Stack
+---
 
-| Concern | Choice | Reason |
+## 1. Quick start
+
+| Task | Command | Notes |
 |---|---|---|
-| Build | Vite + TypeScript (strict) | Fast, static output, no server required |
-| UI | React 19 | Component model for panels |
-| 3D | Three.js (imperative engine) | Full control of the render loop, materials, picking, clipping; avoids per-frame React work. R3F was considered; the engine's needs (on-demand render, material state machine, DOM labels, stencil-free caps) are simpler without a reconciler in the middle |
-| State | Zustand (vanilla store) | Subscribable from both React (`useStore(selector)`) and the engine (`store.subscribe`) without duplication |
-| Geometry compression | glTF + `EXT_meshopt_compression` + quantization | Decoder is tiny and ships with Three; better than Draco for many small meshes |
-| Search | In-house scorer | ~500 entries; a dependency (Fuse etc.) isn't warranted |
-| Routing | In-house History API router | Two route shapes |
+| Install | `npm install` | Node 22 (as in CI). Nothing else is needed for the app. |
+| Run | `npm run dev` | Vite dev server on <http://localhost:5173>. In dev, `window.ds = { registry, engine }` is exposed for debugging. |
+| Unit tests | `npm test` | Vitest, `src/**/*.test.ts`, Node environment (no WebGL) |
+| Type check | `npm run typecheck` | `tsc -b --noEmit`, strict |
+| Build | `npm run build` | Type check, then `vite build` into `dist/`. The SEO plugin also writes `404.html`, the tooth entry pages, `robots.txt` and `sitemap.xml` (§9). |
+| Preview a build | `npm run preview` | |
+| Rebuild the 3D assets | `pip install -r tools/pipeline/requirements.txt`<br>`npm run assets:fetch && npm run assets:build && npm run assets:compress`<br>`node tools/gen-assets-doc.mjs` | Python 3 with numpy, scipy, scikit-image, trimesh, rtree and fast-simplification. Only needed when geometry changes: `public/models/` is committed. See [assets.md](assets.md). |
 
-Runtime dependencies: `react`, `react-dom`, `three`, `zustand`. Nothing else.
+Build-time environment variables:
 
-## 3. Folder layout
-
-```
-src/
-  app/            App shell, providers, routing glue
-  anatomy/        Structure registry, schema types, tooth tables, notation, hierarchy builders
-  content/        Educational text (per-structure JSON), content loader, verification status
-  search/         Index builder + query scorer
-  state/          Zustand store, actions, selectors
-  engine/         Engine (renderer/loop), CameraRig, Picking, Materials, Visibility,
-                  Explode, Clipping, Labels, AssetLoader, SceneRegistry
-  ui/             React components (panels, rail, dock, search, detail, tree, icons)
-  modes/          Mode interface + Explore (implemented), Learn/Quiz/Compare (scaffolded)
-  styles/         Tokens + global CSS
-tools/pipeline/   Python + Node asset pipeline (raw BodyParts3D → production GLB)
-public/models/    Production assets (CC BY-SA 2.1 JP)
-docs/
-```
-
-## 4. Anatomical schema
-
-```ts
-type Provenance = 'source' | 'derived' | 'modeled' | 'schematic';
-type StructureKind = 'group' | 'mesh' | 'region' | 'landmark';
-
-interface Structure {
-  id: string;                 // stable, URL-safe: "tooth-36", "enamel-36", "inferior-alveolar-nerve-left"
-  name: string;               // "Mandibular left first molar"
-  kind: StructureKind;        // group = container, mesh = owns geometry, region = subset of other meshes, landmark = point
-  parent: string | null;
-  children: string[];
-  categories: CategoryId[];   // for layer toggles: 'permanent-teeth', 'enamel', 'nerves', ...
-  meshes: string[];           // scene node keys this structure owns (resolved recursively for groups)
-  aliases: string[];          // search synonyms
-  provenance: Provenance;
-  sourceRef?: string;         // e.g. "FMA55704"
-  stage: 1 | 2 | 3 | 4;       // loading stage that provides its geometry
-  asset?: string;             // lazily loaded file (stage 3 teeth)
-  tooth?: ToothMeta;          // only for teeth
-  anchor?: [number, number, number]; // label/landmark point (filled from bounds at load)
-  labelPriority?: number;     // higher = survives label decluttering longer
-}
-
-interface ToothMeta {
-  fdi: string; universal: string; palmer: string;
-  arch: 'maxillary' | 'mandibular';
-  side: 'right' | 'left';
-  type: 'central-incisor' | 'lateral-incisor' | 'canine' | 'first-premolar' | 'second-premolar'
-      | 'first-molar' | 'second-molar' | 'third-molar';
-  dentition: 'permanent' | 'primary';
-  roots: RootSpec[];          // typical configuration (content, verifiable)
-  eruption?: { fromYears: number; toYears: number }; // future timeline mode
-}
-```
-
-Educational content is separate (`src/content/en/*.json`) so it can be replaced by verified sources without code changes:
-
-```ts
-interface StructureContent {
-  id: string;
-  summary?: string; location?: string; function?: string; clinical?: string;
-  facts?: { label: string; value: string }[];
-  related?: string[];
-  status: 'placeholder' | 'draft' | 'reviewed';
-  sources?: { title: string; url?: string }[];
-}
-```
-
-The detail panel renders fields that exist, shows the status badge, and always shows provenance.
-
-### Hierarchy (generated, not hand-written)
-
-```
-dental-anatomy
-├── maxilla ─ maxillary-alveolar-process
-│   └── maxillary-dentition ─ upper-right-quadrant ─ tooth-18 … tooth-11
-│                            └ upper-left-quadrant  ─ tooth-21 … tooth-28
-├── mandible ─ mandibular-alveolar-process, condyles
-│   └── mandibular-dentition ─ lower-left / lower-right quadrants
-├── periodontium ─ gingiva-upper, gingiva-lower, periodontal-ligament, cementum, alveolar bone
-├── neurovascular ─ nerves ─ inferior alveolar, mental, incisive, lingual, superior alveolar …
-│                └ vessels ─ inferior alveolar artery/vein …
-├── tmj ─ left/right: condyle (region), articular fossa (region), articular disc
-├── skull-context ─ zygomatic, temporal, palatine, sphenoid, …
-└── muscles-of-mastication ─ masseter, temporalis, pterygoids, buccinator, orbicularis oris
-tooth-XX
-├── crown (region) ─ enamel-XX, coronal-dentin-XX, pulp-chamber-XX (+ pulp horns: landmarks)
-├── root  (region) ─ radicular-dentin-XX, cementum-XX, root-canal-XX-<root>[-<n>], apical-foramen-XX-* (landmarks)
-├── pulp (group)   ─ pulp-chamber-XX, root-canal-XX-*
-└── pdl-XX
-```
-
-Tooth tables (`anatomy/teeth.ts`) generate all 32 teeth and their sub-structures; notation (`anatomy/notation.ts`) converts FDI ↔ Universal ↔ Palmer.
-
-## 5. State
-
-One Zustand store; slices are plain data (Sets as arrays/records) and actions are pure functions over it.
-
-| Slice | Fields |
+| Variable | Effect |
 |---|---|
-| selection | `selectedId`, `hoveredId` |
-| visibility | `hidden: Record<id,true>`, `ghosted: Record<id,true>`, `categoryOff: Record<cat,true>`, `isolateId`, `globalOpacity` |
-| view | `explode` (0–1), `explodePhase` (1 in position / 2 laid out), `labels`, `clip: {enabled, axis, offset, flip}`, `numbering`, `orbitMode` (`fixed` / `free`) |
-| tooth | `dissectToothId`, `dissectLevel` (0 whole → 4 canals), `toothExplode` |
-| mode | `mode: 'explore' | 'learn' | 'quiz' | 'compare'` |
-| loading | per-stage progress |
-| ui | panel open states (mobile sheets), search open |
+| `DS_BASE` | Vite `base`. Use `/dental-scope/` for a sub-path. `./` switches deep links to hash URLs (`#/tooth/36`) and skips the tooth entry pages. |
+| `DS_SITE_URL` | Absolute public URL. Enables canonical URLs, Open Graph image tags, structured data and `sitemap.xml`. |
+| `VITE_DS_REPO_URL` | Links the "Made by Yoseph" credit and the About dialog to the repository. When unset these show as plain text, so a build never advertises a private repository. |
+| `VITE_DS_URL=off` | Stop the app from writing to the address bar (for embedding). |
 
-**Visibility resolution** is one pure function: a mesh is visible iff its structure (and ancestors) are not hidden, at least one of its categories is on, it is inside the isolate subtree (if any), and every registered *visibility filter* (mode, dissection level, future timeline) passes. Opacity = ghosted ? ghost : 1. This is how timeline/procedure modes plug in without touching UI code.
+CI (`.github/workflows/ci.yml`) runs typecheck, test and build on pushes and PRs. `.github/workflows/pages.yml` deploys `main` to GitHub Pages. It takes `DS_BASE` and `DS_SITE_URL` from `actions/configure-pages`, and passes `VITE_DS_REPO_URL` only while the repository is public.
 
-## 6. Engine
+## 2. Principles
 
-```
-Engine
- ├─ Renderer / Scene / PerspectiveCamera, ACES tone mapping, sRGB, env light, pixel ratio ≤ 2
- ├─ loop: requestAnimationFrame only while `needsRender || tweens active || controls damping`
- ├─ SceneRegistry   meshKey → Object3D, structureId → meshes, bounds cache
- ├─ AssetLoader     staged GLTF loading (meshopt), progress → store, lazy tooth assets
- ├─ Materials       tissue palette; per-mesh material state: base / hover / selected / ghost; back-face cap shader for sections;
- │                  soft-tissue edge darkening and faint muscle grain; light-theme tuning
- ├─ Visibility      store → mesh.visible / opacity (animated fades)
- ├─ Picking         raycast visible meshes on pointer; hover throttled to rAF; click vs drag discrimination
- ├─ CameraRig       OrbitControls + tweened focus (bounds → distance via FOV), presets, reduced motion;
- │                  orbit modes: fixed (target springs back to a pivot = dentition or dissected tooth) / free
- ├─ Explode         arch-level and tooth-level offset fields, animated
- ├─ Clipping        one global plane (sagittal/coronal/axial/custom-to-view) applied to materials; cut faces rendered as flat tissue colour
- └─ Labels          DOM layer; projected per frame; priority + overlap declutter; click → select
-```
+1. **The 3D explorer is the product.** One full-bleed canvas, with UI panels floating around it.
+2. **Data drives everything.** Anatomy lives in a registry built from the asset manifest and declarative tables. UI components never hardcode structure IDs (see [CONTRIBUTING](../CONTRIBUTING.md)).
+3. **React never renders per frame.** An imperative engine owns Three.js. React renders the panels around it and subscribes to coarse state.
+4. **Render on demand.** The rAF loop always ticks, but it only renders when something changed.
+5. **Load in stages.** First paint needs only the jaws and teeth. Context, nerves and vessels, and per-tooth internal anatomy stream in afterwards.
+6. **Be honest about data.** Every structure carries a provenance (`source`, `derived`, `modeled`, `schematic`) and every text entry a review status.
 
-The engine subscribes to store slices and never calls React. React components call store actions and, for camera commands, `engine.camera.*` via a context handle.
+Runtime dependencies are `react`, `react-dom`, `three` and `zustand`, and nothing else.
 
-### Selection highlight
-Selected meshes blend toward a cool highlight colour with a faint emissive lift; hover uses a lighter version. Everything else is untouched (no global dimming) unless "focus mode" is on, in which case non-selected meshes are ghosted.
-
-### Cross-sections
-Materials use `clippingPlanes`; `side: DoubleSide`; a small `onBeforeCompile` patch renders back faces as an unlit, slightly darkened tissue colour. Because every tissue is a closed solid, the back faces seen through a cut read as solid cut surfaces — enamel thickness, dentin, pulp and canals appear as clean coloured bands without stencil passes.
-
-### Explode
-- **Arch level:** maxillary complex moves up, mandibular complex down, teeth move outward along their arch normal, gingiva lifts off, nerves/vessels move medially/laterally by side, muscles move outward by side (orbicularis oris, which spans the midline in front of the incisors, moves forward and down in front of the chin instead).
-- **Arch level, phase 2 ("Laid out"):** `explodePhase: 2` lays every fully visible structure out on a board facing the viewer (`engine/layout.ts`: shelf packing in bands that read top to bottom like the head, teeth in arch order); ghosted context fades out and the camera frames the board. Moving the slider back or turning on a section returns to phase 1.
-- **Tooth level:** layers separate along the tooth's long axis in anatomical order (enamel shell → dentin → pulp → canals), cementum/PDL radially.
-
-Offsets are computed once from bounds; animation interpolates a scalar.
-
-## 7. Assets & pipeline
+## 3. Repository map
 
 ```
-BodyParts3D STL (mm, Z-up)
- → tools/pipeline/build_assets.py
-     • select dental FMA IDs, rename to registry IDs
-     • transform to Y-up, centre on the dental arch, scale to cm
-     • derive third molars from second molars
-     • per tooth: voxel SDF → cervical line → enamel / dentin (coronal, radicular) / cementum / PDL / pulp chamber / canals
-     • partition alveolar bone from maxilla & mandible
-     • schematic nerves, vessels, TMJ discs from computed landmarks
-     • write glTF per stage with node names = mesh keys, bounds in manifest.json
- → tools/pipeline/compress.mjs (gltf-transform: dedup, weld, simplify, quantize, meshopt)
- → public/models/{core,context,neurovascular}.glb, public/models/teeth/tooth-XX.glb, manifest.json
+index.html              HTML shell; the SEO plugin injects <head> tags at the <!-- seo: --> marker
+vite.config.ts          Vite + Vitest config and the SEO plugin (entry pages, robots, sitemap, 404)
+src/
+  main.tsx              Entry: restore preferences → WebGL check → load manifest → Registry, Engine,
+                        search index → render <App> inside ServicesContext
+  app/
+    router.ts           Deep links ↔ store (History API, or hash with a relative base); document title
+    seo.ts              Page titles, descriptions, head tags, robots/sitemap (shared by build and app)
+    repo.ts             Repository URL from VITE_DS_REPO_URL (null = don't link)
+  anatomy/
+    types.ts            Structure, ToothMeta, Manifest types
+    structures.ts       Declarative non-tooth structures (bones, muscles, nerves, TMJ, …)
+    registry.ts         Registry: builds the full hierarchy (incl. 32 teeth and their parts) from manifest + tables
+    notation.ts         FDI ↔ Universal ↔ Palmer, tooth names
+    categories.ts       Layer categories (19, of which primary teeth and salivary glands are 🗺 planned), presets, colours
+  content/
+    content.ts          Resolve educational text for a structure id (+ review status)
+    en/teeth.json, en/structures.json   The text itself (draft)
+  search/search.ts      Index builder and scorer
+  state/
+    store.ts            Zustand store: AppState, initial state, actions, persisted preferences
+    visibility.ts       Pure per-mesh visibility resolver + pluggable filters
+  engine/
+    Engine.ts           Owns renderer, scene, loop, loading, visibility/highlight/explode/section/labels, picking
+    camera.ts           CameraRig: OrbitControls, focus tweens, presets, fixed/free orbit
+    materials.ts        Tissue palette + shader patch (highlight, cut faces, grain, edges), theme tuning
+    explode.ts          Arch- and tooth-level explode offsets (pure)
+    layout.ts           Phase-2 "laid out" board packing (pure; see §6 Explode)
+    section.ts          Clipping plane + outline
+    labels.ts           DOM label layer with decluttering
+    assets.ts           Manifest fetch + GLB loader (meshopt)
+    animator.ts         Tiny keyed tween driver
+  ui/                   React components: App, TopBar, LayersPanel, StructureTree, DetailPanel, Dock,
+                        ViewRail, SearchPanel, Overlays (About, footer, loading, start hint), icons,
+                        useKeyboard, context (ServicesContext)
+  modes/modes.ts        🧩 Mode interface, lesson format, quiz picker (not wired to the UI)
+  styles/               tokens.css (design tokens, light/dark), app.css
+public/
+  models/               Production GLBs + manifest.json (CC BY-SA 2.1 JP, derived from BodyParts3D)
+  favicon.svg, og-image.png
+tools/
+  pipeline/             Python + Node asset pipeline (see §7)
+  gen-assets-doc.mjs    Regenerates the asset table in docs/assets.md
+docs/                   This file, assets, content, sources, research and comparison notes
 ```
 
-Loading stages:
+## 4. Startup and routing
 
-| Stage | File | Contents | When |
-|---|---|---|---|
-| 1 | `core.glb` | Maxilla, mandible, gingiva, 32 teeth (outer shells) | Immediately |
-| 2 | `context.glb` | Skull context, muscles of mastication, TMJ | After first frame |
-| 3 | `neurovascular.glb` | Schematic nerves & vessels | After stage 2 |
-| 4 | `teeth/tooth-XX.glb` | Internal anatomy of one tooth | On demand (dissect / search hit / deep link); idle prefetch of the detailed exemplar |
-
-## 8. Search
-
-`search/index.ts` builds entries from the registry: name, aliases, category names, and all notation forms (`tooth 36`, `#19`, `19`, `36`, `LL6`, `UR1`…). Queries are normalised (lower-case, punctuation stripped, number words). Scoring: exact > prefix > word-prefix > subsequence, with boosts for teeth when the query is numeric and interpreted in the **active numbering system** first (so "11" means FDI 11 in FDI mode and Universal 11 in Universal mode — both shown, active one first). Selecting a result: reveal ancestors (unhide + category on + clear isolate if excluded), load tooth asset if needed, select, fly camera to bounds, open detail panel, push URL.
-
-## 9. Routing / deep links
+1. `main.tsx` calls `restorePreferences()` (numbering, theme, orbit mode from `localStorage`), checks WebGL, then `loadManifest()`.
+2. It builds the `Registry` (pure, from the manifest), the `Engine` and the search index, and renders `<App>` with all three in `ServicesContext`.
+3. `App` mounts the engine on the stage `<div>`, starts `engine.loadAll()` (staged loading, §7) and `startRouter()`. It sets `data-theme` on `<html>`, installs the keyboard shortcuts (`useKeyboard`) and tells the engine which parts of the canvas are covered by panels (`engine.setInsets`).
+4. `startRouter` applies the current URL (select, focus, maybe enter dissection) and then keeps the URL in sync with `selectedId` / `dissectFdi` through `replaceState`. Explicit navigation (search, tree, detail links) calls `pushPath`. `popstate` / `hashchange` re-apply. It also keeps `document.title` in sync.
 
 | URL | Effect |
 |---|---|
 | `/` | Overview |
-| `/tooth/36` | Select & focus tooth 36 (FDI) |
-| `/tooth/36/dissect` | Enter dissection of tooth 36 |
-| `/structure/<id>` | Select & focus any structure |
+| `/tooth/36/` | Select and focus tooth 36 (FDI). The build writes a static entry page here, with its own title. |
+| `/tooth/36/dissect` | Open the dissection of tooth 36 |
+| `/structure/<id>` | Select and focus any structure (served through the `noindex` 404.html shell on static hosts) |
 
-Selection changes `replaceState`; explicit navigations (search, tree) `pushState`. `popstate` restores. The build (SEO plugin in `vite.config.ts`, metadata in `src/app/seo.ts`) writes a static entry page per tooth (`tooth/36/index.html`, own title/description/canonical) and a `noindex` `404.html` app shell that static hosts such as GitHub Pages serve for every other deep link; also `robots.txt` and, with `DS_SITE_URL`, `sitemap.xml`.
+## 5. State (`src/state/store.ts`)
 
-## 10. Modes
+One vanilla Zustand store. React reads it with `useApp(selector)`, and the engine uses `store.subscribe`. Actions live in `actions.*`, and components never call `setState` directly. The state is plain data only (no Three.js objects).
 
-```ts
-interface Mode {
-  id: 'explore' | 'learn' | 'quiz' | 'compare';
-  enter(ctx: ModeContext): void;
-  exit(ctx: ModeContext): void;
-  visibilityFilter?(s: Structure): boolean;
-  Panel?: React.ComponentType;   // mode-specific UI in the dock
-}
+| Group | Fields |
+|---|---|
+| loading | `ready`, `loading` (stage → 0…1), `error` |
+| selection | `selectedId`, `hoveredId` |
+| visibility | `categories` (id → `on`/`ghost`/`off`), `hidden`, `ghosted` (id → true), `isolateId`, `isolateContext`, `ghostOpacity` |
+| arch view | `explode` (0…1), `explodePhase` (1 in position / 2 laid out), `labels`, `clip` {enabled, axis, offset, flip}, `view` (preset or null), `autoRotate`, `orbitMode` (`fixed`/`free`) |
+| tooth dissection | `dissectFdi`, `dissectLevel` (0 whole → 4 canals), `toothExplode` |
+| UI | `numbering`, `theme`, `searchOpen`, `aboutOpen`, `panel` (layers/tree), `mobileSheet`, `mode` 🧩 |
+
+`numbering`, `theme` and `orbitMode` are saved per viewer in `localStorage`.
+
+**Visibility** (`state/visibility.ts`). `resolveMesh(meshKey, ctx)` is the only function that decides whether a mesh is `on`, `ghost`, `faint` (a quieter ghost used for context around a dissected tooth) or `off`. It combines categories, hide/ghost on the structure and its ancestors, tooth shell vs internal layers (`layersActive`), dissection-level rules (`dissectRule`), isolation, and any filters added with `registerVisibilityFilter` (the hook for modes and a future timeline). `revealPatch` makes a structure reachable, and `Engine.selectFromUI` uses it for search, tree, label and deep-link navigation.
+
+## 6. Engine (`src/engine`)
+
+The engine is a plain class with no React in it. It subscribes to the store in `onState()` and reacts to changes:
+
+```
+store change ─► Engine.onState ─┬─ refreshVisibility → resolveMesh per mesh → entry.visual
+                                ├─ refreshHighlight (selection/hover) · refreshClip · refreshLabels
+                                ├─ theme → applyTheme (exposure, bone shading)   orbitMode → rig.setMode
+                                ├─ dissectFdi → updatePivot (fixed-orbit centre)
+                                └─ explode / explodePhase → reframe / layoutBoard
+loop (rAF) ─► controls.update + rig.tick (pivot spring) + animator.tick + tickVisuals
+             (opacity fades, highlight, explode/board positions) → render only if something moved
 ```
 
-- **Explore** — implemented.
-- **Quiz** — scaffold: pick a random structure from a pool, highlight without label, user answers via search box.
-- **Compare** — scaffold: two tooth IDs; engine places clones of both tooth assets side by side in a secondary group.
-- **Learn** — lessons are data (`lessons/*.json`: steps with target ids, camera preset, visibility, text).
+- **Scene entries.** Each loaded mesh key becomes a `MeshEntry` with its material, its arch- and tooth-level explode offsets (computed once in `explode.ts`), its phase-2 board slot, and animated opacity and highlight. Picking raycasts visible meshes (opaque first) and maps them to the owning structure.
+- **UI → engine.** Components get the engine from `useServices()` and call `selectFromUI(id, {focus})`, `focus(id)`, `ensureTooth(fdi)`, `setView(preset)`, `resetCamera()`, `zoom`, `orbit` and `setInsets`. Everything else goes through store actions.
+- **Engine → UI.** The engine only writes to the store (`actions.select`, `setLoading`, `setState({view})`). It never calls React.
+- **Camera** (`camera.ts`). OrbitControls with damping, `focusSphere` tweens along a spherical arc, 8 presets, and dynamic near/far. **Orbit modes:** *free* lets pan, zoom-to-cursor and focus move the target. *Fixed* keeps the target on a pivot: the dentition, or the tooth being dissected. After a pan it glides back (`pivotSpring`), and focus puts the structure on the pivot→camera line (`fixedFocusPose`).
+- **Materials** (`materials.ts`). One `MeshPhysicalMaterial` per mesh, with a shared shader patch for:
+  - the selection and hover highlight (colour blend plus a fresnel rim);
+  - back faces drawn as flat "cut surface" colour, so sections look solid without a stencil;
+  - edge darkening on muscles, nerves and vessels, plus a faint grain on muscles only;
+  - light-theme exposure and bone shading (`THEME_LIGHTING`, `themedColor`).
+- **Explode** (`explode.ts`, `layout.ts`).
+  - *Arch, phase 1:* the upper complex moves up and the lower down. Teeth rise out of their sockets, nerves and vessels fan out by side, and muscles move outward. The orbicularis oris moves forward and down, clear of the incisors.
+  - *Arch, phase 2 "Laid out":* every fully visible structure is shelf-packed on a board facing the viewer, in bands that read top to bottom like the head. Ghosted context fades out.
+  - *Tooth level:* the layers separate along the tooth's axes.
+- **Sections** (`section.ts`). One global clipping plane: sagittal, coronal or axial in world space, or view-aligned. While dissecting a tooth, the tooth's own frame is used (mesiodistal, buccolingual, horizontal).
+- **Labels** (`labels.ts`). A DOM layer positioned each rendered frame, with priority decluttering and occlusion tests. Clicking a label selects the structure.
 
-**Timeline (future):** `ToothMeta.eruption` + a `dentitionAge` value in the store and a visibility filter; primary teeth are just more registry entries with `dentition: 'primary'`.
+## 7. Assets and loading
 
-**Procedures (future):** a procedure is data: ordered steps, each a *scene diff* (visibility, opacity, extra assets such as a restoration or implant, transforms) plus text. Assets load through the same staged loader.
+The pipeline (details in [assets.md](assets.md)): BodyParts3D STL → `tools/pipeline/build_assets.py` → `compress.mjs` → `public/models/`. `build_assets.py` selects the dental FMA IDs, converts to Y-up centimetres, derives the third molars, and splits out the alveolar bone, condyles and fossae. It models the internal tooth layers (`tooth_layers.py`, a voxel SDF) and places the schematic nerves, vessels and discs. `compress.mjs` applies gltf-transform with meshopt. `manifest.json` records each mesh's stage, file, bounds, provenance and FMA ID, plus tooth frames, roots, landmarks and paths.
 
-## 11. Performance budget
+| Stage | File | Contents | When (`Engine.loadAll` / `ensureTooth`) |
+|---|---|---|---|
+| 1 | `core.glb` | Jaws, gingiva, 32 tooth shells | Immediately (`ready` after this) |
+| 2 | `context.glb` | Skull context, muscles, TMJ | Next |
+| 3 | `neurovascular.glb` | Schematic nerves and vessels | Next |
+| 4 | `teeth/tooth-XX.glb` | One tooth's internal layers | On demand (`ensureTooth`): dissection, search hit, deep link. Turning a section on in the overview loads all 32 (`ensureAllTeeth`, progress under `loading.teeth`). Tooth 36 is prefetched when idle. |
 
-- First load (stage 1): ≤ 2.5 MB transferred, interactive < 2 s on broadband.
-- ≤ ~150 draw calls in overview (one per structure mesh; teeth share materials by tissue).
-- Tooth internal assets ≤ 300 KB each.
-- Render-on-demand: idle GPU usage ≈ 0.
-- Pixel ratio capped at 2 (1.5 on mobile).
+## 8. Anatomy, content and search
 
-## 12. Accessibility
+- **Registry** (`anatomy/registry.ts`). Builds every `Structure` (group / mesh / region / landmark) from the manifest, `structures.ts` and the tooth tables in `notation.ts`. That includes 32 teeth with crown and root regions, pulp, canals, apical foramina and pulp horns. Its main lookups are `get`/`require`, `ancestors`, `descendants`, `meshesOf`, `categoriesOfMesh`, `teeth()` and the `meshOwner` map (mesh key → structure). Add anatomy here, not in components.
+- **Content** (`content/content.ts`). Looks up text by the most specific key (tooth type and arch, then the id, then the id with its qualifiers stripped) in `en/*.json`. Status: every entry with text is currently `draft`, and entries without text are `placeholder`. Per-entry `reviewed` status and `sources` are 🗺 planned; see [content.md](content.md).
+- **Search** (`search/search.ts`). An in-house scorer over names, aliases, categories and every notation form. Numbers are read in the active numbering system first. `SearchPanel` calls `engine.selectFromUI(id, { focus: true })`. That reveals the hit (`revealPatch`: unhide it, turn on its categories, relax isolation), loads the tooth if needed, selects it and flies to it. The panel then pushes the URL.
+- **About-dialog facts** are sourced in [sources.md](sources.md).
 
-- Every control is a `<button>`/`<input>` with a label; keyboard: `/` search, `Esc` clear/close, `F` focus selection, `H` hide, `I` isolate, `R` reset, arrow keys orbit, `+/-` zoom, `[`/`]` dissect level.
-- Tree view is a proper `role="tree"` for keyboard-only navigation of all structures (the canvas is not the only path to content).
-- `prefers-reduced-motion`: camera jumps with short fades, no auto-rotate, explode animates instantly.
-- Contrast ≥ 4.5:1 for text; visible focus rings.
+## 9. Build output and SEO
+
+`vite.config.ts` contains a small plugin, with the metadata itself in `src/app/seo.ts` (unit-tested). It does the following:
+- injects the title, description, Open Graph and Twitter tags into `index.html` (plus canonical, `og:image` and WebSite JSON-LD when `DS_SITE_URL` is set);
+- writes `tooth/NN/index.html` for all 32 teeth with their own head tags (skipped with a relative base);
+- writes `404.html` as a `noindex` copy of the app shell, `robots.txt`, and `sitemap.xml` (with `DS_SITE_URL`).
+
+## 10. Modes and planned work
+
+- ✅ **Explore**: everything above.
+- 🧩 **Learn / Quiz / Compare**: `modes/modes.ts` defines the `Mode` interface, the lesson format, `pickQuizTarget` and `switchMode` (which registers a visibility filter). There's no UI or content for them yet: `actions.setMode` exists, but nothing calls it.
+- 🗺 Primary dentition and an eruption timeline (`ToothMeta.dentition`, a visibility filter), measured nerve and vessel paths, procedure modules, and expert-reviewed text. See the README roadmap.
+
+## 11. Where to start
+
+| I want to… | Start in | Also read |
+|---|---|---|
+| Change a panel, button or copy | `src/ui/*` and `src/styles/app.css` (tokens in `tokens.css`) | [CONTRIBUTING](../CONTRIBUTING.md) (accessibility), [sources.md](sources.md) if About text changes |
+| Add or rename a structure | `anatomy/structures.ts` or `registry.ts`, then `content/en/*.json` | [content.md](content.md) |
+| Edit educational text | `src/content/en/*.json` | [content.md](content.md) |
+| Change how things look in 3D | `engine/materials.ts` (colours, shader), `Engine.ts` (`applyTheme`, lights) | |
+| Change explode or the laid-out board | `engine/explode.ts`, `engine/layout.ts` (both pure and tested) | |
+| Change camera behaviour | `engine/camera.ts`, `Engine.ts` (`setView`, `focus`, `updatePivot`) | |
+| Change visibility rules | `state/visibility.ts` | |
+| Add a URL or change metadata | `app/router.ts`, `app/seo.ts`, `vite.config.ts` | |
+| Replace or add 3D data | `tools/pipeline/*` | [assets.md](assets.md), [CREDITS.md](../CREDITS.md) (licences) |
+| Build a Learn/Quiz mode | `modes/modes.ts`, `registerVisibilityFilter` | §10 |
+
+## 12. Performance and accessibility
+
+- **Performance.** Rendering happens on demand, so an idle scene uses almost no GPU. Pixel ratio is capped at 2 (1.5 on coarse pointers). There is about one draw call per visible mesh. Tooth interiors load lazily. Materials share one program (`customProgramCacheKey`).
+- **Accessibility.**
+  - Every control is a labelled `<button>`/`<input>`.
+  - The structure tree is a keyboard-navigable `role="tree"`, so the canvas isn't the only path to the content.
+  - The view-rail controls show their names on hover, focus and touch.
+  - Keyboard shortcuts are handled in `useKeyboard.ts` and listed in the About dialog and the README.
+  - `prefers-reduced-motion` (or `?motion=reduce`) makes camera and explode changes instant.
+  - Text contrast is at least 4.5:1, with visible focus rings.
