@@ -26,7 +26,6 @@
 | **CTooth / STSR 2025** CBCT tooth & pulp segmentations | Teeth + pulp labels in CBCT | Voxel | Research-access; redistribution terms unclear | NIfTI | Tooth / pulp | Same as above | Not used |
 | **embodi3D, Sketchfab, TurboSquid dental models** | Various single teeth / jaws, some with enamel/dentin/pulp | Varies | Per-model; many "free download" but **not open licences**, often non-redistributable | STL/OBJ | Varies | — | **Rejected** for licence reasons unless a specific model is CC0/CC BY |
 | **NIH 3D (3D Print Exchange)** | Some dental models | Varies | Per-entry (some public domain / CC) | STL | Rarely layered | — | Watch list; no suitable layered adult dentition found |
-| **Human Atlas processed assets** | BodyParts3D derived | — | Derived from CC BY-SA, but it is another project's processed build | Custom binary | — | — | **Not used.** We go to the original source |
 
 A 2025 systematic review of openly accessible oral-maxillofacial imaging datasets found that only ~62 % of 105 datasets state reuse terms at all, which matches our experience: licence clarity is the main blocker, not data availability.
 

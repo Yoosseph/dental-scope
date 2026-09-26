@@ -93,6 +93,12 @@ export const IconTree = (p: P) => (
     <rect x="12" y="11.5" width="8" height="5" rx="1.2" transform="translate(0 5)" />
   </Svg>
 );
+export const IconWarning = (p: P) => (
+  <Svg {...p}>
+    <path d="M12 4 21 19.5H3Z" />
+    <path d="M12 10v4.5M12 17h.01" />
+  </Svg>
+);
 export const IconSection = (p: P) => (
   <Svg {...p}>
     <path d="M12 3v18" strokeDasharray="2 2" />

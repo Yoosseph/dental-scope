@@ -39,8 +39,3 @@ modifications is in [docs/assets.md](docs/assets.md). The social preview image
 
 - [Inter Tight](https://fonts.google.com/specimen/Inter+Tight) and [JetBrains Mono](https://www.jetbrains.com/lp/mono/) — SIL Open Font License 1.1
 
-## Inspiration
-
-Interaction design is benchmarked against [Human Atlas](https://human-atlas.co/). No code,
-text, branding or assets from Human Atlas are used; see
-[docs/human-atlas-reference-analysis.md](docs/human-atlas-reference-analysis.md).

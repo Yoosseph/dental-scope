@@ -1,28 +1,14 @@
 import { useMemo } from 'react';
 import { CATEGORY_BY_ID } from '../anatomy/categories';
 import { formatTooth, NUMBERING_SHORT, NUMBERING_SYSTEMS } from '../anatomy/notation';
-import type { NumberingSystem, Provenance, Structure } from '../anatomy/types';
-import type { ContentStatus } from '../content/content';
-import { pathFor, pushPath } from '../app/router';
+import type { NumberingSystem, Structure } from '../anatomy/types';
+import { pushCurrentPath } from '../app/router';
 import { resolveContent } from '../content/content';
-import { actions, getState, useApp } from '../state/store';
+import { actions, useApp } from '../state/store';
 import { useServices } from './context';
 import { IconArrowLeft, IconClose, IconEyeOff, IconFocus, IconGhost, IconIsolate, IconTooth } from './icons';
 
-const PROVENANCE: Record<Provenance, { label: string; text: string }> = {
-  source: { label: 'Source mesh', text: 'BodyParts3D (DBCLS), simplified.' },
-  derived: { label: 'Derived mesh', text: 'Partitioned or approximated from BodyParts3D meshes.' },
-  modeled: { label: 'Modeled', text: 'Built inside the real tooth shape from simplified proportions. Not measured.' },
-  schematic: { label: 'Schematic', text: 'Placed from anatomical landmarks. Not measured.' },
-};
-
 const NUMBERING_TITLE: Record<NumberingSystem, string> = { fdi: 'FDI (ISO 3950)', universal: 'Universal (ADA)', palmer: 'Palmer' };
-
-const STATUS_LABEL: Record<ContentStatus, string> = {
-  reviewed: 'Reviewed text',
-  draft: 'Unreviewed draft',
-  placeholder: 'No text yet',
-};
 
 export function DetailPanel() {
   const { registry, engine } = useServices();
@@ -46,8 +32,7 @@ export function DetailPanel() {
 
   const go = async (id: string) => {
     await engine.selectFromUI(id, { focus: true });
-    const st = getState();
-    pushPath(pathFor(st.selectedId, st.dissectFdi, registry));
+    pushCurrentPath(registry);
   };
 
   return (
@@ -132,12 +117,6 @@ export function DetailPanel() {
             </div>
           </div>
         )}
-
-        <div className="ds-provenance">
-          <span className={`ds-badge ds-badge--${s.provenance}`}>{PROVENANCE[s.provenance].label}</span>
-          <span className={`ds-badge ds-badge--status-${content.status}`}>{STATUS_LABEL[content.status]}</span>
-          <p>{PROVENANCE[s.provenance].text}</p>
-        </div>
       </div>
 
       <div className="ds-detail-actions">
@@ -182,14 +161,14 @@ export function DetailPanel() {
     const f = dissectFdi!;
     actions.exitDissect();
     engine.focus(`tooth-${f}`);
-    pushPath(pathFor(getState().selectedId, null, registry));
+    pushCurrentPath(registry);
   }
 
   async function enterDissect(f: number) {
     actions.enterDissect(f);
     await engine.ensureTooth(f);
     engine.focus(`tooth-${f}`);
-    pushPath(pathFor(getState().selectedId, f, registry));
+    pushCurrentPath(registry);
   }
 }
 

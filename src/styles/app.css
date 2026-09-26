@@ -118,12 +118,6 @@ kbd {
   letter-spacing: -0.025em;
   line-height: 1.05;
 }
-.ds-subtitle {
-  margin: 5px 0 0;
-  font-size: 13.5px;
-  color: var(--ink);
-  opacity: 0.8;
-}
 .ds-credit {
   margin: 4px 0 0;
   font-size: 11.5px;
@@ -581,40 +575,83 @@ button.ds-layer-name:hover {
   flex-direction: column;
   gap: 2px;
 }
-/* action label: appears to the left of the rail on hover, keyboard focus or a touch tap */
+/* action label: on hover, keyboard focus or a touch tap the button grows into a dark pill that
+   slides out to the left and names the action (the icon stays in place at its right end) */
+.ds-rail-btn {
+  isolation: isolate;
+}
+.ds-rail-btn:hover,
+.ds-rail-btn:focus-visible,
+.ds-rail-btn.is-tip-shown {
+  color: var(--panel-solid);
+}
 .ds-rail-tip,
 .ds-rail-caption {
-  padding: 5px 9px;
-  border-radius: 8px;
-  background: var(--panel-solid);
-  border: 1px solid var(--panel-border);
+  border-radius: 9px;
+  background: var(--ink);
   box-shadow: var(--panel-shadow);
   font-family: var(--font-ui);
   font-size: 12px;
   font-weight: 500;
-  color: var(--ink);
+  color: var(--panel-solid);
   white-space: nowrap;
   pointer-events: none;
 }
+.ds-rail-caption {
+  padding: 5px 10px;
+}
 .ds-rail-tip {
   position: absolute;
-  right: calc(100% + 12px);
-  top: 50%;
+  z-index: -1;
+  top: 0;
+  right: 0;
+  height: 100%;
+  /* the right-hand part sits behind the button's own icon */
+  padding: 0 44px 0 12px;
   display: flex;
   align-items: center;
   gap: 8px;
+  clip-path: inset(0 0 0 calc(100% - 34px) round 9px);
   opacity: 0;
-  transform: translate(4px, -50%);
-  transition: opacity var(--dur), transform var(--dur);
+  transition: clip-path 220ms var(--ease), opacity 120ms;
+}
+.ds-rail-tip-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transform: translateX(10px);
+  transition: transform 220ms var(--ease);
 }
 .ds-rail-tip kbd {
   font-size: 10px;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+:root[data-theme='dark'] .ds-rail-tip kbd {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.18);
 }
 .ds-rail-btn:hover .ds-rail-tip,
 .ds-rail-btn:focus-visible .ds-rail-tip,
-.ds-rail-btn.is-tip-shown .ds-rail-tip {
+.ds-rail-btn.is-tip-shown .ds-rail-tip,
+.ds-rail.is-peek .ds-rail-tip {
   opacity: 1;
-  transform: translate(0, -50%);
+  clip-path: inset(0 round 9px);
+}
+.ds-rail-btn:hover .ds-rail-tip-text,
+.ds-rail-btn:focus-visible .ds-rail-tip-text,
+.ds-rail-btn.is-tip-shown .ds-rail-tip-text,
+.ds-rail.is-peek .ds-rail-tip-text {
+  transform: none;
+}
+/* first visit: every label slides out once, one after another, so people see what the rail does */
+.ds-rail.is-peek .ds-rail-btn {
+  color: var(--panel-solid);
+}
+.ds-rail.is-peek .ds-rail-tip,
+.ds-rail.is-peek .ds-rail-tip-text {
+  transition-delay: calc(var(--i, 0) * 45ms);
 }
 .ds-rail-caption {
   display: none;
@@ -723,60 +760,6 @@ button.ds-layer-name:hover {
 .ds-detail-block {
   margin-top: 14px;
 }
-.ds-provenance {
-  margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid var(--line);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
-}
-.ds-provenance p {
-  flex-basis: 100%;
-  margin: 2px 0 0;
-  font-size: 11.5px;
-  color: var(--faint);
-}
-.ds-badge {
-  display: inline-flex;
-  align-items: center;
-  height: 20px;
-  padding: 0 7px;
-  border-radius: 5px;
-  font-size: 10.5px;
-  font-weight: 500;
-  border: 1px solid var(--line);
-  color: var(--muted);
-}
-.ds-badge--source {
-  color: #2f7a4f;
-  border-color: rgba(47, 122, 79, 0.3);
-}
-.ds-badge--derived {
-  color: #6b6a2a;
-  border-color: rgba(107, 106, 42, 0.3);
-}
-.ds-badge--modeled {
-  color: #7a4f98;
-  border-color: rgba(122, 79, 152, 0.3);
-}
-.ds-badge--schematic {
-  color: #9a5b1f;
-  border-color: rgba(154, 91, 31, 0.3);
-}
-:root[data-theme='dark'] .ds-badge--source {
-  color: #7fd3a1;
-}
-:root[data-theme='dark'] .ds-badge--derived {
-  color: #d3d07f;
-}
-:root[data-theme='dark'] .ds-badge--modeled {
-  color: #c9a3e6;
-}
-:root[data-theme='dark'] .ds-badge--schematic {
-  color: #e7b27a;
-}
 .ds-detail-actions {
   padding: 12px 16px 16px;
   border-top: 1px solid var(--line);
@@ -835,6 +818,8 @@ button.ds-layer-name:hover {
   left: 50%;
   bottom: 40px;
   transform: translateX(-50%);
+  /* above the start hint, so the Labels performance note is not hidden behind it */
+  z-index: 1;
   display: flex;
   flex-direction: column-reverse;
   align-items: center;
@@ -960,6 +945,50 @@ button.ds-layer-name:hover {
 .ds-tool.is-active {
   background: var(--accent-soft);
   color: var(--accent);
+}
+/* Labels toggle: performance note just above the dock, on hover and keyboard focus */
+.ds-dock-main {
+  position: relative;
+}
+.ds-tool-wrap {
+  display: flex;
+}
+.ds-tool-warn {
+  position: absolute;
+  right: 12px;
+  bottom: calc(100% + 8px);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border-radius: 8px;
+  background: var(--panel-solid);
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--panel-shadow);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity var(--dur), transform var(--dur);
+  z-index: 2;
+}
+.ds-tool-warn svg {
+  flex: none;
+  color: #c27a1a;
+}
+:root[data-theme='dark'] .ds-tool-warn svg {
+  color: #e7b27a;
+}
+.ds-tool-warn kbd {
+  font-size: 10px;
+}
+.ds-tool-wrap:hover .ds-tool-warn,
+.ds-tool:focus-visible + .ds-tool-warn {
+  opacity: 1;
+  transform: none;
 }
 .ds-dock-note {
   position: absolute;
@@ -1456,9 +1485,6 @@ button.ds-layer-name:hover {
 }
 
 @media (max-width: 980px) {
-  .ds-subtitle {
-    display: none;
-  }
   .ds-layers {
     width: 240px;
     top: 96px;
@@ -1601,6 +1627,11 @@ button.ds-layer-name:hover {
   .ds-rail-tip {
     display: none;
   }
+  .ds-rail-btn:hover:not(.is-active),
+  .ds-rail-btn:focus-visible:not(.is-active),
+  .ds-rail-btn.is-tip-shown:not(.is-active) {
+    color: var(--ink);
+  }
   /* sits just above the rail row (rail bottom 66px + 46px row); may briefly overlap the dock's lower edge */
   .ds-rail-caption {
     display: block;
@@ -1666,9 +1697,6 @@ button.ds-layer-name:hover {
 @media (max-height: 560px) and (orientation: landscape) {
   .ds-layers {
     top: 96px;
-  }
-  .ds-subtitle {
-    display: none;
   }
 }
 
