@@ -43,6 +43,10 @@ const STAGES = [
 
 const EXEMPLAR_TOOTH = 36;
 
+/** Phase-2 board: gap between laid-out parts (cm) and framing margins (height, width). */
+const BOARD_GAP = 0.35;
+const BOARD_MARGIN = { h: 1.5, w: 1.45 };
+
 export class Engine {
   readonly registry: Registry;
   readonly scene = new THREE.Scene();
@@ -332,7 +336,7 @@ export class Engine {
       const size = box.getSize(new THREE.Vector3());
       items.push({ key: e.key, w: size.x, h: size.y, ...boardSlot(e.key, this.registry.categoriesOfMesh(e.key), this.registry.get(e.owner)?.toothFdi) });
     }
-    const { centers, bounds } = shelfLayout(items, this.rig.camera.aspect, 0.35);
+    const { centers, bounds } = shelfLayout(items, this.rig.camera.aspect, BOARD_GAP);
     this.boardAspect = this.rig.camera.aspect;
     const origin = this.rig.home.target;
     for (const [key, c] of centers) {
@@ -351,7 +355,7 @@ export class Engine {
       const tanV = Math.tan(THREE.MathUtils.degToRad(cam.fov) / 2);
       const halfW = (bounds.x1 - bounds.x0) / 2;
       const halfH = (bounds.y1 - bounds.y0) / 2;
-      const distance = Math.max((halfH * 1.5) / tanV, (halfW * 1.45) / (tanV * cam.aspect));
+      const distance = Math.max((halfH * BOARD_MARGIN.h) / tanV, (halfW * BOARD_MARGIN.w) / (tanV * cam.aspect));
       setState({ view: null });
       this.rig.focusSphere(new THREE.Vector3(origin.x, origin.y, origin.z), Math.hypot(halfW, halfH), { direction: new THREE.Vector3(0, 0.02, 1), distance, duration: 0.9 });
     }
@@ -636,14 +640,15 @@ export class Engine {
     const fdi = s.toothFdi;
     const isToothPart = fdi !== undefined && s.id !== `tooth-${fdi}`;
     if (reveal) setState(revealPatch(this.registry, id, getState()));
-    if (isToothPart && getState().dissectFdi !== fdi && !(getState().clip.enabled && this.loadedTeeth.has(fdi))) {
-      actions.enterDissect(fdi);
-      // pick a dissection level that shows the structure
-      const lvl = levelShowing(id);
-      actions.setDissectLevel(lvl);
-    } else if (isToothPart && getState().dissectFdi === fdi) {
-      const lvl = levelShowing(id);
-      if (!levelShows(getState().dissectLevel, id)) actions.setDissectLevel(lvl);
+    if (isToothPart) {
+      const st = getState();
+      const inTooth = st.dissectFdi === fdi;
+      // a tooth part is shown inside the tooth, at a dissection level that reveals it
+      // (unless an overview section already shows this tooth's layers)
+      if (!inTooth && !(st.clip.enabled && this.loadedTeeth.has(fdi))) {
+        actions.enterDissect(fdi);
+        actions.setDissectLevel(levelShowing(id));
+      } else if (inTooth && !levelShows(st.dissectLevel, id)) actions.setDissectLevel(levelShowing(id));
     }
     if (fdi !== undefined) await this.ensureTooth(fdi);
     actions.select(id);
