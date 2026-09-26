@@ -30,16 +30,18 @@ export function layerKind(meshKey: string): string {
   return meshKey.replace(/-\d{2}$/, '').replace(/^canal-.*/, 'canal');
 }
 
+/** Per dissection level, how tooth layers differ from fully shown ('on'). */
+const DISSECT_RULES: Record<number, Partial<Record<string, MeshVisual>>> = {
+  0: { pdl: 'off' },
+  1: { pdl: 'ghost' },
+  2: { enamel: 'off', pdl: 'off', cementum: 'ghost' },
+  3: { enamel: 'off', pdl: 'off', cementum: 'off', 'dentin-coronal': 'ghost', 'dentin-radicular': 'ghost' },
+  4: { enamel: 'off', pdl: 'off', cementum: 'off', 'dentin-coronal': 'ghost', 'dentin-radicular': 'ghost' },
+};
+
 /** Per dissection level, how each tooth layer is shown. */
 export function dissectRule(level: number, kind: string): MeshVisual {
-  const L: Record<number, Partial<Record<string, MeshVisual>>> = {
-    0: { pdl: 'off' },
-    1: { pdl: 'ghost' },
-    2: { enamel: 'off', pdl: 'off', cementum: 'ghost' },
-    3: { enamel: 'off', pdl: 'off', cementum: 'off', 'dentin-coronal': 'ghost', 'dentin-radicular': 'ghost' },
-    4: { enamel: 'off', pdl: 'off', cementum: 'off', 'dentin-coronal': 'ghost', 'dentin-radicular': 'ghost' },
-  };
-  return L[level]?.[kind] ?? 'on';
+  return DISSECT_RULES[level]?.[kind] ?? 'on';
 }
 
 export interface VisibilityContext {
