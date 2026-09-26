@@ -1,4 +1,5 @@
 import { StrictMode } from 'react';
+import { inject } from '@vercel/analytics';
 import { createRoot } from 'react-dom/client';
 import { Registry } from './anatomy/registry';
 import { loadManifest } from './engine/assets';
@@ -15,6 +16,9 @@ import '@fontsource/jetbrains-mono/500.css';
 import '@fontsource-variable/source-serif-4/opsz.css';
 import './styles/tokens.css';
 import './styles/app.css';
+
+// Vercel Web Analytics: page views and visitors (cookieless); only collects on the Vercel deployment
+inject();
 
 async function boot() {
   restorePreferences();
