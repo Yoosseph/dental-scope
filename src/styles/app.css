@@ -1366,18 +1366,18 @@ button.ds-layer-name:hover {
   .ds-panel-handle--layers,
   .ds-panel-handle--detail {
     top: 50%;
-    width: 20px;
-    height: 48px;
-    margin-top: -24px;
+    width: 30px;
+    height: 72px;
+    margin-top: -36px;
   }
   .ds-panel-handle--layers {
     left: 100%;
-    border-radius: 0 10px 10px 0;
+    border-radius: 0 12px 12px 0;
     border-left: 0;
   }
   .ds-panel-handle--detail {
     right: 100%;
-    border-radius: 10px 0 0 10px;
+    border-radius: 12px 0 0 12px;
     border-right: 0;
   }
   .ds-panel-handle--detail svg {
@@ -1387,11 +1387,11 @@ button.ds-layer-name:hover {
   .ds-panel-handle--dock {
     bottom: 100%;
     left: 50%;
-    width: 48px;
-    height: 18px;
-    margin-left: -24px;
+    width: 72px;
+    height: 28px;
+    margin-left: -36px;
     margin-bottom: -1px;
-    border-radius: 10px 10px 0 0;
+    border-radius: 12px 12px 0 0;
     border-bottom: 0;
   }
   .ds-panel-handle--dock svg {

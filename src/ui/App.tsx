@@ -21,6 +21,7 @@ export function App() {
   const laidOut = useApp((s) => s.explodePhase === 2);
   const detailHidden = useApp((s) => s.collapsed.detail);
   const dockHidden = useApp((s) => s.collapsed.dock);
+  const layersHidden = useApp((s) => s.collapsed.layers);
 
   useEffect(() => {
     engine.mount(stage.current!);
@@ -44,12 +45,22 @@ export function App() {
       const mobile = window.innerWidth <= 767;
       if (mobile) engine.setInsets(0, sheet !== 'none' ? window.innerHeight * 0.5 : 0);
       // the bottom toolbar covers the lower edge of the canvas; the dissection tools and the phase-2 board make it taller
-      else engine.setInsets(selected && !detailHidden && window.innerWidth > 980 ? 360 : 0, dockHidden ? 0 : dissect ? 210 : laidOut ? 170 : 70);
+      else {
+        // the layers panel on the left (offsetLeft/offsetWidth ignore its slide-out transform)
+        const layers = document.querySelector<HTMLElement>('.ds-layers');
+        const left = layers && !layersHidden && layers.offsetParent ? layers.offsetLeft + layers.offsetWidth : 0;
+        // the bottom toolbar: measured, since its height depends on what it shows
+        const dock = document.querySelector<HTMLElement>('.ds-dock');
+        const parent = dock?.offsetParent as HTMLElement | null;
+        const measured = dock && parent ? parent.clientHeight - dock.offsetTop : 0;
+        const bottom = dockHidden ? 0 : measured > 0 ? measured : dissect ? 210 : laidOut ? 170 : 70;
+        engine.setInsets(selected && !detailHidden && window.innerWidth > 980 ? 360 : 0, bottom, left);
+      }
     };
     update();
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
-  }, [engine, selected, dissect, laidOut, sheet, detailHidden, dockHidden]);
+  }, [engine, selected, dissect, laidOut, sheet, detailHidden, dockHidden, layersHidden]);
 
   return (
     <div className={`ds-app${selected ? ' has-selection' : ''}${dissect ? ' is-dissecting' : ''}`}>
