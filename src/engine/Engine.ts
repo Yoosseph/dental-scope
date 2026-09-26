@@ -14,7 +14,7 @@ import { Animator } from './animator';
 import { AssetLoader } from './assets';
 import { CameraRig } from './camera';
 import { archOffset, pulpLayerOffset, toothLayerOffset } from './explode';
-import { boardSlot, shelfLayout, type LayoutItem } from './layout';
+import { boardAssemblyKey, boardSlot, shelfLayout, type LayoutItem } from './layout';
 import { LabelLayer, type LabelCandidate } from './labels';
 import { HOVER, HIGHLIGHT, THEME_LIGHTING, applyThemeToMaterial, createTissueMaterial, setFibreAxis, setMaterialOpacity, styleKeyFor, type SceneTheme, type TissueMaterial } from './materials';
 import { SectionTool } from './section';
@@ -108,13 +108,13 @@ export class Engine {
     );
     this.marker.renderOrder = 1000;
     this.marker.visible = false;
-    const key = new THREE.DirectionalLight('#fff7ec', 1.6);
+    const key = new THREE.DirectionalLight('#fff7ec', 1.35);
     key.position.set(4, 8, 7);
-    const fill = new THREE.DirectionalLight('#dfe9ff', 0.55);
+    const fill = new THREE.DirectionalLight('#dfe9ff', 0.4);
     fill.position.set(-6, 2, 4);
-    const rim = new THREE.DirectionalLight('#ffffff', 0.5);
+    const rim = new THREE.DirectionalLight('#ffffff', 0.45);
     rim.position.set(0, 3, -8);
-    this.scene.add(new THREE.HemisphereLight('#ffffff', '#8b8478', 0.55), key, fill, rim);
+    this.scene.add(new THREE.HemisphereLight('#ffffff', '#8b8478', 0.4), key, fill, rim);
     this.scene.add(this.root, this.marker, this.section.outline);
     const [lo, hi] = registry.manifest.bounds;
     this.sceneBounds.set(new THREE.Vector3(...lo).min(new THREE.Vector3(...hi)), new THREE.Vector3(...lo).max(new THREE.Vector3(...hi)));
@@ -258,7 +258,10 @@ export class Engine {
       const owner = this.registry.meshOwner.get(key);
       if (!owner) continue;
       const cats = this.registry.categoriesOfMesh(key);
-      const mat = createTissueMaterial(styleKeyFor(key, cats));
+      const style = styleKeyFor(key, cats);
+      if (style === 'enamel') shadeEnamelCrevices(geo);
+      const mat = createTissueMaterial(style);
+      if (/^tooth-\d{2}$/.test(key)) colorToothShell(geo, mat, this.registry, Number(key.slice(6)));
       applyThemeToMaterial(mat, getState().theme);
       setFibreAxis(mat, geo.boundingBox!);
       const mesh = new THREE.Mesh(geo, mat);
@@ -314,6 +317,7 @@ export class Engine {
       s.clip.enabled !== p.clip.enabled ||
       s.ghostOpacity !== p.ghostOpacity;
     if (visChanged) this.refreshVisibility();
+    if (s.explode !== p.explode || s.explodePhase !== p.explodePhase) this.refreshRootCuts(s);
     if (s.selectedId !== p.selectedId || s.hoveredId !== p.hoveredId || s.dissectFdi !== p.dissectFdi) this.refreshHighlight();
     if (s.clip !== p.clip || s.dissectFdi !== p.dissectFdi) this.refreshClip();
     if (s.clip.enabled && !p.clip.enabled && s.dissectFdi === null) void this.ensureAllTeeth();
@@ -342,28 +346,40 @@ export class Engine {
     clearTimeout(this.explodeTimer);
     if (getState().explodePhase !== 2) return;
     const items: LayoutItem[] = [];
-    const boxes = new Map<string, THREE.Box3>();
+    const assemblies = new Map<string, { bounds: THREE.Box3; members: MeshEntry[] }>();
     for (const e of this.entries.values()) {
       if (e.visual !== 'on') {
         e.boardTarget = e.boardPos = undefined;
         continue;
       }
-      const box = e.mesh.geometry.boundingBox!;
-      boxes.set(e.key, box);
-      const size = box.getSize(new THREE.Vector3());
-      items.push({ key: e.key, w: size.x, h: size.y, ...boardSlot(e.key, this.registry.categoriesOfMesh(e.key), this.registry.get(e.owner)?.toothFdi) });
+      const key = boardAssemblyKey(e.key);
+      let assembly = assemblies.get(key);
+      if (!assembly) {
+        assembly = { bounds: new THREE.Box3(), members: [] };
+        assemblies.set(key, assembly);
+      }
+      assembly.bounds.union(e.mesh.geometry.boundingBox!);
+      assembly.members.push(e);
+    }
+    for (const [key, assembly] of assemblies) {
+      const size = assembly.bounds.getSize(new THREE.Vector3());
+      const owner = this.registry.meshOwner.get(key);
+      items.push({ key, w: size.x, h: size.y, ...boardSlot(key, this.registry.categoriesOfMesh(key), owner ? this.registry.get(owner)?.toothFdi : undefined) });
     }
     const { centers, bounds } = shelfLayout(items, this.rig.camera.aspect, BOARD_GAP);
     this.boardAspect = this.rig.camera.aspect;
     const origin = this.rig.home.target;
     for (const [key, c] of centers) {
-      const e = this.entries.get(key)!;
-      const center = boxes.get(key)!.getCenter(new THREE.Vector3());
-      e.boardTarget = new THREE.Vector3(origin.x + c.x, origin.y + c.y, origin.z).sub(center);
-      // new slots are taken directly (the move from phase 1 is blended by phaseCur);
-      // existing ones glide to their new place in tickVisuals
-      e.boardPos ??= e.boardTarget.clone();
-      if (this.phaseCur < 1e-3) e.boardPos.copy(e.boardTarget);
+      const assembly = assemblies.get(key)!;
+      const center = assembly.bounds.getCenter(new THREE.Vector3());
+      const target = new THREE.Vector3(origin.x + c.x, origin.y + c.y, origin.z).sub(center);
+      for (const e of assembly.members) {
+        e.boardTarget = target.clone();
+        // new slots are taken directly (the move from phase 1 is blended by phaseCur);
+        // existing ones glide to their new place in tickVisuals
+        e.boardPos ??= target.clone();
+        if (this.phaseCur < 1e-3) e.boardPos.copy(target);
+      }
     }
     if (frame) {
       // fit the board rectangle (not its bounding sphere); the margin keeps it clear of the
@@ -410,7 +426,22 @@ export class Engine {
   private refreshVisibility() {
     const ctx = this.visibilityCtx();
     for (const e of this.entries.values()) e.visual = resolveMesh(e.key, ctx);
+    this.refreshRootCuts(ctx.state);
     this.labels?.markSceneChanged();
+    this.invalidate();
+  }
+
+  /** Keep roots beneath opaque gingiva in the assembled mouth; reveal them as the arches separate. */
+  private refreshRootCuts(s: AppState) {
+    const ctx = this.visibilityCtx();
+    for (const e of this.entries.values()) {
+      const match = /^tooth-(\d{2})$/.exec(e.key);
+      if (!match) continue;
+      const fdi = Number(match[1]);
+      const gum = fdi < 30 ? 'gingiva-upper' : 'gingiva-lower';
+      const covered = resolveMesh(gum, ctx) === 'on' && s.dissectFdi === null && !s.clip.enabled && s.explodePhase === 1;
+      e.mesh.material.userData.fx.uRootCut.value = covered ? -0.12 - 2.5 * s.explode : -100;
+    }
     this.invalidate();
   }
 
@@ -459,6 +490,8 @@ export class Engine {
     const planes = clip.enabled ? this.section.planes : null;
     for (const e of this.entries.values()) {
       const m = e.mesh.material;
+      const style = m.userData.styleKey;
+      m.userData.fx.uCapEnabled.value = clip.enabled && ['shell', 'enamel', 'dentin-coronal', 'dentin-radicular', 'cementum', 'pdl', 'pulp-chamber', 'canal'].includes(style) ? 1 : 0;
       if ((m.clippingPlanes?.length ?? 0) !== (planes?.length ?? 0)) {
         m.clippingPlanes = planes;
         m.needsUpdate = true;
@@ -970,6 +1003,81 @@ export class Engine {
 }
 
 /* ------------------------------------------------------------------ helpers */
+
+/** Give the intact tooth a subtle crown-to-root colour change at its modeled CEJ. */
+function colorToothShell(geo: THREE.BufferGeometry, mat: TissueMaterial, registry: Registry, fdi: number) {
+  const tooth = registry.manifest.teeth[String(fdi)];
+  const cervical = tooth?.landmarks?.['cervical-line'];
+  const axis = tooth?.frame.axis;
+  if (!cervical || !axis) return;
+  mat.userData.fx.uCervical.value.set(...cervical);
+  mat.userData.fx.uToothAxis.value.set(...axis);
+  const positions = geo.getAttribute('position');
+  const crevices = meshCrevices(geo, 0.0004, 0.004);
+  const colors = new Float32Array(positions.count * 3);
+  let crownTop = 0;
+  for (let i = 0; i < positions.count; i++) {
+    const h = (positions.getX(i) - cervical[0]) * axis[0]
+      + (positions.getY(i) - cervical[1]) * axis[1]
+      + (positions.getZ(i) - cervical[2]) * axis[2];
+    crownTop = Math.max(crownTop, h);
+  }
+  const shade = 1 + (((fdi * 17) % 7) - 3) * 0.006;
+  for (let i = 0; i < positions.count; i++) {
+    const height = (positions.getX(i) - cervical[0]) * axis[0]
+      + (positions.getY(i) - cervical[1]) * axis[1]
+      + (positions.getZ(i) - cervical[2]) * axis[2];
+    const crown = THREE.MathUtils.smoothstep(height, -0.11, 0.07);
+    const tip = THREE.MathUtils.smoothstep(height, crownTop * 0.65, crownTop * 0.92);
+    const fissure = 1 - 0.25 * crevices[i] * crown;
+    colors[i * 3] = THREE.MathUtils.lerp(0.84, 1, crown) * (1 - 0.08 * tip) * shade * fissure;
+    colors[i * 3 + 1] = THREE.MathUtils.lerp(0.76, 0.985, crown) * (1 - 0.015 * tip) * shade * fissure;
+    colors[i * 3 + 2] = THREE.MathUtils.lerp(0.66, 0.96, crown) * (1 + 0.035 * tip) * shade * fissure;
+  }
+  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+}
+
+/** Accentuate concave regions already present in the tooth surface, especially occlusal fissures. */
+function shadeEnamelCrevices(geo: THREE.BufferGeometry) {
+  const crevices = meshCrevices(geo, 0.0015, 0.008);
+  const colors = new Float32Array(crevices.length * 3);
+  for (let i = 0; i < crevices.length; i++) {
+    const shade = 1 - 0.19 * crevices[i];
+    colors[i * 3] = shade;
+    colors[i * 3 + 1] = shade;
+    colors[i * 3 + 2] = shade;
+  }
+  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+}
+
+function meshCrevices(geo: THREE.BufferGeometry, start: number, end: number): Float32Array {
+  const pos = geo.getAttribute('position');
+  const normal = geo.getAttribute('normal');
+  const index = geo.getIndex();
+  const out = new Float32Array(pos.count);
+  if (!index || !normal) return out;
+  const sum = new Float32Array(pos.count * 3);
+  const degree = new Uint16Array(pos.count);
+  const add = (from: number, to: number) => {
+    sum[from * 3] += pos.getX(to);
+    sum[from * 3 + 1] += pos.getY(to);
+    sum[from * 3 + 2] += pos.getZ(to);
+    degree[from]++;
+  };
+  for (let i = 0; i < index.count; i += 3) {
+    const a = index.getX(i), b = index.getX(i + 1), c = index.getX(i + 2);
+    add(a, b); add(a, c); add(b, a); add(b, c); add(c, a); add(c, b);
+  }
+  for (let i = 0; i < pos.count; i++) {
+    if (!degree[i]) continue;
+    const x = sum[i * 3] / degree[i] - pos.getX(i);
+    const y = sum[i * 3 + 1] / degree[i] - pos.getY(i);
+    const z = sum[i * 3 + 2] / degree[i] - pos.getZ(i);
+    const depth = x * normal.getX(i) + y * normal.getY(i) + z * normal.getZ(i);
+    out[i] = THREE.MathUtils.smoothstep(depth, start, end);
+  }
+  return out;
+}
 
 /** One easing step from `cur` toward `target`, snapping to the target once within `snap`. */
 function stepToward(cur: number, target: number, rate: number, snap: number): number {

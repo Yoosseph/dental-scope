@@ -46,9 +46,9 @@ export const de: Messages = {
   madeTitle: 'Wie die Anatomie entsteht',
   provSource: 'Quelle',
   provSourceBody:
-    'Kiefer, Zähne, Gingiva, Schädel und Muskeln stammen aus BodyParts3D 3.0, © The Database Center for Life Science, lizenziert unter CC Attribution-Share Alike 2.1 Japan.',
+    'Kiefer, Zähne, Schädel und Muskeln stammen aus BodyParts3D 3.0, © The Database Center for Life Science, lizenziert unter CC Attribution-Share Alike 2.1 Japan.',
   provDerived: 'Abgeleitet',
-  provDerivedBody: 'Weisheitszähne, Alveolarknochen, Gelenkköpfchen und Gelenkgruben sind aus diesen Modellen abgeleitet.',
+  provDerivedBody: 'Weisheitszähne, Gingiva (mit ausgesparten Zahnfächern), Alveolarknochen, Gelenkköpfchen und Gelenkgruben sind aus diesen Modellen abgeleitet.',
   provModeled: 'Modelliert',
   provModeledBody:
     'Schmelz, Dentin, Zement, Desmodont, Pulpa und Kanäle sind in jede echte Zahnform mit vereinfachten, ungefähren Proportionen hineinmodelliert, nicht gemessen.',

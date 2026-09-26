@@ -26,7 +26,7 @@ import trimesh
 from scipy.spatial import cKDTree
 
 sys.path.insert(0, str(Path(__file__).parent))
-from geometry import decimate, ellipsoid_disc, submesh, surface_point, tube  # noqa: E402
+from geometry import decimate, ellipsoid_disc, orient_outward, submesh, surface_point, tube  # noqa: E402
 from tooth_layers import Frame, build_tooth_layers, make_frame  # noqa: E402
 
 # ---------------------------------------------------------------------------
@@ -71,8 +71,10 @@ CONTEXT = {
     "mentalis-right": 46826, "mentalis-left": 46827,
     "orbicularis-oris": 46841,
 }
-CONTEXT_BUDGET = {"default": 3000, "temporalis": 5000, "frontal": 5000, "parietal": 4000, "occipital": 4000,
-                  "sphenoid": 5000, "temporal-bone": 5000, "orbicularis": 3000}
+# Preserve the source's anatomical ridges and muscle insertions. Meshopt still
+# keeps these static context meshes small, and most are translucent or hidden.
+CONTEXT_BUDGET = {"default": 9000, "temporalis": 15000, "frontal": 15000, "parietal": 12000, "occipital": 12000,
+                  "sphenoid": 15000, "temporal-bone": 15000, "orbicularis": 9000}
 
 
 def tooth_info(fdi: int):
@@ -85,8 +87,7 @@ def tooth_info(fdi: int):
 def load_stl(folder: Path, fma: int) -> trimesh.Trimesh:
     m = trimesh.load(folder / f"FMA{fma}.stl")
     m.merge_vertices()
-    m.fix_normals()
-    return m
+    return orient_outward(m)
 
 
 # ---------------------------------------------------------------------------
@@ -111,15 +112,35 @@ class Space:
         return out
 
 
-def derive_third_molar(m2: trimesh.Trimesh, m1: trimesh.Trimesh) -> trimesh.Trimesh:
+def derive_third_molar(m2: trimesh.Trimesh, m1: trimesh.Trimesh, lower: bool) -> trimesh.Trimesh:
     c2, c1 = m2.vertices.mean(0), m1.vertices.mean(0)
     distal = c2 - c1
     distal[2] = 0
     distal /= np.linalg.norm(distal)
     width = np.ptp(m2.vertices @ distal)
     out = m2.copy()
-    out.vertices = (out.vertices - c2) * 0.9 + c2 + distal * width * 0.93
+    # The mandibular second-molar mesh is broad along the arch tangent. Using
+    # its full projected width leaves an obvious gap behind it; the smaller
+    # wisdom tooth contacts naturally at roughly two thirds of that span.
+    spacing = 0.667 if lower else 0.93
+    out.vertices = (out.vertices - c2) * 0.9 + c2 + distal * width * spacing
     return out
+
+
+def carve_tooth_sockets(gum: trimesh.Trimesh, tooth_meshes: list[trimesh.Trimesh]) -> trimesh.Trimesh:
+    """Remove tooth volumes from gingiva, with 0.08 mm clearance at contact."""
+    cutters = []
+    for tooth in tooth_meshes:
+        cutter = tooth.copy()
+        cutter.vertices = cutter.vertices + cutter.vertex_normals * 0.08
+        cutters.append(cutter)
+    carved = trimesh.boolean.difference([gum, *cutters], engine="manifold")
+    if not carved.is_watertight:
+        raise ValueError("Gingival socket subtraction produced an open mesh")
+    # Boolean intersections can leave microscopic closed slivers. Keep the
+    # anatomical body, which contains more than 99.99% of the result's volume.
+    body = max(carved.split(), key=lambda part: part.volume)
+    return orient_outward(body)
 
 
 def _layers_job(args):
@@ -150,7 +171,9 @@ def main():
     print("Loading BodyParts3D meshes…")
     teeth = {f: load_stl(args.bp3d, fma) for f, fma in TEETH_FMA.items() if fma}
     for q in (1, 2, 3, 4):
-        teeth[q * 10 + 8] = derive_third_molar(teeth[q * 10 + 7], teeth[q * 10 + 6])
+        teeth[q * 10 + 8] = derive_third_molar(
+            teeth[q * 10 + 7], teeth[q * 10 + 6], lower=q in (3, 4)
+        )
 
     allv = np.concatenate([m.vertices for m in teeth.values()])
     lo, hi = allv.min(0), allv.max(0)
@@ -186,7 +209,7 @@ def main():
         fr = frames[f]
         jobs.append((f, teeth[f].vertices, teeth[f].faces, arch, ttype,
                      dict(origin=fr.origin, axis=fr.axis, mesial=fr.mesial, buccal=fr.buccal),
-                     str(cache / f"layers-{f}.pkl")))
+                     str(cache / f"layers-v7-{f}.pkl")))
     print(f"Modelling internal anatomy for {len(jobs)} teeth…")
     with Pool(args.jobs) as pool:
         layers = dict(pool.map(_layers_job, jobs))
@@ -213,7 +236,7 @@ def main():
     print("Core: teeth, gingiva, bone…")
     for f, m in sorted(teeth.items()):
         prov = "source" if TEETH_FMA[f] else "derived"
-        add("core", f"tooth-{f}", decimate(m, 2600), prov, TEETH_FMA[f])
+        add("core", f"tooth-{f}", decimate(m, 12000), prov, TEETH_FMA[f])
         arch, side, ttype = tooth_info(f)
         fr = frames[f]
         info = dict(arch=arch, side=side, type=ttype, provenance=prov,
@@ -228,7 +251,10 @@ def main():
         manifest["teeth"][str(f)] = info
 
     for key, fma in CORE.items():
-        add("core", key, decimate(load_stl(args.bp3d, fma), 7000), "source", fma)
+        gum = decimate(load_stl(args.bp3d, fma), 14000)
+        upper = key == "gingiva-upper"
+        fitted = carve_tooth_sockets(gum, [m for f, m in teeth.items() if (f < 30) == upper])
+        add("core", key, fitted, "derived", fma)
 
     # ---- bone partition ---------------------------------------------------
     def root_points(fdis):
@@ -246,7 +272,7 @@ def main():
     upper_l = [f for f in teeth if f // 10 == 2]
 
     # decimate before partitioning so the pieces share identical borders (no cracks)
-    mand = decimate(load_stl(args.bp3d, BONES["mandible"]), 17000)
+    mand = decimate(load_stl(args.bp3d, BONES["mandible"]), 28000)
     tree = cKDTree(root_points(lower))
     fc = mand.triangles_center
     alv = tree.query(fc, distance_upper_bound=4.0)[0] < 4.0
@@ -263,7 +289,7 @@ def main():
     add("core", "mandibular-condyle-left", submesh(mand, cond_l), "derived", 52748)
 
     for side, ups in (("right", upper_r), ("left", upper_l)):
-        mx = decimate(load_stl(args.bp3d, BONES[f"maxilla-{side}"]), 9000)
+        mx = decimate(load_stl(args.bp3d, BONES[f"maxilla-{side}"]), 18000)
         tr = cKDTree(root_points(ups))
         c = mx.triangles_center
         a = tr.query(c, distance_upper_bound=4.0)[0] < 4.0
@@ -277,7 +303,7 @@ def main():
         m = load_stl(args.bp3d, fma)
         budget = next((v for k, v in CONTEXT_BUDGET.items() if key.startswith(k)), CONTEXT_BUDGET["default"])
         if key.startswith("temporal-bone"):
-            temporal[key.split("-")[-1]] = decimate(m, 6500)
+            temporal[key.split("-")[-1]] = decimate(m, 15000)
             continue
         add("context", key, decimate(m, budget), "source", fma)
 
@@ -317,7 +343,7 @@ def main():
 
     def add_path(key, pts, r0, r1=None, provenance="schematic"):
         pts = np.asarray(pts)
-        m = tube(pts, r0, r1, sides=10, samples=8)
+        m = tube(pts, r0, r1, sides=14, samples=12)
         add("neurovascular", key, m, provenance)
         manifest["paths"][key] = S.p(pts).round(4).tolist()
 

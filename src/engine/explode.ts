@@ -37,7 +37,7 @@ export function archOffset(registry: Registry, meshKey: string, center: THREE.Ve
   }
   if (meshKey === 'gingiva-upper') return upper.clone().add(V(0, -0.75, 0.15));
   if (meshKey === 'gingiva-lower') return lower.clone().add(V(0, 0.75, 0.15));
-  if (meshKey.startsWith('maxilla-') || meshKey.startsWith('palatine')) return upper.clone();
+  if (meshKey.startsWith('maxilla-') || meshKey.startsWith('maxillary-alveolar-process') || meshKey.startsWith('palatine')) return upper.clone();
   if (meshKey.startsWith('mandible') || meshKey.startsWith('mandibular')) return lower.clone();
   if (meshKey.startsWith('articular-disc')) return V(side * 0.8, 1.1, 0);
   if (meshKey.startsWith('articular-fossa')) return V(side * 0.4, 3.9, 0);

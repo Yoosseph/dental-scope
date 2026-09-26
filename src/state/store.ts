@@ -101,7 +101,7 @@ export const initialState: AppState = {
   numbering: 'fdi',
   view: 'front',
   autoRotate: false,
-  orbitMode: 'free',
+  orbitMode: 'fixed',
   dissectFdi: null,
   dissectLevel: 0,
   toothExplode: 0,

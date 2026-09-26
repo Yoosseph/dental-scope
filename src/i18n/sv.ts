@@ -46,9 +46,9 @@ export const sv: Messages = {
   madeTitle: 'Hur anatomin är gjord',
   provSource: 'Källa',
   provSourceBody:
-    'käkar, tänder, gingiva, skalle och muskler kommer från BodyParts3D 3.0, © The Database Center for Life Science, licensierat under CC Attribution-Share Alike 2.1 Japan.',
+    'käkar, tänder, skalle och muskler kommer från BodyParts3D 3.0, © The Database Center for Life Science, licensierat under CC Attribution-Share Alike 2.1 Japan.',
   provDerived: 'Härledd',
-  provDerivedBody: 'tredje molarer, alveolarben, ledhuvuden och ledgropar är härledda från dessa modeller.',
+  provDerivedBody: 'tredje molarer, gingiva (med urtag för tänderna), alveolarben, ledhuvuden och ledgropar är härledda från dessa modeller.',
   provModeled: 'Modellerad',
   provModeledBody:
     'emalj, dentin, rotcement, parodontalligament, pulpa och kanaler är modellerade inuti varje verklig tandform med förenklade, ungefärliga proportioner, inte mätningar.',

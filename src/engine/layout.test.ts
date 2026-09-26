@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { boardSlot, shelfLayout, type LayoutItem } from './layout';
+import { boardAssemblyKey, boardSlot, shelfLayout, type LayoutItem } from './layout';
 
 const items: LayoutItem[] = [
   { key: 'skull-a', w: 6, h: 5, group: 0, order: 0 },
@@ -11,6 +11,14 @@ const items: LayoutItem[] = [
 ];
 
 const rect = (c: { x: number; y: number }, it: LayoutItem) => ({ x0: c.x - it.w / 2, x1: c.x + it.w / 2, y0: c.y - it.h / 2, y1: c.y + it.h / 2 });
+
+it('reassembles source-bone partitions on the layout board', () => {
+  expect(boardAssemblyKey('maxillary-alveolar-process-left')).toBe('maxilla-left');
+  expect(boardAssemblyKey('mandibular-alveolar-process')).toBe('mandible-body');
+  expect(boardAssemblyKey('mandibular-condyle-right')).toBe('mandible-body');
+  expect(boardAssemblyKey('articular-fossa-left')).toBe('temporal-bone-left');
+  expect(boardAssemblyKey('tooth-36')).toBe('tooth-36');
+});
 
 describe('shelfLayout', () => {
   for (const aspect of [16 / 9, 0.46]) {

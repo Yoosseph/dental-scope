@@ -81,6 +81,16 @@ export function shelfLayout(input: LayoutItem[], aspect: number, gap: number): B
 
 const LAYER_ORDER = ['tooth', 'enamel', 'dentin-coronal', 'dentin-radicular', 'cementum', 'pdl', 'pulp-chamber', 'canal'];
 
+/** Open partitions cut from one source bone must share a board position to re-form its surface. */
+export function boardAssemblyKey(meshKey: string): string {
+  const upper = /^maxillary-alveolar-process-(left|right)$/.exec(meshKey);
+  if (upper) return `maxilla-${upper[1]}`;
+  if (meshKey === 'mandibular-alveolar-process' || meshKey === 'mandible-body' || /^mandibular-condyle-(left|right)$/.test(meshKey)) return 'mandible-body';
+  const fossa = /^articular-fossa-(left|right)$/.exec(meshKey);
+  if (fossa) return `temporal-bone-${fossa[1]}`;
+  return meshKey;
+}
+
 /** Reading position of a tooth in its arch as seen from the front: patient's right first (18…11, 21…28). */
 function archOrder(fdi: number): number {
   const q = Math.floor(fdi / 10);

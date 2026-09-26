@@ -20,7 +20,7 @@ export const CATEGORIES: CategoryDef[] = [
   { id: 'cementum', label: 'Cementum', color: '#c6a270', group: 'Tooth tissues', initial: 'on' },
   { id: 'dental-pulp', label: 'Dental pulp', color: '#c8484f', group: 'Tooth tissues', initial: 'on' },
   { id: 'root-canals', label: 'Root canals', color: '#a8323e', group: 'Tooth tissues', initial: 'on' },
-  { id: 'gingiva', label: 'Gingiva', color: '#d98689', group: 'Periodontium', initial: 'on' },
+  { id: 'gingiva', label: 'Gingiva', color: '#c77c81', group: 'Periodontium', initial: 'on' },
   { id: 'periodontal-ligament', label: 'Periodontal ligament', color: '#cf7f7a', group: 'Periodontium', initial: 'on' },
   { id: 'alveolar-bone', label: 'Alveolar bone', color: '#ddd3bd', group: 'Periodontium', initial: 'on' },
   { id: 'maxilla', label: 'Maxilla', color: '#e6dfcd', group: 'Bone', initial: 'on' },

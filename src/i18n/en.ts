@@ -55,9 +55,9 @@ export const en = {
   madeTitle: 'How the anatomy is made',
   provSource: 'Source',
   provSourceBody:
-    'jaws, teeth, gingiva, skull and muscles come from BodyParts3D 3.0, © The Database Center for Life Science, licensed under CC Attribution-Share Alike 2.1 Japan.',
+    'jaws, teeth, skull and muscles come from BodyParts3D 3.0, © The Database Center for Life Science, licensed under CC Attribution-Share Alike 2.1 Japan.',
   provDerived: 'Derived',
-  provDerivedBody: 'third molars, alveolar bone, condyles and joint fossae are derived from those meshes.',
+  provDerivedBody: 'third molars, gingiva (with sockets cut for the teeth), alveolar bone, condyles and joint fossae are derived from those meshes.',
   provModeled: 'Modeled',
   provModeledBody:
     'enamel, dentin, cementum, periodontal ligament, pulp and canals are modeled inside each real tooth shape using simplified, approximate proportions, not measurements.',

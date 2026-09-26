@@ -41,3 +41,13 @@ describe('arch explode: orbicularis oris', () => {
     expect(Math.abs(lipsCenter.x)).toBeLessThan(0.3);
   });
 });
+
+it('keeps each maxillary alveolar partition with its source maxilla', () => {
+  for (const side of ['left', 'right']) {
+    const maxilla = `maxilla-${side}`;
+    const alveolar = `maxillary-alveolar-process-${side}`;
+    const bounds = manifest.meshes[maxilla].bounds;
+    const center = new THREE.Box3(new THREE.Vector3(...bounds[0]), new THREE.Vector3(...bounds[1])).getCenter(new THREE.Vector3());
+    expect(archOffset(registry, alveolar, center).toArray()).toEqual(archOffset(registry, maxilla, center).toArray());
+  }
+});

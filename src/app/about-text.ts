@@ -140,7 +140,7 @@ const en: AboutText = {
   ],
   creditsTitle: 'Credits and licence',
   creditsHtml:
-    'Made by {author}. The source code is on <a href="{repo}" rel="noopener">GitHub</a>. The jaws, teeth, gums, skull and muscles come from <a href="{bp3d}" rel="noopener">BodyParts3D</a>, © The Database Center for Life Science, licensed under <a href="{licence}" rel="noopener">CC Attribution-Share Alike 2.1 Japan</a>. Third molars, alveolar bone and the joint are derived from those meshes; enamel, dentin, cementum, periodontal ligament, pulp and canals are modeled with simplified proportions; nerves and vessels are schematic.',
+    'Made by {author}. The source code is on <a href="{repo}" rel="noopener">GitHub</a>. The jaws, teeth, skull and muscles come from <a href="{bp3d}" rel="noopener">BodyParts3D</a>, © The Database Center for Life Science, licensed under <a href="{licence}" rel="noopener">CC Attribution-Share Alike 2.1 Japan</a>. Third molars, gums, alveolar bone and the joint are derived from those meshes; enamel, dentin, cementum, periodontal ligament, pulp and canals are modeled with simplified proportions; nerves and vessels are schematic.',
   note: 'Dental Scope is an educational reference. It is not intended for diagnosis, treatment planning or clinical decisions.',
   footer: 'Free 3D dental anatomy',
   madeBy: 'Made by',
@@ -273,7 +273,7 @@ const sv: AboutText = {
   ],
   creditsTitle: 'Källor och licens',
   creditsHtml:
-    'Skapad av {author}. Källkoden finns på <a href="{repo}" rel="noopener">GitHub</a>. Käkarna, tänderna, tandköttet, skallen och musklerna kommer från <a href="{bp3d}" rel="noopener">BodyParts3D</a>, © The Database Center for Life Science, licensierat under <a href="{licence}" rel="noopener">CC Attribution-Share Alike 2.1 Japan</a>. Tredje molarerna, alveolarbenet och käkleden är härledda från dessa modeller; emalj, dentin, rotcement, parodontalligament, pulpa och kanaler är modellerade med förenklade proportioner; nerver och kärl är schematiska.',
+    'Skapad av {author}. Källkoden finns på <a href="{repo}" rel="noopener">GitHub</a>. Käkarna, tänderna, skallen och musklerna kommer från <a href="{bp3d}" rel="noopener">BodyParts3D</a>, © The Database Center for Life Science, licensierat under <a href="{licence}" rel="noopener">CC Attribution-Share Alike 2.1 Japan</a>. Tredje molarerna, tandköttet, alveolarbenet och käkleden är härledda från dessa modeller; emalj, dentin, rotcement, parodontalligament, pulpa och kanaler är modellerade med förenklade proportioner; nerver och kärl är schematiska.',
   note: 'Dental Scope är ett referensmaterial för utbildning. Det är inte avsett för diagnostik, behandlingsplanering eller kliniska beslut.',
   footer: 'Gratis tandanatomi i 3D',
   madeBy: 'Skapad av',
@@ -406,7 +406,7 @@ const de: AboutText = {
   ],
   creditsTitle: 'Quellen und Lizenz',
   creditsHtml:
-    'Erstellt von {author}. Der Quellcode liegt auf <a href="{repo}" rel="noopener">GitHub</a>. Kiefer, Zähne, Zahnfleisch, Schädel und Muskeln stammen aus <a href="{bp3d}" rel="noopener">BodyParts3D</a>, © The Database Center for Life Science, lizenziert unter <a href="{licence}" rel="noopener">CC Attribution-Share Alike 2.1 Japan</a>. Weisheitszähne, Alveolarknochen und Kiefergelenk sind aus diesen Modellen abgeleitet; Zahnschmelz, Dentin, Wurzelzement, Desmodont, Pulpa und Kanäle sind mit vereinfachten Proportionen modelliert; Nerven und Gefäße sind schematisch.',
+    'Erstellt von {author}. Der Quellcode liegt auf <a href="{repo}" rel="noopener">GitHub</a>. Kiefer, Zähne, Schädel und Muskeln stammen aus <a href="{bp3d}" rel="noopener">BodyParts3D</a>, © The Database Center for Life Science, lizenziert unter <a href="{licence}" rel="noopener">CC Attribution-Share Alike 2.1 Japan</a>. Weisheitszähne, Zahnfleisch, Alveolarknochen und Kiefergelenk sind aus diesen Modellen abgeleitet; Zahnschmelz, Dentin, Wurzelzement, Desmodont, Pulpa und Kanäle sind mit vereinfachten Proportionen modelliert; Nerven und Gefäße sind schematisch.',
   note: 'Dental Scope ist ein Nachschlagewerk für die Lehre. Es ist nicht für Diagnosen, Behandlungsplanung oder klinische Entscheidungen bestimmt.',
   footer: 'Kostenlose Zahnanatomie in 3D',
   madeBy: 'Erstellt von',

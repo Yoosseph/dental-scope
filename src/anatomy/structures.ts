@@ -69,8 +69,8 @@ export const STRUCTURE_DEFS: StructureDef[] = [
   /* ---------------- periodontium ---------------- */
   { id: 'periodontium', name: 'Periodontium', parent: 'dental-anatomy', kind: 'group', aliases: ['supporting tissues', 'gums and bone'] },
   { id: 'gingiva', name: 'Gingiva', parent: 'periodontium', kind: 'group', categories: ['gingiva'], aliases: ['gums', 'gum', 'gingivae'], labelPriority: 5 },
-  { id: 'gingiva-upper', name: 'Maxillary gingiva', parent: 'gingiva', categories: ['gingiva'], meshes: ['gingiva-upper'], provenance: 'source', aliases: ['upper gums', 'upper gingiva'], labelPriority: 4 },
-  { id: 'gingiva-lower', name: 'Mandibular gingiva', parent: 'gingiva', categories: ['gingiva'], meshes: ['gingiva-lower'], provenance: 'source', aliases: ['lower gums', 'lower gingiva'], labelPriority: 4 },
+  { id: 'gingiva-upper', name: 'Maxillary gingiva', parent: 'gingiva', categories: ['gingiva'], meshes: ['gingiva-upper'], provenance: 'derived', aliases: ['upper gums', 'upper gingiva'], labelPriority: 4 },
+  { id: 'gingiva-lower', name: 'Mandibular gingiva', parent: 'gingiva', categories: ['gingiva'], meshes: ['gingiva-lower'], provenance: 'derived', aliases: ['lower gums', 'lower gingiva'], labelPriority: 4 },
 
   /* ---------------- neurovascular ---------------- */
   { id: 'neurovascular', name: 'Neurovascular anatomy', parent: 'dental-anatomy', kind: 'group', aliases: ['nerves and vessels'] },
