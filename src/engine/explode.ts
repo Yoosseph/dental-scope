@@ -4,7 +4,8 @@
  *
  * Arch level: skull ↑, maxillary complex ↑, mandibular complex ↓, teeth rise out
  * of their sockets along their long axis, gingiva lifts off the bone, nerves
- * and vessels move laterally in order, muscles move outward.
+ * and vessels move laterally in order, muscles move outward (the lip ring
+ * moves forward and down, clear of the incisors).
  * Tooth level: layers separate along the tooth's own axes.
  */
 import * as THREE from 'three';
@@ -50,6 +51,9 @@ export function archOffset(registry: Registry, meshKey: string, center: THREE.Ve
     if (/anterior-superior/.test(meshKey)) return base.add(V(side * 0.3, 0, 0.9));
     return base.add(V(side * lat, 0, 0));
   }
+  // The lip ring sits in front of the teeth and spans the midline, so a sideways push leaves it over the
+  // incisors. Move it forward and just below the lower crowns instead (in front of the chin).
+  if (meshKey === 'orbicularis-oris') return lower.clone().add(V(0, -2.6, 2.6));
   if (cats.includes('muscles')) {
     const vertical = center.y > 1.5 ? 3.2 : 0;
     return V(side * 3.2, vertical, center.z > 2.5 ? 2 : 0);
