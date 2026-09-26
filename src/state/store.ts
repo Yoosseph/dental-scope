@@ -121,6 +121,11 @@ export const setState = store.setState;
 
 /* ------------------------------------------------------------------ actions */
 
+const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
+
+/** localStorage keys of the per-viewer preferences. */
+const PREF = { numbering: 'ds.numbering', theme: 'ds.theme', orbit: 'ds.orbit' } as const;
+
 /** Remember a per-viewer preference (restored by restorePreferences). */
 function persist(key: string, value: string) {
   try {
@@ -187,7 +192,7 @@ export const actions = {
     setState({ hidden: {}, ghosted: {}, isolateId: null, isolateContext: false, categories: { ...INITIAL_CATEGORY_STATE } });
   },
   setExplode(v: number) {
-    const explode = Math.max(0, Math.min(1, v));
+    const explode = clamp01(v);
     // scrubbing the slider back leaves the laid-out phase
     setState((s) => ({ explode, explodePhase: explode < 1 ? 1 : s.explodePhase }));
   },
@@ -195,7 +200,7 @@ export const actions = {
     setState((s) => (phase === 2 ? { explodePhase: 2, explode: 1, clip: { ...s.clip, enabled: false } } : { explodePhase: 1 }));
   },
   setToothExplode(v: number) {
-    setState({ toothExplode: Math.max(0, Math.min(1, v)) });
+    setState({ toothExplode: clamp01(v) });
   },
   toggleLabels() {
     setState((s) => ({ labels: !s.labels }));
@@ -206,7 +211,7 @@ export const actions = {
   },
   setNumbering(n: NumberingSystem) {
     setState({ numbering: n });
-    persist('ds.numbering', n);
+    persist(PREF.numbering, n);
   },
   setView(v: ViewPreset | null) {
     setState({ view: v });
@@ -216,7 +221,7 @@ export const actions = {
   },
   setOrbitMode(m: OrbitMode) {
     setState({ orbitMode: m });
-    persist('ds.orbit', m);
+    persist(PREF.orbit, m);
   },
   enterDissect(fdi: number) {
     setState({ dissectFdi: fdi, dissectLevel: 0, toothExplode: 0, isolateId: `tooth-${fdi}`, isolateContext: true, explode: 0, explodePhase: 1 });
@@ -248,7 +253,7 @@ export const actions = {
   },
   setTheme(t: AppState['theme']) {
     setState({ theme: t });
-    persist('ds.theme', t);
+    persist(PREF.theme, t);
   },
   setMode(m: ModeId) {
     setState({ mode: m });
@@ -261,11 +266,11 @@ export const actions = {
 /** Restore per-viewer preferences. */
 export function restorePreferences() {
   try {
-    const n = localStorage.getItem('ds.numbering');
+    const n = localStorage.getItem(PREF.numbering);
     if (n === 'fdi' || n === 'universal' || n === 'palmer') setState({ numbering: n });
-    const t = localStorage.getItem('ds.theme');
+    const t = localStorage.getItem(PREF.theme);
     if (t === 'light' || t === 'dark') setState({ theme: t });
-    const o = localStorage.getItem('ds.orbit');
+    const o = localStorage.getItem(PREF.orbit);
     if (o === 'fixed' || o === 'free') setState({ orbitMode: o });
   } catch {
     /* storage unavailable */
