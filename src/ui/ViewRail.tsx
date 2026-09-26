@@ -22,6 +22,35 @@ const ORBIT_MODES: { id: OrbitMode; label: string; icon: ReactNode }[] = [
 /** How long a label stays up after a touch tap (touch has no hover). */
 const TOUCH_TIP_MS = 1600;
 
+/** Remembers that the first-visit label peek has been shown. */
+const PEEK_KEY = 'ds.railPeek';
+
+/**
+ * First visit on a pointer device: once the model is ready, slide every rail label out for a
+ * moment so people see what the buttons do. Shown once per browser; any hover on the rail ends it.
+ */
+function useFirstVisitPeek(): [boolean, () => void] {
+  const ready = useApp((s) => s.ready);
+  const [peek, setPeek] = useState(false);
+  useEffect(() => {
+    if (!ready) return;
+    try {
+      if (localStorage.getItem(PEEK_KEY)) return;
+      localStorage.setItem(PEEK_KEY, '1');
+    } catch {
+      return; // no storage: skip rather than show it on every visit
+    }
+    if (!matchMedia('(hover: hover) and (min-width: 768px)').matches) return;
+    const on = window.setTimeout(() => setPeek(true), 700);
+    const off = window.setTimeout(() => setPeek(false), 3600);
+    return () => {
+      clearTimeout(on);
+      clearTimeout(off);
+    };
+  }, [ready]);
+  return [peek, () => setPeek(false)];
+}
+
 export function ViewRail() {
   const { engine } = useServices();
   const view = useApp((s) => s.view);
@@ -37,11 +66,14 @@ export function ViewRail() {
     setTipLabel(label);
     if (label && ms) timer.current = window.setTimeout(() => setTipLabel(null), ms);
   };
-  const tipProps = (label: string, shortcut?: string) => ({ label, shortcut, tipShown: tipLabel === label, showTip });
+  const [peek, endPeek] = useFirstVisitPeek();
+  // position in the rail, staggers the first-visit peek
+  let order = 0;
+  const tipProps = (label: string, shortcut?: string) => ({ label, shortcut, tipShown: tipLabel === label, showTip, order: order++ });
 
   return (
     <>
-      <nav className={`ds-rail ds-panel${mobileOpen ? ' is-mobile-open' : ''}`} aria-label="Camera views">
+      <nav className={`ds-rail ds-panel${mobileOpen ? ' is-mobile-open' : ''}${peek ? ' is-peek' : ''}`} aria-label="Camera views" onPointerEnter={endPeek}>
         <div className="ds-rail-group" role="group" aria-label="Orbit mode">
           {ORBIT_MODES.map((m) => (
             <RailButton key={m.id} {...tipProps(m.label)} pressed={orbit === m.id} onClick={() => actions.setOrbitMode(m.id)}>
@@ -85,13 +117,15 @@ interface RailButtonProps {
   /** toggle/selection state (omit for plain actions) */
   pressed?: boolean;
   tipShown: boolean;
+  /** position in the rail (staggers the first-visit peek) */
+  order: number;
   showTip: (label: string | null, ms?: number) => void;
   onClick: () => void;
   children: ReactNode;
 }
 
 /** Icon button with a text label that appears on hover, keyboard focus or touch. */
-function RailButton({ label, shortcut, pressed, tipShown, showTip, onClick, children }: RailButtonProps) {
+function RailButton({ label, shortcut, pressed, tipShown, order, showTip, onClick, children }: RailButtonProps) {
   return (
     <button
       type="button"
@@ -104,11 +138,14 @@ function RailButton({ label, shortcut, pressed, tipShown, showTip, onClick, chil
       onBlur={() => showTip(null)}
       aria-label={label}
       aria-pressed={pressed}
+      style={{ '--i': order } as React.CSSProperties}
     >
       {children}
       <span className="ds-rail-tip" aria-hidden="true">
-        {label}
-        {shortcut && <kbd>{shortcut}</kbd>}
+        <span className="ds-rail-tip-text">
+          {label}
+          {shortcut && <kbd>{shortcut}</kbd>}
+        </span>
       </span>
     </button>
   );
