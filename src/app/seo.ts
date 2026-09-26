@@ -3,8 +3,8 @@
  * writes the head tags, robots.txt, sitemap.xml and one static entry page per
  * tooth) and the app (document title while navigating).
  */
-import { PERMANENT_FDI, fdiToPalmer, fdiToUniversal, toothName } from '../anatomy/notation';
-import type { Structure } from '../anatomy/types';
+import { PERMANENT_FDI, fdiToPalmer, fdiToUniversal, toothName } from '../anatomy/notation.ts';
+import type { Structure } from '../anatomy/types.ts';
 
 export const SITE_NAME = 'Dental Scope';
 
