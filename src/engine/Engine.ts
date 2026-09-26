@@ -13,7 +13,7 @@ import { AssetLoader } from './assets';
 import { CameraRig } from './camera';
 import { archOffset, toothLayerOffset } from './explode';
 import { LabelLayer, type LabelCandidate } from './labels';
-import { HOVER, HIGHLIGHT, createTissueMaterial, setMaterialOpacity, styleKeyFor, type TissueMaterial } from './materials';
+import { HOVER, HIGHLIGHT, THEME_LIGHTING, applyThemeToMaterial, createTissueMaterial, setMaterialOpacity, styleKeyFor, type SceneTheme, type TissueMaterial } from './materials';
 import { SectionTool } from './section';
 
 interface MeshEntry {
@@ -102,7 +102,6 @@ export class Engine {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, mobile ? 1.5 : 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.05;
     renderer.localClippingEnabled = true;
     renderer.setClearColor(0x000000, 0);
     renderer.domElement.className = 'ds-canvas';
@@ -121,7 +120,7 @@ export class Engine {
 
     const pmrem = new THREE.PMREMGenerator(renderer);
     this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-    this.scene.environmentIntensity = 0.55;
+    this.applyTheme(getState().theme);
 
     const camera = new THREE.PerspectiveCamera(32, 1, 0.05, 200);
     this.rig = new CameraRig(camera, renderer.domElement, this.animator);
@@ -226,6 +225,7 @@ export class Engine {
       if (!owner) continue;
       const cats = this.registry.categoriesOfMesh(key);
       const mat = createTissueMaterial(styleKeyFor(key, cats));
+      applyThemeToMaterial(mat, getState().theme);
       const mesh = new THREE.Mesh(geo, mat);
       mesh.name = key;
       mesh.userData.key = key;
@@ -250,6 +250,14 @@ export class Engine {
 
   /* ========================================================= state sync */
 
+  /** Match lighting and bone shading to the UI theme (see THEME_LIGHTING). */
+  private applyTheme(theme: SceneTheme) {
+    this.renderer.toneMappingExposure = THEME_LIGHTING[theme].exposure;
+    this.scene.environmentIntensity = THEME_LIGHTING[theme].environment;
+    for (const e of this.entries.values()) applyThemeToMaterial(e.mesh.material, theme);
+    this.invalidate();
+  }
+
   private onState(s: AppState, p: AppState) {
     const visChanged =
       s.categories !== p.categories ||
@@ -267,6 +275,7 @@ export class Engine {
     if (s.clip.enabled && !p.clip.enabled && s.dissectFdi === null) void this.ensureAllTeeth();
     if (s.dissectFdi !== p.dissectFdi && s.dissectFdi !== null) void this.ensureTooth(s.dissectFdi);
     if (s.autoRotate !== p.autoRotate) this.rig.controls.autoRotate = s.autoRotate;
+    if (s.theme !== p.theme) this.applyTheme(s.theme);
     if (visChanged || s.labels !== p.labels || s.numbering !== p.numbering || s.selectedId !== p.selectedId) this.refreshLabels();
     if (s.explode !== p.explode) this.reframeForExplode(s);
     if (s.explode !== p.explode || s.toothExplode !== p.toothExplode) this.invalidate();

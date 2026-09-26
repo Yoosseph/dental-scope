@@ -52,8 +52,8 @@ kbd {
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(1200px 800px at 55% 42%, var(--bg-1) 0%, transparent 70%),
-    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-0) 100%);
+    radial-gradient(1200px 800px at 55% 42%, var(--stage-1) 0%, transparent 70%),
+    linear-gradient(180deg, var(--stage-1) 0%, var(--stage-0) 100%);
 }
 .ds-stage {
   position: absolute;
@@ -1331,7 +1331,7 @@ button.ds-layer-name:hover {
   box-shadow: none;
   border-color: transparent;
   color: var(--muted);
-  text-shadow: 0 0 3px var(--bg-1), 0 0 3px var(--bg-1);
+  text-shadow: 0 0 3px var(--stage-1), 0 0 3px var(--stage-1);
 }
 .ds-tip {
   position: absolute;
