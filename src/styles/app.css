@@ -571,6 +571,47 @@ button.ds-layer-name:hover {
   background: var(--line);
   margin: 4px 6px;
 }
+.ds-rail-btn {
+  position: relative;
+}
+/* action label: appears to the left of the rail on hover, keyboard focus or a touch tap */
+.ds-rail-tip,
+.ds-rail-caption {
+  padding: 5px 9px;
+  border-radius: 8px;
+  background: var(--panel-solid);
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--panel-shadow);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.ds-rail-tip {
+  position: absolute;
+  right: calc(100% + 12px);
+  top: 50%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  transform: translate(4px, -50%);
+  transition: opacity var(--dur), transform var(--dur);
+}
+.ds-rail-tip kbd {
+  font-size: 10px;
+}
+.ds-rail-btn:hover .ds-rail-tip,
+.ds-rail-btn:focus-visible .ds-rail-tip,
+.ds-rail-btn.is-tip-shown .ds-rail-tip {
+  opacity: 1;
+  transform: translate(0, -50%);
+}
+.ds-rail-caption {
+  display: none;
+}
 
 /* ------------------------------------------------------------------ detail */
 .ds-detail {
@@ -1523,6 +1564,19 @@ button.ds-layer-name:hover {
     flex: none;
     width: 38px;
     height: 36px;
+  }
+  /* the mobile rail scrolls sideways and would clip side labels: name the tapped control above it instead */
+  .ds-rail-tip {
+    display: none;
+  }
+  /* sits just above the rail row (rail bottom 66px + 46px row); may briefly overlap the dock's lower edge */
+  .ds-rail-caption {
+    display: block;
+    position: absolute;
+    left: 50%;
+    bottom: calc(66px + 46px + 6px + env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    z-index: 6;
   }
   .ds-dock {
     display: none;
