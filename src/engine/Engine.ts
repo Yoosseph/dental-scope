@@ -35,10 +35,11 @@ interface MeshEntry {
   boardPos?: THREE.Vector3;
 }
 
+/** Loading stages in order (their UI names live in Overlays' STAGE_LABEL). */
 const STAGES = [
-  { id: 'core', file: 'core.glb', label: 'Jaws & dentition' },
-  { id: 'context', file: 'context.glb', label: 'Skull & muscles' },
-  { id: 'neurovascular', file: 'neurovascular.glb', label: 'Nerves & vessels' },
+  { id: 'core', file: 'core.glb' },
+  { id: 'context', file: 'context.glb' },
+  { id: 'neurovascular', file: 'neurovascular.glb' },
 ] as const;
 
 const EXEMPLAR_TOOTH = 36;
