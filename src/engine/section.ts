@@ -4,6 +4,7 @@
  */
 import * as THREE from 'three';
 import type { ClipState } from '../state/store';
+import { HIGHLIGHT } from './materials';
 
 type PlaneAxis = 'sagittal' | 'coronal' | 'axial';
 const WORLD_AXES: Record<PlaneAxis, THREE.Vector3> = {
@@ -11,6 +12,9 @@ const WORLD_AXES: Record<PlaneAxis, THREE.Vector3> = {
   coronal: new THREE.Vector3(0, 0, 1),
   axial: new THREE.Vector3(0, 1, 0),
 };
+
+/** Rounded vector string, for cheap change detection. */
+const vecKey = (v: THREE.Vector3) => v.toArray().map((n) => n.toFixed(2)).join(',');
 
 export class SectionTool {
   readonly plane = new THREE.Plane(new THREE.Vector3(1, 0, 0), 0);
@@ -38,7 +42,7 @@ export class SectionTool {
       new THREE.Vector3(1, 1, 0),
       new THREE.Vector3(-1, 1, 0),
     ]);
-    const m = new THREE.LineBasicMaterial({ color: '#1fb5c9', transparent: true, opacity: 0.3, depthTest: false });
+    const m = new THREE.LineBasicMaterial({ color: HIGHLIGHT, transparent: true, opacity: 0.3, depthTest: false });
     this.outline = new THREE.LineLoop(g, m);
     this.outline.renderOrder = 999;
     this.outline.visible = false;
@@ -53,7 +57,7 @@ export class SectionTool {
     const size = bounds.getSize(new THREE.Vector3());
     // the removed half is always the one facing the camera, so the cut surface faces the viewer
     const camSide = clip.axis === 'view' ? 0 : Math.sign(this.axes[clip.axis].dot(camera.position.clone().sub(center))) || 1;
-    const key = `${clip.axis}|${clip.flip}|${camSide}|${this.axes[clip.axis === 'view' ? 'axial' : clip.axis].toArray().map((v) => v.toFixed(2)).join(',')}|${center.toArray().map((v) => v.toFixed(2)).join(',')}`;
+    const key = `${clip.axis}|${clip.flip}|${camSide}|${vecKey(this.axes[clip.axis === 'view' ? 'axial' : clip.axis])}|${vecKey(center)}`;
     if (key !== this.lastKey || clip.axis === 'view') {
       if (clip.axis === 'view') {
         this.normal.copy(target).sub(camera.position).normalize();
