@@ -14,7 +14,7 @@ import { CameraRig } from './camera';
 import { archOffset, toothLayerOffset } from './explode';
 import { boardSlot, shelfLayout, type LayoutItem } from './layout';
 import { LabelLayer, type LabelCandidate } from './labels';
-import { HOVER, HIGHLIGHT, THEME_LIGHTING, applyThemeToMaterial, createTissueMaterial, setMaterialOpacity, styleKeyFor, type SceneTheme, type TissueMaterial } from './materials';
+import { HOVER, HIGHLIGHT, THEME_LIGHTING, applyThemeToMaterial, createTissueMaterial, setFibreAxis, setMaterialOpacity, styleKeyFor, type SceneTheme, type TissueMaterial } from './materials';
 import { SectionTool } from './section';
 
 interface MeshEntry {
@@ -238,6 +238,7 @@ export class Engine {
       const cats = this.registry.categoriesOfMesh(key);
       const mat = createTissueMaterial(styleKeyFor(key, cats));
       applyThemeToMaterial(mat, getState().theme);
+      setFibreAxis(mat, geo.boundingBox!);
       const mesh = new THREE.Mesh(geo, mat);
       mesh.name = key;
       mesh.userData.key = key;

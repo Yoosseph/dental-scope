@@ -143,7 +143,8 @@ Engine
  ├─ loop: requestAnimationFrame only while `needsRender || tweens active || controls damping`
  ├─ SceneRegistry   meshKey → Object3D, structureId → meshes, bounds cache
  ├─ AssetLoader     staged GLTF loading (meshopt), progress → store, lazy tooth assets
- ├─ Materials       tissue palette; per-mesh material state: base / hover / selected / ghost; back-face cap shader for sections
+ ├─ Materials       tissue palette; per-mesh material state: base / hover / selected / ghost; back-face cap shader for sections;
+ │                  soft-tissue edge darkening and faint muscle grain; light-theme tuning
  ├─ Visibility      store → mesh.visible / opacity (animated fades)
  ├─ Picking         raycast visible meshes on pointer; hover throttled to rAF; click vs drag discrimination
  ├─ CameraRig       OrbitControls + tweened focus (bounds → distance via FOV), presets, reduced motion;

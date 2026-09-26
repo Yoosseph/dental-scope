@@ -1,5 +1,7 @@
+import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
-import { styleFor, themedColor, THEME_LIGHTING } from './materials';
+import { CATEGORY_BY_ID } from '../anatomy/categories';
+import { fibreAxis, styleFor, themedColor, THEME_LIGHTING } from './materials';
 
 describe('light-theme tuning', () => {
   it('keeps dark-theme colours exactly as styled', () => {
@@ -25,5 +27,36 @@ describe('light-theme tuning', () => {
   it('lowers exposure slightly in the light theme', () => {
     expect(THEME_LIGHTING.light.exposure).toBeLessThan(THEME_LIGHTING.dark.exposure);
     expect(THEME_LIGHTING.light.exposure).toBeGreaterThan(0.85);
+  });
+});
+
+describe('surface detail for non-dental tissue', () => {
+  const dental = ['shell', 'enamel', 'dentin-coronal', 'dentin-radicular', 'cementum', 'pulp-chamber', 'canal', 'pdl', 'gingiva', 'bone', 'alveolar', 'condyle', 'skull'];
+  const context = ['muscle', 'nerve', 'artery', 'vein'];
+  it('adds edge definition to muscles, nerves and vessels, and grain to muscles only', () => {
+    for (const k of context) expect(styleFor(k).edge ?? 0, k).toBeGreaterThan(0);
+    expect(styleFor('muscle').grain ?? 0).toBeGreaterThan(0);
+    for (const k of ['nerve', 'artery', 'vein']) expect(styleFor(k).grain ?? 0, k).toBe(0);
+    for (const k of dental) {
+      expect(styleFor(k).grain ?? 0, k).toBe(0);
+      expect(styleFor(k).edge ?? 0, k).toBe(0);
+    }
+  });
+  it('keeps context tissue matte-ish and free of self-glow', () => {
+    for (const k of context) {
+      const st = styleFor(k);
+      expect(st.roughness, k).toBeGreaterThanOrEqual(0.4);
+      expect(st.clearcoat ?? 0, k).toBeLessThanOrEqual(0.2);
+      expect(new THREE.Color(st.emissive ?? '#000').getHSL({ h: 0, s: 0, l: 0 }).l, k).toBeLessThan(0.03);
+    }
+  });
+  it('shows the same colour in the layer legend as in 3D', () => {
+    const pairs: [string, string][] = [['nerves', 'nerve'], ['arteries', 'artery'], ['veins', 'vein'], ['muscles', 'muscle']];
+    for (const [cat, style] of pairs) expect(CATEGORY_BY_ID[cat as keyof typeof CATEGORY_BY_ID].color, cat).toBe(styleFor(style).color);
+  });
+  it('takes the fibre direction from the longest side of a muscle', () => {
+    const box = new THREE.Box3(new THREE.Vector3(0, 0, 0), new THREE.Vector3(1, 4, 2));
+    expect(fibreAxis(box).toArray()).toEqual([0, 1, 0]);
+    expect(fibreAxis(new THREE.Box3(new THREE.Vector3(0, 0, 0), new THREE.Vector3(5, 1, 1))).toArray()).toEqual([1, 0, 0]);
   });
 });
