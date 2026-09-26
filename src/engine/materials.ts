@@ -110,8 +110,9 @@ export function fibreAxis(box: THREE.Box3): THREE.Vector3 {
 
 export type TissueMaterial = THREE.MeshPhysicalMaterial & { userData: { fx: FxUniforms; styleKey: string } };
 
-export const HIGHLIGHT = new THREE.Color('#1fb5c9');
-export const HOVER = new THREE.Color('#7fd8e3');
+/** Selection and hover tint: the UI's single ultramarine accent. */
+export const HIGHLIGHT = new THREE.Color('#3346f0');
+export const HOVER = new THREE.Color('#8f9bff');
 
 export function createTissueMaterial(styleKey: string): TissueMaterial {
   const st = styleFor(styleKey);

@@ -113,9 +113,11 @@ kbd {
 }
 .ds-title {
   margin: 0;
-  font-size: 30px;
+  font-family: var(--font-display);
+  font-size: 32px;
   font-weight: 600;
-  letter-spacing: -0.025em;
+  font-variation-settings: 'opsz' 60;
+  letter-spacing: -0.015em;
   line-height: 1.05;
 }
 .ds-credit {
@@ -370,7 +372,7 @@ button.ds-layer-name:hover {
   height: 18px;
   flex: none;
   border-radius: 9px;
-  background: var(--switch-off);
+  background: var(--press);
   transition: background var(--dur) var(--ease);
 }
 .ds-switch span {
@@ -695,9 +697,10 @@ button.ds-layer-name:hover {
 }
 .ds-detail-title {
   margin: 6px 0 0;
-  font-size: 21px;
+  font-family: var(--font-display);
+  font-size: 23px;
   font-weight: 600;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
   line-height: 1.2;
   padding-right: 20px;
 }
@@ -977,10 +980,7 @@ button.ds-layer-name:hover {
 }
 .ds-tool-warn svg {
   flex: none;
-  color: #c27a1a;
-}
-:root[data-theme='dark'] .ds-tool-warn svg {
-  color: #e7b27a;
+  color: var(--warn);
 }
 .ds-tool-warn kbd {
   font-size: 10px;
@@ -1081,7 +1081,7 @@ button.ds-layer-name:hover {
   width: 11px;
   height: 11px;
   border-radius: 50%;
-  border: 2px solid var(--switch-off);
+  border: 2px solid var(--faint);
   background: var(--panel-solid);
 }
 .ds-step.is-past .ds-step-dot {
@@ -1224,10 +1224,10 @@ button.ds-layer-name:hover {
 }
 @keyframes ds-pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(31, 181, 201, 0.5);
+    box-shadow: 0 0 0 0 var(--accent-glow);
   }
   100% {
-    box-shadow: 0 0 0 10px rgba(31, 181, 201, 0);
+    box-shadow: 0 0 0 10px transparent;
   }
 }
 @media (max-width: 767px) {
@@ -1250,7 +1250,7 @@ button.ds-layer-name:hover {
   justify-content: center;
   align-items: flex-start;
   padding: 11vh 16px 16px;
-  background: rgba(10, 20, 26, 0.12);
+  background: var(--scrim);
   animation: ds-fade 160ms var(--ease);
 }
 @keyframes ds-fade {
@@ -1350,7 +1350,7 @@ button.ds-layer-name:hover {
   background: var(--label-bg);
   color: var(--label-ink);
   border: 1px solid var(--panel-border);
-  box-shadow: 0 2px 8px rgba(18, 32, 40, 0.1);
+  box-shadow: var(--label-shadow);
   font-size: 11.5px;
   white-space: nowrap;
   opacity: 0;
@@ -1419,12 +1419,14 @@ button.ds-layer-name:hover {
   overflow-y: auto;
 }
 .ds-about::backdrop {
-  background: rgba(10, 20, 26, 0.3);
+  background: var(--scrim-strong);
 }
 .ds-about h2 {
   margin: 0 0 8px;
-  font-size: 20px;
-  letter-spacing: -0.02em;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 .ds-about h3 {
   margin: 18px 0 4px;
@@ -1561,7 +1563,7 @@ button.ds-layer-name:hover {
     display: block;
     position: absolute;
     inset: 0;
-    background: rgba(10, 20, 26, 0.12);
+    background: var(--scrim);
     z-index: 4;
   }
   /* bottom sheets */

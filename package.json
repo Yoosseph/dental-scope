@@ -16,6 +16,9 @@
     "assets:fetch": "node tools/pipeline/fetch_bodyparts3d.mjs"
   },
   "dependencies": {
+    "@fontsource-variable/source-serif-4": "^5.3.0",
+    "@fontsource/inter-tight": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "three": "^0.186.1",
