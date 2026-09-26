@@ -113,9 +113,9 @@ export function AboutDialog() {
         <dt>D</dt>
         <dd>Explore inside the selected tooth</dd>
         <dt>[ · ]</dt>
-        <dd>Dissection level</dd>
+        <dd>Dissection level (inside a tooth)</dd>
         <dt>E · C · L</dt>
-        <dd>Explode · section · labels</dd>
+        <dd>Dissect anatomy (tooth: separate layers) · section · labels</dd>
         <dt>Arrows · + −</dt>
         <dd>Orbit · zoom</dd>
         <dt>R</dt>
