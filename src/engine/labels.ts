@@ -20,6 +20,11 @@ export interface LabelCandidate {
 interface LabelEl {
   el: HTMLButtonElement;
   visible: boolean;
+  /** cached size (0 = measure again); only text and fonts change it, never position */
+  w: number;
+  h: number;
+  /** last transform written, to skip identical style writes */
+  transform: string;
 }
 
 const PAD = 4;
@@ -41,6 +46,13 @@ export class LabelLayer {
   private occluded = new Set<string>();
   private lastOcclusion = 0;
   private blocked: Rect[] = [];
+  /** candidates in draw order (selected first, then priority); rebuilt when candidates or selection change */
+  private sorted: LabelCandidate[] = [];
+  private sortedFor: string | null | undefined = undefined;
+  /** occlusion inputs other than the camera changed since the last occlusion pass */
+  private occlusionDirty = true;
+  private lastView = new THREE.Matrix4();
+  private lastProj = new THREE.Matrix4();
   /** CSS selector for UI elements labels must not sit under */
   blockSelector = '.ds-panel, .ds-identity, .ds-top-actions';
   enabled = false;
@@ -53,10 +65,26 @@ export class LabelLayer {
 
   constructor(root: HTMLElement) {
     this.root = root;
+    // label sizes are cached; web fonts arriving later change them
+    document.fonts?.addEventListener?.('loadingdone', this.resetSizes);
+  }
+
+  private resetSizes = () => {
+    for (const l of this.els.values()) l.w = l.h = 0;
+  };
+
+  /**
+   * Something that affects occlusion other than the camera changed: meshes moved or faded,
+   * visibility or the section plane changed. The next update recomputes occlusion.
+   */
+  markSceneChanged() {
+    this.occlusionDirty = true;
   }
 
   setCandidates(c: LabelCandidate[]) {
     this.candidates = c;
+    this.sortedFor = undefined;
+    this.occlusionDirty = true;
     const ids = new Set(c.map((x) => x.id));
     for (const [id, l] of this.els) {
       if (!ids.has(id)) {
@@ -76,12 +104,13 @@ export class LabelLayer {
         });
         el.addEventListener('pointerdown', (e) => e.stopPropagation());
         this.root.appendChild(el);
-        l = { el, visible: false };
+        l = { el, visible: false, w: 0, h: 0, transform: '' };
         this.els.set(cand.id, l);
       }
       if (l.el.textContent !== cand.text) {
         l.el.textContent = cand.text;
         l.el.setAttribute('aria-label', `Select ${cand.text}`);
+        l.w = l.h = 0;
       }
     }
   }
@@ -93,15 +122,35 @@ export class LabelLayer {
     }
     if (force || now - this.lastOcclusion > 180) {
       this.lastOcclusion = now;
-      this.computeOcclusion(camera);
+      // occlusion is the costly part (a raycast per label): skip it while neither the camera
+      // nor the scene has changed, e.g. for renders caused only by hover highlights
+      const cameraMoved = !this.lastView.equals(camera.matrixWorld) || !this.lastProj.equals(camera.projectionMatrix);
+      if (cameraMoved || this.occlusionDirty) {
+        this.lastView.copy(camera.matrixWorld);
+        this.lastProj.copy(camera.projectionMatrix);
+        this.occlusionDirty = false;
+        this.computeOcclusion(camera);
+      }
       this.computeBlocked();
+    }
+    // read every uncached label size before writing any transform, so the browser lays out
+    // at most once per frame instead of once per label
+    for (const l of this.els.values()) {
+      if (!l.w) {
+        l.w = l.el.offsetWidth;
+        l.h = l.el.offsetHeight;
+      }
+    }
+    if (this.sortedFor !== this.selectedId) {
+      const sel = this.selectedId;
+      this.sorted = [...this.candidates].sort((a, b) => (b.id === sel ? 1 : 0) - (a.id === sel ? 1 : 0) || b.priority - a.priority);
+      this.sortedFor = sel;
     }
     const placed: Rect[] = [];
     const tmp = new THREE.Vector3();
     const camDir = camera.getWorldDirection(new THREE.Vector3());
     const pxPerUnitAt = (d: number) => height / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2) * d);
-    const sorted = [...this.candidates].sort((a, b) => (b.id === this.selectedId ? 1 : 0) - (a.id === this.selectedId ? 1 : 0) || b.priority - a.priority);
-    for (const c of sorted) {
+    for (const c of this.sorted) {
       const l = this.els.get(c.id)!;
       const p = c.anchor();
       if (this.keeps && !this.keeps(p)) {
@@ -128,8 +177,8 @@ export class LabelLayer {
       }
       const x = (tmp.x * 0.5 + 0.5) * width;
       const y = (-tmp.y * 0.5 + 0.5) * height;
-      const w = l.el.offsetWidth || 60;
-      const h = l.el.offsetHeight || 20;
+      const w = l.w || 60;
+      const h = l.h || 20;
       const rect: Rect = { x0: x - w / 2 - PAD, y0: y - h - 8 - PAD, x1: x + w / 2 + PAD, y1: y - 8 + PAD };
       const hits = (r: Rect) => overlaps(r, rect);
       if (this.blocked.some(hits) || (!selected && placed.some(hits))) {
@@ -137,7 +186,11 @@ export class LabelLayer {
         continue;
       }
       placed.push(rect);
-      l.el.style.transform = `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0) translate(-50%, calc(-100% - 8px))`;
+      const transform = `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0) translate(-50%, calc(-100% - 8px))`;
+      if (transform !== l.transform) {
+        l.transform = transform;
+        l.el.style.transform = transform;
+      }
       l.el.classList.toggle('is-selected', selected);
       this.show(l, true);
     }
@@ -176,6 +229,7 @@ export class LabelLayer {
   }
 
   dispose() {
+    document.fonts?.removeEventListener?.('loadingdone', this.resetSizes);
     for (const l of this.els.values()) l.el.remove();
     this.els.clear();
   }
