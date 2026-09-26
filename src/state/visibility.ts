@@ -36,7 +36,8 @@ const DISSECT_RULES: Record<number, Partial<Record<string, MeshVisual>>> = {
   1: { pdl: 'ghost' },
   2: { enamel: 'off', pdl: 'off', cementum: 'ghost' },
   3: { enamel: 'off', pdl: 'off', cementum: 'off', 'dentin-coronal': 'ghost', 'dentin-radicular': 'ghost' },
-  4: { enamel: 'off', pdl: 'off', cementum: 'off', 'dentin-coronal': 'ghost', 'dentin-radicular': 'ghost' },
+  // root canals: the pulp chamber and canals on their own, dentin removed
+  4: { enamel: 'off', pdl: 'off', cementum: 'off', 'dentin-coronal': 'off', 'dentin-radicular': 'off' },
 };
 
 /** Per dissection level, how each tooth layer is shown. */

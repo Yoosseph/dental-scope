@@ -170,6 +170,45 @@ function ArchControls() {
   );
 }
 
+/** rAF tween shared by the tooth play buttons; stops on unmount. */
+function useTween() {
+  const raf = useRef(0);
+  const [playing, setPlaying] = useState(false);
+  useEffect(() => () => cancelAnimationFrame(raf.current), []);
+  const stop = () => {
+    cancelAnimationFrame(raf.current);
+    setPlaying(false);
+  };
+  const run = (from: number, to: number, seconds: number, apply: (v: number) => void, ease = true) => {
+    cancelAnimationFrame(raf.current);
+    setPlaying(true);
+    const t0 = performance.now();
+    const ms = Math.max(1, seconds * 1000);
+    const tick = (now: number) => {
+      const k = Math.min(1, (now - t0) / ms);
+      const e = ease ? (k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2) : k;
+      apply(from + (to - from) * e);
+      if (k < 1) raf.current = requestAnimationFrame(tick);
+      else setPlaying(false);
+    };
+    raf.current = requestAnimationFrame(tick);
+  };
+  return { playing, run, stop };
+}
+
+const LAST_LEVEL = DISSECT_LEVELS.length - 1;
+const SECONDS_PER_LEVEL = 1.3;
+const SECONDS_TO_APART = 1.8;
+
+function PlayButton({ playing, atEnd, onClick, what }: { playing: boolean; atEnd: boolean; onClick: () => void; what: string }) {
+  const label = playing ? `Pause ${what}` : atEnd ? `Replay ${what}` : `Play ${what}`;
+  return (
+    <button type="button" className={`ds-play${playing ? ' is-playing' : ''}`} onClick={onClick} aria-label={label} title={label}>
+      {playing ? <IconPause size={16} /> : atEnd ? <IconReplay size={16} /> : <IconPlay size={16} />}
+    </button>
+  );
+}
+
 function DissectControls({ fdi }: { fdi: number }) {
   const { registry, engine } = useServices();
   const level = useApp((s) => s.dissectLevel);
@@ -179,41 +218,111 @@ function DissectControls({ fdi }: { fdi: number }) {
   const clip = useApp((s) => s.clip.enabled);
   const ctx = useApp((s) => s.isolateContext);
   const tooth = registry.get(`tooth-${fdi}`)!;
+  const levels = useTween();
+  const layers = useTween();
   const exit = () => {
     actions.exitDissect();
     actions.select(`tooth-${fdi}`);
     engine.focus(`tooth-${fdi}`);
     pushCurrentPath(registry);
   };
+
+  // steps through every level to Root canals, holding briefly on each one
+  const playLevels = () => {
+    if (levels.playing) return levels.stop();
+    const from = getState().dissectLevel >= LAST_LEVEL ? 0 : getState().dissectLevel;
+    actions.setDissectLevel(from);
+    levels.run(from, LAST_LEVEL + 0.999, (LAST_LEVEL - from + 1) * SECONDS_PER_LEVEL, (v) => {
+      const l = Math.min(LAST_LEVEL, Math.floor(v));
+      if (getState().dissectLevel !== l) actions.setDissectLevel(l);
+    }, false);
+  };
+  const playLayers = () => {
+    if (layers.playing) return layers.stop();
+    const from = getState().toothExplode >= 1 ? 0 : getState().toothExplode;
+    layers.run(from, 1, (1 - from) * SECONDS_TO_APART, actions.setToothExplode);
+  };
+
   return (
     <div className="ds-dock-main ds-dissect">
-      <div className="ds-dissect-head">
-        <button type="button" className="ds-icon-btn ds-icon-btn--ghost" onClick={exit} aria-label="Back to full mouth" title="Back to full mouth (Esc)">
-          <IconArrowLeft />
-        </button>
-        <div>
-          <div className="ds-label-sm">Inside the tooth</div>
-          <div className="ds-dissect-title">
-            <span className="ds-chip ds-chip--mono">{formatTooth(fdi, numbering)}</span> {tooth.name}
+      <div className="ds-dissect-bar">
+        <div className="ds-dissect-head">
+          <button type="button" className="ds-icon-btn ds-icon-btn--ghost" onClick={exit} aria-label="Back to full mouth" title="Back to full mouth (Esc)">
+            <IconArrowLeft />
+          </button>
+          <div>
+            <div className="ds-label-sm">Inside the tooth</div>
+            <div className="ds-dissect-title">
+              <span className="ds-chip ds-chip--mono">{formatTooth(fdi, numbering)}</span> {tooth.name}
+            </div>
+          </div>
+        </div>
+        <div className="ds-dock-tools">
+          <ToolToggle active={clip} onClick={() => actions.setClip({ enabled: !clip, axis: 'sagittal', offset: 0 })} icon={<IconSection />} label="Section" title="Cross-section (C)" />
+          <LabelsToggle active={labels} />
+          <ToolToggle active={ctx} onClick={() => actions.setIsolateContext(!ctx)} icon={<IconExplode />} label="Context" title="Show surrounding anatomy" />
+        </div>
+      </div>
+
+      <div className="ds-play-row">
+        <PlayButton playing={levels.playing} atEnd={level >= LAST_LEVEL} onClick={playLevels} what="dissection levels" />
+        <div className="ds-play-body">
+          <div className="ds-slider-head">
+            <span className="ds-slider-label">
+              <IconLayersStack /> Dissection level
+            </span>
+            <span className="ds-step-hint">{DISSECT_LEVELS[level].hint}</span>
+          </div>
+          <div className="ds-steps" role="radiogroup" aria-label="Dissection level" style={{ ['--progress' as string]: String(level / LAST_LEVEL) }}>
+            {DISSECT_LEVELS.map((l) => (
+              <button
+                key={l.id}
+                type="button"
+                role="radio"
+                aria-checked={level === l.id}
+                className={`ds-step${level === l.id ? ' is-active' : ''}${level > l.id ? ' is-past' : ''}`}
+                style={{ ['--at' as string]: `${(l.id / LAST_LEVEL) * 100}%` }}
+                onClick={() => {
+                  levels.stop();
+                  actions.setDissectLevel(l.id);
+                }}
+                title={l.hint}
+              >
+                <span className="ds-step-dot" aria-hidden="true" />
+                <span className="ds-step-label">{l.label}</span>
+              </button>
+            ))}
           </div>
         </div>
       </div>
-      <div className="ds-steps" role="radiogroup" aria-label="Dissection level">
-        {DISSECT_LEVELS.map((l) => (
-          <button key={l.id} type="button" role="radio" aria-checked={level === l.id} className={`ds-step${level === l.id ? ' is-active' : ''}${level > l.id ? ' is-past' : ''}`} onClick={() => actions.setDissectLevel(l.id)} title={l.hint}>
-            <span className="ds-step-dot" aria-hidden="true" />
-            <span className="ds-step-label">{l.label}</span>
-          </button>
-        ))}
-      </div>
-      <p className="ds-step-hint">{DISSECT_LEVELS[level].hint}</p>
-      <Slider label="Separate layers" icon={<IconExplode size={15} />} value={tex} onChange={actions.setToothExplode} left="Together" right="Apart" />
-      <div className="ds-dock-tools">
-        <ToolToggle active={clip} onClick={() => actions.setClip({ enabled: !clip, axis: 'sagittal', offset: 0 })} icon={<IconSection />} label="Section" title="Cross-section (C)" />
-        <LabelsToggle active={labels} />
-        <ToolToggle active={ctx} onClick={() => actions.setIsolateContext(!ctx)} icon={<IconExplode />} label="Context" title="Show surrounding anatomy" />
+
+      <div className="ds-play-row">
+        <PlayButton playing={layers.playing} atEnd={tex >= 1} onClick={playLayers} what="layer separation" />
+        <div className="ds-play-body">
+          <Slider
+            label="Separate layers"
+            icon={<IconExplode size={15} />}
+            value={tex}
+            onChange={(v) => {
+              layers.stop();
+              actions.setToothExplode(v);
+            }}
+            left="Together"
+            right="Apart"
+          />
+        </div>
       </div>
     </div>
+  );
+}
+
+function IconLayersStack() {
+  return (
+    <svg width={15} height={15} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="m12 4 8.5 4.5L12 13 3.5 8.5z" />
+      <path d="m3.5 12.5 8.5 4.5 8.5-4.5" />
+      <path d="m3.5 16.5 8.5 4.5 8.5-4.5" />
+    </svg>
   );
 }
 
