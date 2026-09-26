@@ -78,7 +78,7 @@ Details: [docs/architecture.md](docs/architecture.md). Design research: [docs/hu
 
 ## Anatomical data and attribution
 
-3D anatomy is derived from **BodyParts3D**, © The Database Center for Life Science, licensed under [CC BY-SA 2.1 Japan](https://creativecommons.org/licenses/by-sa/2.1/jp/deed.en). Third molars, alveolar bone and TMJ regions are derived from it; internal tooth anatomy is modeled inside each real tooth shape; nerves, vessels and joint discs are schematic. See [CREDITS.md](CREDITS.md) and [docs/assets.md](docs/assets.md).
+3D anatomy is derived from **BodyParts3D**, © The Database Center for Life Science, licensed under [CC BY-SA 2.1 Japan](https://creativecommons.org/licenses/by-sa/2.1/jp/deed.en). Third molars, alveolar bone and TMJ regions are derived from it; internal tooth anatomy is modeled inside each real tooth shape; nerves, vessels and joint discs are schematic. See [CREDITS.md](CREDITS.md) and [docs/assets.md](docs/assets.md); the statements in the app's About dialog are sourced in [docs/sources.md](docs/sources.md).
 
 ## Roadmap
 
