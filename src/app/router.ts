@@ -103,3 +103,9 @@ export function startRouter(engine: Engine, registry: Registry): () => void {
 export function pushPath(path: string) {
   if (path !== currentPath()) writeUrl(path, true);
 }
+
+/** Push a history entry for the current selection / dissection. */
+export function pushCurrentPath(registry: Registry) {
+  const { selectedId, dissectFdi } = getState();
+  pushPath(pathFor(selectedId, dissectFdi, registry));
+}

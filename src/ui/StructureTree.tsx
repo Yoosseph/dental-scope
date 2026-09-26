@@ -4,8 +4,8 @@
 import { memo, useEffect, useRef, useState } from 'react';
 import { formatTooth } from '../anatomy/notation';
 import type { Structure } from '../anatomy/types';
-import { pathFor, pushPath } from '../app/router';
-import { actions, getState, useApp } from '../state/store';
+import { pushCurrentPath } from '../app/router';
+import { actions, useApp } from '../state/store';
 import { useServices } from './context';
 import { IconChevron, IconEye, IconEyeOff } from './icons';
 
@@ -65,8 +65,7 @@ const TreeNode = memo(function TreeNode({ id, depth, open, toggle }: { id: strin
 
   const select = async () => {
     await engine.selectFromUI(id, { focus: true });
-    const st = getState();
-    pushPath(pathFor(st.selectedId, st.dissectFdi, registry));
+    pushCurrentPath(registry);
   };
 
   return (
