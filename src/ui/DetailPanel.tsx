@@ -39,7 +39,7 @@ export function DetailPanel() {
     <aside className={`ds-panel ds-detail${mobileOpen ? ' is-mobile-open' : ''}`} aria-label={`${s.name} details`} aria-live="polite">
       <div className="ds-detail-head">
         <span className="ds-detail-bar" style={{ background: catDef?.color ?? 'var(--accent)' }} aria-hidden="true" />
-        <div className="ds-eyebrow ds-eyebrow--plain">{catDef?.label ?? kindLabel(s)}</div>
+        <div className="ds-eyebrow">{catDef?.label ?? kindLabel(s)}</div>
         <button type="button" className="ds-icon-btn ds-icon-btn--ghost ds-detail-close" onClick={() => actions.select(null)} aria-label="Close details">
           <IconClose />
         </button>
