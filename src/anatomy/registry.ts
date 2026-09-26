@@ -95,6 +95,7 @@ export class Registry {
       const cats = (c: CategoryId[]): CategoryId[] => ['permanent-teeth', ...c];
       const base = { toothFdi: fdi, stage: 4 as const, provenance: 'modeled' as const };
       const shellInfo = this.meshInfo(tId);
+      const tName = toothName(fdi);
 
       // roots and canals (typical configuration derived by the pipeline)
       const roots: RootInfo[] = (mt?.roots ?? []).map((r) => ({
@@ -104,7 +105,7 @@ export class Registry {
 
       this.add({
         id: tId,
-        name: toothName(fdi),
+        name: tName,
         kind: 'mesh',
         parent: QUADRANT_GROUP[Math.floor(fdi / 10)],
         children: [],
@@ -139,7 +140,6 @@ export class Registry {
       });
 
       if (!layers.length) continue;
-      const tName = toothName(fdi);
       const ctx = [tName.toLowerCase(), `tooth ${fdi}`, `#${notation.universal}`];
 
       const region = (id: string, name: string, meshKeys: string[], aliases: string[]) =>
@@ -153,6 +153,8 @@ export class Registry {
       };
       const group = (id: string, name: string, parent: string, c: CategoryId[], aliases: string[], prio: number) =>
         this.add({ id, name, kind: 'group', parent, children: [], categories: cats(c), meshes: [], aliases: [...aliases, ...ctx], labelPriority: prio, ...base });
+      const landmark = (id: string, name: string, parent: string, c: CategoryId[], aliases: string[], anchor: Vec3, prio: number, shortName: string) =>
+        this.add({ id, name, kind: 'landmark', parent, children: [], categories: cats(c), meshes: [], aliases: [...aliases, ...ctx], anchor, labelPriority: prio, shortName, ...base });
 
       mesh('enamel', 'Enamel', tId, ['enamel'], ['enamel', 'tooth enamel', 'enamel cap'], 4);
       group(`dentin-${fdi}`, 'Dentin', tId, ['dentin'], ['dentin', 'dentine'], 4);
@@ -180,21 +182,21 @@ export class Registry {
           const nm = canalName(r.label, nCanals, i, archOf(fdi));
           mesh(c, nm.name, `root-canals-${fdi}`, ['dental-pulp', 'root-canals'], ['root canal', 'canal', nm.abbr.toLowerCase(), `${r.label} canal`], 3, nm.abbr);
           if (lm) {
-            this.add({ id: `apical-foramen-${c.replace('canal-', '')}-${fdi}`, name: `Apical foramen (${nm.abbr})`, kind: 'landmark', parent: key(c), children: [], categories: cats(['dental-pulp', 'root-canals']), meshes: [], aliases: ['apical foramen', 'apex', 'foramen', ...ctx], anchor: lm, labelPriority: 2, shortName: 'Apical foramen', ...base });
+            landmark(`apical-foramen-${c.replace('canal-', '')}-${fdi}`, `Apical foramen (${nm.abbr})`, key(c), ['dental-pulp', 'root-canals'], ['apical foramen', 'apex', 'foramen'], lm, 2, 'Apical foramen');
           }
         });
       }
       // landmarks
       for (const [lk, p] of Object.entries(mt.landmarks ?? {})) {
         if (lk.startsWith('pulp-horn-')) {
-          this.add({ id: `${lk}-${fdi}`, name: `Pulp horn ${lk.slice(10)}`, kind: 'landmark', parent: key('pulp-chamber'), children: [], categories: cats(['dental-pulp']), meshes: [], aliases: ['pulp horn', 'pulp horns', ...ctx], anchor: p, labelPriority: 1, shortName: 'Pulp horn', ...base });
+          landmark(`${lk}-${fdi}`, `Pulp horn ${lk.slice(10)}`, key('pulp-chamber'), ['dental-pulp'], ['pulp horn', 'pulp horns'], p, 1, 'Pulp horn');
         }
       }
       if (mt.landmarks?.['cervical-line']) {
-        this.add({ id: `cej-${fdi}`, name: 'Cementoenamel junction', kind: 'landmark', parent: tId, children: [], categories: cats([]), meshes: [], aliases: ['cej', 'cervical line', 'neck of tooth', 'cementoenamel junction', ...ctx], anchor: mt.landmarks['cervical-line'], labelPriority: 2, shortName: 'CEJ', ...base });
+        landmark(`cej-${fdi}`, 'Cementoenamel junction', tId, [], ['cej', 'cervical line', 'neck of tooth', 'cementoenamel junction'], mt.landmarks['cervical-line'], 2, 'CEJ');
       }
       if (mt.landmarks?.apex) {
-        this.add({ id: `apex-${fdi}`, name: 'Root apex', kind: 'landmark', parent: `root-${fdi}`, children: [], categories: cats([]), meshes: [], aliases: ['apex', 'root apex', 'root tip', ...ctx], anchor: mt.landmarks.apex, labelPriority: 1, shortName: 'Apex', ...base });
+        landmark(`apex-${fdi}`, 'Root apex', `root-${fdi}`, [], ['apex', 'root apex', 'root tip'], mt.landmarks.apex, 1, 'Apex');
       }
       // label for root structure
       const rootStruct = this.byId.get(`root-${fdi}`);
