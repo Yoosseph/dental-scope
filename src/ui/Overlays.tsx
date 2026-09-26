@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { REPO_URL } from '../app/repo';
 import { actions, useApp } from '../state/store';
 import { IconClose } from './icons';
 
@@ -129,10 +130,15 @@ export function AboutDialog() {
         <dd>Reset camera</dd>
       </dl>
       <p className="ds-about-foot">
-        Code MIT · Models CC BY-SA 2.1 JP · Text CC BY-SA 4.0 ·{' '}
-        <a href="https://github.com/Yoosseph/dental-scope" target="_blank" rel="noreferrer">
-          Source on GitHub
-        </a>
+        Code MIT · Models CC BY-SA 2.1 JP · Text CC BY-SA 4.0
+        {REPO_URL && (
+          <>
+            {' · '}
+            <a href={REPO_URL} target="_blank" rel="noopener noreferrer">
+              Source on GitHub
+            </a>
+          </>
+        )}
       </p>
     </dialog>
   );

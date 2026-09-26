@@ -124,6 +124,25 @@ kbd {
   color: var(--ink);
   opacity: 0.8;
 }
+.ds-credit {
+  margin: 4px 0 0;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.ds-credit a {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--line);
+  text-underline-offset: 2px;
+}
+.ds-credit a:hover {
+  color: var(--accent);
+  text-decoration-color: currentColor;
+}
 
 /* ------------------------------------------------------------------ top actions */
 .ds-top-actions {
