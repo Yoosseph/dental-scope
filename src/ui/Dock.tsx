@@ -30,7 +30,7 @@ function ArchControls() {
   return (
     <div className="ds-panel ds-dock-main">
       <Slider
-        label="Explode anatomy"
+        label="Dissect anatomy"
         icon={<IconExplode size={15} />}
         value={explode}
         onChange={actions.setExplode}
