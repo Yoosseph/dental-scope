@@ -366,31 +366,60 @@ button.ds-layer-name:hover {
   color: var(--accent);
   background: var(--accent-soft);
 }
-.ds-switch {
-  position: relative;
-  width: 30px;
-  height: 18px;
+.ds-dot-toggle {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
   flex: none;
-  border-radius: 9px;
-  background: var(--press);
-  transition: background var(--dur) var(--ease);
+  margin-left: -4px;
+  border-radius: 6px;
 }
-.ds-switch span {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 14px;
-  height: 14px;
+.ds-dot-toggle:not(.is-static):hover {
+  background: var(--hover);
+}
+.ds-dot-toggle.is-static .ds-dot-toggle-dot {
+  box-shadow: inset 0 0 0 1.5px var(--dot);
+  opacity: 0.8;
+}
+.ds-dot-toggle-dot {
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
   border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  transition: transform var(--dur) var(--ease);
+  /* off: an outlined ring in the layer colour, with an ink hairline so pale colours stay visible */
+  background: transparent;
+  box-shadow:
+    inset 0 0 0 2px var(--dot),
+    0 0 0 1px var(--line);
+  color: transparent;
+  transition:
+    background var(--dur) var(--ease),
+    color var(--dur) var(--ease);
 }
-.ds-switch.is-on {
-  background: var(--accent);
+.ds-dot-toggle.is-on .ds-dot-toggle-dot {
+  background: var(--dot);
+  color: var(--dot-ink);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.14),
+    0 0 0 1px var(--line);
 }
-.ds-switch.is-on span {
-  transform: translateX(12px);
+/* translucent layers: the swatch fades with them */
+.ds-dot-toggle.is-ghost .ds-dot-toggle-dot {
+  background: color-mix(in srgb, var(--dot) 45%, transparent);
+  color: var(--ink);
+}
+.ds-dot-toggle .ds-dot-toggle-dot svg {
+  transform: scale(0.6);
+  opacity: 0;
+  transition:
+    transform var(--dur) var(--ease),
+    opacity var(--dur);
+}
+.ds-dot-toggle.is-on .ds-dot-toggle-dot svg {
+  transform: none;
+  opacity: 1;
 }
 .ds-panel-footer {
   display: flex;
