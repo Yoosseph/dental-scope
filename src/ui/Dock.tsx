@@ -50,7 +50,7 @@ function ArchControls() {
       </div>
       <div className="ds-dock-tools">
         <ToolToggle active={clip} onClick={() => actions.setClip({ enabled: !clip })} icon={<IconSection />} label="Section" title="Cross-section (C)" />
-        <ToolToggle active={labels} onClick={() => actions.toggleLabels()} icon={<IconLabel />} label="Labels" title="Labels (L)" />
+        <LabelsToggle active={labels} />
       </div>
       {clip && loading !== undefined && loading < 1 && <div className="ds-dock-note">Loading internal tooth anatomy… {Math.round(loading * 100)}%</div>}
     </div>
@@ -97,7 +97,7 @@ function DissectControls({ fdi }: { fdi: number }) {
       <Slider label="Separate layers" icon={<IconExplode size={15} />} value={tex} onChange={actions.setToothExplode} left="Together" right="Apart" />
       <div className="ds-dock-tools">
         <ToolToggle active={clip} onClick={() => actions.setClip({ enabled: !clip, axis: 'sagittal', offset: 0 })} icon={<IconSection />} label="Section" title="Cross-section (C)" />
-        <ToolToggle active={labels} onClick={() => actions.toggleLabels()} icon={<IconLabel />} label="Labels" title="Labels (L)" />
+        <LabelsToggle active={labels} />
         <ToolToggle active={ctx} onClick={() => actions.setIsolateContext(!ctx)} icon={<IconExplode />} label="Context" title="Show surrounding anatomy" />
       </div>
     </div>
@@ -159,6 +159,10 @@ function Slider({ label, icon, value, onChange, left, right }: { label: string; 
       </div>
     </div>
   );
+}
+
+function LabelsToggle({ active }: { active: boolean }) {
+  return <ToolToggle active={active} onClick={() => actions.toggleLabels()} icon={<IconLabel />} label="Labels" title="Labels (L)" />;
 }
 
 function ToolToggle({ active, onClick, icon, label, title }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string; title: string }) {
