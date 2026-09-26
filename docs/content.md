@@ -29,7 +29,7 @@ The resolver (`src/content/content.ts`) tries the most specific key first and th
 
 ## Status and verification
 
-All current text is **draft**: written from standard dental anatomy knowledge and shown with a “Draft text · pending review” badge. Before changing an entry’s status to `reviewed`, verify it against at least one of:
+All current text is **draft**: written from standard dental anatomy knowledge and shown with an “Unreviewed draft” badge. Before changing an entry’s status to `reviewed`, verify it against at least one of:
 
 - Nelson SJ. *Wheeler’s Dental Anatomy, Physiology and Occlusion* (current edition)
 - Scheid RC, Weiss G. *Woelfel’s Dental Anatomy*
