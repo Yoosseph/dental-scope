@@ -264,11 +264,6 @@ export class Registry {
     return [...set];
   }
 
-  /** Tooth FDI a structure belongs to, if any. */
-  toothOf(id: string): number | undefined {
-    return this.byId.get(id)?.toothFdi;
-  }
-
   categoriesOfMesh(meshKey: string): CategoryId[] {
     const owner = this.meshOwner.get(meshKey);
     if (!owner) return [];
@@ -286,10 +281,6 @@ export class Registry {
     }
     // tooth layers not yet loaded still count (they are listed in the manifest)
     return counts;
-  }
-
-  landmarks(): Structure[] {
-    return [...this.byId.values()].filter((s) => s.kind === 'landmark');
   }
 
   teeth(): Structure[] {
