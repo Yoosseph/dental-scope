@@ -17,6 +17,11 @@ export const IconSearch = (p: P) => (
     <path d="m16 16 4.5 4.5" />
   </Svg>
 );
+export const IconCheck = (p: P) => (
+  <Svg {...p}>
+    <path d="m6 12.5 4 4 8-9" />
+  </Svg>
+);
 export const IconClose = (p: P) => (
   <Svg {...p}>
     <path d="M6 6l12 12M18 6 6 18" />
