@@ -17,7 +17,7 @@ export interface PageMeta {
 
 export const HOME: PageMeta = {
   path: '',
-  title: 'Dental Scope — Interactive 3D Dental Anatomy',
+  title: SITE_NAME,
   description:
     'Explore dental anatomy in 3D: all 32 permanent teeth, the jaws, gums and nerves, and the layers inside each tooth. A free, open-source educational reference.',
 };
