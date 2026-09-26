@@ -12,7 +12,7 @@ import { IconArrowLeft, IconClose, IconEyeOff, IconFocus, IconGhost, IconIsolate
 const PROVENANCE: Record<Provenance, { label: string; text: string }> = {
   source: { label: 'Source mesh', text: 'BodyParts3D (DBCLS), simplified.' },
   derived: { label: 'Derived mesh', text: 'Partitioned or approximated from BodyParts3D meshes.' },
-  modeled: { label: 'Modeled', text: 'Built inside the real tooth shape from typical proportions. Not measured.' },
+  modeled: { label: 'Modeled', text: 'Built inside the real tooth shape from simplified proportions. Not measured.' },
   schematic: { label: 'Schematic', text: 'Placed from anatomical landmarks. Not measured.' },
 };
 

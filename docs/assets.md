@@ -20,7 +20,7 @@ Every 3D asset shipped in `public/models/`, where it comes from, its licence and
 |---|---|
 | `source` | Real BodyParts3D geometry, only transformed and simplified |
 | `derived` | Cut from or approximated using source geometry (alveolar bone, condyles, fossae, third molars) |
-| `modeled` | Internal tooth anatomy generated inside the real tooth shape with typical proportions |
+| `modeled` | Internal tooth anatomy generated inside the real tooth shape with simplified, approximate proportions (not measured) |
 | `schematic` | Nerves, vessels and joint discs placed from landmarks to show relationships |
 
 The app shows the provenance of every structure in its detail panel.
