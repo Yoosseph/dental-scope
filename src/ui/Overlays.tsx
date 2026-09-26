@@ -57,6 +57,10 @@ export function Footer() {
         <button type="button" className="ds-link-btn" onClick={() => actions.openAbout(true)}>
           Controls &amp; credits
         </button>
+        {' · '}
+        <a className="ds-link-btn" href={`${import.meta.env.BASE_URL}about/`}>
+          About
+        </a>
       </p>
     </footer>
   );
@@ -79,6 +83,9 @@ export function AboutDialog() {
       <h2 id="ds-about-title">About Dental Scope</h2>
       <p>
         Dental Scope is an open-source, interactive 3D explorer of dental anatomy — from the whole mouth down to the pulp and root canals of a single tooth.
+      </p>
+      <p>
+        <a href={`${import.meta.env.BASE_URL}about/`}>Guide to every tooth, numbering systems and FAQ</a>
       </p>
       <h3>Educational use only</h3>
       <p>Dental Scope is an educational reference. It is not a diagnostic tool and must not be used for diagnosis, treatment planning or clinical decisions.</p>

@@ -2,7 +2,8 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { Registry } from '../anatomy/registry';
 import type { Manifest } from '../anatomy/types';
-import { HOME, documentTitle, headTags, normalizeSiteUrl, robotsTxt, sitemapXml, toothPage } from './seo';
+import { ABOUT, HOME, documentTitle, headTags, normalizeSiteUrl, robotsTxt, sitemapXml, structuredData, toothPage } from './seo';
+import { aboutHtml } from './about';
 
 const registry = new Registry(JSON.parse(readFileSync('public/models/manifest.json', 'utf8')) as Manifest);
 
@@ -77,5 +78,32 @@ describe('robots and sitemap', () => {
     expect(xml).toContain('<loc>https://example.org/ds/</loc>');
     expect(xml).toContain('<loc>https://example.org/ds/tooth/11/</loc>');
     expect(xml.startsWith('<?xml version="1.0" encoding="UTF-8"?>')).toBe(true);
+  });
+});
+
+describe('structured data and the about page', () => {
+  it('describes the home page as a free educational web app', () => {
+    const tags = headTags(HOME, 'https://example.org/');
+    expect(tags).toContain('"@type":"WebApplication"');
+    expect(tags).toContain('"applicationCategory":"EducationalApplication"');
+    expect(tags).toContain('"isAccessibleForFree":true');
+  });
+  it('gives tooth pages a breadcrumb and the tooth as an anatomical structure', () => {
+    const data = JSON.stringify(structuredData(toothPage(36), 'https://example.org/'));
+    expect(data).toContain('"@type":"BreadcrumbList"');
+    expect(data).toContain('"alternateName":["FDI 36","Universal 19","Palmer LL6"]');
+  });
+  it('adds the Search Console token only when given', () => {
+    expect(headTags(HOME, null, { googleVerification: 'abc' })).toContain('<meta name="google-site-verification" content="abc" />');
+    expect(headTags(HOME, null)).not.toContain('google-site-verification');
+  });
+  it('writes a readable about page linking every tooth, with FAQ data', () => {
+    const html = aboutHtml(headTags(ABOUT, 'https://example.org/'), '/', '/favicon.svg');
+    for (const fdi of [11, 18, 21, 28, 31, 38, 41, 48]) expect(html).toContain(`href="/tooth/${fdi}/"`);
+    expect(html).toContain('"@type":"FAQPage"');
+    expect(html).toContain('<h1>');
+    expect(html).not.toContain('undefined');
+    expect(ABOUT.description.length).toBeLessThanOrEqual(160);
+    expect(HOME.description.length).toBeLessThanOrEqual(160);
   });
 });

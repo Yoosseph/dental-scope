@@ -87,9 +87,9 @@ export class Engine {
   private boardAspect = 1;
   private explodeTimer = 0;
   /** canvas area covered by panels (px), animated; shifts the optical centre */
-  private insets = { left: 0, right: 0, bottom: 0 };
+  private insets = { right: 0, bottom: 0 };
   /** where the insets are animating to (the start framing fits into this) */
-  private insetTarget = { left: 0, right: 0, bottom: 0 };
+  private insetTarget = { right: 0, bottom: 0 };
   private insetsKnown = false;
   private marker: THREE.Mesh;
   private root = new THREE.Group();
@@ -762,34 +762,39 @@ export class Engine {
     this.startView();
   }
 
-  /** Start framing: the whole skull from the front, with margin, centred in the part of the canvas the panels leave free. */
+  /**
+   * Start framing: the skull from the front, centred left-right, large enough that the
+   * face and jaws fill the view (the top of the cranium may run off the top edge) with
+   * the chin resting just above the bottom toolbar.
+   */
   private startView(duration = 0.9) {
     if (getState().view !== 'front') setState({ view: 'front' });
     const box = this.skullBounds;
-    let center = box.getCenter(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
-    let halfW = size.x / 2;
-    let halfH = size.y / 2;
-    if (this.rig.mode === 'fixed') {
-      // the fixed orbit keeps its target on the pivot: frame the skull around it instead
-      const p = this.rig.pivot;
-      halfW = Math.max(p.x - box.min.x, box.max.x - p.x);
-      halfH = Math.max(p.y - box.min.y, box.max.y - p.y);
-      center = p.clone();
-    }
-    // fit the skull's front outline into the free area (the view offset centres it there);
-    // the fit is measured at the front of the skull, so add the depth from there to the centre
     const cam = this.rig.camera;
-    const w = this.container?.clientWidth || 1;
+    const tanV = Math.tan(THREE.MathUtils.degToRad(cam.fov) / 2);
     const h = this.container?.clientHeight || 1;
     const ins = this.insetTarget;
-    const freeW = Math.max(0.35, (w - ins.left - ins.right) / w);
-    const freeH = Math.max(0.35, (h - ins.bottom) / h);
-    const tanV = Math.tan(THREE.MathUtils.degToRad(cam.fov) / 2);
-    const MARGIN = 1.08;
-    const fit = Math.max(halfH / (tanV * freeH), halfW / (tanV * cam.aspect * freeW)) * MARGIN;
-    const distance = fit + (box.max.z - center.z);
-    this.rig.focusSphere(center, Math.max(halfW, halfH), { direction: new THREE.Vector3(0, 0.02, 1), distance, duration });
+    // the skull is drawn about as tall as the whole canvas; on narrow (portrait) screens its width decides
+    const SKULL_TO_CANVAS = 1.2;
+    const fitH = size.y / 2 / tanV / SKULL_TO_CANVAS;
+    const fitW = (size.x / 2 / (tanV * cam.aspect)) * 1.06;
+    const fit = Math.max(fitH, fitW); // camera distance from the front of the skull
+    if (this.rig.mode === 'fixed') {
+      // the fixed orbit keeps its target on the pivot
+      this.rig.focusSphere(this.rig.pivot, size.y / 2, { direction: new THREE.Vector3(0, 0.02, 1), distance: fit + (box.max.z - this.rig.pivot.z), duration });
+      this.invalidate();
+      return;
+    }
+    // world units per screen pixel at the front of the skull; the view offset puts the target
+    // in the middle of the area above the toolbar, so lift it until the chin sits a margin above it
+    const perPx = (2 * fit * tanV) / h;
+    // on phones the bottom bar floats over the canvas without an inset; keep the chin clear of it
+    const reserve = Math.max(ins.bottom, (this.container?.clientWidth ?? 1000) < 768 ? 120 : 0);
+    const aboveBar = h - reserve - h * 0.01 - (h - ins.bottom) / 2;
+    const target = new THREE.Vector3(center.x, box.min.y + aboveBar * perPx, center.z);
+    this.rig.focusSphere(target, size.y / 2, { direction: new THREE.Vector3(0, 0.02, 1), distance: fit + (box.max.z - center.z), duration });
     this.invalidate();
   }
 
@@ -812,18 +817,17 @@ export class Engine {
    * Shift the optical centre away from UI that covers the canvas (detail panel,
    * mobile bottom sheet) so the focused anatomy stays visible. Animated.
    */
-  setInsets(right: number, bottom: number, left = 0) {
+  setInsets(right: number, bottom: number) {
     const from = { ...this.insets };
     const t = this.insetTarget;
-    if (t.right === right && t.bottom === bottom && t.left === left) return;
-    this.insetTarget = { left, right, bottom };
+    if (t.right === right && t.bottom === bottom) return;
+    this.insetTarget = { right, bottom };
     // still on the untouched start view (e.g. the panels just measured on load): refit it
     const s = getState();
     const first = !this.insetsKnown;
     this.insetsKnown = true;
     if (s.view === 'front' && !s.selectedId && s.dissectFdi === null) this.startView(first ? 0 : 0.35);
     this.animator.run('insets', first ? 0 : 0.35, (k) => {
-      this.insets.left = from.left + (left - from.left) * k;
       this.insets.right = from.right + (right - from.right) * k;
       this.insets.bottom = from.bottom + (bottom - from.bottom) * k;
       this.applyViewOffset();
@@ -835,8 +839,7 @@ export class Engine {
     const w = this.container.clientWidth;
     const h = this.container.clientHeight;
     const cam = this.rig.camera;
-    const dx = (this.insets.right - this.insets.left) / 2;
-    if (dx || this.insets.bottom) cam.setViewOffset(w, h, dx, this.insets.bottom / 2, w, h);
+    if (this.insets.right || this.insets.bottom) cam.setViewOffset(w, h, this.insets.right / 2, this.insets.bottom / 2, w, h);
     else cam.clearViewOffset();
     cam.updateProjectionMatrix();
     this.invalidate();
