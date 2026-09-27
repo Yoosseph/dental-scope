@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, type RefObject } from 'react';
 import { formatTooth } from '../anatomy/notation';
 import { pushCurrentPath } from '../app/router';
 import { nameOf, useT, type Messages } from '../i18n';
@@ -66,18 +66,8 @@ function ArchControls() {
     setLocal(null);
   }, [resetId]);
 
-  const tween = (from: number, to: number, seconds: number, apply: (v: number) => void, done: () => void) => {
-    const t0 = performance.now();
-    const ms = Math.max(1, seconds * 1000);
-    const tick = (now: number) => {
-      const k = Math.min(1, (now - t0) / ms);
-      const eased = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
-      apply(from + (to - from) * eased);
-      if (k < 1) raf.current = requestAnimationFrame(tick);
-      else done();
-    };
-    raf.current = requestAnimationFrame(tick);
-  };
+  const tween = (from: number, to: number, seconds: number, apply: (v: number) => void, done: () => void) =>
+    animateFrames(raf, from, to, seconds, easeInOutQuad, apply, done);
 
   const play = () => {
     if (playing) return stop();
@@ -130,7 +120,7 @@ function ArchControls() {
   return (
     <div className="ds-dock-main">
       <button type="button" className={`ds-play${playing ? ' is-playing' : ''}`} onClick={play} aria-label={playLabel} title={playLabel}>
-        {playing ? <IconPause size={16} /> : atEnd ? <IconReplay size={16} /> : <IconPlay size={16} />}
+        <PlayIcon playing={playing} atEnd={atEnd} />
       </button>
       <div className="ds-slider ds-slider--dissect">
         <div className="ds-slider-head">
@@ -172,6 +162,26 @@ function ArchControls() {
   );
 }
 
+/** Ease in and out (quadratic). */
+const easeInOutQuad = (k: number) => (k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
+const linear = (k: number) => k;
+
+/**
+ * Drive `apply` from `from` to `to` over `seconds` on animation frames, then call `done`.
+ * The pending frame id is kept in `raf` so the caller can cancel it.
+ */
+function animateFrames(raf: RefObject<number>, from: number, to: number, seconds: number, ease: (k: number) => number, apply: (v: number) => void, done: () => void) {
+  const t0 = performance.now();
+  const ms = Math.max(1, seconds * 1000);
+  const tick = (now: number) => {
+    const k = Math.min(1, (now - t0) / ms);
+    apply(from + (to - from) * ease(k));
+    if (k < 1) raf.current = requestAnimationFrame(tick);
+    else done();
+  };
+  raf.current = requestAnimationFrame(tick);
+}
+
 /** rAF tween shared by the tooth play buttons; stops on unmount. */
 function useTween() {
   const raf = useRef(0);
@@ -184,16 +194,7 @@ function useTween() {
   const run = (from: number, to: number, seconds: number, apply: (v: number) => void, ease = true) => {
     cancelAnimationFrame(raf.current);
     setPlaying(true);
-    const t0 = performance.now();
-    const ms = Math.max(1, seconds * 1000);
-    const tick = (now: number) => {
-      const k = Math.min(1, (now - t0) / ms);
-      const e = ease ? (k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2) : k;
-      apply(from + (to - from) * e);
-      if (k < 1) raf.current = requestAnimationFrame(tick);
-      else setPlaying(false);
-    };
-    raf.current = requestAnimationFrame(tick);
+    animateFrames(raf, from, to, seconds, ease ? easeInOutQuad : linear, apply, () => setPlaying(false));
   };
   return { playing, run, stop };
 }
@@ -206,9 +207,13 @@ function PlayButton({ playing, atEnd, onClick, labels }: { playing: boolean; atE
   const label = playing ? labels.pause : atEnd ? labels.replay : labels.play;
   return (
     <button type="button" className={`ds-play${playing ? ' is-playing' : ''}`} onClick={onClick} aria-label={label} title={label}>
-      {playing ? <IconPause size={16} /> : atEnd ? <IconReplay size={16} /> : <IconPlay size={16} />}
+      <PlayIcon playing={playing} atEnd={atEnd} />
     </button>
   );
+}
+
+function PlayIcon({ playing, atEnd }: { playing: boolean; atEnd: boolean }) {
+  return playing ? <IconPause size={16} /> : atEnd ? <IconReplay size={16} /> : <IconPlay size={16} />;
 }
 
 function DissectControls({ fdi }: { fdi: number }) {
