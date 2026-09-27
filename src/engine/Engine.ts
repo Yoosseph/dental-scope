@@ -272,7 +272,8 @@ export class Engine {
       const style = styleKeyFor(key, cats);
       if (style === 'enamel') shadeEnamelCrevices(geo);
       const mat = createTissueMaterial(style);
-      if (/^tooth-\d{2}$/.test(key)) colorToothShell(geo, mat, this.registry, Number(key.slice(6)));
+      const shell = shellFdi(key);
+      if (shell !== null) colorToothShell(geo, mat, this.registry, shell);
       applyThemeToMaterial(mat, getState().theme);
       setFibreAxis(mat, geo.boundingBox!);
       // nerves and vessels stretch between the jaws as they separate (per-vertex jaw weight → morph target)
@@ -406,7 +407,7 @@ export class Engine {
     const items: LayoutItem[] = [];
     const assemblies = new Map<string, { bounds: THREE.Box3; members: MeshEntry[] }>();
     for (const e of this.entries.values()) {
-      if (e.visual !== 'on' && e.visual !== 'see-through') {
+      if (!isFullyShown(e.visual)) {
         e.boardTarget = e.boardPos = undefined;
         continue;
       }
@@ -443,7 +444,7 @@ export class Engine {
       // fit the board rectangle (not its bounding sphere); the margin keeps it clear of the
       // side panels, the dock and the mobile bar
       const cam = this.rig.camera;
-      const tanV = Math.tan(THREE.MathUtils.degToRad(cam.fov) / 2);
+      const tanV = tanHalfFov(cam);
       const halfW = (bounds.x1 - bounds.x0) / 2;
       const halfH = (bounds.y1 - bounds.y0) / 2;
       const distance = Math.max((halfH * BOARD_MARGIN.h) / tanV, (halfW * BOARD_MARGIN.w) / (tanV * cam.aspect));
@@ -468,7 +469,7 @@ export class Engine {
       const cam = this.rig.camera;
       const size = box.getSize(new THREE.Vector3());
       const center = box.getCenter(new THREE.Vector3());
-      const tanV = Math.tan(THREE.MathUtils.degToRad(cam.fov) / 2);
+      const tanV = tanHalfFov(cam);
       // the fixed orbit keeps looking at its pivot, so fit the larger half on either side of it
       const c = this.rig.mode === 'fixed' ? this.rig.pivot : center;
       const halfH = Math.max(box.max.y - c.y, c.y - box.min.y);
@@ -487,9 +488,7 @@ export class Engine {
     const b = new THREE.Box3();
     const stretch = neurovascularStretch(this.registry).multiplyScalar(ex);
     for (const e of this.entries.values()) {
-      if (e.visual !== 'on' && e.visual !== 'see-through') continue;
-      const cats = this.registry.categoriesOfMesh(e.key);
-      if (cats.includes('skull') || cats.includes('muscles')) continue;
+      if (!isFullyShown(e.visual) || this.isContextMesh(e.key)) continue;
       const geo = e.mesh.geometry;
       if (!geo.boundingBox) geo.computeBoundingBox();
       b.copy(geo.boundingBox!).translate(e.archOffset.clone().multiplyScalar(ex));
@@ -524,17 +523,12 @@ export class Engine {
   private refreshRootCuts(s: AppState) {
     const ctx = this.visibilityCtx();
     for (const e of this.entries.values()) {
-      const match = /^tooth-(\d{2})$/.exec(e.key);
-      if (!match) continue;
-      const fdi = Number(match[1]);
+      const fdi = shellFdi(e.key);
+      if (fdi === null) continue;
       const gum = fdi < 30 ? 'gingiva-upper' : 'gingiva-lower';
       const gumShown = resolveMesh(gum, ctx) === 'on' && s.dissectFdi === null && !s.clip.enabled && s.explodePhase === 1;
-      e.rootCut = gumShown
-        ? {
-            extract: this.registry.manifest.teeth[String(fdi)]?.extract ?? 2,
-            collar: this.registry.manifest.teeth[String(fdi)]?.collar ?? 0.2,
-          }
-        : undefined;
+      const tooth = this.registry.manifest.teeth[String(fdi)];
+      e.rootCut = gumShown ? { extract: tooth?.extract ?? 2, collar: tooth?.collar ?? 0.2 } : undefined;
       if (!e.rootCut) e.mesh.material.userData.fx.uRootCut.value = -100;
     }
     this.invalidate();
@@ -556,6 +550,12 @@ export class Engine {
     this.invalidate();
   }
 
+  /** Skull and muscles: the surroundings, left out when framing the dental anatomy. */
+  private isContextMesh(key: string): boolean {
+    const cats = this.registry.categoriesOfMesh(key);
+    return cats.includes('skull') || cats.includes('muscles');
+  }
+
   /** Meshes to tint for a structure (landmarks are shown by the marker instead). */
   private highlightMeshes(id: string): string[] {
     const s = this.registry.get(id);
@@ -570,8 +570,7 @@ export class Engine {
     }
     const b = new THREE.Box3();
     for (const e of this.entries.values()) {
-      const cats = this.registry.categoriesOfMesh(e.key);
-      if (cats.includes('skull') || cats.includes('muscles')) continue;
+      if (this.isContextMesh(e.key)) continue;
       b.union(e.mesh.geometry.boundingBox!);
     }
     return b.isEmpty() ? this.sceneBounds : b;
@@ -660,7 +659,7 @@ export class Engine {
       for (const st of this.registry.byId.values()) {
         if (st.toothFdi !== undefined || st.labelPriority < 3) continue;
         if (st.kind === 'mesh') {
-          const vis = st.meshes.filter((k) => ['on', 'see-through'].includes(this.entries.get(k)?.visual ?? 'off'));
+          const vis = st.meshes.filter((k) => isFullyShown(this.entries.get(k)?.visual ?? 'off'));
           if (vis.length) addMeshLabel(st.id, shortOf(st, s.lang), 'structure', st.labelPriority, vis);
         } else if (st.kind === 'landmark' && st.anchor) {
           const ok = st.categories.every((c) => s.categories[c] !== 'off');
@@ -869,13 +868,10 @@ export class Engine {
   setView(p: ViewPreset) {
     const { dissectFdi, selectedId } = getState();
     setState({ view: p });
-    if (dissectFdi !== null) {
-      const b = this.boundsOf(`tooth-${dissectFdi}`, false);
-      const sph = b.getBoundingSphere(new THREE.Sphere());
-      this.rig.preset(p, sph.center, sph.radius * 1.2);
-    } else if (selectedId && getState().isolateId) {
-      const b = this.boundsOf(selectedId, true);
-      const sph = b.getBoundingSphere(new THREE.Sphere());
+    // inside a tooth, or with a structure isolated, frame just that
+    const framed = dissectFdi !== null ? this.boundsOf(`tooth-${dissectFdi}`, false) : selectedId && getState().isolateId ? this.boundsOf(selectedId, true) : null;
+    if (framed) {
+      const sph = framed.getBoundingSphere(new THREE.Sphere());
       this.rig.preset(p, sph.center, sph.radius * 1.2);
     } else if (getState().explode > 0 && getState().explodePhase === 1) {
       // the separated jaws need a wider frame than the assembled mouth
@@ -909,7 +905,7 @@ export class Engine {
     const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
     const cam = this.rig.camera;
-    const tanV = Math.tan(THREE.MathUtils.degToRad(cam.fov) / 2);
+    const tanV = tanHalfFov(cam);
     const h = this.container?.clientHeight || 1;
     const ins = this.insetTarget;
     // the skull is drawn about as tall as the whole canvas; on narrow (portrait) screens its width decides
@@ -1058,7 +1054,7 @@ export class Engine {
     let layoutChanged = false;
     const prevPos = new THREE.Vector3();
     for (const e of this.entries.values()) {
-      let target = e.visual === 'on' ? 1 : e.visual === 'see-through' ? SEE_THROUGH_OPACITY : e.visual === 'ghost' ? s.ghostOpacity : e.visual === 'faint' ? s.ghostOpacity * 0.45 : 0;
+      let target = visualOpacity(e.visual, s.ghostOpacity);
       if (e.nv) {
         // While the jaws are dissected the teeth are the subject: nerves and vessels recede into a
         // pale, translucent background. A selected or hovered one comes back at full strength.
@@ -1136,6 +1132,27 @@ export class Engine {
 function morphAwareRaycast(this: THREE.Mesh, raycaster: THREE.Raycaster, hits: THREE.Intersection[]) {
   if (this.morphTargetInfluences?.some((v) => v !== 0)) THREE.Mesh.prototype.raycast.call(this, raycaster, hits);
   else acceleratedRaycast.call(this, raycaster, hits);
+}
+
+/** Mesh visuals that are shown in full (laid out on the board, framed, labelled): opaque or see-through bone. */
+function isFullyShown(v: MeshVisual): boolean {
+  return v === 'on' || v === 'see-through';
+}
+
+/** Resting opacity for a mesh visual (before the nerve and vessel fade and the board fade-out). */
+function visualOpacity(v: MeshVisual, ghostOpacity: number): number {
+  return v === 'on' ? 1 : v === 'see-through' ? SEE_THROUGH_OPACITY : v === 'ghost' ? ghostOpacity : v === 'faint' ? ghostOpacity * 0.45 : 0;
+}
+
+/** FDI number of a tooth shell mesh key ("tooth-36" → 36), or null for any other mesh. */
+function shellFdi(key: string): number | null {
+  const m = /^tooth-(\d{2})$/.exec(key);
+  return m ? Number(m[1]) : null;
+}
+
+/** tan(vertical fov / 2): converts a half-height in view to the camera distance that fits it. */
+function tanHalfFov(cam: THREE.PerspectiveCamera): number {
+  return Math.tan(THREE.MathUtils.degToRad(cam.fov) / 2);
 }
 
 /** Along the tooth axis from the cervical line (cm): where the gum collar hides the root in the assembled mouth. */
