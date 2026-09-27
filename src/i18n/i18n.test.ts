@@ -42,7 +42,7 @@ describe('interface messages', () => {
 });
 
 describe('anatomical names', () => {
-  it('every defined structure has a Swedish and German name', () => {
+  it('every defined structure has a name in every language', () => {
     for (const d of STRUCTURE_DEFS) expect(structureNames(d.id, d.name), d.id).toBeDefined();
   });
   it('every registry structure has names in all languages', () => {
@@ -53,14 +53,20 @@ describe('anatomical names', () => {
       en: 'Mandibular left first molar',
       sv: 'Vänster första molar i underkäken',
       de: 'Erster Molar im Unterkiefer links',
+      es: 'Primer molar inferior izquierdo',
+      la: 'Dens molaris primus inferior sinister',
     });
+    expect(registry.get('enamel-36')!.names.es).toBe('Esmalte');
+    expect(registry.get('enamel-36')!.names.la).toBe('Enamelum');
+    expect(registry.get('inferior-alveolar-nerve-right')!.names.es).toBe('Nervio alveolar inferior (lado derecho)');
+    expect(registry.get('inferior-alveolar-nerve-right')!.names.la).toBe('Nervus alveolaris inferior (lateris dextri)');
     expect(registry.get('enamel-36')!.names.de).toBe('Zahnschmelz');
     expect(registry.get('inferior-alveolar-nerve-right')!.names.sv).toBe('Nervus alveolaris inferior (höger)');
   });
 });
 
 describe('content', () => {
-  it('Swedish and German content has the same entries and fields as English', () => {
+  it('every language has the same content entries and fields as English', () => {
     for (const l of LANGS) {
       expect(Object.keys(CONTENT[l]).sort(), l).toEqual(Object.keys(CONTENT.en).sort());
       for (const [k, e] of Object.entries(CONTENT.en)) {
@@ -72,6 +78,23 @@ describe('content', () => {
   it('resolves content in the interface language', () => {
     expect(resolveContent(registry, 'enamel-36', 'sv').summary).toMatch(/^Kronans yttre hölje/);
     expect(resolveContent(registry, 'tooth-36', 'de').facts.map((f) => f.label)).toContain('Typische Wurzeln');
+  });
+});
+
+describe('search in Spanish and Latin', () => {
+  it('finds structures by their Spanish and Latin names', () => {
+    expect(top('muela del juicio')).toMatch(/^tooth-\d8$/);
+    expect(top('diente 36')).toBe('tooth-36');
+    expect(top('encía')).toMatch(/^gingiva/);
+    expect(top('esmalte')).toMatch(/^enamel-/);
+    expect(top('conducto radicular')).toMatch(/canal/);
+    expect(top('dens serotinus')).toMatch(/^tooth-\d8$/);
+    expect(top('enamelum')).toMatch(/^enamel-/);
+    expect(top('nervus alveolaris inferior')).toMatch(/^inferior-alveolar-nerve/);
+  });
+  it('resolves Spanish and Latin content', () => {
+    expect(resolveContent(registry, 'enamel-36', 'es').summary).toMatch(/^La cubierta externa de la corona/);
+    expect(resolveContent(registry, 'tooth-36', 'la').facts.map((f) => f.label)).toContain('Radices typicae');
   });
 });
 
@@ -112,5 +135,10 @@ describe('about page in every language', () => {
     expect(sv).toContain('/tooth/36/?lang=sv');
     const de = aboutHtml('', '/', '/favicon.svg', 'de');
     expect(de).toContain('Erster Molar im Unterkiefer links');
+    const es = aboutHtml('', '/', '/favicon.svg', 'es');
+    expect(es).toContain('Primer molar inferior izquierdo');
+    expect(es).toContain('/tooth/36/?lang=es');
+    const la = aboutHtml('', '/', '/favicon.svg', 'la');
+    expect(la).toContain('Dens molaris primus inferior sinister');
   });
 });

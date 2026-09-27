@@ -3,7 +3,7 @@
  * that search engines and readers can use. It explains the project and carries
  * a readable guide to every permanent tooth, the numbering systems and the
  * structures in the 3D model, with links into the explorer. Built by vite.config.ts
- * in English (about/), Swedish (about/sv/) and German (about/de/).
+ * in English (about/), Swedish (about/sv/), German (about/de/), Spanish (about/es/) and Latin (about/la/).
  */
 import { PERMANENT_FDI, TOOTH_TYPES, archOf, fdiToPalmer, fdiToUniversal, sideOf, typeOf } from '../anatomy/notation.ts';
 import type { ToothType } from '../anatomy/types.ts';

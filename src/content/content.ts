@@ -10,6 +10,10 @@ import teethSv from './sv/teeth.json';
 import structuresSv from './sv/structures.json';
 import teethDe from './de/teeth.json';
 import structuresDe from './de/structures.json';
+import teethEs from './es/teeth.json';
+import structuresEs from './es/structures.json';
+import teethLa from './la/teeth.json';
+import structuresLa from './la/structures.json';
 
 export type ContentStatus = 'placeholder' | 'draft' | 'reviewed';
 
@@ -41,6 +45,8 @@ export const CONTENT: Record<Lang, Record<string, RawEntry>> = {
   en: db(teeth, structures),
   sv: db(teethSv, structuresSv),
   de: db(teethDe, structuresDe),
+  es: db(teethEs, structuresEs),
+  la: db(teethLa, structuresLa),
 };
 const DB = CONTENT.en;
 
@@ -48,6 +54,8 @@ const FACT_LABELS: Record<Lang, { roots: string; canals: string; eruption: strin
   en: { roots: 'Typical roots', canals: 'Typical canals', eruption: 'Typical eruption' },
   sv: { roots: 'Typiska rötter', canals: 'Typiska kanaler', eruption: 'Typisk eruptionsålder' },
   de: { roots: 'Typische Wurzeln', canals: 'Typische Kanäle', eruption: 'Typischer Durchbruch' },
+  es: { roots: 'Raíces típicas', canals: 'Conductos típicos', eruption: 'Erupción típica' },
+  la: { roots: 'Radices typicae', canals: 'Canales typici', eruption: 'Eruptio typica' },
 };
 const STATUS: ContentStatus = 'draft';
 

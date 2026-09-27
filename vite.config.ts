@@ -45,7 +45,7 @@ function seo(): Plugin {
         mkdirSync(`${outDir}/${page.path}`, { recursive: true });
         writeFileSync(`${outDir}/${page.path}index.html`, withTags(headTags(page, siteUrl, seoOpts)));
       }
-      // plain-HTML about page with the readable guide to every tooth (no app bundle), in English, Swedish and German
+      // plain-HTML about page with the readable guide to every tooth (no app bundle), in every interface language
       for (const page of ABOUT_PAGES) {
         // with a relative base, links climb out of about/ (and about/<lang>/)
         const absBase = base.startsWith('.') ? '../'.repeat(page.path.split('/').filter(Boolean).length) : base;

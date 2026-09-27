@@ -1,4 +1,5 @@
 /** Core anatomical data types. See docs/architecture.md §8. */
+import type { Lang } from '../i18n/lang.ts';
 
 export type Provenance = 'source' | 'derived' | 'modeled' | 'atlas' | 'schematic';
 export type StructureKind = 'group' | 'mesh' | 'region' | 'landmark';
@@ -68,7 +69,7 @@ export interface Structure {
   id: string;
   /** English name (the reference); `names` holds it in every interface language */
   name: string;
-  names: Record<'en' | 'sv' | 'de', string>;
+  names: Record<Lang, string>;
   kind: StructureKind;
   parent: string | null;
   children: string[];
@@ -87,7 +88,7 @@ export interface Structure {
   labelPriority: number;
   /** short label used on the 3D label chip */
   shortName?: string;
-  shortNames?: Record<'en' | 'sv' | 'de', string>;
+  shortNames?: Record<Lang, string>;
 }
 
 /* ---------- manifest produced by tools/pipeline ---------- */

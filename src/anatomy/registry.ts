@@ -31,7 +31,7 @@ import {
 } from '../i18n/anatomy';
 
 /** Translated names as extra search terms. */
-const nameTerms = (n: Names) => [n.sv, n.de];
+const nameTerms = (n: Names) => [n.sv, n.de, n.es, n.la];
 
 const QUADRANT_GROUP: Record<number, string> = {
   1: 'upper-right-quadrant',
@@ -73,7 +73,7 @@ export class Registry {
       const meshes = (d.meshes ?? []).filter((m) => this.meshInfo(m));
       const kind = d.kind ?? (d.landmark ? 'landmark' : meshes.length ? 'mesh' : 'group');
       const info = meshes[0] ? this.meshInfo(meshes[0]) : undefined;
-      const names = structureNames(d.id, d.name) ?? { en: d.name, sv: d.name, de: d.name };
+      const names = structureNames(d.id, d.name) ?? { en: d.name, sv: d.name, de: d.name, es: d.name, la: d.name };
       const short = d.shortName ? STRUCTURE_SHORT[d.id.replace(/-(right|left)$/, '')] : undefined;
       this.add({
         id: d.id,
@@ -91,7 +91,9 @@ export class Registry {
         anchor: d.landmark ? this.manifest.landmarks[d.landmark] : undefined,
         labelPriority: d.labelPriority ?? 1,
         shortName: d.shortName,
-        shortNames: d.shortName ? { en: d.shortName, sv: short?.sv ?? d.shortName, de: short?.de ?? d.shortName } : undefined,
+        shortNames: d.shortName
+          ? { en: d.shortName, sv: short?.sv ?? d.shortName, de: short?.de ?? d.shortName, es: short?.es ?? d.shortName, la: short?.la ?? d.shortName }
+          : undefined,
       });
     }
   }
@@ -108,7 +110,8 @@ export class Registry {
       const base = { toothFdi: fdi, stage: 4 as const, provenance: 'modeled' as const };
       const shellInfo = this.meshInfo(tId);
       const tName = toothName(fdi);
-      const tNames: Names = { en: tName, sv: toothNameIn(typeOf(fdi), archOf(fdi), sideOf(fdi), 'sv'), de: toothNameIn(typeOf(fdi), archOf(fdi), sideOf(fdi), 'de') };
+      const tIn = (l: 'sv' | 'de' | 'es' | 'la') => toothNameIn(typeOf(fdi), archOf(fdi), sideOf(fdi), l);
+      const tNames: Names = { en: tName, sv: tIn('sv'), de: tIn('de'), es: tIn('es'), la: tIn('la') };
 
       // roots and canals (typical configuration derived by the pipeline)
       const roots: RootInfo[] = (mt?.roots ?? []).map((r) => ({
@@ -157,7 +160,7 @@ export class Registry {
 
       if (!layers.length) continue;
       // search context: the tooth's name in every language and its numbers
-      const ctx = [tName.toLowerCase(), tNames.sv.toLowerCase(), tNames.de.toLowerCase(), `tooth ${fdi}`, `tand ${fdi}`, `zahn ${fdi}`, `#${notation.universal}`];
+      const ctx = [tName.toLowerCase(), ...nameTerms(tNames).map((n) => n.toLowerCase()), `tooth ${fdi}`, `tand ${fdi}`, `zahn ${fdi}`, `diente ${fdi}`, `dens ${fdi}`, `#${notation.universal}`];
       /** part names (all languages) plus their search terms */
       const p = (k: PartKey, aliasKey: string = k) => ({ names: partNames(k), extra: [...(PART_ALIASES[aliasKey] ?? []), ...nameTerms(partNames(k))] });
       type Part = { names: Names; extra: string[] };
@@ -223,7 +226,7 @@ export class Registry {
       }
       // label for root structure
       const rootStruct = this.byId.get(`root-${fdi}`);
-      if (rootStruct && roots.length > 1) rootStruct.aliases.push(...roots.flatMap((r) => { const n = rootNames(r.label); return n ? [n.en.toLowerCase(), n.sv, n.de] : [r.label]; }));
+      if (rootStruct && roots.length > 1) rootStruct.aliases.push(...roots.flatMap((r) => { const n = rootNames(r.label); return n ? [n.en.toLowerCase(), ...nameTerms(n)] : [r.label]; }));
     }
   }
 
