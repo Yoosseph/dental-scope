@@ -135,12 +135,12 @@ const en: AboutText = {
     },
     {
       q: 'Can Dental Scope be used for diagnosis?',
-      a: 'No. Dental Scope is an educational reference only. Internal tooth tissues are modeled with simplified proportions and nerves are placed schematically, so it must not be used for diagnosis, treatment planning or clinical decisions.',
+      a: 'No. Dental Scope is an educational reference only. Internal tooth tissues are modeled with simplified proportions and nerves and vessels follow an anatomy atlas rather than measurements of one person, so it must not be used for diagnosis, treatment planning or clinical decisions.',
     },
   ],
   creditsTitle: 'Credits and licence',
   creditsHtml:
-    'Made by {author}. The source code is on <a href="{repo}" rel="noopener">GitHub</a>. The jaws, teeth, skull and muscles come from <a href="{bp3d}" rel="noopener">BodyParts3D</a>, © The Database Center for Life Science, licensed under <a href="{licence}" rel="noopener">CC Attribution-Share Alike 2.1 Japan</a>. Third molars, gums, alveolar bone and the joint are derived from those meshes; enamel, dentin, cementum, periodontal ligament, pulp and canals are modeled with simplified proportions; nerves and vessels are schematic.',
+    'Made by {author}. The source code is on <a href="{repo}" rel="noopener">GitHub</a>. The jaws, teeth, skull and muscles come from <a href="{bp3d}" rel="noopener">BodyParts3D</a>, © The Database Center for Life Science, licensed under <a href="{licence}" rel="noopener">CC Attribution-Share Alike 2.1 Japan</a>. Third molars, gums, alveolar bone and the joint are derived from those meshes; enamel, dentin, cementum, periodontal ligament, pulp and canals are modeled with simplified proportions. Most nerves and vessels follow the <a href="https://github.com/Z-Anatomy/Models-of-human-anatomy" rel="noopener">Z-Anatomy</a> atlas (CC BY-SA 4.0), fitted onto these jaws; the superior alveolar nerves, the inferior alveolar vein and the pterygoid plexus are schematic.',
   note: 'Dental Scope is an educational reference. It is not intended for diagnosis, treatment planning or clinical decisions.',
   footer: 'Free 3D dental anatomy',
   madeBy: 'Made by',
@@ -268,12 +268,12 @@ const sv: AboutText = {
     },
     {
       q: 'Kan Dental Scope användas för diagnostik?',
-      a: 'Nej. Dental Scope är enbart ett referensmaterial för utbildning. Tändernas inre vävnader är modellerade med förenklade proportioner och nerverna är schematiskt placerade, så det får inte användas för diagnostik, behandlingsplanering eller kliniska beslut.',
+      a: 'Nej. Dental Scope är enbart ett referensmaterial för utbildning. Tändernas inre vävnader är modellerade med förenklade proportioner och nerver och kärl följer en anatomisk atlas, inte mätningar på en enskild person, så det får inte användas för diagnostik, behandlingsplanering eller kliniska beslut.',
     },
   ],
   creditsTitle: 'Källor och licens',
   creditsHtml:
-    'Skapad av {author}. Källkoden finns på <a href="{repo}" rel="noopener">GitHub</a>. Käkarna, tänderna, skallen och musklerna kommer från <a href="{bp3d}" rel="noopener">BodyParts3D</a>, © The Database Center for Life Science, licensierat under <a href="{licence}" rel="noopener">CC Attribution-Share Alike 2.1 Japan</a>. Tredje molarerna, tandköttet, alveolarbenet och käkleden är härledda från dessa modeller; emalj, dentin, rotcement, parodontalligament, pulpa och kanaler är modellerade med förenklade proportioner; nerver och kärl är schematiska.',
+    'Skapad av {author}. Källkoden finns på <a href="{repo}" rel="noopener">GitHub</a>. Käkarna, tänderna, skallen och musklerna kommer från <a href="{bp3d}" rel="noopener">BodyParts3D</a>, © The Database Center for Life Science, licensierat under <a href="{licence}" rel="noopener">CC Attribution-Share Alike 2.1 Japan</a>. Tredje molarerna, tandköttet, alveolarbenet och käkleden är härledda från dessa modeller; emalj, dentin, rotcement, parodontalligament, pulpa och kanaler är modellerade med förenklade proportioner. De flesta nerver och kärl följer <a href="https://github.com/Z-Anatomy/Models-of-human-anatomy" rel="noopener">Z-Anatomy</a>-atlasen (CC BY-SA 4.0), anpassad till de här käkarna; de övre alveolarnerverna, v. alveolaris inferior och plexus pterygoideus är schematiska.',
   note: 'Dental Scope är ett referensmaterial för utbildning. Det är inte avsett för diagnostik, behandlingsplanering eller kliniska beslut.',
   footer: 'Gratis tandanatomi i 3D',
   madeBy: 'Skapad av',
@@ -401,12 +401,12 @@ const de: AboutText = {
     },
     {
       q: 'Kann Dental Scope zur Diagnose verwendet werden?',
-      a: 'Nein. Dental Scope ist ausschließlich ein Nachschlagewerk für die Lehre. Die inneren Zahngewebe sind mit vereinfachten Proportionen modelliert und die Nerven schematisch platziert, daher darf es nicht für Diagnosen, Behandlungsplanung oder klinische Entscheidungen verwendet werden.',
+      a: 'Nein. Dental Scope ist ausschließlich ein Nachschlagewerk für die Lehre. Die inneren Zahngewebe sind mit vereinfachten Proportionen modelliert und Nerven und Gefäße folgen einem anatomischen Atlas statt Messungen an einer einzelnen Person, daher darf es nicht für Diagnosen, Behandlungsplanung oder klinische Entscheidungen verwendet werden.',
     },
   ],
   creditsTitle: 'Quellen und Lizenz',
   creditsHtml:
-    'Erstellt von {author}. Der Quellcode liegt auf <a href="{repo}" rel="noopener">GitHub</a>. Kiefer, Zähne, Schädel und Muskeln stammen aus <a href="{bp3d}" rel="noopener">BodyParts3D</a>, © The Database Center for Life Science, lizenziert unter <a href="{licence}" rel="noopener">CC Attribution-Share Alike 2.1 Japan</a>. Weisheitszähne, Zahnfleisch, Alveolarknochen und Kiefergelenk sind aus diesen Modellen abgeleitet; Zahnschmelz, Dentin, Wurzelzement, Desmodont, Pulpa und Kanäle sind mit vereinfachten Proportionen modelliert; Nerven und Gefäße sind schematisch.',
+    'Erstellt von {author}. Der Quellcode liegt auf <a href="{repo}" rel="noopener">GitHub</a>. Kiefer, Zähne, Schädel und Muskeln stammen aus <a href="{bp3d}" rel="noopener">BodyParts3D</a>, © The Database Center for Life Science, lizenziert unter <a href="{licence}" rel="noopener">CC Attribution-Share Alike 2.1 Japan</a>. Weisheitszähne, Zahnfleisch, Alveolarknochen und Kiefergelenk sind aus diesen Modellen abgeleitet; Zahnschmelz, Dentin, Wurzelzement, Desmodont, Pulpa und Kanäle sind mit vereinfachten Proportionen modelliert. Die meisten Nerven und Gefäße folgen dem <a href="https://github.com/Z-Anatomy/Models-of-human-anatomy" rel="noopener">Z-Anatomy</a>-Atlas (CC BY-SA 4.0), angepasst an diese Kiefer; die oberen Alveolarnerven, die V. alveolaris inferior und der Plexus pterygoideus sind schematisch.',
   note: 'Dental Scope ist ein Nachschlagewerk für die Lehre. Es ist nicht für Diagnosen, Behandlungsplanung oder klinische Entscheidungen bestimmt.',
   footer: 'Kostenlose Zahnanatomie in 3D',
   madeBy: 'Erstellt von',

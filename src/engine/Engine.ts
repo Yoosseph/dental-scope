@@ -12,11 +12,11 @@ import { store, getState, setState, actions, DISSECT_LEVELS, type AppState, type
 import { resolveMesh, revealPatch, layersActive, type MeshVisual } from '../state/visibility';
 import { Animator } from './animator';
 import { AssetLoader } from './assets';
-import { CameraRig } from './camera';
-import { archOffset, pulpLayerOffset, toothLayerOffset } from './explode';
+import { CameraRig, PRESET_DIRS } from './camera';
+import { archOffset, isNeurovascular, neurovascularStretch, pulpLayerOffset, toothLayerOffset } from './explode';
 import { boardAssemblyKey, boardSlot, shelfLayout, type LayoutItem } from './layout';
 import { LabelLayer, type LabelCandidate } from './labels';
-import { HOVER, HIGHLIGHT, THEME_LIGHTING, applyThemeToMaterial, createTissueMaterial, setFibreAxis, setMaterialOpacity, styleKeyFor, type SceneTheme, type TissueMaterial } from './materials';
+import { HIGHLIGHT, THEME_LIGHTING, highlightColor, applyThemeToMaterial, createTissueMaterial, setFibreAxis, setMaterialOpacity, styleKeyFor, type SceneTheme, type TissueMaterial } from './materials';
 import { SectionTool } from './section';
 
 interface MeshEntry {
@@ -33,6 +33,8 @@ interface MeshEntry {
   hiTarget: number;
   hover: boolean;
   labelPoint?: THREE.Vector3; // geometry-space label anchor
+  /** tooth shells beside a shown gum: how the root is cut while it is in the gum (see refreshRootCuts) */
+  rootCut?: { atRest: boolean; extract: number; collar: number };
   /** phase-2 board slot (world offset) and the eased current offset */
   boardTarget?: THREE.Vector3;
   boardPos?: THREE.Vector3;
@@ -264,7 +266,26 @@ export class Engine {
       if (/^tooth-\d{2}$/.test(key)) colorToothShell(geo, mat, this.registry, Number(key.slice(6)));
       applyThemeToMaterial(mat, getState().theme);
       setFibreAxis(mat, geo.boundingBox!);
+      // nerves and vessels stretch between the jaws as they separate (per-vertex jaw weight → morph target)
+      const jaw = geo.getAttribute('jaw') as THREE.BufferAttribute | undefined;
+      if (jaw && isNeurovascular(cats)) {
+        const d = neurovascularStretch(this.registry);
+        const delta = new Float32Array(jaw.count * 3);
+        for (let i = 0; i < jaw.count; i++) {
+          const w = jaw.getX(i);
+          delta[i * 3] = d.x * w;
+          delta[i * 3 + 1] = d.y * w;
+          delta[i * 3 + 2] = d.z * w;
+        }
+        geo.morphAttributes.position = [new THREE.BufferAttribute(delta, 3)];
+        geo.morphTargetsRelative = true;
+        geo.computeBoundingSphere();
+      }
       const mesh = new THREE.Mesh(geo, mat);
+      if (geo.morphAttributes.position) {
+        mesh.updateMorphTargets();
+        mesh.morphTargetInfluences![0] = 0;
+      }
       mesh.name = key;
       mesh.userData.key = key;
       mesh.visible = false;
@@ -315,6 +336,7 @@ export class Engine {
       s.dissectFdi !== p.dissectFdi ||
       s.dissectLevel !== p.dissectLevel ||
       s.clip.enabled !== p.clip.enabled ||
+      s.explodePhase !== p.explodePhase ||
       s.ghostOpacity !== p.ghostOpacity;
     if (visChanged) this.refreshVisibility();
     if (s.explode !== p.explode || s.explodePhase !== p.explodePhase) this.refreshRootCuts(s);
@@ -331,7 +353,7 @@ export class Engine {
     if (s.explodePhase !== p.explodePhase || (s.explodePhase === 2 && visChanged)) this.layoutBoard(true);
     if (s.explodePhase === 1 && p.explodePhase === 2 && s.dissectFdi === null && !s.isolateId) {
       // back from the board: frame the in-position dissection again
-      this.rig.preset('three-quarter', this.rig.home.target, this.explodedHomeRadius(s.explode), 0.8);
+      this.reframeForExplode(s, 'three-quarter');
       if (s.view !== 'three-quarter') setState({ view: 'three-quarter' });
     } else if (s.explode !== p.explode && s.explodePhase === 1) this.reframeForExplode(s);
     this.invalidate();
@@ -348,7 +370,7 @@ export class Engine {
     const items: LayoutItem[] = [];
     const assemblies = new Map<string, { bounds: THREE.Box3; members: MeshEntry[] }>();
     for (const e of this.entries.values()) {
-      if (e.visual !== 'on') {
+      if (e.visual !== 'on' && e.visual !== 'see-through') {
         e.boardTarget = e.boardPos = undefined;
         continue;
       }
@@ -395,19 +417,50 @@ export class Engine {
     this.invalidate();
   }
 
-  /** While a view preset is active, widen the framing so the exploded anatomy stays in view. */
-  private reframeForExplode(s: AppState) {
-    if (!s.view || s.dissectFdi !== null || s.isolateId) return;
-    const view = s.view;
+  /** Keep the separating jaws in view: fit the camera to the exploded anatomy as the slider moves. */
+  private reframeForExplode(s: AppState, preset?: ViewPreset) {
+    if (s.dissectFdi !== null || s.isolateId) return;
     clearTimeout(this.explodeTimer);
     this.explodeTimer = window.setTimeout(() => {
-      this.rig.preset(view, this.rig.home.target, this.explodedHomeRadius(getState().explode), 0.6);
+      const ex = getState().explode;
+      if (ex < 1e-3) {
+        this.startView(0.6);
+        return;
+      }
+      const box = this.explodedBounds(ex);
+      if (box.isEmpty()) return;
+      const cam = this.rig.camera;
+      const size = box.getSize(new THREE.Vector3());
+      const center = box.getCenter(new THREE.Vector3());
+      const tanV = Math.tan(THREE.MathUtils.degToRad(cam.fov) / 2);
+      // the fixed orbit keeps looking at its pivot, so fit the larger half on either side of it
+      const c = this.rig.mode === 'fixed' ? this.rig.pivot : center;
+      const halfH = Math.max(box.max.y - c.y, c.y - box.min.y);
+      const halfW = Math.max(box.max.x - c.x, c.x - box.min.x);
+      // leave room for the bottom toolbar and the side panels
+      const fit = Math.max((halfH / tanV) * 1.15, (halfW / (tanV * cam.aspect)) * 1.25);
+      const dir = preset ? PRESET_DIRS[preset].clone() : cam.position.clone().sub(this.rig.controls.target).normalize();
+      this.rig.focusSphere(center, size.length() / 2, { direction: dir, distance: fit + size.z / 2, duration: 0.6 });
+      this.invalidate();
     }, 120);
   }
 
-  /** Home framing radius widened for the arch explode (up to +75 % when fully exploded). */
-  private explodedHomeRadius(explode: number): number {
-    return this.rig.home.radius * (1 + 0.75 * explode);
+  /** Bounds of the shown (non-context) anatomy at a given arch explode. */
+  private explodedBounds(ex: number): THREE.Box3 {
+    const box = new THREE.Box3();
+    const b = new THREE.Box3();
+    const stretch = neurovascularStretch(this.registry).multiplyScalar(ex);
+    for (const e of this.entries.values()) {
+      if (e.visual !== 'on' && e.visual !== 'see-through') continue;
+      const cats = this.registry.categoriesOfMesh(e.key);
+      if (cats.includes('skull') || cats.includes('muscles')) continue;
+      const geo = e.mesh.geometry;
+      if (!geo.boundingBox) geo.computeBoundingBox();
+      b.copy(geo.boundingBox!).translate(e.archOffset.clone().multiplyScalar(ex));
+      if (geo.morphAttributes.position) b.expandByPoint(b.max.clone().add(stretch));
+      box.union(b);
+    }
+    return box;
   }
 
   private refreshAll() {
@@ -439,8 +492,17 @@ export class Engine {
       if (!match) continue;
       const fdi = Number(match[1]);
       const gum = fdi < 30 ? 'gingiva-upper' : 'gingiva-lower';
-      const covered = resolveMesh(gum, ctx) === 'on' && s.dissectFdi === null && !s.clip.enabled && s.explodePhase === 1;
-      e.mesh.material.userData.fx.uRootCut.value = covered ? -0.12 - 2.5 * s.explode : -100;
+      const bone = fdi < 30 ? 'maxillary-alveolar-process-right' : 'mandibular-alveolar-process';
+      const gumShown = resolveMesh(gum, ctx) === 'on' && s.dissectFdi === null && !s.clip.enabled && s.explodePhase === 1;
+      e.rootCut = gumShown
+        ? {
+            // assembled: hide the roots under opaque bone; with see-through bone they show in their sockets
+            atRest: resolveMesh(bone, ctx) === 'on',
+            extract: this.registry.manifest.teeth[String(fdi)]?.extract ?? 2,
+            collar: this.registry.manifest.teeth[String(fdi)]?.collar ?? 0.2,
+          }
+        : undefined;
+      if (!e.rootCut) e.mesh.material.userData.fx.uRootCut.value = -100;
     }
     this.invalidate();
   }
@@ -454,7 +516,7 @@ export class Engine {
     for (const e of this.entries.values()) {
       e.hiTarget = sel.has(e.key) ? 1 : hov.has(e.key) ? 0.55 : 0;
       e.hover = !sel.has(e.key) && hov.has(e.key);
-      e.mesh.material.userData.fx.uHiColor.value.copy(e.hover ? HOVER : HIGHLIGHT);
+      e.mesh.material.userData.fx.uHiColor.value.copy(highlightColor(e.mesh.material, e.hover));
     }
     const s = selectedId ? this.registry.get(selectedId) : undefined;
     this.marker.visible = !!s && s.kind === 'landmark' && !!s.anchor;
@@ -565,7 +627,7 @@ export class Engine {
       for (const st of this.registry.byId.values()) {
         if (st.toothFdi !== undefined || st.labelPriority < 3) continue;
         if (st.kind === 'mesh') {
-          const vis = st.meshes.filter((k) => this.entries.get(k)?.visual === 'on');
+          const vis = st.meshes.filter((k) => ['on', 'see-through'].includes(this.entries.get(k)?.visual ?? 'off'));
           if (vis.length) addMeshLabel(st.id, shortOf(st, s.lang), 'structure', st.labelPriority, vis);
         } else if (st.kind === 'landmark' && st.anchor) {
           const ok = st.categories.every((c) => s.categories[c] !== 'off');
@@ -779,6 +841,9 @@ export class Engine {
       const b = this.boundsOf(selectedId, true);
       const sph = b.getBoundingSphere(new THREE.Sphere());
       this.rig.preset(p, sph.center, sph.radius * 1.2);
+    } else if (getState().explode > 0 && getState().explodePhase === 1) {
+      // the separated jaws need a wider frame than the assembled mouth
+      this.reframeForExplode(getState(), p);
     } else {
       this.rig.preset(p);
     }
@@ -861,7 +926,10 @@ export class Engine {
     const s = getState();
     const first = !this.insetsKnown;
     this.insetsKnown = true;
-    if (s.view === 'front' && !s.selectedId && s.dissectFdi === null) this.startView(first ? 0 : 0.35);
+    if (s.view === 'front' && !s.selectedId && s.dissectFdi === null) {
+      if (s.explode > 0 && s.explodePhase === 1) this.reframeForExplode(s);
+      else if (s.explodePhase === 1) this.startView(first ? 0 : 0.35);
+    }
     this.animator.run('insets', first ? 0 : 0.35, (k) => {
       this.insets.right = from.right + (right - from.right) * k;
       this.insets.bottom = from.bottom + (bottom - from.bottom) * k;
@@ -954,7 +1022,7 @@ export class Engine {
     let layoutChanged = false;
     const prevPos = new THREE.Vector3();
     for (const e of this.entries.values()) {
-      let target = e.visual === 'on' ? 1 : e.visual === 'ghost' ? s.ghostOpacity : e.visual === 'faint' ? s.ghostOpacity * 0.45 : 0;
+      let target = e.visual === 'on' ? 1 : e.visual === 'see-through' ? SEE_THROUGH_OPACITY : e.visual === 'ghost' ? s.ghostOpacity : e.visual === 'faint' ? s.ghostOpacity * 0.45 : 0;
       if (s.explodePhase === 2 && !e.boardTarget) target = 0; // context is not laid out: fade it away
       if (Math.abs(e.opacity - target) > 1e-3) {
         e.opacity = stepToward(e.opacity, target, rate, 0.01);
@@ -977,6 +1045,16 @@ export class Engine {
       const toothPart = s.dissectFdi !== null && this.registry.get(e.owner)?.toothFdi === s.dissectFdi;
       prevPos.copy(e.mesh.position);
       e.mesh.position.copy(e.archOffset).multiplyScalar(this.explodeCur);
+      if (e.rootCut) {
+        // While a tooth slides out of the gum, the part of it still inside the gum is cut away,
+        // so a flared root never shows through the narrower gum collar.
+        e.mesh.material.userData.fx.uRootCut.value =
+          this.explodeCur < 1e-3 ? (e.rootCut.atRest ? ROOT_CUT_REST : -100) : e.rootCut.collar - this.explodeCur * e.rootCut.extract;
+      }
+      if (e.mesh.morphTargetInfluences) {
+        const stretch = this.explodeCur * (1 - this.phaseCur);
+        if (e.mesh.morphTargetInfluences[0] !== stretch) e.mesh.morphTargetInfluences[0] = stretch;
+      }
       if (toothPart) e.mesh.position.addScaledVector(this.tmpOffset.lerpVectors(e.toothOffset, e.pulpOffset, this.pulpModeCur), this.toothExplodeCur);
       if (e.boardPos && this.phaseCur > 0) {
         if (e.boardTarget && e.boardPos.distanceToSquared(e.boardTarget) > 1e-8) {
@@ -1003,6 +1081,13 @@ export class Engine {
 }
 
 /* ------------------------------------------------------------------ helpers */
+
+/** Along the tooth axis from the cervical line (cm): where the gum collar hides the root in the assembled mouth. */
+const ROOT_CUT_REST = -0.12;
+
+/** Bone opacity while the nerve and vessel layers are on. */
+const SEE_THROUGH_OPACITY = 0.32;
+
 
 /** Give the intact tooth a subtle crown-to-root colour change at its modeled CEJ. */
 function colorToothShell(geo: THREE.BufferGeometry, mat: TissueMaterial, registry: Registry, fdi: number) {

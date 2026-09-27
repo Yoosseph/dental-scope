@@ -23,7 +23,7 @@ export interface FocusOptions {
   duration?: number;
 }
 
-const PRESET_DIRS: Record<ViewPreset, THREE.Vector3> = {
+export const PRESET_DIRS: Record<ViewPreset, THREE.Vector3> = {
   'three-quarter': new THREE.Vector3(0.62, 0.22, 0.75),
   front: new THREE.Vector3(0, 0.02, 1),
   left: new THREE.Vector3(1, 0.02, 0.0001),

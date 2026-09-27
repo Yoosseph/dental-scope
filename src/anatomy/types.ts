@@ -1,6 +1,6 @@
 /** Core anatomical data types. See docs/architecture.md §8. */
 
-export type Provenance = 'source' | 'derived' | 'modeled' | 'schematic';
+export type Provenance = 'source' | 'derived' | 'modeled' | 'atlas' | 'schematic';
 export type StructureKind = 'group' | 'mesh' | 'region' | 'landmark';
 export type Arch = 'maxillary' | 'mandibular';
 export type Side = 'right' | 'left';
@@ -111,6 +111,10 @@ export interface ManifestTooth {
   landmarks?: Record<string, Vec3>;
   layers?: string[];
   asset?: string;
+  /** arch dissection: how far (cm) the tooth slides out of the gum along its axis */
+  extract?: number;
+  /** highest gum point over the tooth, along its axis from the cervical line (cm) */
+  collar?: number;
 }
 
 export interface Manifest {
@@ -118,8 +122,11 @@ export interface Manifest {
   source: string;
   meshes: Record<string, ManifestMesh>;
   teeth: Record<string, ManifestTooth>;
-  paths: Record<string, Vec3[]>;
+  /** simplified centrelines of each nerve / vessel mesh (one polyline per branch) */
+  paths: Record<string, Vec3[][]>;
   landmarks: Record<string, Vec3>;
+  /** arch dissection tiers (cm): jaw = how far each jaw moves from the bite; gingiva / teeth = how far they then move toward the bite */
+  explode?: { jaw: number; upper: { gingiva: number; teeth: number }; lower: { gingiva: number; teeth: number } };
   bounds: [Vec3, Vec3];
   files?: Record<string, number>;
 }

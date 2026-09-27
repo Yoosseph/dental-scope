@@ -228,14 +228,14 @@
   },
   "mandibular-foramen": {
     "summary": "Die Öffnung an der Innenseite des Unterkieferasts, durch die der N. alveolaris inferior und die begleitenden Gefäße in den Canalis mandibulae eintreten.",
-    "clinical": "Zielregion der Leitungsanästhesie des N. alveolaris inferior. Die gezeigte Lage ist schematisch.",
+    "clinical": "Zielregion der Leitungsanästhesie des N. alveolaris inferior. Die Lage ist die Stelle, an der der Nervenverlauf des Atlas die Knochenoberfläche kreuzt.",
     "related": [
       "inferior-alveolar-nerve"
     ]
   },
   "mental-foramen": {
     "summary": "Eine Öffnung an der Außenseite des Unterkiefers, meist nahe den Wurzelspitzen der Prämolaren, durch die der N. mentalis und die begleitenden Gefäße austreten.",
-    "clinical": "Seine Lage ist wichtig bei chirurgischen Eingriffen im Prämolarenbereich, bei der Implantation und bei der Mentalisblockade. Die gezeigte Lage ist schematisch.",
+    "clinical": "Seine Lage ist wichtig bei chirurgischen Eingriffen im Prämolarenbereich, bei der Implantation und bei der Mentalisblockade. Die Lage ist die Stelle, an der der Nervenverlauf des Atlas die Knochenoberfläche kreuzt.",
     "related": [
       "mental-nerve",
       "inferior-alveolar-nerve"
@@ -261,7 +261,7 @@
   "inferior-alveolar-nerve": {
     "summary": "Ein Ast des dritten Trigeminusasts, des N. mandibularis (V3). Er tritt durch das Foramen mandibulae ein und verläuft im Canalis mandibulae unterhalb der Wurzeln der unteren Zähne.",
     "function": "Sensible Versorgung der Unterkieferzähne; gibt den N. mentalis ab und setzt sich als N. incisivus fort.",
-    "clinical": "Wird durch die Leitungsanästhesie am Foramen mandibulae betäubt. Seine Nähe zu den Wurzeln der Weisheitszähne und zu Implantatregionen macht ihn zu einer Schlüsselstruktur, die bei chirurgischen Eingriffen geschont werden muss. Der gezeigte Verlauf ist schematisch.",
+    "clinical": "Wird durch die Leitungsanästhesie am Foramen mandibulae betäubt. Seine Nähe zu den Wurzeln der Weisheitszähne und zu Implantatregionen macht ihn zu einer Schlüsselstruktur, die bei chirurgischen Eingriffen geschont werden muss. Der Verlauf folgt dem Z-Anatomy-Atlas, angepasst an diesen Schädel.",
     "related": [
       "mandibular-foramen",
       "mental-nerve",
@@ -271,7 +271,7 @@
   "mental-nerve": {
     "summary": "Der Endast des N. alveolaris inferior, der aus dem Foramen mentale austritt.",
     "function": "Sensible Versorgung von Unterlippe, Kinn und labialer Gingiva der unteren Frontzähne.",
-    "clinical": "Eine Verletzung kann zu Taubheit von Unterlippe und Kinn führen. Der gezeigte Verlauf ist schematisch.",
+    "clinical": "Eine Verletzung kann zu Taubheit von Unterlippe und Kinn führen. Der Verlauf folgt dem Z-Anatomy-Atlas, angepasst an diesen Schädel.",
     "related": [
       "mental-foramen",
       "inferior-alveolar-nerve"
@@ -287,7 +287,7 @@
   "lingual-nerve": {
     "summary": "Ein Ast des N. mandibularis (V3), der medial des Unterkieferasts nach vorn verläuft, am Weisheitszahn dicht an der lingualen Kortikalis, bis zum Mundboden und zur Zunge.",
     "function": "Allgemeine sensible Versorgung der vorderen zwei Drittel der Zunge, des Mundbodens und der lingualen Gingiva; führt außerdem Geschmacksfasern aus der Chorda tympani.",
-    "clinical": "Bei der operativen Entfernung unterer Weisheitszähne gefährdet. Der gezeigte Verlauf ist schematisch.",
+    "clinical": "Bei der operativen Entfernung unterer Weisheitszähne gefährdet. Der Verlauf folgt dem Z-Anatomy-Atlas, angepasst an diesen Schädel.",
     "related": [
       "inferior-alveolar-nerve"
     ]
@@ -309,7 +309,7 @@
   "infraorbital-nerve": {
     "summary": "Die Fortsetzung des N. maxillaris (V2) durch den Orbitaboden, die am Foramen infraorbitale im Gesicht austritt.",
     "function": "Sensible Versorgung von Unterlid, Nasenflügel und Oberlippe; gibt die vorderen (und, falls vorhanden, mittleren) oberen Alveolaräste ab.",
-    "clinical": "Der gezeigte Verlauf ist schematisch.",
+    "clinical": "Der Verlauf folgt dem Z-Anatomy-Atlas, angepasst an diesen Schädel.",
     "related": [
       "anterior-superior-alveolar-nerve",
       "middle-superior-alveolar-nerve"
@@ -342,7 +342,7 @@
   "inferior-alveolar-artery": {
     "summary": "Ein Ast der A. maxillaris, der den N. alveolaris inferior durch den Canalis mandibulae begleitet.",
     "function": "Blutversorgung des Unterkiefers und der unteren Zähne.",
-    "clinical": "Der gezeigte Verlauf ist schematisch.",
+    "clinical": "Der Verlauf folgt dem Z-Anatomy-Atlas, angepasst an diesen Schädel.",
     "related": [
       "inferior-alveolar-nerve",
       "inferior-alveolar-vein"
@@ -440,6 +440,142 @@
     "related": [
       "maxilla",
       "mandible"
+    ]
+  },
+  "trigeminal-nerve": {
+    "summary": "Der fünfte Hirnnerv. Vom Ganglion trigeminale aus teilt er sich in N. ophthalmicus (V1), N. maxillaris (V2) und N. mandibularis (V3).",
+    "function": "Der wichtigste sensible Nerv von Gesicht, Zähnen und Mund; sein mandibulärer Anteil versorgt außerdem die Kaumuskeln motorisch.",
+    "related": [
+      "maxillary-nerve",
+      "mandibular-nerve"
+    ]
+  },
+  "maxillary-nerve": {
+    "summary": "Der zweite Trigeminusast (V2). Er verlässt den Schädel durch das Foramen rotundum, zieht durch die Fossa pterygopalatina und setzt sich als N. infraorbitalis fort.",
+    "function": "Sensible Versorgung der Oberkieferzähne, der Gingiva des Oberkiefers, des Gaumens, der Oberlippe und der Wange.",
+    "related": [
+      "infraorbital-nerve",
+      "posterior-superior-alveolar-nerve",
+      "trigeminal-nerve"
+    ]
+  },
+  "mandibular-nerve": {
+    "summary": "Der dritte Trigeminusast (V3). Er verlässt den Schädel durch das Foramen ovale und teilt sich in einen vorderen und einen hinteren Stamm.",
+    "function": "Sensible Versorgung der Unterkieferzähne, der Zunge, der Unterlippe und des Kinns; motorische Versorgung der Kaumuskeln.",
+    "related": [
+      "inferior-alveolar-nerve",
+      "lingual-nerve",
+      "buccal-nerve",
+      "trigeminal-nerve"
+    ]
+  },
+  "buccal-nerve": {
+    "summary": "Ein sensibler Ast aus dem vorderen Stamm des N. mandibularis (V3), der über den M. buccinator nach vorn zur Wange zieht.",
+    "function": "Sensible Versorgung der Wange und der bukkalen Gingiva der unteren Molaren.",
+    "clinical": "Wird bei Eingriffen an der bukkalen Gingiva der unteren Molaren gesondert betäubt (Bukkalisanästhesie).",
+    "related": [
+      "mandibular-nerve"
+    ]
+  },
+  "external-carotid-artery": {
+    "summary": "Die Arterie, die den größten Teil von Gesicht und Kiefern versorgt. Sie steigt hinter dem Unterkieferast auf und teilt sich am Ende in A. maxillaris und A. temporalis superficialis.",
+    "function": "Ihre Äste, darunter A. facialis und A. maxillaris, versorgen Zähne, Kiefer, Gesicht und Kopfhaut mit Blut.",
+    "related": [
+      "maxillary-artery",
+      "facial-artery"
+    ]
+  },
+  "maxillary-artery": {
+    "summary": "Ein Endast der A. carotis externa. Sie zieht hinter dem Collum mandibulae durch die Fossa infratemporalis nach vorn in die Fossa pterygopalatina.",
+    "function": "Gibt die A. alveolaris inferior, A. alveolaris superior posterior, A. buccalis und A. palatina descendens ab, die Zähne, Kiefer und Gaumen versorgen.",
+    "related": [
+      "external-carotid-artery",
+      "inferior-alveolar-artery",
+      "posterior-superior-alveolar-artery"
+    ]
+  },
+  "posterior-superior-alveolar-artery": {
+    "summary": "Ein Ast der A. maxillaris, der an der Rückseite des Oberkiefers (Tuber maxillae) absteigt und durch kleine Öffnungen in den Knochen eintritt.",
+    "function": "Blutversorgung der oberen Molaren und Prämolaren, der Kieferhöhle und der bukkalen Gingiva.",
+    "clinical": "Kann bei der Tuberanästhesie und bei Sinuslift-Operationen bluten.",
+    "related": [
+      "maxillary-artery",
+      "posterior-superior-alveolar-nerve"
+    ]
+  },
+  "descending-palatine-artery": {
+    "summary": "Ein Ast der A. maxillaris, der durch den Canalis palatinus major absteigt und am harten Gaumen als A. palatina major nach vorn zieht.",
+    "function": "Blutversorgung des harten Gaumens und der palatinalen Gingiva.",
+    "clinical": "Bei der Entnahme von Bindegewebstransplantaten am Gaumen und bei Schnitten am Gaumen zu beachten.",
+    "related": [
+      "maxillary-artery"
+    ]
+  },
+  "buccal-artery": {
+    "summary": "Ein kleiner Ast der A. maxillaris, der mit dem N. buccalis auf den M. buccinator zieht.",
+    "function": "Blutversorgung der Wange und der Wangenschleimhaut.",
+    "related": [
+      "maxillary-artery",
+      "buccal-nerve"
+    ]
+  },
+  "facial-artery": {
+    "summary": "Ein Ast der A. carotis externa, der sich direkt vor dem M. masseter um den Unterrand des Unterkiefers schlingt und über das Gesicht aufsteigt.",
+    "function": "Blutversorgung von Lippen, Wange, Kinn und Nasenflügel.",
+    "clinical": "Ihr Puls ist dort tastbar, wo sie den Unterrand des Unterkiefers kreuzt.",
+    "related": [
+      "external-carotid-artery",
+      "facial-vein"
+    ]
+  },
+  "pterygoid-plexus": {
+    "summary": "Ein Venengeflecht um den M. pterygoideus lateralis in der Fossa infratemporalis. Die Venen der Kiefer und Zähne münden hier, und das Geflecht fließt in die V. maxillaris ab.",
+    "function": "Sammelt Blut aus den Vv. alveolares inferiores, den Kaumuskeln und dem Gaumen.",
+    "clinical": "Kann bei der Tuberanästhesie punktiert werden und ein Hämatom verursachen. Das gezeigte Geflecht ist schematisch.",
+    "related": [
+      "maxillary-vein",
+      "inferior-alveolar-vein"
+    ]
+  },
+  "maxillary-vein": {
+    "summary": "Eine kurze Vene, die Blut aus dem Plexus pterygoideus hinter das Collum mandibulae führt, wo sie sich mit der V. temporalis superficialis zur V. retromandibularis vereinigt.",
+    "function": "Drainiert den Plexus pterygoideus.",
+    "related": [
+      "pterygoid-plexus",
+      "retromandibular-vein"
+    ]
+  },
+  "retromandibular-vein": {
+    "summary": "Die Vene, die hinter dem Unterkieferast in der Ohrspeicheldrüse absteigt und sich in einen vorderen und einen hinteren Ast teilt.",
+    "function": "Leitet das Blut der V. maxillaris und der V. temporalis superficialis in die V. facialis und die V. jugularis externa.",
+    "related": [
+      "maxillary-vein",
+      "facial-vein",
+      "external-jugular-vein"
+    ]
+  },
+  "facial-vein": {
+    "summary": "Die Hauptvene des Gesichts. Sie läuft hinter der A. facialis abwärts, kreuzt den Unterrand des Unterkiefers und vereinigt sich mit dem vorderen Ast der V. retromandibularis zur V. facialis communis.",
+    "function": "Leitet das Blut von Gesicht, Lippen und Kinn in die V. jugularis interna.",
+    "clinical": "Sie steht mit den Venen der Augenhöhle in Verbindung, daher können sich Infektionen von Oberlippe und Nase nach innen ausbreiten.",
+    "related": [
+      "facial-artery",
+      "internal-jugular-vein"
+    ]
+  },
+  "internal-jugular-vein": {
+    "summary": "Die große Vene seitlich am Hals, die Blut aus Gehirn, Gesicht und Hals zum Herzen führt. Nur ihr oberer Abschnitt ist dargestellt.",
+    "function": "Nimmt die V. facialis und damit den größten Teil des venösen Blutes aus Gesicht und Kiefern auf.",
+    "related": [
+      "facial-vein",
+      "external-carotid-artery"
+    ]
+  },
+  "external-jugular-vein": {
+    "summary": "Eine oberflächliche Halsvene, die nahe dem Kieferwinkel aus dem hinteren Ast der V. retromandibularis entsteht. Nur ihr oberer Abschnitt ist dargestellt.",
+    "function": "Drainiert Kopfhaut und seitliches Gesicht.",
+    "related": [
+      "retromandibular-vein"
     ]
   }
 }

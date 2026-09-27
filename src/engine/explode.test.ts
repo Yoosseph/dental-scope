@@ -51,3 +51,40 @@ it('keeps each maxillary alveolar partition with its source maxilla', () => {
     expect(archOffset(registry, alveolar, center).toArray()).toEqual(archOffset(registry, maxilla, center).toArray());
   }
 });
+
+describe('arch explode: tiers', () => {
+  const center = (key: string) => {
+    const [lo, hi] = manifest.meshes[key].bounds;
+    return new THREE.Vector3(...lo).add(new THREE.Vector3(...hi)).multiplyScalar(0.5);
+  };
+  const off = (key: string) => archOffset(registry, key, center(key));
+
+  it('keeps each articular disc in its fossa', () => {
+    for (const side of ['left', 'right']) expect(off(`articular-disc-${side}`).toArray()).toEqual(off(`articular-fossa-${side}`).toArray());
+  });
+
+  it('slides each tooth out of its gum along its own axis', () => {
+    for (const fdi of [11, 26, 36, 43]) {
+      const t = manifest.teeth[String(fdi)];
+      const gum = off(fdi < 30 ? 'gingiva-upper' : 'gingiva-lower');
+      const expected = gum.clone().addScaledVector(new THREE.Vector3(...t.frame.axis), t.extract!);
+      expect(off(`tooth-${fdi}`).distanceTo(expected)).toBeLessThan(1e-9);
+      // every internal layer moves with its tooth
+      expect(off(`enamel-${fdi}`).toArray()).toEqual(off(`tooth-${fdi}`).toArray());
+    }
+  });
+
+  it('separates the upper teeth from the lower teeth', () => {
+    const upper = crowns.filter((k) => Number(k.slice(-2)) < 30).map(exploded);
+    const lower = crowns.filter((k) => Number(k.slice(-2)) > 30).map(exploded);
+    const upperMin = Math.min(...upper.map((b) => b.min.y));
+    const lowerMax = Math.max(...lower.map((b) => b.max.y));
+    expect(upperMin).toBeGreaterThan(lowerMax - 0.6); // crowns interleave at most slightly in their bounds
+  });
+
+  it('keeps nerves and vessels at the mandible offset (the engine stretches them toward the skull)', () => {
+    for (const k of ['inferior-alveolar-nerve-right', 'maxillary-artery-left', 'pterygoid-plexus-right']) {
+      expect(off(k).toArray()).toEqual(off('mandible-body').toArray());
+    }
+  });
+});

@@ -38,7 +38,7 @@ CI (`.github/workflows/ci.yml`) runs typecheck, test and build on pushes and PRs
 3. **React never renders per frame.** An imperative engine owns Three.js. React renders the panels around it and subscribes to coarse state.
 4. **Render on demand.** The rAF loop always ticks, but it only renders when something changed.
 5. **Load in stages.** First paint needs only the jaws and teeth. Context, nerves and vessels, and per-tooth internal anatomy stream in afterwards.
-6. **Be honest about data.** Every structure carries a provenance (`source`, `derived`, `modeled`, `schematic`) and every text entry a review status.
+6. **Be honest about data.** Every structure carries a provenance (`source`, `derived`, `modeled`, `atlas`, `schematic`) and every text entry a review status.
 
 Runtime dependencies are `react`, `react-dom`, `three` and `zustand`, and nothing else.
 
@@ -155,13 +155,15 @@ loop (rAF) ─► controls.update + rig.tick (pivot spring) + animator.tick + ti
 
 ## 7. Assets and loading
 
-The pipeline (details in [assets.md](assets.md)): BodyParts3D STL → `tools/pipeline/build_assets.py` → `compress.mjs` → `public/models/`. `build_assets.py` selects the dental FMA IDs, converts to Y-up centimetres, derives the third molars, and splits out the alveolar bone, condyles and fossae. It models the internal tooth layers (`tooth_layers.py`, a voxel SDF) and places the schematic nerves, vessels and discs. `compress.mjs` applies gltf-transform with meshopt. `manifest.json` records each mesh's stage, file, bounds, provenance and FMA ID, plus tooth frames, roots, landmarks and paths.
+The pipeline (details in [assets.md](assets.md)): BodyParts3D STL → `tools/pipeline/build_assets.py` → `compress.mjs` → `public/models/`. `build_assets.py` selects the dental FMA IDs, converts to Y-up centimetres, derives the third molars, and splits out the alveolar bone, condyles and fossae. It models the internal tooth layers (`tooth_layers.py`, a voxel SDF), sweeps the nerves and vessels along the Z-Anatomy centrelines in `tools/pipeline/data/z-anatomy-neurovascular.json` (made by `extract_z_anatomy.py`, which needs Blender's `bpy`), adds the schematic ones and the discs, and measures the arch-dissection tiers. `compress.mjs` applies gltf-transform with meshopt. `manifest.json` records each mesh's stage, file, bounds, provenance and FMA ID, plus tooth frames, roots, landmarks, paths and the dissection tiers (`explode`).
+
+**Arch dissection ("in position").** The skull and maxillae move up and the mandible down by `explode.jaw`; each jaw then separates toward the bite in tiers, gingiva by `explode.*.gingiva` and teeth by `explode.*.teeth`, all straight up or down. The pipeline measures these distances as height fields over x/z so no tier passes through another. Nerve and vessel meshes carry a per-vertex jaw weight (0 = mandible, 1 = skull), stored in the vertex colour and turned into a morph target by the engine, so a vessel that runs between the jaws stretches instead of breaking. While a nerve or vessel layer is on, bone is drawn see-through (`'see-through'` in `state/visibility.ts`).
 
 | Stage | File | Contents | When (`Engine.loadAll` / `ensureTooth`) |
 |---|---|---|---|
 | 1 | `core.glb` | Jaws, gingiva, 32 tooth shells | Immediately (`ready` after this) |
 | 2 | `context.glb` | Skull context, muscles, TMJ | Next |
-| 3 | `neurovascular.glb` | Schematic nerves and vessels | Next |
+| 3 | `neurovascular.glb` | Nerves and vessels (atlas and schematic) | Next |
 | 4 | `teeth/tooth-XX.glb` | One tooth's internal layers | On demand (`ensureTooth`): dissection, search hit, deep link. Turning a section on in the overview loads all 32 (`ensureAllTeeth`, progress under `loading.teeth`). Tooth 36 is prefetched when idle. |
 
 ## 8. Anatomy, content and search

@@ -41,12 +41,12 @@ const STYLES: Record<string, TissueStyle> = {
   disc: { color: '#86b2c4', roughness: 0.45, cap: '#6d9aae' },
   skull: { color: '#e6dfcd', roughness: 0.85, cap: '#d6caac' },
   // soft tissue: deeper, less saturated colours than before, matte with a little sheen, and edge
-  // definition instead of self-glow. Muscles get a faint fibre grain; the schematic nerve and
-  // vessel paths stay smooth (no surface detail that would suggest measured anatomy).
+  // definition instead of self-glow. Muscles get a faint fibre grain; nerve and vessel paths stay
+  // smooth. Nerves, arteries and veins use the anatomy-atlas convention: yellow, red, blue.
   muscle: { color: '#a34d44', roughness: 0.62, sheen: 0.35, cap: '#8a3b33', grain: 0.3, edge: 0.28 },
   nerve: { color: '#d9b347', roughness: 0.48, sheen: 0.25, cap: '#c19a33', edge: 0.2 },
-  artery: { color: '#b8433b', roughness: 0.45, clearcoat: 0.12, cap: '#9d342d', edge: 0.2 },
-  vein: { color: '#51639a', roughness: 0.48, clearcoat: 0.12, cap: '#40518a', edge: 0.2 },
+  artery: { color: '#c3362c', roughness: 0.45, clearcoat: 0.12, cap: '#a52a21', edge: 0.2 },
+  vein: { color: '#3163c4', roughness: 0.48, clearcoat: 0.12, cap: '#254f9f', edge: 0.2 },
 };
 
 export function styleKeyFor(meshKey: string, cats: CategoryId[]): string {
@@ -121,6 +121,15 @@ export type TissueMaterial = THREE.MeshPhysicalMaterial & { userData: { fx: FxUn
 /** Selection and hover tint: the UI's single ultramarine accent. */
 export const HIGHLIGHT = new THREE.Color('#3346f0');
 export const HOVER = new THREE.Color('#8f9bff');
+/** On blue tissue (veins) the accent would only read as "more blue": lighten toward white instead. */
+export const HIGHLIGHT_ON_BLUE = new THREE.Color('#dfe4ff');
+export const HOVER_ON_BLUE = new THREE.Color('#b9c3ff');
+
+/** Selection and hover tint for a material. */
+export function highlightColor(mat: TissueMaterial, hover: boolean): THREE.Color {
+  const blue = mat.userData.styleKey === 'vein';
+  return hover ? (blue ? HOVER_ON_BLUE : HOVER) : blue ? HIGHLIGHT_ON_BLUE : HIGHLIGHT;
+}
 
 export function createTissueMaterial(styleKey: string): TissueMaterial {
   const st = styleFor(styleKey);

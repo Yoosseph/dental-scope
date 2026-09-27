@@ -52,8 +52,12 @@ export const sv: Messages = {
   provModeled: 'Modellerad',
   provModeledBody:
     'emalj, dentin, rotcement, parodontalligament, pulpa och kanaler är modellerade inuti varje verklig tandform med förenklade, ungefärliga proportioner, inte mätningar.',
+  provAtlas: 'Atlas',
+  provAtlasBody:
+    'de flesta nerver och kärl följer Z-Anatomy-atlasen (CC BY-SA 4.0), anpassad till de här käkarna: förloppet är anatomiskt, men inte uppmätt hos just den här individen.',
   provSchematic: 'Schematisk',
-  provSchematicBody: 'nerver, kärl och ledskivor är placerade utifrån anatomiska landmärken för att visa samband, inte uppmätta förlopp.',
+  provSchematicBody:
+    'de övre alveolarnerverna, v. alveolaris inferior, plexus pterygoideus och ledskivorna är placerade utifrån anatomiska landmärken för att visa samband, inte uppmätta förlopp.',
   sources: 'Källor för dessa uppgifter',
   sourcesAria: 'Källor för dessa uppgifter (öppnas i en ny flik)',
   controlsTitle: 'Kontroller',

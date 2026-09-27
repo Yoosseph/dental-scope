@@ -61,8 +61,12 @@ export const en = {
   provModeled: 'Modeled',
   provModeledBody:
     'enamel, dentin, cementum, periodontal ligament, pulp and canals are modeled inside each real tooth shape using simplified, approximate proportions, not measurements.',
+  provAtlas: 'Atlas',
+  provAtlasBody:
+    'most nerves and vessels follow the Z-Anatomy atlas (CC BY-SA 4.0), fitted onto these jaws: their course is anatomical, but not measured in this individual.',
   provSchematic: 'Schematic',
-  provSchematicBody: 'nerves, vessels and joint discs are placed from anatomical landmarks to show relationships, not measured paths.',
+  provSchematicBody:
+    'the superior alveolar nerves, the inferior alveolar vein, the pterygoid plexus and the joint discs are placed from anatomical landmarks to show relationships, not measured paths.',
   sources: 'Sources for these statements',
   sourcesAria: 'Sources for these statements (opens in a new tab)',
   controlsTitle: 'Controls',

@@ -52,8 +52,12 @@ export const de: Messages = {
   provModeled: 'Modelliert',
   provModeledBody:
     'Schmelz, Dentin, Zement, Desmodont, Pulpa und Kanäle sind in jede echte Zahnform mit vereinfachten, ungefähren Proportionen hineinmodelliert, nicht gemessen.',
+  provAtlas: 'Atlas',
+  provAtlasBody:
+    'die meisten Nerven und Gefäße folgen dem Z-Anatomy-Atlas (CC BY-SA 4.0), angepasst an diese Kiefer: Ihr Verlauf ist anatomisch, aber nicht an diesem Individuum gemessen.',
   provSchematic: 'Schematisch',
-  provSchematicBody: 'Nerven, Gefäße und Gelenkscheiben sind anhand anatomischer Landmarken platziert, um Lagebeziehungen zu zeigen, nicht gemessene Verläufe.',
+  provSchematicBody:
+    'die oberen Alveolarnerven, die V. alveolaris inferior, der Plexus pterygoideus und die Gelenkscheiben sind anhand anatomischer Landmarken platziert, um Lagebeziehungen zu zeigen, nicht gemessene Verläufe.',
   sources: 'Quellen für diese Angaben',
   sourcesAria: 'Quellen für diese Angaben (öffnet in einem neuen Tab)',
   controlsTitle: 'Steuerung',

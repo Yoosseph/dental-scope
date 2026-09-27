@@ -123,3 +123,41 @@ def surface_point(mesh: trimesh.Trimesh, origin, direction):
         return None
     d = np.linalg.norm(loc - origin, axis=1)
     return loc[np.argmin(d)]
+
+
+def tube_polyline(points: np.ndarray, radii, sides: int = 12, cap: bool = True) -> trimesh.Trimesh:
+    """Sweep a circle along an already dense polyline with a per-point radius (parallel transport)."""
+    c = np.asarray(points, float)
+    keep = np.r_[True, np.linalg.norm(np.diff(c, axis=0), axis=1) > 1e-6]
+    c = c[keep]
+    r = np.broadcast_to(np.asarray(radii, float), (len(keep),))[keep]
+    n = len(c)
+    tangents = np.gradient(c, axis=0)
+    tangents /= np.linalg.norm(tangents, axis=1, keepdims=True)
+    ref = np.array([0, 0, 1.0]) if abs(tangents[0][2]) < 0.9 else np.array([1.0, 0, 0])
+    normal = np.cross(tangents[0], ref)
+    normal /= np.linalg.norm(normal)
+    ang = np.linspace(0, 2 * np.pi, sides, endpoint=False)
+    verts = []
+    for i in range(n):
+        t = tangents[i]
+        normal = normal - t * (normal @ t)
+        normal /= np.linalg.norm(normal)
+        binormal = np.cross(t, normal)
+        verts.append(c[i] + r[i] * (np.cos(ang)[:, None] * normal + np.sin(ang)[:, None] * binormal))
+    verts = np.concatenate(verts)
+    faces = []
+    for i in range(n - 1):
+        for j in range(sides):
+            a, b = i * sides + j, i * sides + (j + 1) % sides
+            cc, d = (i + 1) * sides + j, (i + 1) * sides + (j + 1) % sides
+            faces += [[a, cc, b], [b, cc, d]]
+    if cap:
+        s0 = len(verts)
+        verts = np.vstack([verts, c[0], c[-1]])
+        base = (n - 1) * sides
+        for j in range(sides):
+            faces.append([s0, j, (j + 1) % sides])
+            faces.append([s0 + 1, base + (j + 1) % sides, base + j])
+    m = trimesh.Trimesh(verts, np.array(faces), process=False)
+    return orient_outward(m)

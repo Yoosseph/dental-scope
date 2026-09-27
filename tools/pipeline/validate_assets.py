@@ -91,6 +91,55 @@ def main() -> None:
                 if tooth is not None and gum.contains(tooth.vertices[::40]).any():
                     errors.append(f"{arch}: tooth {fdi} intersects gingiva")
 
+    # Arch dissection: at every point of the slider the visible part of each tooth must stay
+    # clear of the gum. While a tooth slides out, the engine cuts away the part still below the
+    # gum collar (uRootCut = collar - e * extract along the axis from the cervical line), so only
+    # the part above that plane is checked. Fully separated, upper and lower teeth must not overlap.
+    plan = manifest.get("explode")
+    if not plan:
+        errors.append("manifest: missing explode plan")
+    else:
+        for arch, jaw, sign in (("gingiva-upper", "upper", -1), ("gingiva-lower", "lower", 1)):
+            gum = gums.get(arch)
+            if gum is None:
+                continue
+            for e in (0.2, 0.4, 0.6, 0.8, 1.0):
+                for fdi, tooth in shells.items():
+                    if (fdi < 30) != (jaw == "upper"):
+                        continue
+                    info = manifest["teeth"][str(fdi)]
+                    axis = np.array(info["frame"]["axis"])
+                    cervical = np.array(info["landmarks"]["cervical-line"])
+                    v = tooth.vertices[::10]
+                    v = v[(v - cervical) @ axis >= info["collar"] - e * info["extract"]]
+                    pts = v + e * info["extract"] * axis  # tooth relative to gum
+                    if gum.contains(pts).any():
+                        errors.append(f"dissection {e:.0%}: tooth {fdi} passes through {arch}")
+        def placed(fdi, tooth):
+            info = manifest["teeth"][str(fdi)]
+            jaw_y = plan["jaw"] - plan["upper"]["gingiva"] if fdi < 30 else -plan["jaw"] + plan["lower"]["gingiva"]
+            return tooth.vertices + np.array([0, jaw_y, 0]) + info["extract"] * np.array(info["frame"]["axis"])
+
+        up = np.vstack([placed(f, s) for f, s in shells.items() if f < 30])
+        lo = np.vstack([placed(f, s) for f, s in shells.items() if f > 30])
+        gap = cKDTree(up).query(lo)[0].min()
+        if gap < 0.2:
+            errors.append(f"dissection: upper and lower teeth only {gap * 10:.1f} mm apart")
+
+    # Nerves and vessels carry their jaw weight (vertex colour) for the dissection stretch.
+    nv = trimesh.load(args.build / "neurovascular.glb", force="scene")
+    for key, mesh in nv.geometry.items():
+        if mesh.visual.kind != "vertex":
+            errors.append(f"{key}: missing jaw-weight vertex colours")
+    # The inferior alveolar nerve runs inside the mandible between its foramina.
+    mand = trimesh.load(args.build / "core.glb", force="scene").geometry
+    mandible = trimesh.util.concatenate([mand[k] for k in ("mandible-body", "mandibular-alveolar-process")])
+    for side in ("right", "left"):
+        trunk = np.array(manifest["paths"][f"inferior-alveolar-nerve-{side}"][0])
+        near = cKDTree(mandible.vertices).query(trunk)[0]
+        if np.median(near) > 0.6:
+            errors.append(f"inferior-alveolar-nerve-{side}: trunk lies {np.median(near) * 10:.1f} mm from the mandible")
+
     print(f"Validated {len(expected)} GLBs, {len(manifest['meshes'])} meshes, {total_faces:,} triangles")
     print(f"Internal surfaces with nonmanifold edges: {len(nonmanifold)}")
     if nonmanifold:

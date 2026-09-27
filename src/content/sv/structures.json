@@ -228,14 +228,14 @@
   },
   "mandibular-foramen": {
     "summary": "Öppningen på insidan av underkäkens ramus där n. alveolaris inferior och kärlen går in i mandibularkanalen.",
-    "clinical": "Målområdet för mandibularblockad (bedövning av n. alveolaris inferior). Läget som visas är schematiskt.",
+    "clinical": "Målområdet för mandibularblockad (bedövning av n. alveolaris inferior). Läget är där atlasens nervförlopp passerar benytan.",
     "related": [
       "inferior-alveolar-nerve"
     ]
   },
   "mental-foramen": {
     "summary": "En öppning på underkäkens utsida, vanligen nära premolarernas rotspetsar, där n. mentalis och kärlen kommer ut.",
-    "clinical": "Läget är viktigt vid kirurgi i premolarområdet, implantatinstallation och mentalisblockad. Läget som visas är schematiskt.",
+    "clinical": "Läget är viktigt vid kirurgi i premolarområdet, implantatinstallation och mentalisblockad. Läget är där atlasens nervförlopp passerar benytan.",
     "related": [
       "mental-nerve",
       "inferior-alveolar-nerve"
@@ -261,7 +261,7 @@
   "inferior-alveolar-nerve": {
     "summary": "En gren av trigeminusnervens mandibulara gren (V3). Den går in genom foramen mandibulae och löper i mandibularkanalen under underkäkständernas rötter.",
     "function": "Känsel till underkäkens tänder; avger n. mentalis och fortsätter som n. incisivus.",
-    "clinical": "Bedövas med mandibularblockad. Närheten till tredje molarernas rötter och till implantatområden gör den till en nyckelstruktur att undvika vid kirurgi. Förloppet som visas är schematiskt.",
+    "clinical": "Bedövas med mandibularblockad. Närheten till tredje molarernas rötter och till implantatområden gör den till en nyckelstruktur att undvika vid kirurgi. Förloppet följer Z-Anatomy-atlasen, anpassat till den här skallen.",
     "related": [
       "mandibular-foramen",
       "mental-nerve",
@@ -271,7 +271,7 @@
   "mental-nerve": {
     "summary": "Den terminala gren av n. alveolaris inferior som kommer ut genom foramen mentale.",
     "function": "Känsel till underläppen, hakan och den labiala gingivan vid underkäkens framtänder.",
-    "clinical": "En skada kan ge domningar i underläppen och hakan. Förloppet som visas är schematiskt.",
+    "clinical": "En skada kan ge domningar i underläppen och hakan. Förloppet följer Z-Anatomy-atlasen, anpassat till den här skallen.",
     "related": [
       "mental-foramen",
       "inferior-alveolar-nerve"
@@ -287,7 +287,7 @@
   "lingual-nerve": {
     "summary": "En gren av trigeminusnervens mandibulara gren (V3) som löper framåt medialt om ramus, nära den linguala kortikalisen vid tredje molaren, till munbotten och tungan.",
     "function": "Allmän känsel till tungans främre två tredjedelar, munbotten och den linguala gingivan; den leder även smakfibrer från chorda tympani.",
-    "clinical": "Riskerar att skadas vid kirurgi av underkäkens tredje molarer. Förloppet som visas är schematiskt.",
+    "clinical": "Riskerar att skadas vid kirurgi av underkäkens tredje molarer. Förloppet följer Z-Anatomy-atlasen, anpassat till den här skallen.",
     "related": [
       "inferior-alveolar-nerve"
     ]
@@ -309,7 +309,7 @@
   "infraorbital-nerve": {
     "summary": "Fortsättningen av n. maxillaris (V2) genom orbitabotten, som når ansiktet genom foramen infraorbitale.",
     "function": "Känsel till nedre ögonlocket, näsans sida och överläppen; avger de främre (och, när de finns, mellersta) övre alveolarnerverna.",
-    "clinical": "Förloppet som visas är schematiskt.",
+    "clinical": "Förloppet följer Z-Anatomy-atlasen, anpassat till den här skallen.",
     "related": [
       "anterior-superior-alveolar-nerve",
       "middle-superior-alveolar-nerve"
@@ -342,7 +342,7 @@
   "inferior-alveolar-artery": {
     "summary": "En gren av a. maxillaris som följer n. alveolaris inferior genom mandibularkanalen.",
     "function": "Blodförsörjning till underkäken och underkäkens tänder.",
-    "clinical": "Förloppet som visas är schematiskt.",
+    "clinical": "Förloppet följer Z-Anatomy-atlasen, anpassat till den här skallen.",
     "related": [
       "inferior-alveolar-nerve",
       "inferior-alveolar-vein"
@@ -440,6 +440,142 @@
     "related": [
       "maxilla",
       "mandible"
+    ]
+  },
+  "trigeminal-nerve": {
+    "summary": "Den femte kranialnerven. Från ganglion trigeminale delar den sig i n. ophthalmicus (V1), n. maxillaris (V2) och n. mandibularis (V3).",
+    "function": "Ansiktets, tändernas och munnens viktigaste känselnerv; den mandibulara delen styr också tuggmusklerna.",
+    "related": [
+      "maxillary-nerve",
+      "mandibular-nerve"
+    ]
+  },
+  "maxillary-nerve": {
+    "summary": "Trigeminusnervens andra gren (V2). Den lämnar skallen genom foramen rotundum, passerar fossa pterygopalatina och fortsätter som n. infraorbitalis.",
+    "function": "Känsel till överkäkens tänder, överkäkens gingiva, gommen, överläppen och kinden.",
+    "related": [
+      "infraorbital-nerve",
+      "posterior-superior-alveolar-nerve",
+      "trigeminal-nerve"
+    ]
+  },
+  "mandibular-nerve": {
+    "summary": "Trigeminusnervens tredje gren (V3). Den lämnar skallen genom foramen ovale och delar sig i en främre och en bakre stam.",
+    "function": "Känsel till underkäkens tänder, tungan, underläppen och hakan; motorisk försörjning av tuggmusklerna.",
+    "related": [
+      "inferior-alveolar-nerve",
+      "lingual-nerve",
+      "buccal-nerve",
+      "trigeminal-nerve"
+    ]
+  },
+  "buccal-nerve": {
+    "summary": "En känselgren från n. mandibularis (V3) främre stam som löper framåt över m. buccinator till kinden.",
+    "function": "Känsel till kinden och den buckala gingivan vid underkäkens molarer.",
+    "clinical": "Bedövas separat (buckal blockad) vid ingrepp i den buckala gingivan vid underkäkens molarer.",
+    "related": [
+      "mandibular-nerve"
+    ]
+  },
+  "external-carotid-artery": {
+    "summary": "Artären som försörjer större delen av ansiktet och käkarna. Den stiger bakom underkäkens ramus och slutar med att dela sig i a. maxillaris och a. temporalis superficialis.",
+    "function": "Dess grenar, bland annat a. facialis och a. maxillaris, för blod till tänderna, käkarna, ansiktet och skalpen.",
+    "related": [
+      "maxillary-artery",
+      "facial-artery"
+    ]
+  },
+  "maxillary-artery": {
+    "summary": "En av a. carotis externas slutgrenar. Den löper framåt bakom underkäkens collum genom fossa infratemporalis in i fossa pterygopalatina.",
+    "function": "Avger a. alveolaris inferior, a. alveolaris superior posterior, a. buccalis och a. palatina descendens, som försörjer tänderna, käkarna och gommen.",
+    "related": [
+      "external-carotid-artery",
+      "inferior-alveolar-artery",
+      "posterior-superior-alveolar-artery"
+    ]
+  },
+  "posterior-superior-alveolar-artery": {
+    "summary": "En gren av a. maxillaris som går ned på överkäkens baksida (tuber maxillae) och in i benet genom små hål.",
+    "function": "Blodförsörjning till överkäkens molarer och premolarer, sinus maxillaris och den buckala gingivan.",
+    "clinical": "Kan blöda vid tuberblockad och vid sinuslyft.",
+    "related": [
+      "maxillary-artery",
+      "posterior-superior-alveolar-nerve"
+    ]
+  },
+  "descending-palatine-artery": {
+    "summary": "En gren av a. maxillaris som går ned genom canalis palatinus major och fortsätter framåt på hårda gommen som a. palatina major.",
+    "function": "Blodförsörjning till hårda gommen och den palatinala gingivan.",
+    "clinical": "Viktig att ta hänsyn till vid bindvävstransplantat från gommen och vid snitt i gommen.",
+    "related": [
+      "maxillary-artery"
+    ]
+  },
+  "buccal-artery": {
+    "summary": "En liten gren av a. maxillaris som följer n. buccalis ut på m. buccinator.",
+    "function": "Blodförsörjning till kinden och kindslemhinnan.",
+    "related": [
+      "maxillary-artery",
+      "buccal-nerve"
+    ]
+  },
+  "facial-artery": {
+    "summary": "En gren av a. carotis externa som böjer sig över underkäkens nedre kant strax framför m. masseter och löper upp över ansiktet.",
+    "function": "Blodförsörjning till läpparna, kinden, hakan och näsans sida.",
+    "clinical": "Pulsen kan kännas där den korsar underkäkens nedre kant.",
+    "related": [
+      "external-carotid-artery",
+      "facial-vein"
+    ]
+  },
+  "pterygoid-plexus": {
+    "summary": "Ett nätverk av vener runt m. pterygoideus lateralis i fossa infratemporalis. Käkarnas och tändernas vener dräneras hit, och plexus dräneras till v. maxillaris.",
+    "function": "Samlar blod från vv. alveolares inferiores, tuggmusklerna och gommen.",
+    "clinical": "Kan punkteras vid tuberblockad och ge ett hematom. Nätverket som visas är schematiskt.",
+    "related": [
+      "maxillary-vein",
+      "inferior-alveolar-vein"
+    ]
+  },
+  "maxillary-vein": {
+    "summary": "En kort ven som för blod från plexus pterygoideus bakåt bakom underkäkens collum, där den förenas med v. temporalis superficialis till v. retromandibularis.",
+    "function": "Dränerar plexus pterygoideus.",
+    "related": [
+      "pterygoid-plexus",
+      "retromandibular-vein"
+    ]
+  },
+  "retromandibular-vein": {
+    "summary": "Venen som löper ned bakom underkäkens ramus, inne i öronspottkörteln, och delar sig i en främre och en bakre gren.",
+    "function": "För blod från v. maxillaris och v. temporalis superficialis vidare till v. facialis och v. jugularis externa.",
+    "related": [
+      "maxillary-vein",
+      "facial-vein",
+      "external-jugular-vein"
+    ]
+  },
+  "facial-vein": {
+    "summary": "Ansiktets huvudven. Den löper ned bakom a. facialis, korsar underkäkens nedre kant och förenas med v. retromandibularis främre gren till v. facialis communis.",
+    "function": "Dränerar ansiktet, läpparna och hakan till v. jugularis interna.",
+    "clinical": "Den har förbindelser med ögonhålans vener, så infektioner i överläppen och näsan kan spridas inåt.",
+    "related": [
+      "facial-artery",
+      "internal-jugular-vein"
+    ]
+  },
+  "internal-jugular-vein": {
+    "summary": "Den stora venen på halsens sida som för blod från hjärnan, ansiktet och halsen ned mot hjärtat. Endast den övre delen visas.",
+    "function": "Tar emot v. facialis och därmed det mesta av det venösa blodet från ansiktet och käkarna.",
+    "related": [
+      "facial-vein",
+      "external-carotid-artery"
+    ]
+  },
+  "external-jugular-vein": {
+    "summary": "En ytlig halsven som bildas nära underkäkens vinkel av v. retromandibularis bakre gren. Endast den övre delen visas.",
+    "function": "Dränerar skalpen och ansiktets sida.",
+    "related": [
+      "retromandibular-vein"
     ]
   }
 }

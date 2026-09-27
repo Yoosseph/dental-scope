@@ -119,6 +119,9 @@ export function AboutDialog() {
           <strong>{m.provModeled}</strong> — {m.provModeledBody}
         </li>
         <li>
+          <strong>{m.provAtlas}</strong> — {withEm(m.provAtlasBody, 'Z-Anatomy')}
+        </li>
+        <li>
           <strong>{m.provSchematic}</strong> — {m.provSchematicBody}
         </li>
       </ul>

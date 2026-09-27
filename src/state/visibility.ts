@@ -7,10 +7,23 @@ import type { Registry } from '../anatomy/registry';
 import type { CategoryState } from '../anatomy/categories';
 import type { AppState } from './store';
 
-/** 'faint' is a quieter ghost used for surrounding context. */
-export type MeshVisual = 'on' | 'ghost' | 'faint' | 'off';
+/**
+ * 'faint' is a quieter ghost used for surrounding context. 'see-through' is bone with the
+ * nerve and vessel layers on: clearly visible, but open enough to show what runs inside it.
+ */
+export type MeshVisual = 'on' | 'see-through' | 'ghost' | 'faint' | 'off';
 
-const RANK: Record<MeshVisual, number> = { off: 0, faint: 1, ghost: 2, on: 3 };
+const RANK: Record<MeshVisual, number> = { off: 0, faint: 1, ghost: 2, 'see-through': 3, on: 4 };
+
+const BONE = new Set(['maxilla', 'mandible', 'alveolar-bone']);
+const NEUROVASCULAR = ['nerves', 'arteries', 'veins'] as const;
+
+/** Bone turns see-through whenever a nerve or vessel layer is fully on (the paths run inside it). */
+function boneSeeThrough(cats: readonly string[], state: AppState): boolean {
+  // not while sectioning (the cut shows solid bone) or on the laid-out board (nothing runs inside it there)
+  if (state.clip.enabled || state.explodePhase === 2 || !cats.some((c) => BONE.has(c))) return false;
+  return NEUROVASCULAR.some((c) => state.categories[c] === 'on');
+}
 const minVis = (a: MeshVisual, b: MeshVisual): MeshVisual => (RANK[a] <= RANK[b] ? a : b);
 
 export type VisibilityFilter = (meshKey: string, ownerId: string, state: AppState) => MeshVisual;
@@ -72,6 +85,8 @@ export function resolveMesh(meshKey: string, ctx: VisibilityContext): MeshVisual
     const cs: CategoryState = state.categories[c] ?? 'on';
     v = minVis(v, cs);
   }
+
+  if (owner.toothFdi === undefined && boneSeeThrough(registry.categoriesOfMesh(meshKey), state)) v = minVis(v, 'see-through');
 
   // explicit hide / ghost on the structure or any ancestor
   const chain = [owner, ...registry.ancestors(ownerId)];
