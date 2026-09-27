@@ -77,7 +77,7 @@ export type SceneTheme = AppState['theme'];
  * bone wash out together; slightly lower exposure brings back surface shading.
  */
 export const THEME_LIGHTING: Record<SceneTheme, { exposure: number; environment: number }> = {
-  light: { exposure: 0.9, environment: 0.38 },
+  light: { exposure: 0.98, environment: 0.45 },
   dark: { exposure: 1, environment: 0.45 },
 };
 
