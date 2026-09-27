@@ -34,7 +34,7 @@ interface MeshEntry {
   hover: boolean;
   labelPoint?: THREE.Vector3; // geometry-space label anchor
   /** tooth shells beside a shown gum: how the root is cut while it is in the gum (see refreshRootCuts) */
-  rootCut?: { atRest: boolean; extract: number; collar: number };
+  rootCut?: { extract: number; collar: number };
   /** nerve or vessel: faded to quiet background while the jaws are dissected (0 = full, 1 = quiet) */
   nv?: boolean;
   quiet?: number;
@@ -448,7 +448,7 @@ export class Engine {
       // leave room for the bottom toolbar and the side panels
       const fit = Math.max((halfH / tanV) * 1.15, (halfW / (tanV * cam.aspect)) * 1.25);
       const dir = preset ? PRESET_DIRS[preset].clone() : cam.position.clone().sub(this.rig.controls.target).normalize();
-      this.rig.focusSphere(center, size.length() / 2, { direction: dir, distance: fit + size.z / 2, duration: 0.6 });
+      this.rig.focusSphere(c, size.length() / 2, { direction: dir, distance: fit + size.z / 2, duration: 0.6 });
       this.invalidate();
     }, 120);
   }
@@ -500,12 +500,9 @@ export class Engine {
       if (!match) continue;
       const fdi = Number(match[1]);
       const gum = fdi < 30 ? 'gingiva-upper' : 'gingiva-lower';
-      const bone = fdi < 30 ? 'maxillary-alveolar-process-right' : 'mandibular-alveolar-process';
       const gumShown = resolveMesh(gum, ctx) === 'on' && s.dissectFdi === null && !s.clip.enabled && s.explodePhase === 1;
       e.rootCut = gumShown
         ? {
-            // assembled: hide the roots under opaque bone; with see-through bone they show in their sockets
-            atRest: resolveMesh(bone, ctx) === 'on',
             extract: this.registry.manifest.teeth[String(fdi)]?.extract ?? 2,
             collar: this.registry.manifest.teeth[String(fdi)]?.collar ?? 0.2,
           }
@@ -1066,10 +1063,12 @@ export class Engine {
       prevPos.copy(e.mesh.position);
       e.mesh.position.copy(e.archOffset).multiplyScalar(this.explodeCur);
       if (e.rootCut) {
-        // While a tooth slides out of the gum, the part of it still inside the gum is cut away,
-        // so a flared root never shows through the narrower gum collar.
+        // Roots below the gum line are never drawn while the gum is shown: assembled, the thin
+        // see-through bone would otherwise show them sticking out under the gum; while a tooth
+        // slides out, the part still inside the gum is cut away so a flared root never shows
+        // through the narrower gum collar.
         e.mesh.material.userData.fx.uRootCut.value =
-          this.explodeCur < 1e-3 ? (e.rootCut.atRest ? ROOT_CUT_REST : -100) : e.rootCut.collar - this.explodeCur * e.rootCut.extract;
+          this.explodeCur < 1e-3 ? ROOT_CUT_REST : e.rootCut.collar - this.explodeCur * e.rootCut.extract;
       }
       if (e.mesh.morphTargetInfluences) {
         const stretch = this.explodeCur * (1 - this.phaseCur);
