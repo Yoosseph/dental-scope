@@ -4,20 +4,24 @@
  */
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { MeshBVH, acceleratedRaycast } from 'three-mesh-bvh';
 import type { Registry } from '../anatomy/registry';
 import type { Structure } from '../anatomy/types';
 import { formatTooth } from '../anatomy/notation';
 import { nameOf, shortOf } from '../i18n';
 import { store, getState, setState, actions, DISSECT_LEVELS, type AppState, type ViewPreset } from '../state/store';
+import { levelShowing, levelShows } from '../state/dissectLevels';
 import { resolveMesh, revealPatch, layersActive, type MeshVisual } from '../state/visibility';
 import { Animator } from './animator';
 import { AssetLoader } from './assets';
 import { CameraRig, PRESET_DIRS } from './camera';
 import { archOffset, isNeurovascular, neurovascularStretch, pulpLayerOffset, toothLayerOffset } from './explode';
 import { boardAssemblyKey, boardSlot, shelfLayout, type LayoutItem } from './layout';
+import { computeLabelPoint } from './labelPoint';
 import { LabelLayer, type LabelCandidate } from './labels';
 import { HIGHLIGHT, THEME_LIGHTING, highlightColor, themedColor, applyThemeToMaterial, createTissueMaterial, setFibreAxis, setMaterialOpacity, styleKeyFor, type SceneTheme, type TissueMaterial } from './materials';
 import { SectionTool } from './section';
+import { colorToothShell, shadeEnamelCrevices } from './toothShading';
 
 interface MeshEntry {
   key: string;
@@ -83,6 +87,8 @@ export class Engine {
   private raf = 0;
   private unsub: (() => void)[] = [];
   private explodeCur = 0;
+  private bvhQueue: THREE.BufferGeometry[] = [];
+  private bvhScheduled = false;
   private toothExplodeCur = 0;
   /** 0…1 blend from the normal layer separation to the pulp-only one (Root canals level) */
   private pulpModeCur = 0;
@@ -291,6 +297,11 @@ export class Engine {
       }
       mesh.name = key;
       mesh.userData.key = key;
+      // Ray tests (hover, picking, label occlusion) use a bounding-volume tree once it is built:
+      // the same hits as the plain test with far fewer triangles checked. The tree describes the
+      // rest shape, so nerves and vessels fall back to the plain test while they are stretched.
+      mesh.raycast = geo.morphAttributes.position ? morphAwareRaycast : acceleratedRaycast;
+      this.bvhQueue.push(geo);
       mesh.visible = false;
       const center = geo.boundingBox!.getCenter(new THREE.Vector3());
       const entry: MeshEntry = {
@@ -311,6 +322,23 @@ export class Engine {
       this.entries.set(key, entry);
       this.root.add(mesh);
     }
+    this.scheduleBvh();
+  }
+
+  /** Build ray-test trees in idle time, a few meshes per slice, so loading never stalls. */
+  private scheduleBvh() {
+    if (this.bvhScheduled || !this.bvhQueue.length) return;
+    this.bvhScheduled = true;
+    // a timer rather than requestIdleCallback: while the scene animates the browser may never be idle
+    setTimeout(() => {
+      const until = performance.now() + 10;
+      while (this.bvhQueue.length && performance.now() < until) {
+        const geo = this.bvhQueue.shift()!;
+        if (!geo.boundsTree && geo.index !== null) geo.boundsTree = new MeshBVH(geo);
+      }
+      this.bvhScheduled = false;
+      if (!this.disposed) this.scheduleBvh();
+    }, 30);
   }
 
   /* ========================================================= state sync */
@@ -648,7 +676,7 @@ export class Engine {
   }
 
   private labelAnchor(e: MeshEntry): THREE.Vector3 {
-    if (!e.labelPoint) e.labelPoint = computeLabelPoint(e, this.registry);
+    if (!e.labelPoint) e.labelPoint = computeLabelPoint(e.mesh.geometry, e.key, e.owner, this.registry);
     return e.labelPoint.clone().add(e.mesh.position);
   }
 
@@ -694,16 +722,19 @@ export class Engine {
     this.pointer.set((this.pointerPx.x / r.width) * 2 - 1, -(this.pointerPx.y / r.height) * 2 + 1);
   }
 
-  private pickables(): THREE.Object3D[] {
+  private pickables(opaqueOnly = false): THREE.Object3D[] {
     const out: THREE.Object3D[] = [];
-    for (const e of this.entries.values()) if (e.mesh.visible && e.visual !== 'off') out.push(e.mesh);
+    for (const e of this.entries.values()) if (e.mesh.visible && (opaqueOnly ? e.visual === 'on' : e.visual !== 'off')) out.push(e.mesh);
     return out;
   }
 
-  /** Entries hit by the current raycaster ray, nearest first, skipping parts cut away by the section. */
-  private *rayHits(): Generator<{ entry: MeshEntry; distance: number }> {
+  /**
+   * Entries hit by the current raycaster ray, nearest first, skipping parts cut away by the section.
+   * `opaqueOnly` leaves ghosted and see-through meshes out of the test (they never occlude).
+   */
+  private *rayHits(opaqueOnly = false): Generator<{ entry: MeshEntry; distance: number }> {
     const clip = getState().clip.enabled;
-    for (const h of this.raycaster.intersectObjects(this.pickables(), false)) {
+    for (const h of this.raycaster.intersectObjects(this.pickables(opaqueOnly), false)) {
       if (clip && !this.section.keeps(h.point)) continue;
       const entry = this.entries.get(h.object.userData.key as string);
       if (entry) yield { entry, distance: h.distance };
@@ -726,7 +757,7 @@ export class Engine {
     // only hits in front of the label anchor can hide it: stop the ray there
     this.raycaster.far = from.distanceTo(to);
     try {
-      for (const { entry, distance } of this.rayHits()) if (entry.visual === 'on') return { id: entry.owner, distance };
+      for (const { entry, distance } of this.rayHits(true)) return { id: entry.owner, distance };
       return null;
     } finally {
       this.raycaster.far = Infinity;
@@ -1101,6 +1132,12 @@ export class Engine {
 
 /* ------------------------------------------------------------------ helpers */
 
+/** Accelerated ray test while the morph is at rest, the plain (morph-following) one while stretched. */
+function morphAwareRaycast(this: THREE.Mesh, raycaster: THREE.Raycaster, hits: THREE.Intersection[]) {
+  if (this.morphTargetInfluences?.some((v) => v !== 0)) THREE.Mesh.prototype.raycast.call(this, raycaster, hits);
+  else acceleratedRaycast.call(this, raycaster, hits);
+}
+
 /** Along the tooth axis from the cervical line (cm): where the gum collar hides the root in the assembled mouth. */
 const ROOT_CUT_REST = -0.12;
 
@@ -1112,82 +1149,6 @@ const QUIET_TINT = { light: new THREE.Color('#d8d2c6'), dark: new THREE.Color('#
 /** Bone opacity while the nerve and vessel layers are on. */
 const SEE_THROUGH_OPACITY = 0.32;
 
-
-/** Give the intact tooth a subtle crown-to-root colour change at its modeled CEJ. */
-function colorToothShell(geo: THREE.BufferGeometry, mat: TissueMaterial, registry: Registry, fdi: number) {
-  const tooth = registry.manifest.teeth[String(fdi)];
-  const cervical = tooth?.landmarks?.['cervical-line'];
-  const axis = tooth?.frame.axis;
-  if (!cervical || !axis) return;
-  mat.userData.fx.uCervical.value.set(...cervical);
-  mat.userData.fx.uToothAxis.value.set(...axis);
-  const positions = geo.getAttribute('position');
-  const crevices = meshCrevices(geo, 0.0004, 0.004);
-  const colors = new Float32Array(positions.count * 3);
-  let crownTop = 0;
-  for (let i = 0; i < positions.count; i++) {
-    const h = (positions.getX(i) - cervical[0]) * axis[0]
-      + (positions.getY(i) - cervical[1]) * axis[1]
-      + (positions.getZ(i) - cervical[2]) * axis[2];
-    crownTop = Math.max(crownTop, h);
-  }
-  const shade = 1 + (((fdi * 17) % 7) - 3) * 0.006;
-  for (let i = 0; i < positions.count; i++) {
-    const height = (positions.getX(i) - cervical[0]) * axis[0]
-      + (positions.getY(i) - cervical[1]) * axis[1]
-      + (positions.getZ(i) - cervical[2]) * axis[2];
-    const crown = THREE.MathUtils.smoothstep(height, -0.11, 0.07);
-    const tip = THREE.MathUtils.smoothstep(height, crownTop * 0.65, crownTop * 0.92);
-    const fissure = 1 - 0.25 * crevices[i] * crown;
-    colors[i * 3] = THREE.MathUtils.lerp(0.84, 1, crown) * (1 - 0.08 * tip) * shade * fissure;
-    colors[i * 3 + 1] = THREE.MathUtils.lerp(0.76, 0.985, crown) * (1 - 0.015 * tip) * shade * fissure;
-    colors[i * 3 + 2] = THREE.MathUtils.lerp(0.66, 0.96, crown) * (1 + 0.035 * tip) * shade * fissure;
-  }
-  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-}
-
-/** Accentuate concave regions already present in the tooth surface, especially occlusal fissures. */
-function shadeEnamelCrevices(geo: THREE.BufferGeometry) {
-  const crevices = meshCrevices(geo, 0.0015, 0.008);
-  const colors = new Float32Array(crevices.length * 3);
-  for (let i = 0; i < crevices.length; i++) {
-    const shade = 1 - 0.19 * crevices[i];
-    colors[i * 3] = shade;
-    colors[i * 3 + 1] = shade;
-    colors[i * 3 + 2] = shade;
-  }
-  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-}
-
-function meshCrevices(geo: THREE.BufferGeometry, start: number, end: number): Float32Array {
-  const pos = geo.getAttribute('position');
-  const normal = geo.getAttribute('normal');
-  const index = geo.getIndex();
-  const out = new Float32Array(pos.count);
-  if (!index || !normal) return out;
-  const sum = new Float32Array(pos.count * 3);
-  const degree = new Uint16Array(pos.count);
-  const add = (from: number, to: number) => {
-    sum[from * 3] += pos.getX(to);
-    sum[from * 3 + 1] += pos.getY(to);
-    sum[from * 3 + 2] += pos.getZ(to);
-    degree[from]++;
-  };
-  for (let i = 0; i < index.count; i += 3) {
-    const a = index.getX(i), b = index.getX(i + 1), c = index.getX(i + 2);
-    add(a, b); add(a, c); add(b, a); add(b, c); add(c, a); add(c, b);
-  }
-  for (let i = 0; i < pos.count; i++) {
-    if (!degree[i]) continue;
-    const x = sum[i * 3] / degree[i] - pos.getX(i);
-    const y = sum[i * 3 + 1] / degree[i] - pos.getY(i);
-    const z = sum[i * 3 + 2] / degree[i] - pos.getZ(i);
-    const depth = x * normal.getX(i) + y * normal.getY(i) + z * normal.getZ(i);
-    out[i] = THREE.MathUtils.smoothstep(depth, start, end);
-  }
-  return out;
-}
-
 /** One easing step from `cur` toward `target`, snapping to the target once within `snap`. */
 function stepToward(cur: number, target: number, rate: number, snap: number): number {
   const next = cur + (target - cur) * rate;
@@ -1196,67 +1157,4 @@ function stepToward(cur: number, target: number, rate: number, snap: number): nu
 
 function nextFrame() {
   return new Promise((r) => requestAnimationFrame(() => r(null)));
-}
-
-/** A dissection level at which a given tooth part is fully visible. */
-function levelShowing(id: string): number {
-  if (id.startsWith('canal-') || id.startsWith('root-canals-') || id.startsWith('apical-')) return 4;
-  if (id.startsWith('enamel-') || id.startsWith('crown-') || id.startsWith('cej-')) return 0;
-  if (id.startsWith('pdl-') || id.startsWith('cementum-') || id.startsWith('root-') || id.startsWith('apex-')) return 1;
-  if (id.startsWith('dentin')) return 2;
-  if (id.startsWith('pulp-chamber') || id.startsWith('pulp-horn') || id.startsWith('pulp-')) return 3;
-  return 0;
-}
-
-function levelShows(level: number, id: string): boolean {
-  const want = levelShowing(id);
-  if (want >= 3) return level >= 3;
-  if (want === 2) return level === 2;
-  return level <= 1 || want === level;
-}
-
-/** A point on the outer surface of a mesh to anchor its label. */
-function computeLabelPoint(e: MeshEntry, registry: Registry): THREE.Vector3 {
-  const geo = e.mesh.geometry;
-  const pos = geo.getAttribute('position') as THREE.BufferAttribute;
-  const center = geo.boundingBox!.getCenter(new THREE.Vector3());
-  const owner = registry.get(e.owner);
-  const fdi = owner?.toothFdi;
-  let dir = center.clone().sub(new THREE.Vector3(0, 0, -0.6));
-  if (fdi !== undefined) {
-    const f = registry.get(`tooth-${fdi}`)?.tooth?.frame;
-    if (f) {
-      const axis = new THREE.Vector3(...f.axis);
-      const buccal = new THREE.Vector3(...f.buccal);
-      const kind = e.key.replace(/-\d{2}$/, '');
-      const mix: Record<string, [number, number]> = {
-        shell: [1, 0.35],
-        enamel: [1, 0.3],
-        'dentin-coronal': [0.25, 1],
-        'dentin-radicular': [-0.45, 1],
-        cementum: [-0.8, 1],
-        pdl: [-1, 0.4],
-        'pulp-chamber': [1, 0.2],
-      };
-      const [a, b] = mix[e.key === `tooth-${fdi}` ? 'shell' : kind] ?? [0, 0];
-      if (a || b) dir = axis.multiplyScalar(a).addScaledVector(buccal, b);
-      else {
-        // canals: centroid of the mesh
-        return center;
-      }
-    }
-  }
-  dir.normalize();
-  let best = -Infinity;
-  const v = new THREE.Vector3();
-  const out = new THREE.Vector3();
-  for (let i = 0; i < pos.count; i++) {
-    v.fromBufferAttribute(pos, i);
-    const d = v.clone().sub(center).dot(dir);
-    if (d > best) {
-      best = d;
-      out.copy(v);
-    }
-  }
-  return out;
 }

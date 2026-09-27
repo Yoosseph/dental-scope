@@ -2025,3 +2025,18 @@ button.ds-layer-name:hover {
     width: 30px;
   }
 }
+/* five flags must leave room for the title on the narrowest phones */
+@media (max-width: 430px) {
+  .ds-lang {
+    gap: 0;
+    padding: 2px;
+  }
+  .ds-lang button {
+    width: 25px;
+    height: 28px;
+  }
+  .ds-lang svg {
+    width: 18px;
+    height: 12px;
+  }
+}

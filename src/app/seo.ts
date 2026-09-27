@@ -30,7 +30,7 @@ export const HOME: PageMeta = {
     'Free interactive 3D dental anatomy: all 32 permanent teeth with FDI, Universal and Palmer numbers, enamel to root canals, jaws and nerves. Educational tool.',
 };
 
-const ABOUT_ALTERNATES: Record<Lang, string> = { en: 'about/', sv: 'about/sv/', de: 'about/de/' };
+const ABOUT_ALTERNATES: Record<Lang, string> = { en: 'about/', sv: 'about/sv/', de: 'about/de/', es: 'about/es/', la: 'about/la/' };
 const aboutPage = (lang: Lang): PageMeta => ({
   path: ABOUT_ALTERNATES[lang],
   title: ABOUT_TEXT[lang].title,
@@ -40,10 +40,10 @@ const aboutPage = (lang: Lang): PageMeta => ({
 });
 
 export const ABOUT: PageMeta = aboutPage('en');
-/** The about page in every language: English, Swedish, German. */
-export const ABOUT_PAGES: PageMeta[] = [ABOUT, aboutPage('sv'), aboutPage('de')];
-const LOCALE: Record<Lang, string> = { en: 'en_US', sv: 'sv_SE', de: 'de_DE' };
-const ABOUT_CRUMB: Record<Lang, string> = { en: 'About', sv: 'Om', de: 'Über' };
+/** The about page in every language: English, Swedish, German, Spanish, Latin. */
+export const ABOUT_PAGES: PageMeta[] = [ABOUT, aboutPage('sv'), aboutPage('de'), aboutPage('es'), aboutPage('la')];
+const LOCALE: Record<Lang, string> = { en: 'en_US', sv: 'sv_SE', de: 'de_DE', es: 'es_ES', la: 'la_VA' };
+const ABOUT_CRUMB: Record<Lang, string> = { en: 'About', sv: 'Om', de: 'Über', es: 'Acerca de', la: 'De opere' };
 
 export const OG_IMAGE = { path: 'og-image.png', width: 1200, height: 630, alt: 'Dental Scope: 3D model of the jaws and permanent teeth' };
 

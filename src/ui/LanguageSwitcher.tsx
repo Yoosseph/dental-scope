@@ -4,6 +4,7 @@
  */
 import { LANGS, LANG_NATIVE, MESSAGES, useLang, useT, type Lang } from '../i18n';
 import { actions } from '../state/store';
+import spainFlag from './flags/es.png';
 
 export function LanguageSwitcher() {
   const lang = useLang();
@@ -45,6 +46,24 @@ function Flag({ lang }: { lang: Lang }) {
         <rect width="5" height="1" y="0" fill="#000" />
         <rect width="5" height="1" y="1" fill="#dd0000" />
         <rect width="5" height="1" y="2" fill="#ffce00" />
+      </svg>
+    );
+  if (lang === 'es')
+    // Spain: the state flag with the coat of arms (a small raster, too detailed for hand-written SVG)
+    return (
+      <svg {...common} viewBox="0 0 3 2">
+        <image href={spainFlag} width="3" height="2" preserveAspectRatio="xMidYMid slice" />
+      </svg>
+    );
+  if (lang === 'la')
+    // Latin has no country: a Roman vexillum, crimson with SPQR in gold
+    return (
+      <svg {...common} viewBox="0 0 30 20">
+        <rect width="30" height="20" fill="#8e1b1b" />
+        <rect x="1" y="1" width="28" height="18" fill="none" stroke="#e0b12f" strokeWidth="1" />
+        <text x="15" y="13.6" textAnchor="middle" fontFamily="Georgia, 'Times New Roman', serif" fontWeight="700" fontSize="9" letterSpacing="0.3" fill="#e0b12f">
+          SPQR
+        </text>
       </svg>
     );
   // United Kingdom
