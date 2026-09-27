@@ -141,12 +141,16 @@ function persist(key: string, value: string) {
   }
 }
 
+/** orbit mode to restore when the user leaves a tooth (set when entering one switched it to free) */
+let orbitBeforeTooth: OrbitMode | null = null;
+
 export const actions = {
   setCollapsed(panel: CollapsiblePanel, v: boolean) {
     setState((s) => ({ collapsed: { ...s.collapsed, [panel]: v } }));
   },
   /** Back to the start: every scene setting and preference to its default. Theme, language and loading progress are kept. */
   resetAll() {
+    orbitBeforeTooth = null;
     setState((s) => ({ ...initialState, ready: s.ready, loading: s.loading, error: s.error, theme: s.theme, lang: s.lang, resetId: s.resetId + 1 }));
     persist(PREF.numbering, initialState.numbering);
     persist(PREF.orbit, initialState.orbitMode);
@@ -235,13 +239,21 @@ export const actions = {
     setState({ autoRotate: on });
   },
   setOrbitMode(m: OrbitMode) {
+    // a choice made inside a tooth is the user's own: keep it when they leave the tooth
+    orbitBeforeTooth = null;
     setState({ orbitMode: m });
     persist(PREF.orbit, m);
   },
   enterDissect(fdi: number) {
-    setState({ dissectFdi: fdi, dissectLevel: 0, toothExplode: 0, isolateId: `tooth-${fdi}`, isolateContext: true, explode: 0, explodePhase: 1 });
+    // Inside a tooth the free orbit is the useful one (pan and focus on a canal or a root);
+    // the mouth-level orbit comes back when the tooth is left. Not saved as a preference.
+    if (getState().dissectFdi === null && getState().orbitMode !== 'free') orbitBeforeTooth = getState().orbitMode;
+    setState({ dissectFdi: fdi, dissectLevel: 0, toothExplode: 0, isolateId: `tooth-${fdi}`, isolateContext: true, explode: 0, explodePhase: 1, orbitMode: 'free' });
   },
   exitDissect() {
+    const restore = orbitBeforeTooth;
+    orbitBeforeTooth = null;
+    if (restore) setState({ orbitMode: restore });
     setState((s) => ({
       dissectFdi: null,
       dissectLevel: 0,
