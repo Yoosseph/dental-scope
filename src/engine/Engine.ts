@@ -10,6 +10,7 @@ import type { Structure } from '../anatomy/types';
 import { formatTooth } from '../anatomy/notation';
 import { nameOf, shortOf } from '../i18n';
 import { store, getState, setState, actions, DISSECT_LEVELS, type AppState, type ViewPreset } from '../state/store';
+import { levelShowing, levelShows } from '../state/dissectLevels';
 import { resolveMesh, revealPatch, layersActive, type MeshVisual } from '../state/visibility';
 import { Animator } from './animator';
 import { AssetLoader } from './assets';
@@ -1230,23 +1231,6 @@ function stepToward(cur: number, target: number, rate: number, snap: number): nu
 
 function nextFrame() {
   return new Promise((r) => requestAnimationFrame(() => r(null)));
-}
-
-/** A dissection level at which a given tooth part is fully visible. */
-function levelShowing(id: string): number {
-  if (id.startsWith('canal-') || id.startsWith('root-canals-') || id.startsWith('apical-')) return 4;
-  if (id.startsWith('enamel-') || id.startsWith('crown-') || id.startsWith('cej-')) return 0;
-  if (id.startsWith('pdl-') || id.startsWith('cementum-') || id.startsWith('root-') || id.startsWith('apex-')) return 1;
-  if (id.startsWith('dentin')) return 2;
-  if (id.startsWith('pulp-chamber') || id.startsWith('pulp-horn') || id.startsWith('pulp-')) return 3;
-  return 0;
-}
-
-function levelShows(level: number, id: string): boolean {
-  const want = levelShowing(id);
-  if (want >= 3) return level >= 3;
-  if (want === 2) return level === 2;
-  return level <= 1 || want === level;
 }
 
 /** A point on the outer surface of a mesh to anchor its label. */
