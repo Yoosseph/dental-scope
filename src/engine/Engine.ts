@@ -4,6 +4,7 @@
  */
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { MeshBVH, acceleratedRaycast } from 'three-mesh-bvh';
 import type { Registry } from '../anatomy/registry';
 import type { Structure } from '../anatomy/types';
 import { formatTooth } from '../anatomy/notation';
@@ -83,6 +84,8 @@ export class Engine {
   private raf = 0;
   private unsub: (() => void)[] = [];
   private explodeCur = 0;
+  private bvhQueue: THREE.BufferGeometry[] = [];
+  private bvhScheduled = false;
   private toothExplodeCur = 0;
   /** 0…1 blend from the normal layer separation to the pulp-only one (Root canals level) */
   private pulpModeCur = 0;
@@ -291,6 +294,11 @@ export class Engine {
       }
       mesh.name = key;
       mesh.userData.key = key;
+      // Ray tests (hover, picking, label occlusion) use a bounding-volume tree once it is built:
+      // the same hits as the plain test with far fewer triangles checked. The tree describes the
+      // rest shape, so nerves and vessels fall back to the plain test while they are stretched.
+      mesh.raycast = geo.morphAttributes.position ? morphAwareRaycast : acceleratedRaycast;
+      this.bvhQueue.push(geo);
       mesh.visible = false;
       const center = geo.boundingBox!.getCenter(new THREE.Vector3());
       const entry: MeshEntry = {
@@ -311,6 +319,23 @@ export class Engine {
       this.entries.set(key, entry);
       this.root.add(mesh);
     }
+    this.scheduleBvh();
+  }
+
+  /** Build ray-test trees in idle time, a few meshes per slice, so loading never stalls. */
+  private scheduleBvh() {
+    if (this.bvhScheduled || !this.bvhQueue.length) return;
+    this.bvhScheduled = true;
+    // a timer rather than requestIdleCallback: while the scene animates the browser may never be idle
+    setTimeout(() => {
+      const until = performance.now() + 10;
+      while (this.bvhQueue.length && performance.now() < until) {
+        const geo = this.bvhQueue.shift()!;
+        if (!geo.boundsTree && geo.index !== null) geo.boundsTree = new MeshBVH(geo);
+      }
+      this.bvhScheduled = false;
+      if (!this.disposed) this.scheduleBvh();
+    }, 30);
   }
 
   /* ========================================================= state sync */
@@ -694,16 +719,19 @@ export class Engine {
     this.pointer.set((this.pointerPx.x / r.width) * 2 - 1, -(this.pointerPx.y / r.height) * 2 + 1);
   }
 
-  private pickables(): THREE.Object3D[] {
+  private pickables(opaqueOnly = false): THREE.Object3D[] {
     const out: THREE.Object3D[] = [];
-    for (const e of this.entries.values()) if (e.mesh.visible && e.visual !== 'off') out.push(e.mesh);
+    for (const e of this.entries.values()) if (e.mesh.visible && (opaqueOnly ? e.visual === 'on' : e.visual !== 'off')) out.push(e.mesh);
     return out;
   }
 
-  /** Entries hit by the current raycaster ray, nearest first, skipping parts cut away by the section. */
-  private *rayHits(): Generator<{ entry: MeshEntry; distance: number }> {
+  /**
+   * Entries hit by the current raycaster ray, nearest first, skipping parts cut away by the section.
+   * `opaqueOnly` leaves ghosted and see-through meshes out of the test (they never occlude).
+   */
+  private *rayHits(opaqueOnly = false): Generator<{ entry: MeshEntry; distance: number }> {
     const clip = getState().clip.enabled;
-    for (const h of this.raycaster.intersectObjects(this.pickables(), false)) {
+    for (const h of this.raycaster.intersectObjects(this.pickables(opaqueOnly), false)) {
       if (clip && !this.section.keeps(h.point)) continue;
       const entry = this.entries.get(h.object.userData.key as string);
       if (entry) yield { entry, distance: h.distance };
@@ -726,7 +754,7 @@ export class Engine {
     // only hits in front of the label anchor can hide it: stop the ray there
     this.raycaster.far = from.distanceTo(to);
     try {
-      for (const { entry, distance } of this.rayHits()) if (entry.visual === 'on') return { id: entry.owner, distance };
+      for (const { entry, distance } of this.rayHits(true)) return { id: entry.owner, distance };
       return null;
     } finally {
       this.raycaster.far = Infinity;
@@ -1100,6 +1128,12 @@ export class Engine {
 }
 
 /* ------------------------------------------------------------------ helpers */
+
+/** Accelerated ray test while the morph is at rest, the plain (morph-following) one while stretched. */
+function morphAwareRaycast(this: THREE.Mesh, raycaster: THREE.Raycaster, hits: THREE.Intersection[]) {
+  if (this.morphTargetInfluences?.some((v) => v !== 0)) THREE.Mesh.prototype.raycast.call(this, raycaster, hits);
+  else acceleratedRaycast.call(this, raycaster, hits);
+}
 
 /** Along the tooth axis from the cervical line (cm): where the gum collar hides the root in the assembled mouth. */
 const ROOT_CUT_REST = -0.12;
