@@ -11,6 +11,25 @@ import { AboutDialog, Footer, LoadingCard } from './Overlays';
 import { SearchPanel } from './SearchPanel';
 import { Identity, TopActions } from './TopBar';
 import { useKeyboard } from './useKeyboard';
+import { isCompact, isCompactLandscape } from '../app/viewport';
+
+type Sheet = 'layers' | 'detail' | 'tools';
+/** The panel that a mobile sheet shows (the tools sheet is the dock). */
+const sheetPanel = (sheet: Sheet | 'none') => (sheet === 'tools' ? 'dock' : sheet);
+
+/** How far a panel reaches in from the bottom edge of the app (px), 0 when it is not laid out. */
+function coveredFromBottom(selector: string): number {
+  const el = document.querySelector<HTMLElement>(selector);
+  const parent = el?.offsetParent as HTMLElement | null;
+  return el && parent ? Math.max(0, parent.clientHeight - el.offsetTop) : 0;
+}
+
+/** How far a panel reaches in from the right edge of the app (px), 0 when it is not laid out. */
+function coveredFromRight(selector: string): number {
+  const el = document.querySelector<HTMLElement>(selector);
+  const parent = el?.offsetParent as HTMLElement | null;
+  return el && parent ? Math.max(0, parent.clientWidth - el.offsetLeft) : 0;
+}
 
 export function App() {
   const { engine, registry } = useServices();
@@ -48,22 +67,54 @@ export function App() {
   // keep the focused anatomy clear of the panels that cover the canvas
   useEffect(() => {
     const update = () => {
-      const mobile = window.innerWidth <= 767;
-      if (mobile) engine.setInsets(0, sheet !== 'none' ? window.innerHeight * 0.5 : 0);
-      // the bottom toolbar covers the lower edge of the canvas; the dissection tools and the phase-2 board make it taller
-      else {
-        // the bottom toolbar: measured, since its height depends on what it shows
-        const dock = document.querySelector<HTMLElement>('.ds-dock');
-        const parent = dock?.offsetParent as HTMLElement | null;
-        const measured = dock && parent ? parent.clientHeight - dock.offsetTop : 0;
-        const bottom = dockHidden ? 0 : measured > 0 ? measured : dissect ? 210 : laidOut ? 170 : 70;
-        engine.setInsets(selected && !detailHidden && window.innerWidth > 980 ? 360 : 0, bottom);
+      if (isCompact()) {
+        // phone: an open sheet covers the lower half of the canvas
+        if (!isCompactLandscape()) {
+          engine.setInsets(0, sheet !== 'none' ? window.innerHeight * 0.5 : 0);
+          return;
+        }
+        // held sideways, sheets (and the tooth controls while dissecting) cover the right side instead
+        const panel = sheet !== 'none' ? sheetPanel(sheet) : dissect && !selected ? 'dock' : null;
+        engine.setInsets(panel ? coveredFromRight(`.ds-${panel}`) : 0, 0);
+        return;
       }
+      // the bottom toolbar covers the lower edge of the canvas; the dissection tools and the phase-2 board make it taller
+      // the bottom toolbar: measured, since its height depends on what it shows
+      const measured = coveredFromBottom('.ds-dock');
+      const bottom = dockHidden ? 0 : measured > 0 ? measured : dissect ? 210 : laidOut ? 170 : 70;
+      // the detail panel: a fixed 360 px on wide screens; measured where it is narrower (tablets)
+      const right = !selected || detailHidden ? 0 : window.innerWidth > 1180 ? 360 : coveredFromRight('.ds-detail') || 360;
+      engine.setInsets(right, bottom);
     };
     update();
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
   }, [engine, selected, dissect, laidOut, sheet, detailHidden, dockHidden]);
+
+  // the toolbar's current height, for side panels that must end above it (see .ds-detail and .ds-layers in app.css)
+  useEffect(() => {
+    const dock = document.querySelector<HTMLElement>('.ds-dock');
+    if (!dock) return;
+    const root = document.documentElement;
+    const sync = () => {
+      const covers = coveredFromBottom('.ds-dock');
+      root.style.setProperty('--ds-dock-covers', `${covers}px`);
+      // the layers panel only has to make room where the toolbar actually reaches under it (narrower screens)
+      const layers = document.querySelector<HTMLElement>('.ds-layers');
+      const toolbar = dock.querySelector<HTMLElement>('.ds-toolbar');
+      const under = !!layers && !!toolbar && toolbar.getBoundingClientRect().left < layers.getBoundingClientRect().right;
+      if (under) root.style.setProperty('--ds-layers-bottom', `${covers + 12}px`);
+      else root.style.removeProperty('--ds-layers-bottom');
+    };
+    sync();
+    const obs = new ResizeObserver(sync);
+    obs.observe(dock);
+    window.addEventListener('resize', sync);
+    return () => {
+      obs.disconnect();
+      window.removeEventListener('resize', sync);
+    };
+  }, []);
 
   return (
     <div className={`ds-app${selected ? ' has-selection' : ''}${dissect ? ' is-dissecting' : ''}`}>

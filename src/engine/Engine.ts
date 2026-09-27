@@ -20,6 +20,7 @@ import { boardAssemblyKey, boardSlot, shelfLayout, type LayoutItem } from './lay
 import { computeLabelPoint } from './labelPoint';
 import { LabelLayer, type LabelCandidate } from './labels';
 import { HIGHLIGHT, THEME_LIGHTING, highlightColor, themedColor, applyThemeToMaterial, createTissueMaterial, setFibreAxis, setMaterialOpacity, styleKeyFor, type SceneTheme, type TissueMaterial } from './materials';
+import { isCompact, isCompactLandscape } from '../app/viewport';
 import { SectionTool } from './section';
 import { colorToothShell, shadeEnamelCrevices } from './toothShading';
 
@@ -923,7 +924,8 @@ export class Engine {
     // in the middle of the area above the toolbar, so lift it until the chin sits a margin above it
     const perPx = (2 * fit * tanV) / h;
     // on phones the bottom bar floats over the canvas without an inset; keep the chin clear of it
-    const reserve = Math.max(ins.bottom, (this.container?.clientWidth ?? 1000) < 768 ? 120 : 0);
+    // (held sideways there is little height to spare, and only the bar itself to clear)
+    const reserve = Math.max(ins.bottom, isCompact() ? (isCompactLandscape() ? 64 : 120) : 0);
     const aboveBar = h - reserve - h * 0.01 - (h - ins.bottom) / 2;
     const target = new THREE.Vector3(center.x, box.min.y + aboveBar * perPx, center.z);
     this.rig.focusSphere(target, size.y / 2, { direction: new THREE.Vector3(0, 0.02, 1), distance: fit + (box.max.z - center.z), duration });

@@ -262,7 +262,8 @@ kbd {
   position: absolute;
   left: 24px;
   top: 124px;
-  bottom: 64px;
+  /* raised above the toolbar where the two would overlap (set in App.tsx) */
+  bottom: var(--ds-layers-bottom, 64px);
   width: 272px;
   max-height: 640px;
   display: flex;
@@ -712,7 +713,8 @@ button.ds-layer-name:hover {
   right: 24px;
   top: 76px;
   width: 340px;
-  max-height: calc(100% - 76px - 150px);
+  /* end above the bottom toolbar, whose height the app measures (--ds-dock-covers, set in App.tsx) */
+  max-height: calc(100% - 76px - var(--ds-dock-covers, 138px) - 12px);
   display: flex;
   flex-direction: column;
   animation: ds-in 260ms var(--ease);
@@ -724,7 +726,7 @@ button.ds-layer-name:hover {
   }
 }
 .ds-app.is-dissecting .ds-detail {
-  max-height: calc(100% - 76px - 260px);
+  max-height: calc(100% - 76px - var(--ds-dock-covers, 248px) - 12px);
 }
 .ds-detail-head {
   position: relative;
@@ -1212,7 +1214,7 @@ button.ds-layer-name:hover {
   text-overflow: ellipsis;
 }
 /* desktop: the level steps span the full row like a slider, first dot at the left edge, last at the right */
-@media (min-width: 768px) {
+@media (min-width: 768px) and (min-height: 501px) {
   .ds-dissect {
     padding: 10px 16px 10px 12px;
   }
@@ -1309,7 +1311,7 @@ button.ds-layer-name:hover {
 .ds-reset-all:active {
   transform: scale(0.97);
 }
-@media (max-width: 767px) {
+@media (max-width: 767px), (max-height: 500px) {
   /* icon only, above the mobile bar; hidden while the tooth dissection tools take the bottom */
   .ds-reset-all {
     left: 12px;
@@ -1333,7 +1335,7 @@ button.ds-layer-name:hover {
 .ds-panel-handle {
   display: none;
 }
-@media (min-width: 768px) {
+@media (min-width: 768px) and (min-height: 501px) {
   .ds-layers,
   .ds-detail,
   .ds-dock {
@@ -1509,6 +1511,7 @@ button.ds-layer-name:hover {
 .ds-search {
   width: min(560px, 100%);
   max-height: 70vh;
+  max-height: 70dvh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1661,6 +1664,7 @@ button.ds-layer-name:hover {
 .ds-about {
   width: min(560px, calc(100vw - 32px));
   max-height: 84vh;
+  max-height: 84dvh;
   padding: 26px 28px 22px;
   color: var(--ink);
   background: var(--panel-solid);
@@ -1717,6 +1721,10 @@ button.ds-layer-name:hover {
 }
 
 /* ------------------------------------------------------------------ mobile */
+/* The compact (phone) layout: narrow screens, and short ones such as a phone held sideways.
+   Keep these two queries exact complements, and in sync with COMPACT_QUERY in app/viewport.ts:
+     compact:  (max-width: 767px), (max-height: 500px)
+     wide:     (min-width: 768px) and (min-height: 501px) */
 .ds-mobile-bar,
 .ds-scrim {
   display: none;
@@ -1724,7 +1732,7 @@ button.ds-layer-name:hover {
 
 /* Desktop dock: wide and short, so it covers less of the model. The slider and phase switch
    sit side by side, and tools are icon + label pills instead of stacked tiles. */
-@media (min-width: 768px) {
+@media (min-width: 768px) and (min-height: 501px) {
   .ds-dock-main {
     gap: 16px;
     padding: 6px 12px 6px 16px;
@@ -1780,7 +1788,7 @@ button.ds-layer-name:hover {
   }
 }
 
-@media (max-width: 767px) {
+@media (max-width: 767px), (max-height: 500px) {
   .ds-identity {
     top: 14px;
     left: 16px;
@@ -1853,6 +1861,7 @@ button.ds-layer-name:hover {
     bottom: calc(66px + env(safe-area-inset-bottom));
     width: auto;
     max-height: 62vh;
+    max-height: 62dvh;
     border-radius: 18px;
     z-index: 5;
     display: none;
@@ -1860,13 +1869,16 @@ button.ds-layer-name:hover {
   .ds-layers.is-mobile-open {
     display: flex;
     height: 62vh;
+    height: 62dvh;
   }
   .ds-app.has-selection .ds-layers.is-mobile-open {
     display: flex;
   }
-  .ds-detail.is-mobile-open {
+  .ds-detail.is-mobile-open,
+  .ds-app.is-dissecting .ds-detail.is-mobile-open {
     display: flex;
     max-height: 56vh;
+    max-height: 56dvh;
     animation: ds-sheet 240ms var(--ease);
   }
   @keyframes ds-sheet {
@@ -1948,12 +1960,41 @@ button.ds-layer-name:hover {
   }
   .ds-steps {
     width: 100%;
-    overflow-x: auto;
   }
   .ds-step {
     width: auto;
-    flex: 1;
-    min-width: 58px;
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 4px 1px;
+    font-size: 10px;
+    overflow-wrap: anywhere;
+  }
+  /* tooth dissection tools: fill the sheet; the tooth name and its tools wrap onto two rows
+     when they do not fit on one, and the level hint wraps under its label */
+  .ds-dissect {
+    width: auto;
+  }
+  .ds-dissect-bar {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+  .ds-dissect-head {
+    flex: 1 1 200px;
+    min-width: 0;
+  }
+  .ds-dissect-bar .ds-dock-tools {
+    margin-left: auto;
+  }
+  .ds-play-row {
+    gap: 10px;
+  }
+  .ds-play-body .ds-slider-head {
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+  .ds-step-hint {
+    flex-basis: 100%;
+    white-space: normal;
   }
   .ds-loading.is-compact {
     bottom: 130px;
@@ -1969,9 +2010,84 @@ button.ds-layer-name:hover {
   }
 }
 
-@media (max-height: 560px) and (orientation: landscape) {
+@media (min-width: 768px) and (min-height: 501px) and (max-height: 560px) and (orientation: landscape) {
   .ds-layers {
     top: 96px;
+  }
+}
+
+/* Compact layout on a phone held sideways (COMPACT_LANDSCAPE_QUERY): the screen is wide but
+   short, so sheets open at the right side at full height instead of rising from the bottom,
+   and the bottom bar moves to the left corner, clear of them. */
+@media (max-height: 500px) and (orientation: landscape) {
+  .ds-identity {
+    top: calc(10px + env(safe-area-inset-top));
+    left: calc(14px + env(safe-area-inset-left));
+  }
+  .ds-top-actions {
+    top: calc(8px + env(safe-area-inset-top));
+    right: calc(10px + env(safe-area-inset-right));
+  }
+  .ds-mobile-bar {
+    left: calc(10px + env(safe-area-inset-left));
+    bottom: calc(8px + env(safe-area-inset-bottom));
+    transform: none;
+  }
+  .ds-mobile-bar button {
+    height: 38px;
+    padding: 0 12px;
+  }
+  .ds-reset-all {
+    left: calc(10px + env(safe-area-inset-left));
+    bottom: calc(60px + env(safe-area-inset-bottom));
+  }
+  .ds-footer {
+    left: auto;
+    right: calc(14px + env(safe-area-inset-right));
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    max-width: 44vw;
+    justify-content: flex-end;
+    text-align: right;
+  }
+  /* side sheets */
+  .ds-layers,
+  .ds-detail,
+  .ds-dock {
+    left: auto;
+    right: calc(8px + env(safe-area-inset-right));
+    width: min(400px, max(340px, 48vw));
+  }
+  .ds-layers,
+  .ds-detail {
+    top: calc(8px + env(safe-area-inset-top));
+    bottom: calc(8px + env(safe-area-inset-bottom));
+    max-height: none;
+    border-radius: 16px;
+  }
+  .ds-layers.is-mobile-open {
+    height: auto;
+  }
+  .ds-detail.is-mobile-open,
+  .ds-app.is-dissecting .ds-detail.is-mobile-open {
+    max-height: none;
+    animation-name: ds-side-sheet;
+  }
+  @keyframes ds-side-sheet {
+    from {
+      transform: translateX(24px);
+      opacity: 0;
+    }
+  }
+  /* the toolbar (Tools, and the tooth controls while dissecting) sits in the lower right, scrolling if it must */
+  .ds-dock,
+  .ds-app.is-dissecting .ds-dock:not(.is-mobile-open) {
+    bottom: calc(8px + env(safe-area-inset-bottom));
+    max-height: calc(100% - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .ds-loading.is-compact {
+    bottom: 64px;
   }
 }
 
@@ -2020,7 +2136,7 @@ button.ds-layer-name:hover {
   background: var(--hover);
   box-shadow: inset 0 0 0 1.5px var(--accent);
 }
-@media (max-width: 767px) {
+@media (max-width: 767px), (max-height: 500px) {
   .ds-lang button {
     width: 30px;
   }
@@ -2038,5 +2154,125 @@ button.ds-layer-name:hover {
   .ds-lang svg {
     width: 18px;
     height: 12px;
+  }
+}
+
+/* ------------------------------------------------------------------ touch
+   Phones and tablets: finger-sized targets (about 40 px) and nothing that only appears on hover.
+   Sizes grow, the visuals (dots, icons) stay the same. */
+button,
+input,
+a,
+[role='button'],
+[role='treeitem'] {
+  /* no double-tap-to-zoom delay on taps */
+  touch-action: manipulation;
+}
+@media (hover: none) {
+  /* hover-only controls are always shown on touch screens */
+  .ds-ghost-btn,
+  .ds-tree-eye {
+    opacity: 0.75;
+  }
+  .ds-ghost-btn.is-active,
+  .ds-tree-row.is-hidden .ds-tree-eye {
+    opacity: 1;
+  }
+}
+@media (pointer: coarse) {
+  .ds-layer-row {
+    height: 40px;
+  }
+  .ds-layer-row .ds-layer-name {
+    align-self: stretch;
+  }
+  .ds-dot-toggle,
+  .ds-ghost-btn {
+    width: 36px;
+    height: 36px;
+  }
+  .ds-tree-row {
+    height: 38px;
+  }
+  .ds-tree-caret,
+  .ds-tree-eye {
+    width: 32px;
+    height: 32px;
+  }
+  .ds-tabs button,
+  .ds-segmented button {
+    height: 36px;
+  }
+  .ds-chip--button {
+    height: 32px;
+    padding: 0 10px;
+  }
+  .ds-crumbs .ds-link-btn {
+    padding: 6px 0;
+  }
+  .ds-secondary {
+    height: 40px;
+  }
+  .ds-primary {
+    height: 44px;
+  }
+  .ds-icon-btn {
+    width: 40px;
+    height: 40px;
+  }
+  .ds-detail-close {
+    top: 8px;
+    right: 8px;
+  }
+  .ds-tool {
+    min-height: 40px;
+  }
+  .ds-play {
+    width: 40px;
+    height: 40px;
+  }
+  .ds-search-result {
+    min-height: 44px;
+  }
+  .ds-footer .ds-link-btn {
+    padding: 6px 0;
+  }
+  /* sliders: a larger thumb and a taller hit area */
+  .ds-range {
+    height: 32px;
+  }
+  .ds-range::-webkit-slider-thumb {
+    width: 22px;
+    height: 22px;
+    margin-top: -9.5px;
+  }
+  .ds-range::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+  }
+}
+/* tablets: the wide layout, with room to make the toolbar, flags and panel tabs finger-sized too */
+@media (pointer: coarse) and (min-width: 768px) and (min-height: 501px) {
+  .ds-tb-btn {
+    width: 40px;
+    height: 40px;
+  }
+  .ds-lang button {
+    width: 36px;
+    height: 36px;
+  }
+  .ds-panel-handle--layers,
+  .ds-panel-handle--detail {
+    width: 36px;
+    height: 80px;
+    margin-top: -40px;
+  }
+  .ds-panel-handle--dock {
+    width: 80px;
+    height: 34px;
+    margin-left: -40px;
+  }
+  .ds-reset-all {
+    height: 40px;
   }
 }
