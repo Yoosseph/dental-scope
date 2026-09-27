@@ -16,7 +16,7 @@ import { CameraRig, PRESET_DIRS } from './camera';
 import { archOffset, isNeurovascular, neurovascularStretch, pulpLayerOffset, toothLayerOffset } from './explode';
 import { boardAssemblyKey, boardSlot, shelfLayout, type LayoutItem } from './layout';
 import { LabelLayer, type LabelCandidate } from './labels';
-import { HIGHLIGHT, THEME_LIGHTING, highlightColor, applyThemeToMaterial, createTissueMaterial, setFibreAxis, setMaterialOpacity, styleKeyFor, type SceneTheme, type TissueMaterial } from './materials';
+import { HIGHLIGHT, THEME_LIGHTING, highlightColor, themedColor, applyThemeToMaterial, createTissueMaterial, setFibreAxis, setMaterialOpacity, styleKeyFor, type SceneTheme, type TissueMaterial } from './materials';
 import { SectionTool } from './section';
 
 interface MeshEntry {
@@ -35,6 +35,9 @@ interface MeshEntry {
   labelPoint?: THREE.Vector3; // geometry-space label anchor
   /** tooth shells beside a shown gum: how the root is cut while it is in the gum (see refreshRootCuts) */
   rootCut?: { atRest: boolean; extract: number; collar: number };
+  /** nerve or vessel: faded to quiet background while the jaws are dissected (0 = full, 1 = quiet) */
+  nv?: boolean;
+  quiet?: number;
   /** phase-2 board slot (world offset) and the eased current offset */
   boardTarget?: THREE.Vector3;
   boardPos?: THREE.Vector3;
@@ -294,6 +297,8 @@ export class Engine {
         key,
         owner,
         mesh,
+        nv: isNeurovascular(cats),
+        quiet: 0,
         archOffset: archOffset(this.registry, key, center),
         toothOffset: toothLayerOffset(this.registry, key),
         pulpOffset: pulpLayerOffset(this.registry, key),
@@ -322,7 +327,10 @@ export class Engine {
   private applyTheme(theme: SceneTheme) {
     this.renderer.toneMappingExposure = THEME_LIGHTING[theme].exposure;
     this.scene.environmentIntensity = THEME_LIGHTING[theme].environment;
-    for (const e of this.entries.values()) applyThemeToMaterial(e.mesh.material, theme);
+    for (const e of this.entries.values()) {
+      applyThemeToMaterial(e.mesh.material, theme);
+      if (e.quiet) e.mesh.material.color.lerp(QUIET_TINT[theme], QUIET_MIX * e.quiet);
+    }
     this.invalidate();
   }
 
@@ -1023,6 +1031,18 @@ export class Engine {
     const prevPos = new THREE.Vector3();
     for (const e of this.entries.values()) {
       let target = e.visual === 'on' ? 1 : e.visual === 'see-through' ? SEE_THROUGH_OPACITY : e.visual === 'ghost' ? s.ghostOpacity : e.visual === 'faint' ? s.ghostOpacity * 0.45 : 0;
+      if (e.nv) {
+        // While the jaws are dissected the teeth are the subject: nerves and vessels recede into a
+        // pale, translucent background. A selected or hovered one comes back at full strength.
+        const quietTarget = s.explodePhase === 1 && s.dissectFdi === null && e.hiTarget === 0 ? Math.min(1, this.explodeCur * 2.5) : 0;
+        if (Math.abs(e.quiet! - quietTarget) > 1e-3) {
+          e.quiet = stepToward(e.quiet!, quietTarget, rate, 0.01);
+          const mat = e.mesh.material;
+          mat.color.copy(themedColor(mat.userData.styleKey, s.theme)).lerp(QUIET_TINT[s.theme], QUIET_MIX * e.quiet);
+          moving = true;
+        }
+        target *= 1 - (1 - QUIET_OPACITY) * e.quiet!;
+      }
       if (s.explodePhase === 2 && !e.boardTarget) target = 0; // context is not laid out: fade it away
       if (Math.abs(e.opacity - target) > 1e-3) {
         e.opacity = stepToward(e.opacity, target, rate, 0.01);
@@ -1084,6 +1104,11 @@ export class Engine {
 
 /** Along the tooth axis from the cervical line (cm): where the gum collar hides the root in the assembled mouth. */
 const ROOT_CUT_REST = -0.12;
+
+/** Nerves and vessels during the arch dissection: opacity and how far their colour moves toward the stage colour. */
+const QUIET_OPACITY = 0.3;
+const QUIET_MIX = 0.6;
+const QUIET_TINT = { light: new THREE.Color('#d8d2c6'), dark: new THREE.Color('#3a3833') };
 
 /** Bone opacity while the nerve and vessel layers are on. */
 const SEE_THROUGH_OPACITY = 0.32;
