@@ -4,6 +4,7 @@
  */
 import { LANGS, LANG_NATIVE, MESSAGES, useLang, useT, type Lang } from '../i18n';
 import { actions } from '../state/store';
+import spainFlag from './flags/es.png';
 
 export function LanguageSwitcher() {
   const lang = useLang();
@@ -48,11 +49,10 @@ function Flag({ lang }: { lang: Lang }) {
       </svg>
     );
   if (lang === 'es')
-    // Spain (civil flag: red, yellow twice as high, red)
+    // Spain: the state flag with the coat of arms (a small raster, too detailed for hand-written SVG)
     return (
-      <svg {...common} viewBox="0 0 4 4">
-        <rect width="4" height="4" fill="#aa151b" />
-        <rect y="1" width="4" height="2" fill="#f1bf00" />
+      <svg {...common} viewBox="0 0 3 2">
+        <image href={spainFlag} width="3" height="2" preserveAspectRatio="xMidYMid slice" />
       </svg>
     );
   if (lang === 'la')
