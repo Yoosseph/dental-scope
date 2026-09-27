@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { CATEGORY_BY_ID } from '../anatomy/categories';
+import { CATEGORY_BY_ID, primaryCategory } from '../anatomy/categories';
 import { formatTooth, NUMBERING_LABEL } from '../anatomy/notation';
 import { pushCurrentPath } from '../app/router';
 import { nameOf, useT } from '../i18n';
@@ -88,7 +88,7 @@ export function SearchPanel() {
           <ul id="ds-search-results" className="ds-search-results" role="listbox" ref={list}>
             {results.map((r, i) => {
               const s = registry.get(r.id)!;
-              const cat = s.categories.find((c) => c !== 'permanent-teeth') ?? s.categories[0];
+              const cat = primaryCategory(s);
               const catDef = cat ? CATEGORY_BY_ID[cat] : undefined;
               const fdi = s.toothFdi;
               const ctxS = fdi !== undefined && !s.tooth ? registry.get(`tooth-${fdi}`) : registry.get(s.parent ?? '');

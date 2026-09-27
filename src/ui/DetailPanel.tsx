@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { CATEGORY_BY_ID } from '../anatomy/categories';
+import { CATEGORY_BY_ID, primaryCategory } from '../anatomy/categories';
 import { formatTooth, NUMBERING_SHORT, NUMBERING_SYSTEMS } from '../anatomy/notation';
 import type { Structure } from '../anatomy/types';
 import { pushCurrentPath } from '../app/router';
@@ -26,7 +26,7 @@ export function DetailPanel() {
   const content = useMemo(() => (s ? resolveContent(registry, s.id, lang) : null), [registry, s, lang]);
   if (!s || !content) return null;
 
-  const cat = s.categories.find((c) => c !== 'permanent-teeth') ?? s.categories[0] ?? registry.ancestors(s.id).find((a) => a.categories.length)?.categories[0];
+  const cat = primaryCategory(s) ?? registry.ancestors(s.id).find((a) => a.categories.length)?.categories[0];
   const catDef = cat ? CATEGORY_BY_ID[cat] : undefined;
   const fdi = s.toothFdi;
   const tooth = fdi !== undefined ? registry.get(`tooth-${fdi}`) : undefined;

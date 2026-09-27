@@ -1,4 +1,4 @@
-import type { CategoryId } from './types';
+import type { CategoryId, Structure } from './types';
 
 export interface CategoryDef {
   id: CategoryId;
@@ -35,6 +35,14 @@ export const CATEGORIES: CategoryDef[] = [
 ];
 
 export const CATEGORY_BY_ID = Object.fromEntries(CATEGORIES.map((c) => [c.id, c])) as Record<CategoryId, CategoryDef>;
+
+/**
+ * The category a structure is shown under (colour dot, eyebrow): its first one other than the
+ * general teeth layer, else its only one. Undefined for structures that declare none.
+ */
+export function primaryCategory(s: Pick<Structure, 'categories'>): CategoryId | undefined {
+  return s.categories.find((c) => c !== 'permanent-teeth') ?? s.categories[0];
+}
 
 export type CategoryState = 'on' | 'ghost' | 'off';
 
