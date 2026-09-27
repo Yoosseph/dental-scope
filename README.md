@@ -19,16 +19,17 @@ Dental Scope is an open-source, interactive 3D dental anatomy explorer. Start wi
 - **Mouth → jaw → dentition → tooth → tissue.** One continuous scene; no separate "tooth viewer".
 - **All 32 permanent teeth**, individually selectable, named anatomically, with **FDI, Universal and Palmer** numbering (switchable).
 - **Inside every tooth:** enamel, coronal and radicular dentin, cementum, periodontal ligament, pulp chamber with pulp horns, and one canal per root in its most common configuration (e.g. MB2 in maxillary first molars, two mesial canals in mandibular first molars). Five dissection levels peel the tooth layer by layer.
-- **Dissection** at two levels: the whole mouth (*Dissect anatomy*: jaws apart, teeth out of their sockets, nerves and vessels fanned out) and a single tooth (*Separate layers*: enamel shell, dentin, pulp and canals apart).
+- **Dissection** at two levels: the whole mouth (*Dissect anatomy*: jaws apart, gum and teeth lifted off in clean tiers, bone see-through so the nerves and vessels stay where they run) and a single tooth (*Separate layers*: enamel shell, dentin, pulp and canals apart).
 - **Cross-sections:** sagittal, coronal, axial or view-aligned planes; inside a tooth they switch to mesiodistal, buccolingual and horizontal. Cut surfaces render as solid tissue, so enamel thickness, dentin and pulp read clearly — across all 32 teeth at once.
 - **Search** by name, tooth number in any system (`11`, `#8`, `UR6`, `fdi 36`), tissue, synonym (`gums`, `wisdom tooth`, `IAN`, `cuspid`).
 - **Layers** for 19 dental categories with show, show-only, translucent and hide; plus hide/ghost/isolate per structure and a full hierarchy tree.
 - **Premium camera:** arcing focus transitions, bounding-box framing, eight view presets including occlusal views, optical centre that stays clear of panels.
 - **Labels** that anchor to anatomy, declutter by priority, hide when occluded or too small, and select on click.
 - **Deep links:** `/tooth/36`, `/tooth/36/dissect`, `/structure/inferior-alveolar-nerve-left`.
-- **Honest data:** every structure shows whether it is *source*, *derived*, *modeled* or *schematic* geometry; all text shows its review status.
+- **English, Swedish and German:** switch with the flags at the top. Everything is translated by hand, including anatomical names, descriptions, search terms and the about page (`/about/sv/`, `/about/de/`). Add `?lang=sv` or `?lang=de` to a link to open it in that language. Translations live in `src/i18n/` and `src/content/<lang>/`.
+- **Honest data:** every structure shows whether it is *source*, *derived*, *modeled*, *atlas* or *schematic* geometry; all text shows its review status.
 - **Responsive** (bottom sheets on phones), **keyboard-accessible** (tree view, shortcuts, focus rings), **reduced-motion** aware, light and dark themes.
-- **Fast:** ≈0.5 MB of geometry for first paint, the rest streams in; ≈120 KB per tooth's internal anatomy, loaded on demand; render-on-demand loop.
+- **Fast:** ≈1 MB of geometry for first paint, the rest streams in; ≈205 KB per tooth's internal anatomy on average, loaded on demand; render-on-demand loop.
 
 ## Tech stack
 
@@ -79,12 +80,13 @@ Details and a handoff guide (commands, runtime flows, where to start): [docs/arc
 
 ## Anatomical data and attribution
 
-3D anatomy is derived from **BodyParts3D**, © The Database Center for Life Science, licensed under [CC BY-SA 2.1 Japan](https://creativecommons.org/licenses/by-sa/2.1/jp/deed.en). Third molars, alveolar bone and TMJ regions are derived from it; internal tooth anatomy is modeled inside each real tooth shape; nerves, vessels and joint discs are schematic. See [CREDITS.md](CREDITS.md) and [docs/assets.md](docs/assets.md); the statements in the app's About dialog are sourced in [docs/sources.md](docs/sources.md).
+3D anatomy is derived from **BodyParts3D**, © The Database Center for Life Science, licensed under [CC BY-SA 2.1 Japan](https://creativecommons.org/licenses/by-sa/2.1/jp/deed.en). Third molars, alveolar bone and TMJ regions are derived from it; internal tooth anatomy is modeled inside each real tooth shape. Most nerves and vessels follow the [Z-Anatomy](https://github.com/Z-Anatomy/Models-of-human-anatomy) atlas (CC BY-SA 4.0), fitted onto these jaws; the superior alveolar nerves, the inferior alveolar vein, the pterygoid plexus and the joint discs are schematic. See [CREDITS.md](CREDITS.md) and [docs/assets.md](docs/assets.md); the statements in the app's About dialog are sourced in [docs/sources.md](docs/sources.md).
 
 ## Roadmap
 
 - [ ] Expert review of all educational text (see [docs/content.md](docs/content.md))
-- [ ] Measured nerve and vessel paths (Z-Anatomy, CC BY-SA 4.0; CBCT-derived canals where licences allow)
+- [x] Atlas nerve and vessel paths (Z-Anatomy, CC BY-SA 4.0)
+- [ ] CBCT-derived canals where licences allow
 - [ ] Primary dentition and an eruption timeline (mixed dentition by age)
 - [ ] Learn mode: guided lessons as data
 - [ ] Quiz mode: identify highlighted structures

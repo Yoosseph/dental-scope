@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useT } from '../i18n';
 import { actions, useApp, type OrbitMode, type ViewPreset } from '../state/store';
 import { useServices } from './context';
 import {
@@ -19,20 +20,21 @@ import {
   IconViewThreeQuarter,
 } from './icons';
 
-export const VIEWS: { id: ViewPreset; label: string; short: string; icon: ReactNode }[] = [
-  { id: 'three-quarter', label: 'Three-quarter view', short: '¾ view', icon: <IconViewThreeQuarter size={18} /> },
-  { id: 'front', label: 'Front view', short: 'Front', icon: <IconViewFront size={18} /> },
-  { id: 'left', label: 'Left lateral view', short: 'Left', icon: <IconViewLeft size={18} /> },
-  { id: 'right', label: 'Right lateral view', short: 'Right', icon: <IconViewRight size={18} /> },
-  { id: 'superior', label: 'Superior view', short: 'Top', icon: <IconViewSuperior size={18} /> },
-  { id: 'inferior', label: 'Inferior view', short: 'Bottom', icon: <IconViewInferior size={18} /> },
-  { id: 'occlusal-upper', label: 'Occlusal view of the upper arch', short: 'Upper arch', icon: <IconViewOcclusalUpper size={18} /> },
-  { id: 'occlusal-lower', label: 'Occlusal view of the lower arch', short: 'Lower arch', icon: <IconViewOcclusalLower size={18} /> },
+/** Camera view presets; their names (full and short) are in the messages (`view`). */
+export const VIEWS: { id: ViewPreset; icon: ReactNode }[] = [
+  { id: 'three-quarter', icon: <IconViewThreeQuarter size={18} /> },
+  { id: 'front', icon: <IconViewFront size={18} /> },
+  { id: 'left', icon: <IconViewLeft size={18} /> },
+  { id: 'right', icon: <IconViewRight size={18} /> },
+  { id: 'superior', icon: <IconViewSuperior size={18} /> },
+  { id: 'inferior', icon: <IconViewInferior size={18} /> },
+  { id: 'occlusal-upper', icon: <IconViewOcclusalUpper size={18} /> },
+  { id: 'occlusal-lower', icon: <IconViewOcclusalLower size={18} /> },
 ];
 
-const ORBIT_MODES: { id: OrbitMode; label: string; icon: ReactNode }[] = [
-  { id: 'fixed', label: 'Fixed orbit: always turn around the model centre', icon: <IconOrbitFixed /> },
-  { id: 'free', label: 'Free orbit: pan and focus move the pivot', icon: <IconOrbitFree /> },
+const ORBIT_MODES: { id: OrbitMode; icon: ReactNode }[] = [
+  { id: 'fixed', icon: <IconOrbitFixed /> },
+  { id: 'free', icon: <IconOrbitFree /> },
 ];
 
 /** How long a label stays up after a touch tap (touch has no hover). */
@@ -50,6 +52,7 @@ const PEEK_STEP_MS = 420;
  */
 function useFirstVisitPeek(): [string | null, () => void] {
   const ready = useApp((s) => s.ready);
+  const m = useT();
   const [step, setStep] = useState(-1);
   useEffect(() => {
     if (!ready) return;
@@ -64,7 +67,7 @@ function useFirstVisitPeek(): [string | null, () => void] {
     timers.push(window.setTimeout(() => setStep(-1), 700 + VIEWS.length * PEEK_STEP_MS));
     return () => timers.forEach(clearTimeout);
   }, [ready]);
-  return [step >= 0 ? VIEWS[step].label : null, () => setStep(-1)];
+  return [step >= 0 ? m.view[VIEWS[step].id][0] : null, () => setStep(-1)];
 }
 
 /**
@@ -76,6 +79,7 @@ export function CameraControls() {
   const view = useApp((s) => s.view);
   const auto = useApp((s) => s.autoRotate);
   const orbit = useApp((s) => s.orbitMode);
+  const m = useT();
   // label shown for touch, hover or focus: drives the touch tip and the peek
   const [tipLabel, setTipLabel] = useState<string | null>(null);
   const timer = useRef(0);
@@ -90,35 +94,35 @@ export function CameraControls() {
   const tip = (label: string, shortcut?: string) => ({ label, shortcut, tipShown: shown === label, showTip });
 
   return (
-    <div className="ds-camera" role="group" aria-label="Camera" onPointerEnter={endPeek}>
-      <div className="ds-tb-group" role="group" aria-label="Orbit mode">
-        {ORBIT_MODES.map((m) => (
-          <ToolbarButton key={m.id} {...tip(m.label)} pressed={orbit === m.id} onClick={() => actions.setOrbitMode(m.id)}>
-            {m.icon}
+    <div className="ds-camera" role="group" aria-label={m.camera} onPointerEnter={endPeek}>
+      <div className="ds-tb-group" role="group" aria-label={m.orbitMode}>
+        {ORBIT_MODES.map((o) => (
+          <ToolbarButton key={o.id} {...tip(m.orbit[o.id])} pressed={orbit === o.id} onClick={() => actions.setOrbitMode(o.id)}>
+            {o.icon}
           </ToolbarButton>
         ))}
       </div>
       <span className="ds-tb-sep" aria-hidden="true" />
-      <div className="ds-tb-group ds-views" role="group" aria-label="Camera views">
+      <div className="ds-tb-group ds-views" role="group" aria-label={m.cameraViews}>
         {VIEWS.map((v) => (
-          <ToolbarButton key={v.id} {...tip(v.label)} pressed={view === v.id} onClick={() => engine.setView(v.id)}>
+          <ToolbarButton key={v.id} {...tip(m.view[v.id][0])} pressed={view === v.id} onClick={() => engine.setView(v.id)}>
             {v.icon}
           </ToolbarButton>
         ))}
       </div>
       <ViewPicker />
       <span className="ds-tb-sep" aria-hidden="true" />
-      <div className="ds-tb-group" role="group" aria-label="Zoom and rotation">
-        <ToolbarButton {...tip('Zoom in', '+')} onClick={() => engine.zoom(0.75)}>
+      <div className="ds-tb-group" role="group" aria-label={m.zoomRotation}>
+        <ToolbarButton {...tip(m.zoomIn, '+')} onClick={() => engine.zoom(0.75)}>
           <IconPlus />
         </ToolbarButton>
-        <ToolbarButton {...tip('Zoom out', '−')} onClick={() => engine.zoom(1.33)}>
+        <ToolbarButton {...tip(m.zoomOut, '−')} onClick={() => engine.zoom(1.33)}>
           <IconMinus />
         </ToolbarButton>
-        <ToolbarButton {...tip('Auto-rotate')} pressed={auto} onClick={() => actions.setAutoRotate(!auto)}>
+        <ToolbarButton {...tip(m.autoRotate)} pressed={auto} onClick={() => actions.setAutoRotate(!auto)}>
           <IconRotate />
         </ToolbarButton>
-        <ToolbarButton {...tip('Reset view', 'R')} onClick={() => engine.resetCamera()}>
+        <ToolbarButton {...tip(m.resetView, 'R')} onClick={() => engine.resetCamera()}>
           <IconReset />
         </ToolbarButton>
       </div>
@@ -141,6 +145,7 @@ function ViewPicker() {
   const view = useApp((s) => s.view);
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
+  const m = useT();
   const current = VIEWS.find((v) => v.id === view);
 
   useEffect(() => {
@@ -166,19 +171,19 @@ function ViewPicker() {
 
   return (
     <div className="ds-view-picker" ref={root}>
-      <button type="button" className={`ds-tb-btn ds-view-picker-btn${open ? ' is-open' : ''}`} onClick={() => setOpen(!open)} aria-expanded={open} aria-haspopup="true" aria-label={`Camera view${current ? `: ${current.label}` : ''}`}>
+      <button type="button" className={`ds-tb-btn ds-view-picker-btn${open ? ' is-open' : ''}`} onClick={() => setOpen(!open)} aria-expanded={open} aria-haspopup="true" aria-label={`${m.cameraView}${current ? `: ${m.view[current.id][0]}` : ''}`}>
         {current?.icon ?? <IconView size={18} />}
-        <span className="ds-view-picker-text">View</span>
+        <span className="ds-view-picker-text">{m.viewBtn}</span>
       </button>
       {open && (
-        <div className="ds-panel ds-view-grid" role="group" aria-label="Camera views">
+        <div className="ds-panel ds-view-grid" role="group" aria-label={m.cameraViews}>
           {VIEWS.map((v) => (
             <button
               key={v.id}
               type="button"
               className={view === v.id ? 'is-active' : ''}
               aria-pressed={view === v.id}
-              aria-label={v.label}
+              aria-label={m.view[v.id][0]}
               onClick={() => {
                 engine.setView(v.id);
                 setOpen(false);
@@ -187,7 +192,7 @@ function ViewPicker() {
               }}
             >
               {v.icon}
-              <span aria-hidden="true">{v.short}</span>
+              <span aria-hidden="true">{m.view[v.id][1]}</span>
             </button>
           ))}
         </div>

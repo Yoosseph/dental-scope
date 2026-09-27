@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { CATEGORIES, PRESETS, type CategoryState } from '../anatomy/categories';
 import type { CategoryId } from '../anatomy/types';
+import { useT } from '../i18n';
 import { actions, useApp } from '../state/store';
 import { useServices } from './context';
 import { IconCheck, IconGhost, IconLayers, IconReset, IconTree } from './icons';
@@ -11,15 +12,16 @@ export function LayersPanel() {
   const panel = useApp((s) => s.panel);
   const mobileOpen = useApp((s) => s.mobileSheet === 'layers');
   const collapsed = useApp((s) => s.collapsed.layers);
+  const m = useT();
   return (
-    <aside className={`ds-panel ds-layers${mobileOpen ? ' is-mobile-open' : ''}${collapsed ? ' is-collapsed' : ''}`} aria-label="Layers and structures">
+    <aside className={`ds-panel ds-layers${mobileOpen ? ' is-mobile-open' : ''}${collapsed ? ' is-collapsed' : ''}`} aria-label={m.layersAria}>
       <PanelHandle panel="layers" />
-      <div className="ds-tabs" role="tablist" aria-label="Panel">
+      <div className="ds-tabs" role="tablist" aria-label={m.panelTabs}>
         <button type="button" role="tab" aria-selected={panel === 'layers'} className={panel === 'layers' ? 'is-active' : ''} onClick={() => actions.setPanel('layers')}>
-          <IconLayers size={14} /> Layers
+          <IconLayers size={14} /> {m.layers}
         </button>
         <button type="button" role="tab" aria-selected={panel === 'tree'} className={panel === 'tree' ? 'is-active' : ''} onClick={() => actions.setPanel('tree')}>
-          <IconTree size={14} /> Structures
+          <IconTree size={14} /> {m.structures}
         </button>
       </div>
       {panel === 'layers' ? <Categories /> : <StructureTree />}
@@ -33,29 +35,30 @@ function Categories() {
   const hiddenCount = useApp((s) => Object.keys(s.hidden).length + Object.keys(s.ghosted).length);
   const isolate = useApp((s) => s.isolateId);
   const counts = useMemo(() => registry.countByCategory(), [registry]);
+  const m = useT();
   const presetActive = PRESETS.find((p) => CATEGORIES.every((c) => (p.state[c.id] ?? 'off') === cats[c.id]))?.id;
   const groups = useMemo(() => {
     const m = new Map<string, typeof CATEGORIES>();
     for (const c of CATEGORIES) m.set(c.group, [...(m.get(c.group) ?? []), c]);
     return [...m.entries()];
   }, []);
-  const visibilityNote = [hiddenCount ? `${hiddenCount} adjusted` : '', isolate ? 'Isolated' : ''].filter(Boolean).join(' · ');
+  const visibilityNote = [hiddenCount ? m.adjusted(hiddenCount) : '', isolate ? m.isolated : ''].filter(Boolean).join(' · ');
 
   return (
     <>
-      <div className="ds-segmented ds-segmented--fill" role="radiogroup" aria-label="Layer presets">
+      <div className="ds-segmented ds-segmented--fill" role="radiogroup" aria-label={m.layerPresets}>
         {PRESETS.map((p) => (
           <button key={p.id} type="button" role="radio" aria-checked={presetActive === p.id} className={presetActive === p.id ? 'is-active' : ''} onClick={() => actions.setCategories(p.state)}>
-            {p.label}
+            {m.preset[p.id] ?? p.label}
           </button>
         ))}
       </div>
       <div className="ds-layer-list">
         {groups.map(([group, list]) => (
-          <div key={group} className="ds-layer-group" role="list" aria-label={group}>
-            <div className="ds-layer-group-title">{group}</div>
+          <div key={group} className="ds-layer-group" role="list" aria-label={m.group[group] ?? group}>
+            <div className="ds-layer-group-title">{m.group[group] ?? group}</div>
             {list.map((c) => (
-              <CategoryRow key={c.id} id={c.id} label={c.label} color={c.color} planned={!!c.planned} count={counts[c.id] ?? 0} state={cats[c.id]} />
+              <CategoryRow key={c.id} id={c.id} label={m.category[c.id] ?? c.label} color={c.color} planned={!!c.planned} count={counts[c.id] ?? 0} state={cats[c.id]} />
             ))}
           </div>
         ))}
@@ -63,7 +66,7 @@ function Categories() {
       <div className="ds-panel-footer">
         <span>{visibilityNote}</span>
         <button type="button" className="ds-link-btn" onClick={() => actions.resetVisibility()}>
-          <IconReset size={13} /> Reset
+          <IconReset size={13} /> {m.reset}
         </button>
       </div>
     </>
@@ -71,14 +74,15 @@ function Categories() {
 }
 
 function CategoryRow({ id, label, color, count, state, planned }: { id: CategoryId; label: string; color: string; count: number; state: CategoryState; planned: boolean }) {
+  const m = useT();
   if (planned) {
     return (
-      <div className="ds-layer-row is-planned" role="listitem" title="Not modeled yet">
+      <div className="ds-layer-row is-planned" role="listitem" title={m.notModeled}>
         <span className="ds-dot-toggle is-static" style={{ '--dot': color } as React.CSSProperties} aria-hidden="true">
           <span className="ds-dot-toggle-dot" />
         </span>
         <span className="ds-layer-name">{label}</span>
-        <span className="ds-soon">planned</span>
+        <span className="ds-soon">{m.planned}</span>
       </div>
     );
   }
@@ -92,14 +96,14 @@ function CategoryRow({ id, label, color, count, state, planned }: { id: Category
         style={{ '--dot': color, '--dot-ink': inkOn(color) } as React.CSSProperties}
         onClick={() => actions.setCategory(id, on ? 'off' : 'on')}
         aria-pressed={on}
-        aria-label={`Show ${label}`}
-        title={on ? `Hide ${label}` : `Show ${label}`}
+        aria-label={m.showX(label)}
+        title={on ? m.hideX(label) : m.showX(label)}
       >
         <span className="ds-dot-toggle-dot" aria-hidden="true">
           <IconCheck size={11} strokeWidth={2.6} />
         </span>
       </button>
-      <button type="button" className="ds-layer-name" onClick={() => actions.showOnlyCategory(id)} title={`Show only ${label}`} aria-label={`Show only ${label}`}>
+      <button type="button" className="ds-layer-name" onClick={() => actions.showOnlyCategory(id)} title={m.showOnlyX(label)} aria-label={m.showOnlyX(label)}>
         {label}
       </button>
       <span className="ds-count">{count}</span>
@@ -108,8 +112,8 @@ function CategoryRow({ id, label, color, count, state, planned }: { id: Category
         className={`ds-ghost-btn${state === 'ghost' ? ' is-active' : ''}`}
         onClick={() => actions.setCategory(id, state === 'ghost' ? 'on' : 'ghost')}
         aria-pressed={state === 'ghost'}
-        aria-label={`Make ${label} translucent`}
-        title="Translucent"
+        aria-label={m.translucentX(label)}
+        title={m.translucent}
       >
         <IconGhost size={14} />
       </button>

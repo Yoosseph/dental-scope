@@ -26,7 +26,7 @@ import trimesh
 from scipy.spatial import cKDTree
 
 sys.path.insert(0, str(Path(__file__).parent))
-from geometry import decimate, ellipsoid_disc, submesh, surface_point, tube  # noqa: E402
+from geometry import catmull_rom, decimate, ellipsoid_disc, orient_outward, submesh, tube_polyline  # noqa: E402
 from tooth_layers import Frame, build_tooth_layers, make_frame  # noqa: E402
 
 # ---------------------------------------------------------------------------
@@ -71,8 +71,10 @@ CONTEXT = {
     "mentalis-right": 46826, "mentalis-left": 46827,
     "orbicularis-oris": 46841,
 }
-CONTEXT_BUDGET = {"default": 3000, "temporalis": 5000, "frontal": 5000, "parietal": 4000, "occipital": 4000,
-                  "sphenoid": 5000, "temporal-bone": 5000, "orbicularis": 3000}
+# Preserve the source's anatomical ridges and muscle insertions. Meshopt still
+# keeps these static context meshes small, and most are translucent or hidden.
+CONTEXT_BUDGET = {"default": 9000, "temporalis": 15000, "frontal": 15000, "parietal": 12000, "occipital": 12000,
+                  "sphenoid": 15000, "temporal-bone": 15000, "orbicularis": 9000}
 
 
 def tooth_info(fdi: int):
@@ -85,8 +87,7 @@ def tooth_info(fdi: int):
 def load_stl(folder: Path, fma: int) -> trimesh.Trimesh:
     m = trimesh.load(folder / f"FMA{fma}.stl")
     m.merge_vertices()
-    m.fix_normals()
-    return m
+    return orient_outward(m)
 
 
 # ---------------------------------------------------------------------------
@@ -108,18 +109,40 @@ class Space:
 
     def mesh(self, m: trimesh.Trimesh) -> trimesh.Trimesh:
         out = trimesh.Trimesh(self.p(m.vertices), m.faces.copy(), process=False)
+        if m.visual.kind == "vertex":  # neurovascular jaw weights travel as vertex colours
+            out.visual = trimesh.visual.ColorVisuals(out, vertex_colors=m.visual.vertex_colors.copy())
         return out
 
 
-def derive_third_molar(m2: trimesh.Trimesh, m1: trimesh.Trimesh) -> trimesh.Trimesh:
+def derive_third_molar(m2: trimesh.Trimesh, m1: trimesh.Trimesh, lower: bool) -> trimesh.Trimesh:
     c2, c1 = m2.vertices.mean(0), m1.vertices.mean(0)
     distal = c2 - c1
     distal[2] = 0
     distal /= np.linalg.norm(distal)
     width = np.ptp(m2.vertices @ distal)
     out = m2.copy()
-    out.vertices = (out.vertices - c2) * 0.9 + c2 + distal * width * 0.93
+    # The mandibular second-molar mesh is broad along the arch tangent. Using
+    # its full projected width leaves an obvious gap behind it; the smaller
+    # wisdom tooth contacts naturally at roughly two thirds of that span.
+    spacing = 0.667 if lower else 0.93
+    out.vertices = (out.vertices - c2) * 0.9 + c2 + distal * width * spacing
     return out
+
+
+def carve_tooth_sockets(gum: trimesh.Trimesh, tooth_meshes: list[trimesh.Trimesh]) -> trimesh.Trimesh:
+    """Remove tooth volumes from gingiva, with 0.08 mm clearance at contact."""
+    cutters = []
+    for tooth in tooth_meshes:
+        cutter = tooth.copy()
+        cutter.vertices = cutter.vertices + cutter.vertex_normals * 0.08
+        cutters.append(cutter)
+    carved = trimesh.boolean.difference([gum, *cutters], engine="manifold")
+    if not carved.is_watertight:
+        raise ValueError("Gingival socket subtraction produced an open mesh")
+    # Boolean intersections can leave microscopic closed slivers. Keep the
+    # anatomical body, which contains more than 99.99% of the result's volume.
+    body = max(carved.split(), key=lambda part: part.volume)
+    return orient_outward(body)
 
 
 def _layers_job(args):
@@ -150,7 +173,9 @@ def main():
     print("Loading BodyParts3D meshes…")
     teeth = {f: load_stl(args.bp3d, fma) for f, fma in TEETH_FMA.items() if fma}
     for q in (1, 2, 3, 4):
-        teeth[q * 10 + 8] = derive_third_molar(teeth[q * 10 + 7], teeth[q * 10 + 6])
+        teeth[q * 10 + 8] = derive_third_molar(
+            teeth[q * 10 + 7], teeth[q * 10 + 6], lower=q in (3, 4)
+        )
 
     allv = np.concatenate([m.vertices for m in teeth.values()])
     lo, hi = allv.min(0), allv.max(0)
@@ -186,7 +211,7 @@ def main():
         fr = frames[f]
         jobs.append((f, teeth[f].vertices, teeth[f].faces, arch, ttype,
                      dict(origin=fr.origin, axis=fr.axis, mesial=fr.mesial, buccal=fr.buccal),
-                     str(cache / f"layers-{f}.pkl")))
+                     str(cache / f"layers-v7-{f}.pkl")))
     print(f"Modelling internal anatomy for {len(jobs)} teeth…")
     with Pool(args.jobs) as pool:
         layers = dict(pool.map(_layers_job, jobs))
@@ -213,7 +238,7 @@ def main():
     print("Core: teeth, gingiva, bone…")
     for f, m in sorted(teeth.items()):
         prov = "source" if TEETH_FMA[f] else "derived"
-        add("core", f"tooth-{f}", decimate(m, 2600), prov, TEETH_FMA[f])
+        add("core", f"tooth-{f}", decimate(m, 12000), prov, TEETH_FMA[f])
         arch, side, ttype = tooth_info(f)
         fr = frames[f]
         info = dict(arch=arch, side=side, type=ttype, provenance=prov,
@@ -228,7 +253,10 @@ def main():
         manifest["teeth"][str(f)] = info
 
     for key, fma in CORE.items():
-        add("core", key, decimate(load_stl(args.bp3d, fma), 7000), "source", fma)
+        gum = decimate(load_stl(args.bp3d, fma), 14000)
+        upper = key == "gingiva-upper"
+        fitted = carve_tooth_sockets(gum, [m for f, m in teeth.items() if (f < 30) == upper])
+        add("core", key, fitted, "derived", fma)
 
     # ---- bone partition ---------------------------------------------------
     def root_points(fdis):
@@ -246,7 +274,7 @@ def main():
     upper_l = [f for f in teeth if f // 10 == 2]
 
     # decimate before partitioning so the pieces share identical borders (no cracks)
-    mand = decimate(load_stl(args.bp3d, BONES["mandible"]), 17000)
+    mand = decimate(load_stl(args.bp3d, BONES["mandible"]), 28000)
     tree = cKDTree(root_points(lower))
     fc = mand.triangles_center
     alv = tree.query(fc, distance_upper_bound=4.0)[0] < 4.0
@@ -263,7 +291,7 @@ def main():
     add("core", "mandibular-condyle-left", submesh(mand, cond_l), "derived", 52748)
 
     for side, ups in (("right", upper_r), ("left", upper_l)):
-        mx = decimate(load_stl(args.bp3d, BONES[f"maxilla-{side}"]), 9000)
+        mx = decimate(load_stl(args.bp3d, BONES[f"maxilla-{side}"]), 18000)
         tr = cKDTree(root_points(ups))
         c = mx.triangles_center
         a = tr.query(c, distance_upper_bound=4.0)[0] < 4.0
@@ -277,7 +305,7 @@ def main():
         m = load_stl(args.bp3d, fma)
         budget = next((v for k, v in CONTEXT_BUDGET.items() if key.startswith(k)), CONTEXT_BUDGET["default"])
         if key.startswith("temporal-bone"):
-            temporal[key.split("-")[-1]] = decimate(m, 6500)
+            temporal[key.split("-")[-1]] = decimate(m, 15000)
             continue
         add("context", key, decimate(m, budget), "source", fma)
 
@@ -308,90 +336,208 @@ def main():
         add("context", f"articular-disc-{side}", disc, "schematic")
         manifest["landmarks"][f"condyle-top-{side}"] = S.p(top).round(4).tolist()
 
-    # ---- neurovascular (schematic) -----------------------------------------
-    print("Neurovascular paths (schematic)…")
-    mand_full = mand
+    # ---- neurovascular -------------------------------------------------------
+    # Nerve and vessel centrelines come from Z-Anatomy (registered onto these
+    # jaws by extract_z_anatomy.py). Structures Z-Anatomy does not model (the
+    # superior alveolar nerves, the inferior alveolar vein and the pterygoid
+    # plexus) are placed from landmarks and joined to those paths.
+    print("Neurovascular paths…")
+    za = json.loads((Path(__file__).parent / "data" / "z-anatomy-neurovascular.json").read_text())["structures"]
+    hyoid = load_stl(args.bp3d, CONTEXT["hyoid-bone"])
+    z_clip = hyoid.bounds[0][2] - 6  # keep the neck vessels down to just below the hyoid
+
+    # "jaw weight" per vertex: 0 = moves with the mandible, 1 = moves with the skull and
+    # maxillae when the arches separate. Vessels that run between the two stretch.
+    upper_bones = trimesh.util.concatenate(
+        [load_stl(args.bp3d, BONES["maxilla-right"]), load_stl(args.bp3d, BONES["maxilla-left"])]
+        + [load_stl(args.bp3d, CONTEXT[k]) for k in ("temporal-bone-right", "temporal-bone-left", "sphenoid-bone",
+                                                     "palatine-bone-right", "palatine-bone-left",
+                                                     "zygomatic-bone-right", "zygomatic-bone-left")])
+    mand_hi = load_stl(args.bp3d, BONES["mandible"])
+    upper_kd = cKDTree(upper_bones.sample(120000, seed=np.random.default_rng(1)))
+    mand_kd = cKDTree(mand_hi.sample(60000, seed=np.random.default_rng(2)))
+
+    def jaw_weight(v: np.ndarray) -> np.ndarray:
+        dl = mand_kd.query(v)[0]
+        du = upper_kd.query(v)[0]
+        w = dl / np.maximum(dl + du, 1e-6)
+        w = ((w - 0.3) / 0.4).clip(0, 1)
+        return w * w * (3 - 2 * w)
+
+    nv_paths: dict[str, list[tuple[np.ndarray, np.ndarray]]] = {}
+
+    def z_splines(name, side, idx=None, scale=1.0, floor=0.3):
+        out = []
+        for i, sp in enumerate(za[name][side]):
+            if idx is not None and i not in idx:
+                continue
+            p = np.array(sp["points"])
+            r = np.maximum(np.array(sp["radius"]) * 0.5 * scale, floor)
+            keep = p[:, 2] >= z_clip
+            if keep.sum() < 2:
+                continue
+            out.append((p[keep], r[keep]))
+        return out
+
+    def put(key, polys, provenance):
+        polys = [(p, r) for p, r in polys if len(p) >= 2]
+        parts, weights = [], []
+        for p, r in polys:
+            sides = 12 if r.max() > 0.6 else 8
+            keep = np.r_[True, np.linalg.norm(np.diff(p, axis=0), axis=1) > 1e-6]
+            # one weight per centreline point, smoothed along the path, shared by its whole ring,
+            # so a tube never shears across its width when the jaws separate
+            wp = jaw_weight(p[keep])
+            if len(wp) > 4:
+                wp = np.convolve(np.pad(wp, 2, mode="edge"), np.ones(5) / 5, mode="valid")
+            parts.append(tube_polyline(p, r, sides=sides))
+            weights.append(np.r_[np.repeat(wp, sides), wp[0], wp[-1]])
+        m = trimesh.util.concatenate(parts)
+        w = np.concatenate(weights)
+        assert len(w) == len(m.vertices), key
+        m.visual = trimesh.visual.ColorVisuals(m, vertex_colors=np.c_[np.repeat((w * 255).round()[:, None], 3, 1), np.full(len(w), 255)].astype(np.uint8))
+        add("neurovascular", key, m, provenance)
+        manifest["paths"][key] = [S.p(p[:: max(1, len(p) // 24)]).round(4).tolist() for p, _ in polys]
+
+    def smooth_path(pts, n=6):
+        return catmull_rom(np.asarray(pts, float), n)
 
     def apex(f):
         return layers[f].landmarks["apex"] if f in layers else teeth[f].vertices[np.argmin(teeth[f].vertices[:, 2])]
 
-    def add_path(key, pts, r0, r1=None, provenance="schematic"):
-        pts = np.asarray(pts)
-        m = tube(pts, r0, r1, sides=10, samples=8)
-        add("neurovascular", key, m, provenance)
-        manifest["paths"][key] = S.p(pts).round(4).tolist()
+    NERVE, ART, VEIN = 2.0, 1.0, 1.0  # Z-Anatomy radius factor → mm (its bevel is 0.5 mm)
+    for side, q_lo, q_up, sgn in (("right", 4, 1, -1), ("left", 3, 2, 1)):
+        # --- nerves -------------------------------------------------------
+        put(f"trigeminal-nerve-{side}", z_splines("Trigeminal nerve (V)", side, scale=NERVE), "atlas")
+        put(f"mandibular-nerve-{side}", z_splines("Anterior division of mandibular nerve", side, scale=NERVE)
+            + z_splines("Posterior division of mandibular nerve", side, scale=NERVE), "atlas")
+        ian = za["Inferior alveolar nerve"][side]
+        # Z-Anatomy's dental branches run on into its own (different) teeth: end each at the
+        # apex of the nearest tooth here, and add a branch for any tooth left without one.
+        lower_fdi = [q_lo * 10 + n for n in range(1, 9)]
+        apices = np.array([apex(f) for f in lower_fdi])
+        ian_polys = z_splines("Inferior alveolar nerve", side, idx={0} | set(range(2, len(ian))), scale=NERVE, floor=0.22)
+        served = set()
+        for i, (p, r) in enumerate(ian_polys):
+            if i == 0 or p[-1][2] - p[0][2] < 5:  # dental branches rise toward the teeth
+                continue
+            d = np.linalg.norm(p[:, None] - apices[None], axis=2)
+            k, j = np.unravel_index(d.argmin(), d.shape)
+            ian_polys[i] = (np.vstack([p[: k + 1], apices[j]]), np.r_[r[: k + 1], r[k]])
+            served.add(j)
+        ian_trunk_pts = ian_polys[0][0]
+        for j in set(range(8)) - served:
+            k = int(np.argmin(np.linalg.norm(ian_trunk_pts - apices[j], axis=1)))
+            b = smooth_path([ian_trunk_pts[k], (ian_trunk_pts[k] + apices[j]) / 2 + np.array([0, 0, 1.0]), apices[j]], 5)
+            ian_polys.append((b, np.full(len(b), 0.25)))
+        put(f"inferior-alveolar-nerve-{side}", ian_polys, "atlas")
+        put(f"incisive-nerve-{side}", z_splines("Inferior alveolar nerve", side, idx={1}, scale=NERVE, floor=0.3), "atlas")
+        put(f"mental-nerve-{side}", z_splines("Mental nerve", side, scale=NERVE, floor=0.25), "atlas")
+        put(f"lingual-nerve-{side}", z_splines("Lingual nerve", side, scale=NERVE), "atlas")
+        put(f"buccal-nerve-{side}", z_splines("Buccal nerve", side, scale=NERVE, floor=0.25), "atlas")
 
-    vy = mand_full.vertices
-    for side, q, sgn in (("right", 4, -1), ("left", 3, 1)):
-        a8, a7, a6, a5, a4 = (apex(q * 10 + n) for n in (8, 7, 6, 5, 4))
-        a3, a2, a1 = (apex(q * 10 + n) for n in (3, 2, 1))
-        occl = np.mean([teeth[q * 10 + n].vertices[:, 2].max() for n in (6, 7)])
-        # ramus section at occlusal level, posterior to the third molar
-        y_back = teeth[q * 10 + 8].vertices[:, 1].max() + 6
-        ring = vy[(np.abs(vy[:, 2] - (occl - 3)) < 1.5) & (vy[:, 1] > y_back) & (np.sign(vy[:, 0]) == sgn)]
-        ya, yb = ring[:, 1].min(), ring[:, 1].max()
-        x_med = ring[:, 0][np.argmin(np.abs(ring[:, 0]))]
-        foramen = np.array([x_med + sgn * 1.2, ya + 0.45 * (yb - ya), occl - 4])
-        start = foramen + np.array([-sgn * 6, 4, 16])
-        dn = np.array([0, 0, -3.2])
-        lingual = np.array([-sgn * 1.0, 0, 0])
-        canal = [start, foramen + np.array([-sgn * 0.5, 0, 3]), foramen,
-                 a8 + dn * 1.2 + lingual, a7 + dn + lingual, a6 + dn + lingual * 0.6, a5 + dn]
-        # mental foramen: between the premolars, on the buccal surface
-        mid = (a4 + a5) / 2 + np.array([0, 0, -4.0])
-        hit = surface_point(mand_full, mid, np.array([sgn, -0.2, 0]))
-        mental_f = hit if hit is not None else mid + np.array([sgn * 5, 0, 0])
-        inner_mf = mental_f - np.array([sgn, -0.2, 0]) * 1.5
-        add_path(f"inferior-alveolar-nerve-{side}", canal + [inner_mf], 1.1, 0.95)
-        add_path(f"inferior-alveolar-artery-{side}",
-                 [p + np.array([-sgn * 0.9, 0, 1.0]) for p in canal[1:]] + [inner_mf + np.array([0, 0, 0.9])], 0.45, 0.35)
-        add_path(f"inferior-alveolar-vein-{side}",
-                 [p + np.array([sgn * 0.3, 0.4, -1.1]) for p in canal[1:]] + [inner_mf + np.array([0, 0, -1.0])], 0.6, 0.45)
-        # mental nerve: exits the foramen and fans toward lip & chin
-        mout = mental_f + np.array([sgn * 1.2, -0.6, 0.3])
-        for i, d in enumerate([np.array([sgn * 1.2, -3.5, 5]), np.array([sgn * 1.8, -4.5, 2.2]), np.array([sgn * 1.5, -4, -1.5])]):
-            add_path(f"mental-nerve-{side}" if i == 0 else f"mental-nerve-{side}-branch-{i}",
-                     [inner_mf, mental_f, mout, mout + d * 0.5 + np.array([sgn, 0, 0]), mout + d], 0.6 if i == 0 else 0.4, 0.25)
-        # incisive nerve continues in bone beneath the anterior apices
-        add_path(f"incisive-nerve-{side}", [inner_mf, a4 + dn, a3 + dn * 1.3, a2 + dn, a1 + dn + np.array([-sgn * 1.5, 0, 0])], 0.55, 0.3)
-        # lingual nerve: medial to the ramus, close to the lingual plate at the third molar, then to the tongue
-        crest8 = teeth[q * 10 + 8].vertices[:, 2].min() + 2
-        near8 = vy[(np.abs(vy[:, 1] - a8[1]) < 2) & (np.sign(vy[:, 0]) == sgn) & (np.abs(vy[:, 2] - crest8) < 3)]
-        x_ling = near8[:, 0][np.argmin(np.abs(near8[:, 0]))] if len(near8) else a8[0] - sgn * 4
-        l1 = start + np.array([sgn * 1.0, -6, 1])
-        l2 = np.array([x_ling - sgn * 1.6, a8[1] + 3, crest8 - 3])
-        l3 = np.array([x_ling - sgn * 4.0, a6[1], crest8 - 9])
-        l4 = np.array([x_ling - sgn * 9.0, a4[1], crest8 - 8])
-        l5 = np.array([x_ling - sgn * 12.0, a3[1] - 3, crest8 - 2])
-        add_path(f"lingual-nerve-{side}", [start + np.array([sgn * 1, -3, 6]), l1, l2, l3, l4, l5], 0.9, 0.6)
+        # V2: the maxillary nerve runs to the pterygopalatine fossa, then continues as the
+        # infraorbital nerve along the orbital floor and out of the infraorbital foramen.
+        mxn = z_splines("Maxillary nerve", side, scale=NERVE, floor=0.25)
+        trunk, trunk_r = mxn[0]
+        mx_side = load_stl(args.bp3d, BONES[f"maxilla-{side}"])
+        near = cKDTree(mx_side.sample(30000, seed=np.random.default_rng(3))).query(trunk)[0]
+        k_io = int(np.argmax(near < 3.0))  # first point within 3 mm of the maxilla: the fossa / orbital floor
+        put(f"maxillary-nerve-{side}", [(trunk[: k_io + 1], trunk_r[: k_io + 1])], "atlas")
+        io_trunk = trunk[k_io:]
+        put(f"infraorbital-nerve-{side}", [(io_trunk, trunk_r[k_io:])] + mxn[1:], "atlas")
+        tang = np.gradient(io_trunk, axis=0)
+        tang /= np.linalg.norm(tang, axis=1, keepdims=True)
+        k_f = int(np.argmax(tang[:, 2] < -0.6))  # where the nerve turns down out of the foramen
+        io_f = io_trunk[k_f]
+        manifest["landmarks"][f"infraorbital-foramen-{side}"] = S.p(io_f).round(4).tolist()
+
+        # superior alveolar nerves (schematic, joined to V2 / the infraorbital nerve)
+        ap_ = {n: apex(q_up * 10 + n) for n in range(1, 9)}
+        upz = np.array([0, 0, 3.0])
+        t8 = teeth[q_up * 10 + 8].vertices
+        tub = np.array([ap_[8][0] + sgn * 3, t8[:, 1].max() + 4, ap_[8][2] + 10])
+        psa_start = trunk[k_io]
+        put(f"posterior-superior-alveolar-nerve-{side}",
+            [(p := smooth_path([psa_start, tub, ap_[8] + upz + np.array([sgn * 1.5, 0, 0]), ap_[7] + upz, ap_[6] + upz]), np.linspace(0.55, 0.35, len(p)))],
+            "schematic")
+        k_mid = k_io + max(1, k_f // 2)
+        msa_start = trunk[min(k_mid, len(trunk) - 1)]
+        put(f"middle-superior-alveolar-nerve-{side}",
+            [(p := smooth_path([msa_start, ap_[5] + upz * 2.2, ap_[5] + upz, ap_[4] + upz]), np.linspace(0.45, 0.32, len(p)))], "schematic")
+        asa_start = io_trunk[max(0, k_f - 3)]
+        put(f"anterior-superior-alveolar-nerve-{side}",
+            [(p := smooth_path([asa_start, ap_[3] + upz * 2.5, ap_[3] + upz, ap_[2] + upz, ap_[1] + upz + np.array([-sgn * 1.5, 0, 0])]), np.linspace(0.5, 0.32, len(p)))],
+            "schematic")
+
+        # landmarks on the mandible from the alveolar nerve itself
+        ian_trunk = np.array(ian[0]["points"])
+        inside = mand_hi.contains(ian_trunk)
+        foramen = ian_trunk[int(np.argmax(inside))]
         manifest["landmarks"][f"mandibular-foramen-{side}"] = S.p(foramen).round(4).tolist()
+        mn0 = np.array(za["Mental nerve"][side][0]["points"])[0]
+        mental_f = mand_hi.nearest.on_surface([mn0])[0][0]
         manifest["landmarks"][f"mental-foramen-{side}"] = S.p(mental_f).round(4).tolist()
 
-    # superior alveolar nerves (schematic)
-    for side, q, sgn in (("right", 1, -1), ("left", 2, 1)):
-        mx = load_stl(args.bp3d, BONES[f"maxilla-{side}"])
-        ap_ = {n: apex(q * 10 + n) for n in range(1, 9)}
-        upz = np.array([0, 0, 3.0])
-        # infraorbital foramen: anterior surface above the first premolar
-        probe = ap_[4] + np.array([sgn * -2, 4, 17])
-        hit = surface_point(mx, probe, np.array([sgn * 0.3, -1, 0]))
-        io_f = hit if hit is not None else probe + np.array([0, -8, 0])
-        io_in = io_f + np.array([0, 3, 1.5])
-        io_back1 = io_f + np.array([-sgn * 1, 16, 4])
-        io_back2 = io_f + np.array([-sgn * 2, 32, 6])
-        add_path(f"infraorbital-nerve-{side}", [io_back2, io_back1, io_in, io_f,
-                                                io_f + np.array([sgn * 1.2, -1.5, -0.8]), io_f + np.array([sgn * 2.2, -2.6, -2.4])], 1.0, 0.6)
-        # posterior superior alveolar: from behind the tuberosity into the molar apices
-        t8 = teeth[q * 10 + 8].vertices
-        tub = np.array([ap_[8][0] + sgn * 3, t8[:, 1].max() + 4, ap_[8][2] + 10])
-        add_path(f"posterior-superior-alveolar-nerve-{side}",
-                 [io_back2 + np.array([sgn * 2, -2, -3]), tub, ap_[8] + upz + np.array([sgn * 1.5, 0, 0]),
-                  ap_[7] + upz, ap_[6] + upz], 0.55, 0.4)
-        add_path(f"middle-superior-alveolar-nerve-{side}",
-                 [io_back1 + np.array([sgn * 1.5, 0, -1]), ap_[5] + upz * 2.2, ap_[5] + upz, ap_[4] + upz], 0.45, 0.35)
-        add_path(f"anterior-superior-alveolar-nerve-{side}",
-                 [io_in, ap_[3] + upz * 2.5, ap_[3] + upz, ap_[2] + upz, ap_[1] + upz + np.array([-sgn * 1.5, 0, 0])], 0.5, 0.35)
-        manifest["landmarks"][f"infraorbital-foramen-{side}"] = S.p(io_f).round(4).tolist()
+        # --- arteries -----------------------------------------------------
+        put(f"external-carotid-artery-{side}", z_splines("External carotid artery", side, scale=ART), "atlas")
+        put(f"maxillary-artery-{side}", z_splines("Maxillary artery", side, scale=ART, floor=0.25), "atlas")
+        iaa = z_splines("Inferior alveolar artery", side, scale=ART, floor=0.3) + z_splines(
+            "Mental branch of inferior alveolar artery", side, scale=ART, floor=0.25)
+        put(f"inferior-alveolar-artery-{side}", iaa, "atlas")
+        put(f"posterior-superior-alveolar-artery-{side}", z_splines("Posterior superior alveolar artery", side, scale=ART, floor=0.3), "atlas")
+        put(f"descending-palatine-artery-{side}", z_splines("Descending palatine artery", side, scale=ART)
+            + z_splines("Greater palatine artery", side, scale=ART), "atlas")
+        put(f"buccal-artery-{side}", z_splines("Buccal artery", side, scale=ART * 0.5), "atlas")
+        put(f"facial-artery-{side}", z_splines("Facial artery", side, scale=ART), "atlas")
+
+        # --- veins ----------------------------------------------------------
+        put(f"internal-jugular-vein-{side}", z_splines("Internal jugular vein", side, scale=VEIN * 0.8), "atlas")
+        put(f"external-jugular-vein-{side}", z_splines("External jugular vein", side, scale=VEIN * 0.8), "atlas")
+        put(f"retromandibular-vein-{side}", z_splines("Retromandibular vein", side, scale=VEIN)
+            + z_splines("Anterior division of retromandibular vein", side, scale=VEIN)
+            + z_splines("Posterior division of retromandibular vein", side, scale=VEIN), "atlas")
+        mxv = z_splines("Maxillary veins", side, scale=VEIN)
+        put(f"maxillary-vein-{side}", mxv, "atlas")
+        put(f"facial-vein-{side}", z_splines("Facial vein", side, scale=VEIN) + z_splines("Common facial vein", side, scale=VEIN), "atlas")
+
+        # Pterygoid plexus (schematic): a small venous network on the lateral pterygoid,
+        # draining into the maxillary vein. The mesh is a set of interlinked vessels.
+        lp = trimesh.util.concatenate([load_stl(args.bp3d, CONTEXT[f"lateral-pterygoid-lower-{side}"]),
+                                       load_stl(args.bp3d, CONTEXT[f"lateral-pterygoid-upper-{side}"])])
+        mv_pts = np.vstack([p for p, _ in mxv])
+        # the maxillary vein end that lies nearest the muscle is where the plexus drains
+        ends = np.array([mv_pts[0], mv_pts[-1]])
+        drain = ends[np.argmin(np.linalg.norm(ends - lp.centroid, axis=1))]
+        lat = lp.vertices[(lp.vertices[:, 0] - lp.centroid[0]) * sgn > 0]  # lateral surface points
+        lo_, hi_ = lat.min(0), lat.max(0)
+        grid = []
+        for zi in np.linspace(0.2, 0.8, 3):
+            row = []
+            for yi in np.linspace(0.15, 0.85, 4):
+                target = np.array([0, lo_[1] + (hi_[1] - lo_[1]) * yi, lo_[2] + (hi_[2] - lo_[2]) * zi])
+                cand = lat[np.argmin(np.linalg.norm((lat - target)[:, 1:], axis=1))]
+                row.append(cand + np.array([sgn * 1.5, 0, 0]))
+            grid.append(row)
+        grid = np.array(grid)
+        plexus = []
+        for row in grid:
+            plexus.append(smooth_path(row, 5))
+        for j in range(grid.shape[1]):
+            plexus.append(smooth_path(grid[:, j], 5))
+        plexus.append(smooth_path([grid[1, 1], (grid[1, 1] + drain) / 2 + np.array([sgn * 1.0, 0, 0]), drain], 5))
+        put(f"pterygoid-plexus-{side}", [(p, np.full(len(p), 0.55)) for p in plexus], "schematic")
+
+        # Inferior alveolar vein (schematic): runs with the artery in the canal and joins the plexus.
+        ia_pts = np.vstack([p for p, _ in z_splines("Inferior alveolar artery", side)])
+        if np.linalg.norm(ia_pts[0] - drain) > np.linalg.norm(ia_pts[-1] - drain):
+            ia_pts = ia_pts[::-1]  # from the plexus down to the mental foramen
+        mid_row = grid[:, 1]
+        start = mid_row[np.argmin(mid_row[:, 2])]  # lowest plexus vessel
+        offs = np.array([sgn * 0.5, 0.3, -0.9])
+        path = np.vstack([start, ia_pts[len(ia_pts) // 6:] + offs])
+        path = path[::max(1, len(path) // 18)]
+        put(f"inferior-alveolar-vein-{side}", [(p := smooth_path(path, 4), np.linspace(0.75, 0.45, len(p)))], "schematic")
 
     # ---- tooth internal assets -------------------------------------------
     print("Tooth assets…")
@@ -404,12 +550,76 @@ def main():
             register(key, ma, 4, f"teeth/tooth-{f}.glb", "modeled")
         sc.export(out / "teeth" / f"tooth-{f}.glb")
 
+    manifest["explode"] = explode_plan(scenes["core"].geometry, manifest["teeth"])
+
     for name, sc in scenes.items():
         sc.export(out / f"{name}.glb")
     manifest["bounds"] = S.p(np.array([lo, hi])).round(4).tolist()
     (out / "manifest.json").write_text(json.dumps(manifest, indent=1))
     print("Done.", {k: len(v.geometry) for k, v in scenes.items()}, "teeth assets:", len(layers))
 
+
+def explode_plan(core: dict, teeth_info: dict, gap: float = 0.3, bite_gap: float = 0.6) -> dict:
+    """Separations (cm) for the arch dissection: bone | gingiva | teeth tiers.
+
+    The gingiva moves straight toward the bite until it clears the bone in every vertical
+    column (a height field over x/z). Each tooth then slides out of its socket along its
+    own long axis, just far enough to clear the gum: a tilted root pulled straight up
+    would cut through the socket wall, along its axis it follows the socket. Finally the
+    jaws open until the extracted upper and lower teeth clear each other.
+    Writes each tooth's extraction distance to teeth_info[fdi]["extract"].
+    """
+    rng = np.random.default_rng(4)
+
+    def pts(keys):
+        m = trimesh.util.concatenate([core[k] for k in keys])
+        return np.vstack([m.sample(40000, seed=rng), m.vertices])
+
+    def clearance(moving, fixed, up: bool, cell=0.08) -> float:
+        cm = [tuple(c) for c in np.floor(moving[:, [0, 2]] / cell).astype(int)]
+        cf = [tuple(c) for c in np.floor(fixed[:, [0, 2]] / cell).astype(int)]
+        lo_m, hi_f = {}, {}
+        for c, y in zip(cm, moving[:, 1] if up else -moving[:, 1]):
+            lo_m[c] = min(lo_m.get(c, np.inf), y)
+        for c, y in zip(cf, fixed[:, 1] if up else -fixed[:, 1]):
+            hi_f[c] = max(hi_f.get(c, -np.inf), y)
+        d = [hi_f[c] - lo_m[c] for c in lo_m if c in hi_f]
+        return float(max(0.0, max(d))) if d else 0.0
+
+    bone_u = pts(["maxilla-right", "maxilla-left", "maxillary-alveolar-process-right", "maxillary-alveolar-process-left"])
+    bone_l = pts(["mandible-body", "mandibular-alveolar-process"])
+    g_u = clearance(pts(["gingiva-upper"]), bone_u, up=False) + gap
+    g_l = clearance(pts(["gingiva-lower"]), bone_l, up=True) + gap
+
+    moved = {"upper": [], "lower": []}
+    for f, info in teeth_info.items():
+        fdi = int(f)
+        shell = core[f"tooth-{fdi}"]
+        gum = core["gingiva-upper" if fdi < 30 else "gingiva-lower"]
+        axis = np.array(info["frame"]["axis"], float)
+        axis /= np.linalg.norm(axis)
+        v = shell.vertices
+        c = v.mean(0)
+        radial = lambda p: np.linalg.norm(np.cross(p - c, axis), axis=1)  # noqa: E731
+        # the gum within the tooth's footprint around its axis; the tooth has to pass all of it
+        near = gum.vertices[radial(gum.vertices) < radial(v).max() + 0.1]
+        dist = max(0.0, float((near @ axis).max() - (v @ axis).min())) if len(near) else 0.0
+        info["extract"] = round(dist + gap, 3)
+        # highest gum point over the tooth, along its axis from the cervical line: while the tooth
+        # slides out, the engine hides the part of it still below this collar (inside the gum)
+        cervical = np.array(info["landmarks"]["cervical-line"])
+        info["collar"] = round(float((near @ axis).max() - cervical @ axis) + 0.02, 3) if len(near) else 0.0
+        jaw_shift = np.array([0, -g_u, 0]) if fdi < 30 else np.array([0, g_l, 0])
+        moved["upper" if fdi < 30 else "lower"].append(shell.vertices + jaw_shift + axis * info["extract"])
+    up = np.vstack(moved["upper"])
+    lo = np.vstack(moved["lower"])
+    jaw = (clearance(up, lo, up=True) + bite_gap) / 2
+    t_u = max(float(teeth_info[k]["extract"]) for k in teeth_info if int(k) < 30)
+    t_l = max(float(teeth_info[k]["extract"]) for k in teeth_info if int(k) > 30)
+    plan = {"jaw": round(jaw, 3), "upper": {"gingiva": round(g_u, 3), "teeth": round(g_u + t_u, 3)},
+            "lower": {"gingiva": round(g_l, 3), "teeth": round(g_l + t_l, 3)}}
+    print("Explode plan:", plan)
+    return plan
 
 if __name__ == "__main__":
     main()

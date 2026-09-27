@@ -2,11 +2,17 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { defineConfig, type Plugin } from 'vitest/config';
 import react from '@vitejs/plugin-react';
-import { HOME, TOOTH_PAGES, headTags, normalizeSiteUrl, robotsTxt, sitemapXml } from './src/app/seo.ts';
+import { ABOUT_PAGES, HOME, TOOTH_PAGES, headTags, normalizeSiteUrl, robotsTxt, sitemapXml } from './src/app/seo.ts';
+import { aboutHtml } from './src/app/about.ts';
 
 const base = process.env.DS_BASE ?? '/';
 /** Absolute public URL of the deployed site (e.g. https://user.github.io/dental-scope/); enables canonical URLs and the sitemap. */
-const siteUrl = normalizeSiteUrl(process.env.DS_SITE_URL);
+// On Vercel it defaults to the project's production domain (a custom domain once one is added).
+const vercelUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+const siteUrl = normalizeSiteUrl(process.env.DS_SITE_URL || (vercelUrl ? `https://${vercelUrl}` : undefined));
+/** Google Search Console HTML-tag verification token (optional). */
+const googleVerification = process.env.DS_GOOGLE_SITE_VERIFICATION?.trim() || null;
+const seoOpts = { googleVerification };
 const SEO_MARKER = /<!-- seo:[^>]*-->/;
 
 /**
@@ -24,22 +30,30 @@ function seo(): Plugin {
     },
     transformIndexHtml(html) {
       if (!SEO_MARKER.test(html)) throw new Error('index.html is missing the <!-- seo: … --> marker');
-      return html.replace(SEO_MARKER, () => headTags(HOME, siteUrl));
+      return html.replace(SEO_MARKER, () => headTags(HOME, siteUrl, seoOpts));
     },
     closeBundle() {
       const index = readFileSync(`${outDir}/index.html`, 'utf8');
-      const homeTags = headTags(HOME, siteUrl);
+      const homeTags = headTags(HOME, siteUrl, seoOpts);
       if (!index.includes(homeTags)) throw new Error('seo: built index.html no longer contains the generated head tags');
       const withTags = (tags: string) => index.replace(homeTags, () => tags);
-      writeFileSync(`${outDir}/404.html`, withTags(headTags(HOME, siteUrl, { notFound: true })));
+      writeFileSync(`${outDir}/404.html`, withTags(headTags(HOME, siteUrl, { ...seoOpts, notFound: true })));
       writeFileSync(`${outDir}/robots.txt`, robotsTxt(siteUrl));
       // with a relative base (hash routing) sub-folder pages would break asset paths
       const pages = base.startsWith('.') ? [] : TOOTH_PAGES;
       for (const page of pages) {
         mkdirSync(`${outDir}/${page.path}`, { recursive: true });
-        writeFileSync(`${outDir}/${page.path}index.html`, withTags(headTags(page, siteUrl)));
+        writeFileSync(`${outDir}/${page.path}index.html`, withTags(headTags(page, siteUrl, seoOpts)));
       }
-      if (siteUrl) writeFileSync(`${outDir}/sitemap.xml`, sitemapXml(siteUrl, [HOME.path, ...pages.map((p) => p.path)]));
+      // plain-HTML about page with the readable guide to every tooth (no app bundle), in English, Swedish and German
+      for (const page of ABOUT_PAGES) {
+        // with a relative base, links climb out of about/ (and about/<lang>/)
+        const absBase = base.startsWith('.') ? '../'.repeat(page.path.split('/').filter(Boolean).length) : base;
+        mkdirSync(`${outDir}/${page.path}`, { recursive: true });
+        writeFileSync(`${outDir}/${page.path}index.html`, aboutHtml(headTags(page, siteUrl, seoOpts), absBase, `${absBase}favicon.svg`, page.lang));
+      }
+      const today = new Date().toISOString().slice(0, 10);
+      if (siteUrl) writeFileSync(`${outDir}/sitemap.xml`, sitemapXml(siteUrl, [HOME.path, ...ABOUT_PAGES.map((p) => p.path), ...pages.map((p) => p.path)], today));
     },
   };
 }

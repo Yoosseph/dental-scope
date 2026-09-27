@@ -2,10 +2,13 @@
  * Exploded views. Offsets are pure functions of the mesh key + registry data;
  * the engine interpolates them by the explode scalar.
  *
- * Arch level: skull ↑, maxillary complex ↑, mandibular complex ↓, teeth rise out
- * of their sockets along their long axis, gingiva lifts off the bone, nerves
- * and vessels move laterally in order, muscles move outward (the lip ring
- * moves forward and down, clear of the incisors).
+ * Arch level ("Dissect anatomy", in position): the skull and maxillae move up and the
+ * mandible down, then each jaw separates in clean tiers toward the bite — bone, gingiva,
+ * teeth — with each tooth slid out of its socket along its own axis, clear of the gum. The tier
+ * distances come from the asset build (manifest.explode), measured so that no tier passes
+ * through another. Nerves and vessels stay in their true position relative to the bone:
+ * they sit at the mandible's offset and stretch toward the skull's offset by a per-vertex
+ * jaw weight (see `neurovascularStretch`), so the connections between the jaws stay intact.
  * Tooth level: layers separate along the tooth's own axes.
  */
 import * as THREE from 'three';
@@ -18,48 +21,81 @@ function toothVec(registry: Registry, fdi: number, key: 'axis' | 'buccal' | 'mes
   return f ? V(...f[key]) : V(0, fdi < 30 ? -1 : 1, 0);
 }
 
+/** Tier distances; used when an older manifest has no measured plan. */
+const FALLBACK_PLAN = { jaw: 4.6, upper: { gingiva: 1.6, teeth: 3.8 }, lower: { gingiva: 2.4, teeth: 4.7 } };
+
+export function archPlan(registry: Registry) {
+  return registry.manifest.explode ?? FALLBACK_PLAN;
+}
+
+export function isNeurovascular(cats: readonly string[]): boolean {
+  return cats.includes('nerves') || cats.includes('arteries') || cats.includes('veins');
+}
+
+/**
+ * Per-vertex stretch of a nerve or vessel at explode = 1, scaled by its jaw weight
+ * (0 = moves with the mandible, 1 = moves with the skull and maxillae).
+ */
+export function neurovascularStretch(registry: Registry): THREE.Vector3 {
+  return V(0, 2 * archPlan(registry).jaw, 0);
+}
+
 /** Arch-level offset at explode = 1 (app units, cm). `center` = mesh bounds centre. */
 export function archOffset(registry: Registry, meshKey: string, center: THREE.Vector3): THREE.Vector3 {
   const owner = registry.get(registry.meshOwner.get(meshKey) ?? '');
   const cats = registry.categoriesOfMesh(meshKey);
   const side = Math.sign(center.x) || 1;
   const fdi = owner?.toothFdi;
+  const plan = archPlan(registry);
 
-  const upper = V(0, 2.3, 0);
-  const lower = V(0, -2.3, 0);
+  const upper = V(0, plan.jaw, 0);
+  const lower = V(0, -plan.jaw, 0);
+  const upperGum = upper.clone().add(V(0, -plan.upper.gingiva, 0));
+  const lowerGum = lower.clone().add(V(0, plan.lower.gingiva, 0));
 
+  // Every part of a tooth (shell and internal layers) moves with the tooth: with its gum,
+  // then out of the socket along its own long axis (a tilted root pulled straight would cut
+  // through the socket wall), just far enough to clear the gum.
   if (fdi !== undefined) {
-    const jaw = fdi < 30 ? upper : lower;
-    return jaw
-      .clone()
-      .addScaledVector(toothVec(registry, fdi, 'axis'), 1.35)
-      .addScaledVector(toothVec(registry, fdi, 'buccal'), 0.3);
+    const extract = registry.manifest.teeth[String(fdi)]?.extract ?? (fdi < 30 ? plan.upper.teeth - plan.upper.gingiva : plan.lower.teeth - plan.lower.gingiva);
+    return (fdi < 30 ? upperGum : lowerGum).clone().addScaledVector(toothVec(registry, fdi, 'axis'), extract);
   }
-  if (meshKey === 'gingiva-upper') return upper.clone().add(V(0, -0.75, 0.15));
-  if (meshKey === 'gingiva-lower') return lower.clone().add(V(0, 0.75, 0.15));
-  if (meshKey.startsWith('maxilla-') || meshKey.startsWith('palatine')) return upper.clone();
+  if (meshKey === 'gingiva-upper') return upperGum;
+  if (meshKey === 'gingiva-lower') return lowerGum;
+  if (meshKey.startsWith('maxilla-') || meshKey.startsWith('maxillary-alveolar-process') || meshKey.startsWith('palatine')) return upper.clone();
   if (meshKey.startsWith('mandible') || meshKey.startsWith('mandibular')) return lower.clone();
-  if (meshKey.startsWith('articular-disc')) return V(side * 0.8, 1.1, 0);
-  if (meshKey.startsWith('articular-fossa')) return V(side * 0.4, 3.9, 0);
+  // the disc stays in its fossa on the temporal bone
+  if (meshKey.startsWith('articular-disc') || meshKey.startsWith('articular-fossa')) return upper.clone();
 
-  if (cats.includes('nerves') || cats.includes('arteries') || cats.includes('veins')) {
-    const isUpper = /superior-alveolar|infraorbital/.test(meshKey);
-    const base = isUpper ? upper.clone().add(V(0, 0.4, 0)) : lower.clone().add(V(0, -0.3, 0));
-    const lat = cats.includes('arteries') ? 1.35 : cats.includes('veins') ? 1.8 : 0.95;
-    if (meshKey.startsWith('lingual-nerve')) return base.add(V(-side * 0.9, 0, 0));
-    if (meshKey.startsWith('incisive') || meshKey.startsWith('mental')) return base.add(V(side * 0.35, 0, 0.9));
-    if (/anterior-superior/.test(meshKey)) return base.add(V(side * 0.3, 0, 0.9));
-    return base.add(V(side * lat, 0, 0));
-  }
+  // nerves and vessels: mandible offset here; the engine adds the per-vertex stretch
+  if (isNeurovascular(cats)) return lower.clone();
+
   // The lip ring sits in front of the teeth and spans the midline, so a sideways push leaves it over the
   // incisors. Move it forward and just below the lower crowns instead (in front of the chin).
-  if (meshKey === 'orbicularis-oris') return lower.clone().add(V(0, -2.6, 2.6));
-  if (cats.includes('muscles')) {
-    const vertical = center.y > 1.5 ? 3.2 : 0;
-    return V(side * 3.2, vertical, center.z > 2.5 ? 2 : 0);
-  }
-  if (cats.includes('skull')) return V(0, 3.9, 0).add(V(side * (Math.abs(center.x) > 2 ? 0.6 : 0), 0, 0));
+  if (meshKey === 'orbicularis-oris') return lipRingOffset(registry, lower);
+  if (cats.includes('muscles')) return (center.y > 1.5 ? upper : lower).clone().add(V(side * 3.2, 0, center.z > 2.5 ? 2 : 0));
+  // the hyoid hangs below the mandible and goes down with it; the rest of the skull goes up with the maxillae
+  if (cats.includes('skull')) return center.y < -2 ? lower.clone() : upper.clone();
   return V();
+}
+
+/**
+ * The lip ring goes forward and down to sit just below the separated lower crowns, so it
+ * never covers a crown when seen from the front.
+ */
+function lipRingOffset(registry: Registry, lower: THREE.Vector3): THREE.Vector3 {
+  const meshes = registry.manifest.meshes;
+  const lips = meshes['orbicularis-oris'];
+  if (!lips) return lower.clone().add(V(0, 0, 2.6));
+  let crownMin = Infinity;
+  for (const [key, m] of Object.entries(meshes)) {
+    const fdi = /^enamel-(\d\d)$/.exec(key)?.[1];
+    if (!fdi || Number(fdi) < 30) continue;
+    const c = new THREE.Vector3(...m.bounds[0]).add(new THREE.Vector3(...m.bounds[1])).multiplyScalar(0.5);
+    crownMin = Math.min(crownMin, m.bounds[0][1] + archOffset(registry, key, c).y);
+  }
+  if (!Number.isFinite(crownMin)) return lower.clone().add(V(0, 0, 2.6));
+  return V(0, crownMin - 0.15 - lips.bounds[1][1], 2.6);
 }
 
 /** Tooth-level offset at toothExplode = 1 for one layer mesh. */

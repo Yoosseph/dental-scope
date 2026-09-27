@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { pushCurrentPath, startRouter } from '../app/router';
+import { useT } from '../i18n';
 import { actions, useApp } from '../state/store';
 import { useServices } from './context';
 import { DetailPanel } from './DetailPanel';
@@ -21,7 +22,8 @@ export function App() {
   const laidOut = useApp((s) => s.explodePhase === 2);
   const detailHidden = useApp((s) => s.collapsed.detail);
   const dockHidden = useApp((s) => s.collapsed.dock);
-  const layersHidden = useApp((s) => s.collapsed.layers);
+  const lang = useApp((s) => s.lang);
+  const m = useT();
 
   useEffect(() => {
     engine.mount(stage.current!);
@@ -37,6 +39,10 @@ export function App() {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
 
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
+
   useKeyboard(engine);
 
   // keep the focused anatomy clear of the panels that cover the canvas
@@ -46,21 +52,18 @@ export function App() {
       if (mobile) engine.setInsets(0, sheet !== 'none' ? window.innerHeight * 0.5 : 0);
       // the bottom toolbar covers the lower edge of the canvas; the dissection tools and the phase-2 board make it taller
       else {
-        // the layers panel on the left (offsetLeft/offsetWidth ignore its slide-out transform)
-        const layers = document.querySelector<HTMLElement>('.ds-layers');
-        const left = layers && !layersHidden && layers.offsetParent ? layers.offsetLeft + layers.offsetWidth : 0;
         // the bottom toolbar: measured, since its height depends on what it shows
         const dock = document.querySelector<HTMLElement>('.ds-dock');
         const parent = dock?.offsetParent as HTMLElement | null;
         const measured = dock && parent ? parent.clientHeight - dock.offsetTop : 0;
         const bottom = dockHidden ? 0 : measured > 0 ? measured : dissect ? 210 : laidOut ? 170 : 70;
-        engine.setInsets(selected && !detailHidden && window.innerWidth > 980 ? 360 : 0, bottom, left);
+        engine.setInsets(selected && !detailHidden && window.innerWidth > 980 ? 360 : 0, bottom);
       }
     };
     update();
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
-  }, [engine, selected, dissect, laidOut, sheet, detailHidden, dockHidden, layersHidden]);
+  }, [engine, selected, dissect, laidOut, sheet, detailHidden, dockHidden]);
 
   return (
     <div className={`ds-app${selected ? ' has-selection' : ''}${dissect ? ' is-dissecting' : ''}`}>
@@ -74,18 +77,18 @@ export function App() {
         <Footer />
         <ResetButton />
         <LoadingCard />
-        <nav className="ds-mobile-bar ds-panel" aria-label="Mobile controls">
+        <nav className="ds-mobile-bar ds-panel" aria-label={m.mobileControls}>
           <button type="button" className={sheet === 'layers' ? 'is-active' : ''} onClick={() => actions.setMobileSheet(sheet === 'layers' ? 'none' : 'layers')} aria-pressed={sheet === 'layers'}>
-            <IconLayers /> <span>Layers</span>
+            <IconLayers /> <span>{m.layers}</span>
           </button>
           <button type="button" onClick={() => actions.openSearch(true)}>
-            <IconSearch /> <span>Search</span>
+            <IconSearch /> <span>{m.search}</span>
           </button>
           <button type="button" className={sheet === 'tools' ? 'is-active' : ''} onClick={() => actions.setMobileSheet(sheet === 'tools' ? 'none' : 'tools')} aria-pressed={sheet === 'tools'}>
-            <IconSection /> <span>Tools</span>
+            <IconSection /> <span>{m.tools}</span>
           </button>
         </nav>
-        {sheet !== 'none' && <button type="button" className="ds-scrim" aria-label="Close panel" onClick={() => actions.setMobileSheet('none')} />}
+        {sheet !== 'none' && <button type="button" className="ds-scrim" aria-label={m.closePanel} onClick={() => actions.setMobileSheet('none')} />}
       </div>
       <SearchPanel />
       <AboutDialog />
@@ -96,15 +99,16 @@ export function App() {
 /** Bottom-left: back to the start view with every setting at its default. */
 function ResetButton() {
   const { engine, registry } = useServices();
+  const m = useT();
   const reset = () => {
     actions.resetAll();
     engine.resetToStart();
     pushCurrentPath(registry);
   };
   return (
-    <button type="button" className="ds-reset-all" onClick={reset} title="Reset all: start view and default settings" aria-label="Reset all: start view and default settings">
+    <button type="button" className="ds-reset-all" onClick={reset} title={m.resetAllTitle} aria-label={m.resetAllTitle}>
       <IconReset size={15} />
-      <span>Reset all</span>
+      <span>{m.resetAll}</span>
     </button>
   );
 }

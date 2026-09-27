@@ -37,10 +37,12 @@ describe('surface detail for non-dental tissue', () => {
     for (const k of context) expect(styleFor(k).edge ?? 0, k).toBeGreaterThan(0);
     expect(styleFor('muscle').grain ?? 0).toBeGreaterThan(0);
     for (const k of ['nerve', 'artery', 'vein']) expect(styleFor(k).grain ?? 0, k).toBe(0);
-    for (const k of dental) {
-      expect(styleFor(k).grain ?? 0, k).toBe(0);
-      expect(styleFor(k).edge ?? 0, k).toBe(0);
+    for (const k of dental) expect(styleFor(k).grain ?? 0, k).toBe(0);
+    for (const k of ['shell', 'enamel', 'gingiva']) {
+      expect(styleFor(k).edge ?? 0, k).toBeGreaterThan(0);
+      expect(styleFor(k).mottle ?? 0, k).toBeGreaterThan(0);
     }
+    for (const k of dental.filter((k) => !['shell', 'enamel', 'gingiva'].includes(k))) expect(styleFor(k).edge ?? 0, k).toBe(0);
   });
   it('keeps context tissue matte-ish and free of self-glow', () => {
     for (const k of context) {

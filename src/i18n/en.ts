@@ -1,0 +1,272 @@
+/**
+ * English interface text: the reference dictionary. sv.ts and de.ts must provide
+ * every key (the Messages type enforces it).
+ */
+import type { CategoryId, NumberingSystem } from '../anatomy/types';
+import type { ClipAxis, OrbitMode, ViewPreset } from '../state/store';
+
+export const en = {
+  langLabel: 'Language',
+  switchTo: 'Switch to English',
+
+  fatalWebgl: 'Dental Scope needs WebGL. Please use a current version of Chrome, Edge, Firefox or Safari.',
+  fatalStart: 'Dental Scope could not start. Please reload the page.',
+  loadError: 'The 3D anatomy could not be loaded. Check your connection and reload.',
+
+  /* top bar */
+  madeBy: 'Made by Yoseph',
+  madeByAria: 'Made by Yoseph – Dental Scope on GitHub (opens in a new tab)',
+  numberingGroup: 'Tooth numbering system',
+  numberingTitle: (system: string) => `${system} tooth numbering`,
+  searchAnatomy: 'Search anatomy',
+  toLight: 'Switch to light theme',
+  toDark: 'Switch to dark theme',
+  theme: 'Theme',
+  aboutAria: 'About Dental Scope',
+  about: 'About',
+
+  /* mobile + app */
+  mobileControls: 'Mobile controls',
+  layers: 'Layers',
+  search: 'Search',
+  tools: 'Tools',
+  closePanel: 'Close panel',
+  resetAll: 'Reset all',
+  resetAllTitle: 'Reset all: start view and default settings',
+
+  /* loading */
+  stage: { core: 'Jaws & dentition', context: 'Skull & muscles', neurovascular: 'Nerves & vessels' } as Record<string, string>,
+  somethingWrong: 'Something went wrong',
+  loadingStage: (stage: string) => `Loading ${stage.toLowerCase()}…`,
+  preparing: 'Preparing dental anatomy',
+
+  /* footer */
+  disclaimer: 'Educational anatomical reference. Not intended for diagnosis or treatment.',
+  controlsCredits: 'Controls & credits',
+
+  /* about dialog */
+  aboutTitle: 'About Dental Scope',
+  aboutIntro:
+    'Dental Scope is an open-source, interactive 3D explorer of dental anatomy — from the whole mouth down to the pulp and root canals of a single tooth.',
+  aboutGuide: 'Guide to every tooth, numbering systems and FAQ',
+  eduTitle: 'Educational use only',
+  eduBody:
+    'Dental Scope is an educational reference. It is not a diagnostic tool and must not be used for diagnosis, treatment planning or clinical decisions.',
+  madeTitle: 'How the anatomy is made',
+  provSource: 'Source',
+  provSourceBody:
+    'jaws, teeth, skull and muscles come from BodyParts3D 3.0, © The Database Center for Life Science, licensed under CC Attribution-Share Alike 2.1 Japan.',
+  provDerived: 'Derived',
+  provDerivedBody: 'third molars, gingiva (with sockets cut for the teeth), alveolar bone, condyles and joint fossae are derived from those meshes.',
+  provModeled: 'Modeled',
+  provModeledBody:
+    'enamel, dentin, cementum, periodontal ligament, pulp and canals are modeled inside each real tooth shape using simplified, approximate proportions, not measurements.',
+  provAtlas: 'Atlas',
+  provAtlasBody:
+    'most nerves and vessels follow the Z-Anatomy atlas (CC BY-SA 4.0), fitted onto these jaws: their course is anatomical, but not measured in this individual.',
+  provSchematic: 'Schematic',
+  provSchematicBody:
+    'the superior alveolar nerves, the inferior alveolar vein, the pterygoid plexus and the joint discs are placed from anatomical landmarks to show relationships, not measured paths.',
+  sources: 'Sources for these statements',
+  sourcesAria: 'Sources for these statements (opens in a new tab)',
+  controlsTitle: 'Controls',
+  keys: [
+    ['Drag', 'Orbit (touch: one finger)'],
+    ['Right-drag', 'Pan (touch: two fingers)'],
+    ['Scroll', 'Zoom (touch: pinch)'],
+    ['Click', 'Select · double-click to focus'],
+    ['Orbit mode', 'Fixed: always turn around the model centre · Free: pan and focus move the pivot (bottom toolbar)'],
+    ['/', 'Search'],
+    ['Esc', 'Clear selection / leave tooth'],
+    ['F', 'Focus selection'],
+    ['I · H · G', 'Isolate · hide · ghost selection'],
+    ['D', 'Explore inside the selected tooth'],
+    ['[ · ]', 'Dissection level (inside a tooth)'],
+    ['E', 'Dissect anatomy (in a tooth: separate layers)'],
+    ['C · L', 'Section · labels'],
+    ['Arrows · + −', 'Orbit · zoom'],
+    ['R', 'Reset view'],
+  ] as [string, string][],
+  licences: 'Code MIT · Models CC BY-SA 2.1 JP · Text CC BY-SA 4.0',
+  sourceOnGithub: 'Source on GitHub',
+  close: 'Close',
+
+  /* detail panel */
+  detailsAria: (name: string) => `${name} details`,
+  closeDetails: 'Close details',
+  toothNotation: 'Tooth notation',
+  numberingTitleLong: { fdi: 'FDI (ISO 3950)', universal: 'Universal (ADA)', palmer: 'Palmer' } as Record<NumberingSystem, string>,
+  hierarchy: 'Location in hierarchy',
+  noDescription: 'No description yet.',
+  function: 'Function',
+  clinical: 'Clinical relevance',
+  archSide: 'Arch · side',
+  arch: { maxillary: 'Maxillary', mandibular: 'Mandibular' } as Record<'maxillary' | 'mandibular', string>,
+  side: { right: 'right', left: 'left' } as Record<'right' | 'left', string>,
+  modeledHere: 'Modeled here',
+  modeledSummary: (roots: number, canals: number) => `${roots} root${roots > 1 ? 's' : ''} · ${canals} canal${canals > 1 ? 's' : ''}`,
+  atlasRef: 'Atlas reference',
+  contains: 'Contains',
+  related: 'Related',
+  backToMouth: 'Back to the full mouth',
+  exploreInside: 'Explore inside this tooth',
+  showSurrounding: 'Show surrounding anatomy',
+  isolateStructure: 'Isolate structure',
+  focus: 'Focus',
+  focusTitle: 'Focus (F)',
+  ghost: 'Ghost',
+  ghostTitle: 'Translucent (G)',
+  hide: 'Hide',
+  hideTitle: 'Hide (H)',
+  kind: { landmark: 'Landmark', region: 'Region', structure: 'Structure' },
+
+  /* layers panel */
+  layersAria: 'Layers and structures',
+  panelTabs: 'Panel',
+  structures: 'Structures',
+  layerPresets: 'Layer presets',
+  preset: { overview: 'Overview', dentition: 'Teeth', bone: 'Bone', nerves: 'Nerves' } as Record<string, string>,
+  group: {
+    Dentition: 'Dentition',
+    'Tooth tissues': 'Tooth tissues',
+    Periodontium: 'Periodontium',
+    Bone: 'Bone',
+    Neurovascular: 'Neurovascular',
+    'Supporting anatomy': 'Supporting anatomy',
+  } as Record<string, string>,
+  category: {
+    'permanent-teeth': 'Permanent teeth',
+    'primary-teeth': 'Primary teeth',
+    enamel: 'Enamel',
+    dentin: 'Dentin',
+    cementum: 'Cementum',
+    'dental-pulp': 'Dental pulp',
+    'root-canals': 'Root canals',
+    gingiva: 'Gingiva',
+    'periodontal-ligament': 'Periodontal ligament',
+    'alveolar-bone': 'Alveolar bone',
+    maxilla: 'Maxilla',
+    mandible: 'Mandible',
+    tmj: 'Temporomandibular joint',
+    nerves: 'Nerves',
+    arteries: 'Arteries',
+    veins: 'Veins',
+    skull: 'Skull (context)',
+    muscles: 'Muscles of mastication',
+    salivary: 'Salivary glands',
+  } as Record<CategoryId, string>,
+  notModeled: 'Not modeled yet',
+  planned: 'planned',
+  showX: (x: string) => `Show ${x}`,
+  hideX: (x: string) => `Hide ${x}`,
+  showOnlyX: (x: string) => `Show only ${x}`,
+  translucentX: (x: string) => `Make ${x} translucent`,
+  translucent: 'Translucent',
+  adjusted: (n: number) => `${n} adjusted`,
+  isolated: 'Isolated',
+  reset: 'Reset',
+
+  /* structure tree */
+  treeAria: 'Anatomical hierarchy',
+  collapse: 'Collapse',
+  expand: 'Expand',
+
+  /* panel handles */
+  panelName: { layers: 'layers panel', detail: 'details panel', dock: 'toolbar' } as Record<'layers' | 'detail' | 'dock', string>,
+  showPanel: (name: string) => `Show ${name}`,
+  hidePanel: (name: string) => `Hide ${name}`,
+  clickOrDrag: 'click or drag',
+
+  /* search */
+  suggestions: ['first molar', 'tooth 36', '11', 'pulp', 'root canal', 'enamel', 'inferior alveolar nerve', 'TMJ disc', 'wisdom tooth', 'gingiva'],
+  searchPlaceholder: 'Tooth, number, tissue, nerve…',
+  closeSearch: 'Close search',
+  noMatches: (q: string) => `No matches for “${q}”.`,
+  tryLabel: 'Try',
+  /** [before, between, after] around the <kbd>fdi</kbd> and <kbd>#</kbd> keys */
+  searchTip: (system: string) => [`Numbers follow the active system (${system}). Prefix with`, 'or', 'to be explicit.'] as [string, string, string],
+
+  /* dock */
+  axis: {
+    sagittal: ['Sagittal', 'Sagittal plane (left–right cut)'],
+    coronal: ['Coronal', 'Coronal plane (front–back cut)'],
+    axial: ['Axial', 'Axial plane (horizontal cut)'],
+    view: ['View', 'Plane facing the camera'],
+  } as Record<ClipAxis, [string, string]>,
+  toothAxis: {
+    sagittal: ['Mesiodistal', 'Mesiodistal plane of the tooth'],
+    coronal: ['Buccolingual', 'Buccolingual plane of the tooth'],
+    axial: ['Horizontal', 'Horizontal cross-section of the tooth'],
+    view: ['View', 'Plane facing the camera'],
+  } as Record<ClipAxis, [string, string]>,
+  toolbarDissect: 'Camera and tooth dissection tools',
+  toolbarScene: 'Camera and scene tools',
+  inPosition: 'In position',
+  laidOut: 'Laid out',
+  assembled: 'Assembled',
+  pause: 'Pause',
+  replayDissection: 'Replay dissection',
+  playLayOut: 'Play: lay out every structure',
+  playPullApart: 'Play: pull apart to in position',
+  dissectAnatomy: 'Dissect anatomy',
+  section: 'Section',
+  sectionTitle: 'Cross-section (C)',
+  loadingInternal: (pct: number) => `Loading internal tooth anatomy… ${pct}%`,
+  playLevels: { play: 'Play dissection levels', pause: 'Pause dissection levels', replay: 'Replay dissection levels' },
+  playLayers: { play: 'Play layer separation', pause: 'Pause layer separation', replay: 'Replay layer separation' },
+  backToFullMouth: 'Back to full mouth',
+  backToFullMouthEsc: 'Back to full mouth (Esc)',
+  insideTooth: 'Inside the tooth',
+  context: 'Context',
+  dissectionLevel: 'Dissection level',
+  level: [
+    ['Whole tooth', 'Outer surface: enamel crown and cementum-covered root'],
+    ['Crown & root', 'Crown and root regions with the periodontal ligament'],
+    ['Enamel removed', 'Enamel lifted away to reveal the dentin'],
+    ['Pulp revealed', 'Dentin made translucent to reveal the pulp chamber'],
+    ['Root canals', 'Pulp chamber and root canals in isolation'],
+  ] as [string, string][],
+  separateLayers: 'Separate layers',
+  together: 'Together',
+  apart: 'Apart',
+  percent: (n: number) => `${n} percent`,
+  pct: (n: number) => `${n}%`,
+  crossSection: 'Cross-section',
+  sectionPlane: 'Section plane',
+  sectionPosition: 'Section position',
+  flipSection: 'Flip section side',
+  flipSide: 'Flip side',
+  labels: 'Labels',
+  labelsLag: 'May cause lag on slower devices',
+
+  /* camera */
+  view: {
+    'three-quarter': ['Three-quarter view', '¾ view'],
+    front: ['Front view', 'Front'],
+    left: ['Left lateral view', 'Left'],
+    right: ['Right lateral view', 'Right'],
+    superior: ['Superior view', 'Top'],
+    inferior: ['Inferior view', 'Bottom'],
+    'occlusal-upper': ['Occlusal view of the upper arch', 'Upper arch'],
+    'occlusal-lower': ['Occlusal view of the lower arch', 'Lower arch'],
+  } as Record<ViewPreset, [string, string]>,
+  orbit: {
+    fixed: 'Fixed orbit: always turn around the model centre',
+    free: 'Free orbit: pan and focus move the pivot',
+  } as Record<OrbitMode, string>,
+  camera: 'Camera',
+  orbitMode: 'Orbit mode',
+  cameraViews: 'Camera views',
+  zoomRotation: 'Zoom and rotation',
+  zoomIn: 'Zoom in',
+  zoomOut: 'Zoom out',
+  autoRotate: 'Auto-rotate',
+  resetView: 'Reset view',
+  cameraView: 'Camera view',
+  viewBtn: 'View',
+
+  /* 3D labels */
+  selectX: (x: string) => `Select ${x}`,
+};
+
+export type Messages = typeof en;

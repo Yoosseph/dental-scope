@@ -3,6 +3,8 @@
  */
 import { memo, useEffect, useRef, useState } from 'react';
 import { formatTooth } from '../anatomy/notation';
+import { typeLabel } from '../i18n/anatomy';
+import { nameOf, useT, type Lang } from '../i18n';
 import type { Structure } from '../anatomy/types';
 import { pushCurrentPath } from '../app/router';
 import { actions, useApp } from '../state/store';
@@ -31,6 +33,7 @@ export function StructureTree() {
   const toggle = (id: string) => setOpen((o) => withOpen(o, id, !o.has(id)));
 
   const root = registry.require(registry.rootId);
+  const m = useT();
   const onKeyDown = (e: React.KeyboardEvent) => {
     const items = [...(ref.current?.querySelectorAll<HTMLElement>('[role="treeitem"] > .ds-tree-row') ?? [])];
     const i = items.indexOf(document.activeElement as HTMLElement);
@@ -45,7 +48,7 @@ export function StructureTree() {
   };
 
   return (
-    <div className="ds-tree" role="tree" aria-label="Anatomical hierarchy" ref={ref} onKeyDown={onKeyDown}>
+    <div className="ds-tree" role="tree" aria-label={m.treeAria} ref={ref} onKeyDown={onKeyDown}>
       {root.children.map((c) => (
         <TreeNode key={c} id={c} depth={0} open={open} toggle={toggle} />
       ))}
@@ -59,6 +62,8 @@ const TreeNode = memo(function TreeNode({ id, depth, open, toggle }: { id: strin
   const selected = useApp((st) => st.selectedId === id);
   const hidden = useApp((st) => !!st.hidden[id]);
   const numbering = useApp((st) => st.numbering);
+  const lang = useApp((st) => st.lang);
+  const m = useT();
   const children = s.children.filter((c) => registry.get(c)?.kind !== 'landmark' || depth > 1);
   const expandable = children.length > 0;
   const isOpen = open.has(id);
@@ -92,18 +97,18 @@ const TreeNode = memo(function TreeNode({ id, depth, open, toggle }: { id: strin
             e.stopPropagation();
             toggle(id);
           }}
-          aria-label={isOpen ? 'Collapse' : 'Expand'}
+          aria-label={isOpen ? m.collapse : m.expand}
         >
           <IconChevron size={12} />
         </button>
-        <span className="ds-tree-name">{label(s)}</span>
+        <span className="ds-tree-name">{label(s, lang)}</span>
         {s.tooth && <span className="ds-chip ds-chip--mono ds-chip--sm">{formatTooth(s.tooth.fdi, numbering)}</span>}
         {s.kind !== 'landmark' && (
           <button
             type="button"
             tabIndex={-1}
             className="ds-tree-eye"
-            aria-label={hidden ? `Show ${s.name}` : `Hide ${s.name}`}
+            aria-label={hidden ? m.showX(nameOf(s, lang)) : m.hideX(nameOf(s, lang))}
             onClick={(e) => {
               e.stopPropagation();
               if (hidden) actions.unhide(id);
@@ -134,7 +139,7 @@ function withOpen(open: Set<string>, id: string, isOpen: boolean): Set<string> {
 }
 
 /** Tree label: teeth drop the arch/side prefix, which the quadrant row above already shows. */
-function label(s: Structure): string {
-  if (s.tooth) return s.name.replace(/^(Maxillary|Mandibular) (right|left) /, '').replace(/^./, (c) => c.toUpperCase());
-  return s.name;
+function label(s: Structure, lang: Lang): string {
+  if (s.tooth) return typeLabel(s.tooth.type, lang);
+  return nameOf(s, lang);
 }

@@ -1,11 +1,12 @@
 import { useRef } from 'react';
+import { useT } from '../i18n';
 import { actions, useApp, type CollapsiblePanel } from '../state/store';
 
 /** Which way each panel slides to tuck away: left panel → left, detail → right, dock → down. */
-const DIR: Record<CollapsiblePanel, { axis: 'x' | 'y'; sign: 1 | -1; name: string }> = {
-  layers: { axis: 'x', sign: -1, name: 'layers panel' },
-  detail: { axis: 'x', sign: 1, name: 'details panel' },
-  dock: { axis: 'y', sign: 1, name: 'toolbar' },
+const DIR: Record<CollapsiblePanel, { axis: 'x' | 'y'; sign: 1 | -1 }> = {
+  layers: { axis: 'x', sign: -1 },
+  detail: { axis: 'x', sign: 1 },
+  dock: { axis: 'y', sign: 1 },
 };
 
 /**
@@ -17,6 +18,7 @@ export function PanelHandle({ panel }: { panel: CollapsiblePanel }) {
   const start = useRef<{ x: number; y: number } | null>(null);
   const dragged = useRef(false);
   const d = DIR[panel];
+  const m = useT();
 
   const onPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
     start.current = { x: e.clientX, y: e.clientY };
@@ -42,7 +44,7 @@ export function PanelHandle({ panel }: { panel: CollapsiblePanel }) {
     actions.setCollapsed(panel, !collapsed);
   };
 
-  const label = `${collapsed ? 'Show' : 'Hide'} ${d.name}`;
+  const label = collapsed ? m.showPanel(m.panelName[panel]) : m.hidePanel(m.panelName[panel]);
   return (
     <button
       type="button"
@@ -52,7 +54,7 @@ export function PanelHandle({ panel }: { panel: CollapsiblePanel }) {
       onClick={onClick}
       aria-label={label}
       aria-expanded={!collapsed}
-      title={`${label} (click or drag)`}
+      title={`${label} (${m.clickOrDrag})`}
     >
       <svg width={24} height={24} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="m15 6-6 6 6 6" />

@@ -29,6 +29,13 @@ function toFloatGeometry(src: THREE.BufferGeometry): THREE.BufferGeometry {
     }
     geo.setAttribute(name, new THREE.BufferAttribute(arr, 3));
   }
+  // neurovascular meshes carry a per-vertex jaw weight in their colour (see explode.ts)
+  const jaw = src.getAttribute('color') as THREE.BufferAttribute | THREE.InterleavedBufferAttribute | undefined;
+  if (jaw) {
+    const w = new Float32Array(jaw.count);
+    for (let i = 0; i < jaw.count; i++) w[i] = jaw.getX(i);
+    geo.setAttribute('jaw', new THREE.BufferAttribute(w, 1));
+  }
   if (src.index) geo.setIndex(src.index);
   return geo;
 }

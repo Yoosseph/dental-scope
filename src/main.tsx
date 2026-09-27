@@ -1,12 +1,14 @@
 import { StrictMode } from 'react';
+import { inject } from '@vercel/analytics';
 import { createRoot } from 'react-dom/client';
 import { Registry } from './anatomy/registry';
 import { loadManifest } from './engine/assets';
 import { Engine } from './engine/Engine';
 import { buildIndex } from './search/search';
-import { restorePreferences } from './state/store';
+import { getState, restorePreferences } from './state/store';
 import { App } from './ui/App';
 import { ServicesContext } from './ui/context';
+import { t } from './i18n';
 import '@fontsource/inter-tight/400.css';
 import '@fontsource/inter-tight/500.css';
 import '@fontsource/inter-tight/600.css';
@@ -16,11 +18,15 @@ import '@fontsource-variable/source-serif-4/opsz.css';
 import './styles/tokens.css';
 import './styles/app.css';
 
+// Vercel Web Analytics: page views and visitors (cookieless); only collects on the Vercel deployment
+inject();
+
 async function boot() {
   restorePreferences();
+  document.documentElement.lang = getState().lang;
   const root = createRoot(document.getElementById('root')!);
   if (!hasWebGL()) {
-    root.render(<p className="ds-fatal">Dental Scope needs WebGL. Please use a current version of Chrome, Edge, Firefox or Safari.</p>);
+    root.render(<p className="ds-fatal">{t().fatalWebgl}</p>);
     return;
   }
   const manifest = await loadManifest();
@@ -48,5 +54,8 @@ function hasWebGL() {
 
 boot().catch((e) => {
   console.error(e);
-  document.getElementById('root')!.innerHTML = '<p class="ds-fatal">Dental Scope could not start. Please reload the page.</p>';
+  const p = document.createElement('p');
+  p.className = 'ds-fatal';
+  p.textContent = t().fatalStart;
+  document.getElementById('root')!.replaceChildren(p);
 });

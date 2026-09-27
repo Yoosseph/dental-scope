@@ -4,6 +4,8 @@
  */
 import type { Registry } from '../anatomy/registry';
 import { CATEGORY_BY_ID } from '../anatomy/categories';
+import { de } from '../i18n/de';
+import { sv } from '../i18n/sv';
 import { palmerToFdi, universalToFdi } from '../anatomy/notation';
 import type { NumberingSystem, Structure } from '../anatomy/types';
 
@@ -31,6 +33,7 @@ export function normalise(s: string): string {
     .toLowerCase()
     .normalize('NFKD')
     .replace(/[̀-ͯ]/g, '')
+    .replace(/ß/g, 'ss')
     .replace(/dentine/g, 'dentin')
     .replace(/[^a-z0-9#\s]/g, ' ')
     .split(/\s+/)
@@ -45,7 +48,12 @@ export function buildIndex(registry: Registry): SearchEntry[] {
     if (s.id === registry.rootId) continue;
     const terms = new Set<string>([normalise(s.name), ...s.aliases.map(normalise)]);
     if (s.shortName) terms.add(normalise(s.shortName));
-    for (const c of s.categories) terms.add(normalise(CATEGORY_BY_ID[c]?.label ?? c));
+    for (const c of s.categories) {
+      terms.add(normalise(CATEGORY_BY_ID[c]?.label ?? c));
+      // category names in the other interface languages
+      terms.add(normalise(sv.category[c] ?? c));
+      terms.add(normalise(de.category[c] ?? c));
+    }
     out.push({ id: s.id, name: s.name, terms: [...terms], kindBoost: kindBoost(s) });
   }
   return out;
@@ -84,7 +92,8 @@ export function parseToothQuery(raw: string, system: NumberingSystem): { fdi: nu
   const out: { fdi: number; hint: string; primary: boolean }[] = [];
   const pal = palmerToFdi(q.replace(/^palmer\s*/, ''));
   if (pal) return [{ fdi: pal, hint: `Palmer ${q.toUpperCase().replace(/\s+/g, '')}`, primary: true }];
-  const m = /^(?:(tooth|fdi|universal|uni|#)\s*)?#?\s*(\d{1,2})$/.exec(q);
+  // "tooth" in English, Swedish (tand) and German (zahn)
+  const m = /^(?:(tooth|tand|zahn|fdi|universal|uni|#)\s*)?#?\s*(\d{1,2})$/.exec(q);
   if (!m) return out;
   const n = Number(m[2]);
   const prefix = m[1];
@@ -111,7 +120,7 @@ export function search(index: SearchEntry[], registry: Registry, raw: string, sy
 
   const qWords = q.split(' ');
   // "tooth 36 pulp" → narrow to that tooth
-  const toothCtx = /\b(?:tooth\s*)?#?(\d{1,2})\b/.exec(raw.toLowerCase());
+  const toothCtx = /\b(?:(?:tooth|tand|zahn)\s*)?#?(\d{1,2})\b/.exec(raw.toLowerCase());
   for (const e of index) {
     let best = 0;
     for (const t of e.terms) {

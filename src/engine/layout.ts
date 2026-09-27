@@ -81,6 +81,16 @@ export function shelfLayout(input: LayoutItem[], aspect: number, gap: number): B
 
 const LAYER_ORDER = ['tooth', 'enamel', 'dentin-coronal', 'dentin-radicular', 'cementum', 'pdl', 'pulp-chamber', 'canal'];
 
+/** Open partitions cut from one source bone must share a board position to re-form its surface. */
+export function boardAssemblyKey(meshKey: string): string {
+  const upper = /^maxillary-alveolar-process-(left|right)$/.exec(meshKey);
+  if (upper) return `maxilla-${upper[1]}`;
+  if (meshKey === 'mandibular-alveolar-process' || meshKey === 'mandible-body' || /^mandibular-condyle-(left|right)$/.test(meshKey)) return 'mandible-body';
+  const fossa = /^articular-fossa-(left|right)$/.exec(meshKey);
+  if (fossa) return `temporal-bone-${fossa[1]}`;
+  return meshKey;
+}
+
 /** Reading position of a tooth in its arch as seen from the front: patient's right first (18…11, 21…28). */
 function archOrder(fdi: number): number {
   const q = Math.floor(fdi / 10);
@@ -105,7 +115,7 @@ export function boardSlot(meshKey: string, cats: readonly string[], fdi: number 
   }
   const vessel = cats.includes('nerves') || cats.includes('arteries') || cats.includes('veins');
   if (/^(articular-(fossa|disc)|mandibular-condyle)/.test(meshKey)) return slot(0, 1, side * 10 + (meshKey.startsWith('articular-fossa') ? 0 : meshKey.startsWith('articular-disc') ? 1 : 2));
-  if (vessel && /superior-alveolar|infraorbital/.test(meshKey)) return slot(0, 2, side * 10);
+  if (vessel && /superior-alveolar|infraorbital|maxillary-nerve|trigeminal|descending-palatine/.test(meshKey)) return slot(0, 2, side * 10);
   if (/^(maxilla|maxillary-alveolar|palatine)/.test(meshKey)) return slot(1, 0, side * 10 + (meshKey.startsWith('maxilla-') ? 0 : meshKey.startsWith('maxillary') ? 1 : 2));
   if (meshKey === 'gingiva-upper') return slot(1, 1, 0);
   if (meshKey === 'gingiva-lower') return slot(4, 0, 0);

@@ -3,8 +3,13 @@
  * and UI, so it can be replaced by verified sources without code changes.
  */
 import type { Registry } from '../anatomy/registry';
+import type { Lang } from '../i18n/lang';
 import teeth from './en/teeth.json';
 import structures from './en/structures.json';
+import teethSv from './sv/teeth.json';
+import structuresSv from './sv/structures.json';
+import teethDe from './de/teeth.json';
+import structuresDe from './de/structures.json';
 
 export type ContentStatus = 'placeholder' | 'draft' | 'reviewed';
 
@@ -30,7 +35,20 @@ export interface ResolvedContent {
   status: ContentStatus;
 }
 
-const DB: Record<string, RawEntry> = { ...(teeth as Record<string, RawEntry>), ...(structures as Record<string, RawEntry>) };
+const db = (t: unknown, s: unknown): Record<string, RawEntry> => ({ ...(t as Record<string, RawEntry>), ...(s as Record<string, RawEntry>) });
+/** Content per interface language; every language has the same keys (checked by i18n.test.ts). */
+export const CONTENT: Record<Lang, Record<string, RawEntry>> = {
+  en: db(teeth, structures),
+  sv: db(teethSv, structuresSv),
+  de: db(teethDe, structuresDe),
+};
+const DB = CONTENT.en;
+
+const FACT_LABELS: Record<Lang, { roots: string; canals: string; eruption: string }> = {
+  en: { roots: 'Typical roots', canals: 'Typical canals', eruption: 'Typical eruption' },
+  sv: { roots: 'Typiska rötter', canals: 'Typiska kanaler', eruption: 'Typisk eruptionsålder' },
+  de: { roots: 'Typische Wurzeln', canals: 'Typische Kanäle', eruption: 'Typischer Durchbruch' },
+};
 const STATUS: ContentStatus = 'draft';
 
 /** Candidate content keys for a structure id, most specific first. */
@@ -55,15 +73,16 @@ export function contentKeys(registry: Registry, id: string): string[] {
   return keys;
 }
 
-export function resolveContent(registry: Registry, id: string): ResolvedContent {
+export function resolveContent(registry: Registry, id: string, lang: Lang = 'en'): ResolvedContent {
   const key = contentKeys(registry, id).find((k) => DB[k]) ?? null;
-  const raw = key ? DB[key] : undefined;
+  const raw = key ? (CONTENT[lang][key] ?? DB[key]) : undefined;
+  const fl = FACT_LABELS[lang];
   const s = registry.get(id);
   const facts = [...(raw?.facts ?? [])];
-  if (raw?.roots) facts.push({ label: 'Typical roots', value: raw.roots });
-  if (raw?.canals) facts.push({ label: 'Typical canals', value: raw.canals });
-  if (raw?.eruption) facts.push({ label: 'Typical eruption', value: raw.eruption });
-  const related = (raw?.related ?? [])
+  if (raw?.roots) facts.push({ label: fl.roots, value: raw.roots });
+  if (raw?.canals) facts.push({ label: fl.canals, value: raw.canals });
+  if (raw?.eruption) facts.push({ label: fl.eruption, value: raw.eruption });
+  const related = ((key ? DB[key]?.related : undefined) ?? [])
     .map((r) => resolveRelated(registry, r, id))
     .filter((r): r is string => !!r && r !== id && r !== s?.parent);
   return {

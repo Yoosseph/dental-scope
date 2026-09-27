@@ -1,27 +1,25 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { formatTooth } from '../anatomy/notation';
 import { pushCurrentPath } from '../app/router';
+import { nameOf, useT, type Messages } from '../i18n';
 import { actions, DISSECT_LEVELS, getState, useApp, type ClipAxis } from '../state/store';
 import { CameraControls } from './CameraControls';
 import { useServices } from './context';
 import { PanelHandle } from './PanelHandle';
 import { IconArrowLeft, IconExplode, IconFlip, IconLabel, IconPause, IconPlay, IconReplay, IconSection, IconWarning } from './icons';
 
-const AXES: { id: ClipAxis; label: string; title: string }[] = [
-  { id: 'sagittal', label: 'Sagittal', title: 'Sagittal plane (left–right cut)' },
-  { id: 'coronal', label: 'Coronal', title: 'Coronal plane (front–back cut)' },
-  { id: 'axial', label: 'Axial', title: 'Axial plane (horizontal cut)' },
-  { id: 'view', label: 'View', title: 'Plane facing the camera' },
-];
+/** Section planes; names and titles are in the messages (`axis`, `toothAxis`). */
+const AXES: ClipAxis[] = ['sagittal', 'coronal', 'axial', 'view'];
 
 export function Dock() {
   const dissectFdi = useApp((s) => s.dissectFdi);
   const mobileOpen = useApp((s) => s.mobileSheet === 'tools');
   const collapsed = useApp((s) => s.collapsed.dock);
+  const m = useT();
   return (
     <div className={`ds-dock${mobileOpen ? ' is-mobile-open' : ''}${collapsed ? ' is-collapsed' : ''}`}>
       <PanelHandle panel="dock" />
-      <div className="ds-panel ds-toolbar" role="toolbar" aria-label={dissectFdi !== null ? 'Camera and tooth dissection tools' : 'Camera and scene tools'}>
+      <div className="ds-panel ds-toolbar" role="toolbar" aria-label={dissectFdi !== null ? m.toolbarDissect : m.toolbarScene}>
         <CameraControls />
         {dissectFdi !== null ? <DissectControls fdi={dissectFdi} /> : <ArchControls />}
       </div>
@@ -45,6 +43,7 @@ function ArchControls() {
   const labels = useApp((s) => s.labels);
   const loading = useApp((s) => s.loading.teeth);
   const clip = useApp((s) => s.clip.enabled);
+  const m = useT();
   // UI-only positions on the right half, where the store is discrete (phase 1 or 2)
   const [local, setLocal] = useState<number | null>(null);
   const [playing, setPlaying] = useState(false);
@@ -125,8 +124,8 @@ function ArchControls() {
     setLocal(null);
   };
 
-  const readout = value < 1 ? `${Math.round(value * 100)}%` : value < 1.5 ? 'In position' : 'Laid out';
-  const playLabel = playing ? 'Pause' : atEnd ? 'Replay dissection' : value >= 1 ? 'Play: lay out every structure' : 'Play: pull apart to in position';
+  const readout = value < 1 ? m.pct(Math.round(value * 100)) : value < 1.5 ? m.inPosition : m.laidOut;
+  const playLabel = playing ? m.pause : atEnd ? m.replayDissection : value >= 1 ? m.playLayOut : m.playPullApart;
 
   return (
     <div className="ds-dock-main">
@@ -136,7 +135,7 @@ function ArchControls() {
       <div className="ds-slider ds-slider--dissect">
         <div className="ds-slider-head">
           <span className="ds-slider-label">
-            <IconExplode size={15} /> Dissect anatomy
+            <IconExplode size={15} /> {m.dissectAnatomy}
           </span>
           <span className="ds-slider-value">{readout}</span>
         </div>
@@ -152,23 +151,23 @@ function ArchControls() {
             onPointerUp={release}
             onKeyUp={release}
             onBlur={release}
-            aria-label="Dissect anatomy"
+            aria-label={m.dissectAnatomy}
             aria-valuetext={readout}
             className="ds-range"
             style={{ ['--fill' as string]: `${(value / 2) * 100}%` }}
           />
         </div>
         <div className="ds-slider-ends ds-slider-ends--three" aria-hidden="true">
-          <span>Assembled</span>
-          <span>In position</span>
-          <span>Laid out</span>
+          <span>{m.assembled}</span>
+          <span>{m.inPosition}</span>
+          <span>{m.laidOut}</span>
         </div>
       </div>
       <div className="ds-dock-tools">
-        <ToolToggle active={clip} onClick={() => actions.setClip({ enabled: !clip })} icon={<IconSection />} label="Section" title="Cross-section (C)" />
+        <ToolToggle active={clip} onClick={() => actions.setClip({ enabled: !clip })} icon={<IconSection />} label={m.section} title={m.sectionTitle} />
         <LabelsToggle active={labels} />
       </div>
-      {clip && loading !== undefined && loading < 1 && <div className="ds-dock-note">Loading internal tooth anatomy… {Math.round(loading * 100)}%</div>}
+      {clip && loading !== undefined && loading < 1 && <div className="ds-dock-note">{m.loadingInternal(Math.round(loading * 100))}</div>}
     </div>
   );
 }
@@ -203,8 +202,8 @@ const LAST_LEVEL = DISSECT_LEVELS.length - 1;
 const SECONDS_PER_LEVEL = 1.3;
 const SECONDS_TO_APART = 1.8;
 
-function PlayButton({ playing, atEnd, onClick, what }: { playing: boolean; atEnd: boolean; onClick: () => void; what: string }) {
-  const label = playing ? `Pause ${what}` : atEnd ? `Replay ${what}` : `Play ${what}`;
+function PlayButton({ playing, atEnd, onClick, labels }: { playing: boolean; atEnd: boolean; onClick: () => void; labels: Messages['playLevels'] }) {
+  const label = playing ? labels.pause : atEnd ? labels.replay : labels.play;
   return (
     <button type="button" className={`ds-play${playing ? ' is-playing' : ''}`} onClick={onClick} aria-label={label} title={label}>
       {playing ? <IconPause size={16} /> : atEnd ? <IconReplay size={16} /> : <IconPlay size={16} />}
@@ -220,6 +219,8 @@ function DissectControls({ fdi }: { fdi: number }) {
   const labels = useApp((s) => s.labels);
   const clip = useApp((s) => s.clip.enabled);
   const ctx = useApp((s) => s.isolateContext);
+  const lang = useApp((s) => s.lang);
+  const m = useT();
   const tooth = registry.get(`tooth-${fdi}`)!;
   const levels = useTween();
   const layers = useTween();
@@ -250,33 +251,33 @@ function DissectControls({ fdi }: { fdi: number }) {
     <div className="ds-dock-main ds-dissect">
       <div className="ds-dissect-bar">
         <div className="ds-dissect-head">
-          <button type="button" className="ds-icon-btn ds-icon-btn--ghost" onClick={exit} aria-label="Back to full mouth" title="Back to full mouth (Esc)">
+          <button type="button" className="ds-icon-btn ds-icon-btn--ghost" onClick={exit} aria-label={m.backToFullMouth} title={m.backToFullMouthEsc}>
             <IconArrowLeft />
           </button>
           <div>
-            <div className="ds-label-sm">Inside the tooth</div>
+            <div className="ds-label-sm">{m.insideTooth}</div>
             <div className="ds-dissect-title">
-              <span className="ds-chip ds-chip--mono">{formatTooth(fdi, numbering)}</span> {tooth.name}
+              <span className="ds-chip ds-chip--mono">{formatTooth(fdi, numbering)}</span> {nameOf(tooth, lang)}
             </div>
           </div>
         </div>
         <div className="ds-dock-tools">
-          <ToolToggle active={clip} onClick={() => actions.setClip({ enabled: !clip, axis: 'sagittal', offset: 0 })} icon={<IconSection />} label="Section" title="Cross-section (C)" />
+          <ToolToggle active={clip} onClick={() => actions.setClip({ enabled: !clip, axis: 'sagittal', offset: 0 })} icon={<IconSection />} label={m.section} title={m.sectionTitle} />
           <LabelsToggle active={labels} />
-          <ToolToggle active={ctx} onClick={() => actions.setIsolateContext(!ctx)} icon={<IconExplode />} label="Context" title="Show surrounding anatomy" />
+          <ToolToggle active={ctx} onClick={() => actions.setIsolateContext(!ctx)} icon={<IconExplode />} label={m.context} title={m.showSurrounding} />
         </div>
       </div>
 
       <div className="ds-play-row">
-        <PlayButton playing={levels.playing} atEnd={level >= LAST_LEVEL} onClick={playLevels} what="dissection levels" />
+        <PlayButton playing={levels.playing} atEnd={level >= LAST_LEVEL} onClick={playLevels} labels={m.playLevels} />
         <div className="ds-play-body">
           <div className="ds-slider-head">
             <span className="ds-slider-label">
-              <IconLayersStack /> Dissection level
+              <IconLayersStack /> {m.dissectionLevel}
             </span>
-            <span className="ds-step-hint">{DISSECT_LEVELS[level].hint}</span>
+            <span className="ds-step-hint">{m.level[level][1]}</span>
           </div>
-          <div className="ds-steps" role="radiogroup" aria-label="Dissection level" style={{ ['--progress' as string]: String(level / LAST_LEVEL) }}>
+          <div className="ds-steps" role="radiogroup" aria-label={m.dissectionLevel} style={{ ['--progress' as string]: String(level / LAST_LEVEL) }}>
             {DISSECT_LEVELS.map((l) => (
               <button
                 key={l.id}
@@ -289,10 +290,10 @@ function DissectControls({ fdi }: { fdi: number }) {
                   levels.stop();
                   actions.setDissectLevel(l.id);
                 }}
-                title={l.hint}
+                title={m.level[l.id][1]}
               >
                 <span className="ds-step-dot" aria-hidden="true" />
-                <span className="ds-step-label">{l.label}</span>
+                <span className="ds-step-label">{m.level[l.id][0]}</span>
               </button>
             ))}
           </div>
@@ -300,18 +301,18 @@ function DissectControls({ fdi }: { fdi: number }) {
       </div>
 
       <div className="ds-play-row">
-        <PlayButton playing={layers.playing} atEnd={tex >= 1} onClick={playLayers} what="layer separation" />
+        <PlayButton playing={layers.playing} atEnd={tex >= 1} onClick={playLayers} labels={m.playLayers} />
         <div className="ds-play-body">
           <Slider
-            label="Separate layers"
+            label={m.separateLayers}
             icon={<IconExplode size={15} />}
             value={tex}
             onChange={(v) => {
               layers.stop();
               actions.setToothExplode(v);
             }}
-            left="Together"
-            right="Apart"
+            left={m.together}
+            right={m.apart}
           />
         </div>
       </div>
@@ -329,23 +330,18 @@ function IconLayersStack() {
   );
 }
 
-const TOOTH_AXIS_LABEL: Record<ClipAxis, [string, string]> = {
-  sagittal: ['Mesiodistal', 'Mesiodistal plane of the tooth'],
-  coronal: ['Buccolingual', 'Buccolingual plane of the tooth'],
-  axial: ['Horizontal', 'Horizontal cross-section of the tooth'],
-  view: ['View', 'Plane facing the camera'],
-};
-
 function SectionControls() {
   const clip = useApp((s) => s.clip);
   const inTooth = useApp((s) => s.dissectFdi !== null);
+  const m = useT();
   if (!clip.enabled) return null;
+  const names = inTooth ? m.toothAxis : m.axis;
   return (
-    <div className="ds-panel ds-section-panel" role="group" aria-label="Cross-section">
-      <div className="ds-segmented ds-segmented--fill" role="radiogroup" aria-label="Section plane">
+    <div className="ds-panel ds-section-panel" role="group" aria-label={m.crossSection}>
+      <div className="ds-segmented ds-segmented--fill" role="radiogroup" aria-label={m.sectionPlane}>
         {AXES.map((a) => (
-          <button key={a.id} type="button" role="radio" aria-checked={clip.axis === a.id} className={clip.axis === a.id ? 'is-active' : ''} onClick={() => actions.setClip({ axis: a.id, offset: 0 })} title={inTooth ? TOOTH_AXIS_LABEL[a.id][1] : a.title}>
-            {inTooth ? TOOTH_AXIS_LABEL[a.id][0] : a.label}
+          <button key={a} type="button" role="radio" aria-checked={clip.axis === a} className={clip.axis === a ? 'is-active' : ''} onClick={() => actions.setClip({ axis: a, offset: 0 })} title={names[a][1]}>
+            {names[a][0]}
           </button>
         ))}
       </div>
@@ -357,10 +353,10 @@ function SectionControls() {
           step={0.005}
           value={clip.offset}
           onChange={(e) => actions.setClip({ offset: Number(e.target.value) })}
-          aria-label="Section position"
+          aria-label={m.sectionPosition}
           className="ds-range"
         />
-        <button type="button" className="ds-icon-btn" onClick={() => actions.setClip({ flip: !clip.flip })} aria-label="Flip section side" title="Flip side">
+        <button type="button" className="ds-icon-btn" onClick={() => actions.setClip({ flip: !clip.flip })} aria-label={m.flipSection} title={m.flipSide}>
           <IconFlip />
         </button>
       </div>
@@ -369,15 +365,16 @@ function SectionControls() {
 }
 
 function Slider({ label, icon, value, onChange, left, right }: { label: string; icon: React.ReactNode; value: number; onChange: (v: number) => void; left: string; right: string }) {
+  const m = useT();
   return (
     <div className="ds-slider">
       <div className="ds-slider-head">
         <span className="ds-slider-label">
           {icon} {label}
         </span>
-        <span className="ds-slider-value">{Math.round(value * 100)}%</span>
+        <span className="ds-slider-value">{m.pct(Math.round(value * 100))}</span>
       </div>
-      <input type="range" min={0} max={1} step={0.01} value={value} onChange={(e) => onChange(Number(e.target.value))} aria-label={label} aria-valuetext={`${Math.round(value * 100)} percent`} className="ds-range" />
+      <input type="range" min={0} max={1} step={0.01} value={value} onChange={(e) => onChange(Number(e.target.value))} aria-label={label} aria-valuetext={m.percent(Math.round(value * 100))} className="ds-range" />
       <div className="ds-slider-ends" aria-hidden="true">
         <span>{left}</span>
         <span>{right}</span>
@@ -388,13 +385,14 @@ function Slider({ label, icon, value, onChange, left, right }: { label: string; 
 
 function LabelsToggle({ active }: { active: boolean }) {
   const warnId = useId();
+  const m = useT();
   return (
     <span className="ds-tool-wrap">
-      <ToolToggle active={active} onClick={() => actions.toggleLabels()} icon={<IconLabel />} label="Labels" describedBy={warnId} />
+      <ToolToggle active={active} onClick={() => actions.toggleLabels()} icon={<IconLabel />} label={m.labels} describedBy={warnId} />
       {/* styled tooltip instead of a native title, so the performance note is visible on hover and keyboard focus */}
       <span className="ds-tool-warn" role="tooltip" id={warnId}>
         <IconWarning size={13} />
-        May cause lag on slower devices
+        {m.labelsLag}
         <kbd>L</kbd>
       </span>
     </span>

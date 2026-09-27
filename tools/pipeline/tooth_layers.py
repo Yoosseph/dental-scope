@@ -31,11 +31,14 @@ structures as `modeled`.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from itertools import permutations
 
 import numpy as np
 import trimesh
 from scipy import ndimage
 from skimage import measure
+
+from geometry import orient_outward, smooth_taubin
 
 try:
     import fast_simplification
@@ -211,28 +214,45 @@ def smax(a, b, k):
     return -smin(-a, -b, k)
 
 
-def surface(field: np.ndarray, lo, h, frame: Frame, target_faces: int, smooth=6) -> trimesh.Trimesh | None:
+def surface(field: np.ndarray, lo, h, frame: Frame, target_faces: int, smooth=4) -> trimesh.Trimesh | None:
     if field.max() <= 0:
         return None
+    # Suppress small voxel islands before meshing, avoiding detached specks.
+    components, count = ndimage.label(field > 0)
+    if count > 1:
+        sizes = np.bincount(components.ravel())[1:]
+        keep = np.flatnonzero(sizes >= sizes.max() * 0.02) + 1
+        field = np.where(np.isin(components, keep), field, -h)
     padded = np.pad(field, 1, constant_values=-1.0)
     verts, faces, _, _ = measure.marching_cubes(padded, level=0.0, spacing=(h, h, h))
     verts = verts - h + lo
     # marching_cubes on a positive-inside field gives inward normals; flip.
     faces = faces[:, ::-1]
-    m = trimesh.Trimesh(verts, faces, process=True)
-    # drop tiny islands
-    parts = m.split(only_watertight=False)
-    if len(parts) > 1:
-        big = max(p.area for p in parts)
-        m = trimesh.util.concatenate([p for p in parts if p.area > big * 0.02])
-    trimesh.smoothing.filter_taubin(m, iterations=smooth)
+    m = trimesh.Trimesh(verts, faces, process=False)
+    smooth_taubin(m, iterations=smooth)
     if fast_simplification is not None and len(m.faces) > target_faces:
-        v2, f2 = fast_simplification.simplify(m.vertices.astype(np.float32), m.faces.astype(np.int32),
-                                              target_reduction=1 - target_faces / len(m.faces))
-        m = trimesh.Trimesh(v2, f2, process=True)
+        def reduce(source: trimesh.Trimesh, aggressiveness: float) -> trimesh.Trimesh:
+            v2, f2 = fast_simplification.simplify(
+                source.vertices.astype(np.float32), source.faces.astype(np.int32),
+                target_count=target_faces, agg=aggressiveness, preserve_border=True,
+            )
+            return trimesh.Trimesh(v2, f2, process=False)
+
+        # A very gentle pass removes marching-cubes pinches before the final
+        # reduction; otherwise thin nested shells can acquire nonmanifold edges.
+        clean = reduce(m, 2.0)
+        simplified = reduce(clean, 7.0) if len(clean.faces) > target_faces else clean
+        if not simplified.is_watertight:
+            # Thin closed shells need gentler reduction. Accept extra detail up
+            # to a bounded limit; never keep a huge unsimplified volume.
+            for aggressiveness in (5.0, 4.0, 3.0):
+                trial = reduce(clean, aggressiveness)
+                if trial.is_watertight and len(trial.faces) <= target_faces * 2.5:
+                    simplified = trial
+                    break
+        m = simplified
     m.vertices = frame.to_world(np.asarray(m.vertices))
-    m.fix_normals()
-    return m
+    return orient_outward(m)
 
 
 def track_roots(inside, lo, h, z_top, z_bottom):
@@ -271,11 +291,11 @@ def track_roots(inside, lo, h, z_top, z_bottom):
     return roots
 
 
-def build_tooth_layers(mesh: trimesh.Trimesh, arch: str, ttype: str, frame: Frame, h=0.11,
+def build_tooth_layers(mesh: trimesh.Trimesh, arch: str, ttype: str, frame: Frame, h=0.09,
                        faces_budget=None) -> ToothLayers:
     key = (arch, ttype)
     P = TYPE_PARAMS[key]
-    faces_budget = faces_budget or dict(enamel=7000, dentin=6000, cementum=4000, pdl=3000, chamber=2500, canal=900)
+    faces_budget = faces_budget or dict(enamel=12000, dentin=11000, cementum=7000, pdl=5000, chamber=4500, canal=1800)
 
     tri_local = frame.to_local(mesh.vertices)[mesh.faces]
     vl = tri_local.reshape(-1, 3)
@@ -337,28 +357,17 @@ def build_tooth_layers(mesh: trimesh.Trimesh, arch: str, ttype: str, frame: Fram
     canal_paths = []  # (name, rootLabel, [points local])
     root_infos = []
 
-    def label_for(dirxy):
-        cands = expected if expected else ["single"]
-        if len(cands) == 1:
-            return cands[0]
-        best = max(cands, key=lambda c: np.dot(dirxy, ROOT_DIRS[c]))
-        return best
-
     if roots:
         centre = np.mean([r["path"][0][:2] for r in roots], axis=0)
-    used = set()
     root_specs = []
     if expected and len(roots) >= len(expected):
-        # choose the largest len(expected) roots
+        # Match the root configuration as a set. A greedy assignment can swap
+        # adjacent molar roots when the first component is slightly off axis.
         roots = sorted(roots, key=lambda r: -len(r["path"]))[: len(expected)]
-        for r in roots:
-            d = r["path"][0][:2] - centre
-            d = d / (np.linalg.norm(d) + 1e-9)
-            lab = label_for(d)
-            if lab in used:
-                lab = [c for c in expected if c not in used][0]
-            used.add(lab)
-            root_specs.append((lab, r))
+        centre = np.mean([r["path"][0][:2] for r in roots], axis=0)
+        directions = [(r["path"][0][:2] - centre) / (np.linalg.norm(r["path"][0][:2] - centre) + 1e-9) for r in roots]
+        assignment = max(permutations(expected), key=lambda labs: sum(np.dot(d, ROOT_DIRS[lab]) for d, lab in zip(directions, labs)))
+        root_specs = list(zip(assignment, roots))
     elif roots:
         # fused / single root: one geometric root carries all expected canals
         r = max(roots, key=lambda r: len(r["path"]))
@@ -444,7 +453,7 @@ def build_tooth_layers(mesh: trimesh.Trimesh, arch: str, ttype: str, frame: Fram
     # Adjacent tissues are separated by a hair-thin gap (EPS). Coincident surfaces
     # would z-fight when a section exposes them; with the gap, the inner tissue's
     # cut face always wins and sections read as clean coloured bands.
-    EPS = 0.1
+    EPS = 0.06
     f_cementum = np.minimum.reduce([sd, c - sd, below, -f_pulp - EPS])
     outer = np.where(hc > 0, e, c)
     f_dentin = np.minimum(sd - outer - EPS, -f_pulp - EPS)
