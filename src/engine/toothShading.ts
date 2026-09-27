@@ -17,18 +17,18 @@ export function colorToothShell(geo: THREE.BufferGeometry, mat: TissueMaterial, 
   const positions = geo.getAttribute('position');
   const crevices = meshCrevices(geo, 0.0004, 0.004);
   const colors = new Float32Array(positions.count * 3);
+  // height of each vertex along the tooth axis, measured from the cervical line
+  const heights = new Float64Array(positions.count);
   let crownTop = 0;
   for (let i = 0; i < positions.count; i++) {
-    const h = (positions.getX(i) - cervical[0]) * axis[0]
+    heights[i] = (positions.getX(i) - cervical[0]) * axis[0]
       + (positions.getY(i) - cervical[1]) * axis[1]
       + (positions.getZ(i) - cervical[2]) * axis[2];
-    crownTop = Math.max(crownTop, h);
+    crownTop = Math.max(crownTop, heights[i]);
   }
   const shade = 1 + (((fdi * 17) % 7) - 3) * 0.006;
   for (let i = 0; i < positions.count; i++) {
-    const height = (positions.getX(i) - cervical[0]) * axis[0]
-      + (positions.getY(i) - cervical[1]) * axis[1]
-      + (positions.getZ(i) - cervical[2]) * axis[2];
+    const height = heights[i];
     const crown = THREE.MathUtils.smoothstep(height, -0.11, 0.07);
     const tip = THREE.MathUtils.smoothstep(height, crownTop * 0.65, crownTop * 0.92);
     const fissure = 1 - 0.25 * crevices[i] * crown;
