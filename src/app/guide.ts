@@ -19,6 +19,8 @@ export const MIN_INDEX_WORDS = 150;
 
 interface Entry {
   summary?: string;
+  /** longer description of form (crown, roots, canals) for the guide pages; not shown in the explorer panel */
+  anatomy?: string;
   function?: string;
   clinical?: string;
   location?: string;
@@ -44,6 +46,7 @@ interface GuideText {
   otherSide: string;
   antagonist: string;
   related: string;
+  anatomyTitle: string;
   toothTail: string;
   structureTail: string;
   draft: string;
@@ -65,6 +68,7 @@ export const GUIDE_TEXT: Record<Lang, GuideText> = {
     otherSide: 'Same tooth, other side',
     antagonist: 'Opposing tooth',
     related: 'Related structures',
+    anatomyTitle: 'Form and anatomy',
     toothTail: 'tooth anatomy in 3D',
     structureTail: 'anatomy in 3D',
     draft: 'This text is a draft and has not yet been reviewed by a dental professional. Educational reference only, not for diagnosis or treatment.',
@@ -84,6 +88,7 @@ export const GUIDE_TEXT: Record<Lang, GuideText> = {
     otherSide: 'Samma tand, andra sidan',
     antagonist: 'Motstående tand',
     related: 'Relaterade strukturer',
+    anatomyTitle: 'Form och anatomi',
     toothTail: 'tandanatomi i 3D',
     structureTail: 'anatomi i 3D',
     draft: 'Texten är ett utkast och har ännu inte granskats av tandvårdspersonal. Endast för utbildning, inte för diagnos eller behandling.',
@@ -103,6 +108,7 @@ export const GUIDE_TEXT: Record<Lang, GuideText> = {
     otherSide: 'Gleicher Zahn, andere Seite',
     antagonist: 'Gegenzahn',
     related: 'Verwandte Strukturen',
+    anatomyTitle: 'Form und Anatomie',
     toothTail: 'Zahnanatomie in 3D',
     structureTail: 'Anatomie in 3D',
     draft: 'Dieser Text ist ein Entwurf und wurde noch nicht zahnärztlich geprüft. Nur zu Lernzwecken, nicht zur Diagnose oder Behandlung.',
@@ -122,6 +128,7 @@ export const GUIDE_TEXT: Record<Lang, GuideText> = {
     otherSide: 'Mismo diente, otro lado',
     antagonist: 'Diente antagonista',
     related: 'Estructuras relacionadas',
+    anatomyTitle: 'Forma y anatomía',
     toothTail: 'anatomía dental en 3D',
     structureTail: 'anatomía en 3D',
     draft: 'Este texto es un borrador y aún no ha sido revisado por un profesional de la odontología. Solo con fines educativos, no para diagnóstico ni tratamiento.',
@@ -141,6 +148,7 @@ export const GUIDE_TEXT: Record<Lang, GuideText> = {
     otherSide: 'Idem dens, latere altero',
     antagonist: 'Dens antagonista',
     related: 'Structurae cognatae',
+    anatomyTitle: 'Forma et anatomia',
     toothTail: 'anatomia dentis in 3D',
     structureTail: 'anatomia in 3D',
     draft: 'Hic textus adumbratio est, nondum a medico dentario recognita. Ad discendum tantum, non ad diagnosim vel curationem.',
@@ -226,7 +234,7 @@ const entryOf = (s: GuideSubject, lang: Lang): Entry | undefined => (CONTENT[lan
 export function wordCount(s: GuideSubject, lang: Lang): number {
   const e = entryOf(s, lang);
   if (!e) return 0;
-  const parts = [e.summary, e.function, e.clinical, e.location, e.roots, e.canals, e.eruption, ...(e.facts ?? []).map((f) => `${f.label} ${f.value}`)];
+  const parts = [e.summary, e.anatomy, e.function, e.clinical, e.location, e.roots, e.canals, e.eruption, ...(e.facts ?? []).map((f) => `${f.label} ${f.value}`)];
   return parts.filter(Boolean).join(' ').split(/\s+/).filter(Boolean).length;
 }
 
@@ -318,6 +326,7 @@ export function guideHtml(page: GuidePage, head: string, base: string): string {
   for (const f of e.facts ?? []) facts.push([f.label, f.value]);
 
   const sections: string[] = [];
+  if (e.anatomy) sections.push(`<h2>${esc(T.anatomyTitle)}</h2><p>${esc(e.anatomy)}</p>`);
   if (e.function) sections.push(`<h2>${esc(T.functionTitle)}</h2><p>${esc(e.function)}</p>`);
   if (e.clinical) sections.push(`<h2>${esc(T.clinicalTitle)}</h2><p>${esc(e.clinical)}</p>`);
   if (s.fdi !== undefined) {

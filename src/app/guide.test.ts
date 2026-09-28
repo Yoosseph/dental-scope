@@ -63,6 +63,16 @@ describe('guide pages', () => {
   });
 });
 
+describe('English tooth pages', () => {
+  it('have enough text to be indexed', () => {
+    for (const s of TOOTH_SUBJECTS) expect(wordCount(s, 'en'), `tooth ${s.fdi}`).toBeGreaterThanOrEqual(MIN_INDEX_WORDS);
+  });
+  it('show the form-and-anatomy section', () => {
+    const page = guidePage(tooth36, 'en');
+    expect(guideHtml(page, '', '/')).toContain('<h2>Form and anatomy</h2>');
+  });
+});
+
 describe('neighbouring teeth', () => {
   it('finds mesial and distal neighbours, crossing the midline between central incisors', () => {
     expect(neighbour(11, 'mesial')).toBe(21);
