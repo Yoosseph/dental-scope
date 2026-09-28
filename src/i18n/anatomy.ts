@@ -520,6 +520,15 @@ export function structureNames(id: string, en: string): Names | undefined {
   return { en, sv: `${sided.sv} (${side.sv})`, de: `${sided.de} (${side.de})`, es: `${sided.es} (${side.es})`, la: `${sided.la} (${side.la})` };
 }
 
+/**
+ * Names of a structure without its side (\"Inferior alveolar nerve\", not \"Right …\"), for pages
+ * about the structure in general. `en` is the English base name. Undefined when not translated.
+ */
+export function baseStructureNames(key: string, en: string, sided: boolean): Names | undefined {
+  const t = sided ? SIDED[key] : EXACT[key];
+  return t ? { en, ...t } : undefined;
+}
+
 /** Short 3D-label names of non-tooth structures, where English has one (by base id). */
 export const STRUCTURE_SHORT: Record<string, Tr> = {
   'inferior-alveolar-nerve': { sv: 'N. alv. inf.', de: 'N. alv. inf.' , es: 'N. alv. inf.', la: 'N. alv. inf.' },

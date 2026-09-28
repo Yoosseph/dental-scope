@@ -240,3 +240,6 @@ th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px soli
 .note{color:var(--muted);font-size:14px}
 .bottom{max-width:880px;margin:0 auto;padding:24px 16px 40px;color:var(--muted);font-size:14px;border-top:1px solid var(--line)}
 `;
+
+/** Shared stylesheet for the plain text pages (about, guide). */
+export const PAGE_CSS = CSS;
