@@ -81,8 +81,6 @@ export interface AppState {
 
 export type CollapsiblePanel = 'layers' | 'detail' | 'dock';
 
-const prefersDark = typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches;
-
 export const initialState: AppState = {
   ready: false,
   loading: {},
@@ -110,7 +108,7 @@ export const initialState: AppState = {
   aboutOpen: false,
   panel: 'layers',
   mobileSheet: 'none',
-  theme: prefersDark ? 'dark' : 'light',
+  theme: 'light', // light by default; users can switch to dark (choice is remembered)
   lang: DEFAULT_LANG,
   resetId: 0,
   collapsed: { layers: false, detail: false, dock: false },

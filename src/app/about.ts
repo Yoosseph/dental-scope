@@ -30,7 +30,7 @@ const GLOSSARY: string[][] = [
   ['crown', 'root', 'cej', 'apex'],
   ['enamel', 'dentin', 'cementum', 'pulp', 'pulp-chamber', 'pulp-horn', 'root-canals', 'apical-foramen'],
   ['periodontium', 'gingiva', 'pdl', 'maxillary-alveolar-process', 'mandibular-alveolar-process'],
-  ['maxilla', 'mandible', 'mandibular-condyle', 'tmj', 'articular-disc', 'mandibular-foramen', 'mental-foramen'],
+  ['maxilla', 'maxillary-sinus', 'mandible', 'mandibular-condyle', 'tmj', 'articular-disc', 'mandibular-foramen', 'mental-foramen'],
   [
     'inferior-alveolar-nerve',
     'mental-nerve',
@@ -128,7 +128,7 @@ export function aboutHtml(head: string, base: string, faviconHref: string, lang:
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#ebe7de" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#f7f5f0" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#11100e" media="(prefers-color-scheme: dark)" />
     ${head}
     ${jsonLd(faqLd)}
@@ -207,7 +207,7 @@ export function aboutHtml(head: string, base: string, faviconHref: string, lang:
 }
 
 const CSS = `
-:root{--bg:#ebe7de;--ink:#1c1a17;--muted:#6b665d;--line:#d6d0c4;--card:#f6f3ed;--accent:#9a3b3b}
+:root{--bg:#f7f5f0;--ink:#1c1a17;--muted:#6b665d;--line:#d6d0c4;--card:#f6f3ed;--accent:#9a3b3b}
 @media (prefers-color-scheme:dark){:root{--bg:#11100e;--ink:#ece8e1;--muted:#a39d92;--line:#2c2a26;--card:#1a1916;--accent:#e08a7e}}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -240,3 +240,6 @@ th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px soli
 .note{color:var(--muted);font-size:14px}
 .bottom{max-width:880px;margin:0 auto;padding:24px 16px 40px;color:var(--muted);font-size:14px;border-top:1px solid var(--line)}
 `;
+
+/** Shared stylesheet for the plain text pages (about, guide). */
+export const PAGE_CSS = CSS;

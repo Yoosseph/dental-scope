@@ -53,6 +53,8 @@ The built site is fully static. For a sub-path deployment set `DS_BASE`, e.g. `D
 
 Set `DS_SITE_URL` to the public address of the deployment (e.g. `https://user.github.io/dental-scope/`) to add canonical URLs, social-preview tags with `og-image.png`, structured data and `sitemap.xml`. On Vercel, set it in the project's environment variables. Every build also writes `robots.txt` and a static entry page per tooth (`tooth/36/`) so those deep links return their own title and description instead of the 404 fallback. Crawlers only read `robots.txt` at the domain root, so for a project site under a sub-path submit `sitemap.xml` in the search engine's webmaster tools instead.
 
+Every build also writes a text-first guide page for every tooth and structure in all five languages: English at the root (`teeth/36-mandibular-left-first-molar/`), the others under `sv/`, `de/`, `es/` and `la/` with translated slugs (`sv/tander/36-vanster-forsta-molar-i-underkaken/`). A guide page stays `noindex` until its own text reaches 150 words (`MIN_INDEX_WORDS` in `src/app/guide.ts`); only indexable pages go into `sitemap.xml`, with hreflang links between their language versions. Once a tooth's English guide page is indexable, the matching explorer entry page (`tooth/36/`) leaves the index so the two don't compete. Vercel preview deployments (or any build with `DS_PREVIEW=1`) are `noindex` everywhere and `robots.txt` blocks all crawlers.
+
 ### Keyboard
 
 `/` search · `Esc` clear / leave tooth · `F` focus · `I` isolate · `H` hide · `G` ghost · `D` inside tooth · `[` `]` dissection level · `E` dissect anatomy / separate tooth layers · `C` section · `L` labels · arrows orbit · `+` `−` zoom · `R` reset

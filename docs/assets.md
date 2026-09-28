@@ -20,7 +20,7 @@ Every 3D asset shipped in `public/models/`, where it comes from, its licence and
 |---|---|
 | `source` | Real BodyParts3D geometry, only transformed and simplified |
 | `derived` | Cut from or approximated using source geometry (alveolar bone, condyles, fossae, third molars) |
-| `modeled` | Internal tooth anatomy generated inside the real tooth shape with simplified, approximate proportions (not measured) |
+| `modeled` | Internal tooth anatomy generated inside the real tooth shape with simplified, approximate proportions (not measured); the maxillary sinuses, hollowed out of the maxilla with an approximate wall thickness |
 | `atlas` | Nerve and vessel centrelines from the Z-Anatomy atlas (CC BY-SA 4.0), fitted onto these jaws: anatomical course, not measured in this individual |
 | `schematic` | Superior alveolar nerves, inferior alveolar vein, pterygoid plexus and joint discs placed from landmarks to show relationships |
 
@@ -34,8 +34,9 @@ The provenance of every mesh is recorded in `manifest.json`; the About dialog ex
 - **Mandibular condyles** — the top 10 mm of the posterior ramus on each side.
 - **Articular fossae** — faces of the temporal bone within reach of the condylar head.
 - **Tooth layers** — see `tools/pipeline/tooth_layers.py`: signed-distance field of each tooth → cervical line from a typical crown/root ratio → enamel and cementum by depth → pulp chamber by inner offset → canals traced along each detected root; canal count per root follows the most common textbook configuration.
-- **Atlas nerves and vessels** — `tools/pipeline/extract_z_anatomy.py` (run once with Blender's `bpy` module) samples the Z-Anatomy Bezier curves, fits the Z-Anatomy mandible and maxillae onto the BodyParts3D ones with a similarity ICP (median residual on the mandible 0.27 mm) and writes the centrelines to `tools/pipeline/data/z-anatomy-neurovascular.json`. `build_assets.py` sweeps them into tubes, ends the inferior alveolar nerve's dental branches at the tooth apices (adding one for a tooth without a branch), trims the neck vessels just below the hyoid and uses the atlas nerve path to place the mandibular, mental and infraorbital foramen landmarks.
+- **Atlas nerves and vessels** — `tools/pipeline/extract_z_anatomy.py` (run once with Blender's `bpy` module) samples the Z-Anatomy Bezier curves, fits the Z-Anatomy mandible and maxillae onto the BodyParts3D ones with a similarity ICP (median residual on the mandible 0.27 mm) and writes the centrelines to `tools/pipeline/data/z-anatomy-neurovascular.json`. `build_assets.py` sweeps them into tubes, ends the inferior alveolar nerve's dental branches at the tooth apices (adding one for a tooth without a branch), clips the neck vessels (external carotid artery, internal jugular, retromandibular and facial veins) just below the angle of the mandible, keeps only the ganglion of the trigeminal nerve, leaves out the external jugular vein and the posterior division of the retromandibular vein, gives the inferior alveolar nerve trunk its real calibre (about 2.2 mm) and uses the atlas nerve path to place the mandibular, mental and infraorbital foramen landmarks.
 - **Schematic nerves and vessels / TMJ discs** — the superior alveolar nerves branch from the atlas maxillary and infraorbital nerves to the upper apices; the pterygoid plexus is a small venous network on the lateral pterygoid draining into the atlas maxillary vein; the inferior alveolar vein runs beside the atlas artery from the plexus to the mental foramen. Discs sit between condylar head and fossa.
+- **Maxillary sinuses** — `tools/pipeline/sinus.py`. Neither source has them (both maxillae are solid), so each is modelled: the BodyParts3D maxilla is voxelised (0.4 mm), eroded by a 1 mm wall, cut medially at the lateral nasal wall (the lateral edge of the inferior nasal concha), kept 1 mm from the tooth roots and 0.8 mm from the superior alveolar and infraorbital nerves, opened (2 mm) to drop thin remnants of the processes, and the largest cavity is meshed with marching cubes. `manifest.sinus` holds each volume and the distance from each upper root apex to the sinus floor.
 - **Jaw weights** — every nerve and vessel vertex stores (in its vertex colour) how far it moves with the skull (1) rather than the mandible (0) when the arches separate, from its distances to the two bones, so paths between the jaws stretch instead of breaking.
 - **Dissection tiers** (`manifest.explode`, `teeth[].extract`, `teeth[].collar`) — measured by `explode_plan` in `build_assets.py`; `validate_assets.py` checks that no tooth passes visibly through its gum at any point of the slider.
 
@@ -49,6 +50,8 @@ npm run assets:compress   # → public/models
 node tools/gen-assets-doc.mjs   # refresh the table below
 python3 tools/pipeline/validate_assets.py tools/pipeline/.cache/build
 ```
+
+`validate_assets.py` also checks that no nerve or vessel hangs below the mandible and that each maxillary sinus is one closed body inside its maxilla, clear of the teeth and of the nerves in its walls, with a volume of 3–25 cm³.
 
 The Z-Anatomy centrelines are committed, so the steps above do not need Blender. To regenerate them, download `Z-Anatomy.zip` from <https://github.com/Z-Anatomy/Models-of-human-anatomy>, unzip `Startup.blend`, and run `python tools/pipeline/extract_z_anatomy.py --blend <Startup.blend> --bp3d tools/pipeline/raw/stl` with `bpy` 4.2 (Python 3.11), trimesh, SciPy and rtree installed. Loading the atlas needs about 4 GB of memory.
 
@@ -72,10 +75,8 @@ The Z-Anatomy centrelines are committed, so the steps above do not need Blender.
 | `descending-palatine-artery-left` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 2,464 |
 | `descending-palatine-artery-right` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 2,464 |
 | `ethmoid-bone` | context.glb | FMA52740 | source | Axis/unit transform, decimation, meshopt compression | 7,774 |
-| `external-carotid-artery-left` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 1,176 |
-| `external-carotid-artery-right` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 1,176 |
-| `external-jugular-vein-left` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 888 |
-| `external-jugular-vein-right` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 888 |
+| `external-carotid-artery-left` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 840 |
+| `external-carotid-artery-right` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 840 |
 | `facial-artery-left` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 1,752 |
 | `facial-artery-right` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 1,752 |
 | `facial-vein-left` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 2,736 |
@@ -90,14 +91,14 @@ The Z-Anatomy centrelines are committed, so the steps above do not need Blender.
 | `inferior-alveolar-artery-right` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 4,024 |
 | `inferior-alveolar-nerve-left` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 2,960 |
 | `inferior-alveolar-nerve-right` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 2,960 |
-| `inferior-alveolar-vein-left` | neurovascular.glb | — | schematic | Generated by `build_assets.py` from computed landmarks | 1,944 |
-| `inferior-alveolar-vein-right` | neurovascular.glb | — | schematic | Generated by `build_assets.py` from computed landmarks | 1,944 |
+| `inferior-alveolar-vein-left` | neurovascular.glb | — | schematic | Generated by `build_assets.py` from computed landmarks | 1,296 |
+| `inferior-alveolar-vein-right` | neurovascular.glb | — | schematic | Generated by `build_assets.py` from computed landmarks | 1,296 |
 | `inferior-nasal-concha-left` | context.glb | FMA54738 | source | Axis/unit transform, decimation, meshopt compression | 1,484 |
 | `inferior-nasal-concha-right` | context.glb | FMA54737 | source | Axis/unit transform, decimation, meshopt compression | 1,616 |
 | `infraorbital-nerve-left` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 2,968 |
 | `infraorbital-nerve-right` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 2,968 |
-| `internal-jugular-vein-left` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 1,680 |
-| `internal-jugular-vein-right` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 1,680 |
+| `internal-jugular-vein-left` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 1,440 |
+| `internal-jugular-vein-right` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 1,440 |
 | `lacrimal-bone-left` | context.glb | FMA53646 | source | Axis/unit transform, decimation, meshopt compression | 1,152 |
 | `lacrimal-bone-right` | context.glb | FMA53645 | source | Axis/unit transform, decimation, meshopt compression | 1,114 |
 | `lateral-pterygoid-lower-left` | context.glb | FMA49023 | source | Axis/unit transform, decimation, meshopt compression | 2,390 |
@@ -110,8 +111,8 @@ The Z-Anatomy centrelines are committed, so the steps above do not need Blender.
 | `mandibular-alveolar-process` | core.glb | FMA52748 | derived | Transform + partition or approximation from the named source mesh (see below) | 8,150 |
 | `mandibular-condyle-left` | core.glb | FMA52748 | derived | Transform + partition or approximation from the named source mesh (see below) | 1,406 |
 | `mandibular-condyle-right` | core.glb | FMA52748 | derived | Transform + partition or approximation from the named source mesh (see below) | 1,495 |
-| `mandibular-nerve-left` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 1,008 |
-| `mandibular-nerve-right` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 1,008 |
+| `mandibular-nerve-left` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 1,800 |
+| `mandibular-nerve-right` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 1,800 |
 | `masseter-deep-left` | context.glb | FMA49005 | source | Axis/unit transform, decimation, meshopt compression | 9,000 |
 | `masseter-deep-right` | context.glb | FMA49004 | source | Axis/unit transform, decimation, meshopt compression | 9,000 |
 | `masseter-superficial-left` | context.glb | FMA49002 | source | Axis/unit transform, decimation, meshopt compression | 9,000 |
@@ -124,6 +125,8 @@ The Z-Anatomy centrelines are committed, so the steps above do not need Blender.
 | `maxillary-artery-right` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 5,416 |
 | `maxillary-nerve-left` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 1,176 |
 | `maxillary-nerve-right` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 1,176 |
+| `maxillary-sinus-left` | core.glb | FMA53650 | modeled | Modeled by `sinus.py`: the source maxilla hollowed out inward (see above) | 5,000 |
+| `maxillary-sinus-right` | core.glb | FMA53649 | modeled | Modeled by `sinus.py`: the source maxilla hollowed out inward (see above) | 5,000 |
 | `maxillary-vein-left` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 1,944 |
 | `maxillary-vein-right` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 1,944 |
 | `medial-pterygoid-left` | context.glb | FMA49013 | source | Axis/unit transform, decimation, meshopt compression | 7,368 |
@@ -148,8 +151,8 @@ The Z-Anatomy centrelines are committed, so the steps above do not need Blender.
 | `posterior-superior-alveolar-nerve-right` | neurovascular.glb | — | schematic | Generated by `build_assets.py` from computed landmarks | 400 |
 | `pterygoid-plexus-left` | neurovascular.glb | — | schematic | Generated by `build_assets.py` from computed landmarks | 1,648 |
 | `pterygoid-plexus-right` | neurovascular.glb | — | schematic | Generated by `build_assets.py` from computed landmarks | 1,648 |
-| `retromandibular-vein-left` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 1,224 |
-| `retromandibular-vein-right` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 1,224 |
+| `retromandibular-vein-left` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 816 |
+| `retromandibular-vein-right` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 816 |
 | `sphenoid-bone` | context.glb | FMA52736 | source | Axis/unit transform, decimation, meshopt compression | 15,000 |
 | `temporal-bone-left` | context.glb | FMA52739 | source | Axis/unit transform, decimation, meshopt compression | 10,948 |
 | `temporal-bone-right` | context.glb | FMA52738 | source | Axis/unit transform, decimation, meshopt compression | 11,005 |
@@ -187,8 +190,8 @@ The Z-Anatomy centrelines are committed, so the steps above do not need Blender.
 | `tooth-46` | core.glb | FMA55705 | source | Axis/unit transform, decimation, meshopt compression | 8,818 |
 | `tooth-47` | core.glb | FMA55706 | source | Axis/unit transform, decimation, meshopt compression | 8,102 |
 | `tooth-48` | core.glb | — | derived | Transform + partition or approximation from the named source mesh (see below) | 8,102 |
-| `trigeminal-nerve-left` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 1,584 |
-| `trigeminal-nerve-right` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 1,584 |
+| `trigeminal-nerve-left` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 144 |
+| `trigeminal-nerve-right` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 144 |
 | `vomer` | context.glb | FMA9710 | source | Axis/unit transform, decimation, meshopt compression | 2,422 |
 | `zygomatic-bone-left` | context.glb | FMA52893 | source | Axis/unit transform, decimation, meshopt compression | 4,560 |
 | `zygomatic-bone-right` | context.glb | FMA52892 | source | Axis/unit transform, decimation, meshopt compression | 4,612 |

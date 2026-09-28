@@ -51,7 +51,7 @@ export const de: Messages = {
   provDerivedBody: 'Weisheitszähne, Gingiva (mit ausgesparten Zahnfächern), Alveolarknochen, Gelenkköpfchen und Gelenkgruben sind aus diesen Modellen abgeleitet.',
   provModeled: 'Modelliert',
   provModeledBody:
-    'Schmelz, Dentin, Zement, Desmodont, Pulpa und Kanäle sind in jede echte Zahnform mit vereinfachten, ungefähren Proportionen hineinmodelliert, nicht gemessen.',
+    'Schmelz, Dentin, Zement, Desmodont, Pulpa und Kanäle sind in jede echte Zahnform mit vereinfachten, ungefähren Proportionen hineinmodelliert, nicht gemessen. Die Kieferhöhlen sind mit einer ungefähren Wandstärke in den Oberkiefer hineinmodelliert.',
   provAtlas: 'Atlas',
   provAtlasBody:
     'die meisten Nerven und Gefäße folgen dem Z-Anatomy-Atlas (CC BY-SA 4.0), angepasst an diese Kiefer: Ihr Verlauf ist anatomisch, aber nicht an diesem Individuum gemessen.',
@@ -137,6 +137,7 @@ export const de: Messages = {
     maxilla: 'Oberkiefer',
     mandible: 'Unterkiefer',
     tmj: 'Kiefergelenke',
+    sinus: 'Kieferhöhlen',
     nerves: 'Nerven',
     arteries: 'Arterien',
     veins: 'Venen',

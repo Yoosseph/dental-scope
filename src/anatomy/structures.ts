@@ -18,6 +18,11 @@ export interface StructureDef {
   shortName?: string;
   /** landmark key in manifest.landmarks */
   landmark?: string;
+  /**
+   * A nerve or vessel trunk outside the dental region, kept so the dental branches connect
+   * to something: drawn quiet (pale and translucent) and never labelled on its own.
+   */
+  regional?: boolean;
 }
 
 const LR = ['right', 'left'] as const;
@@ -51,6 +56,9 @@ export const STRUCTURE_DEFS: StructureDef[] = [
   ...bilateral('maxilla', 'maxilla', () => 'maxilla', { categories: ['maxilla'], provenance: 'source', labelPriority: 3, aliases: ['upper jaw bone'] }),
   { id: 'maxillary-alveolar-process', name: 'Maxillary alveolar process', parent: 'maxilla', kind: 'group', categories: ['maxilla', 'alveolar-bone'], aliases: ['upper alveolar bone', 'alveolar ridge', 'alveolar bone', 'tooth socket', 'socket'], labelPriority: 4 },
   ...bilateral('maxillary-alveolar-process', 'maxillary alveolar process', () => 'maxillary-alveolar-process', { categories: ['maxilla', 'alveolar-bone'], provenance: 'derived', labelPriority: 2 }),
+  // Modelled from this skull's maxilla (neither source has it): see tools/pipeline/sinus.py.
+  { id: 'maxillary-sinus', name: 'Maxillary sinuses', parent: 'maxilla', kind: 'group', categories: ['sinus'], aliases: ['sinus', 'sinuses', 'antrum', 'maxillary antrum', 'antrum of highmore'], labelPriority: 4 },
+  ...bilateral('maxillary-sinus', 'maxillary sinus', () => 'maxillary-sinus', { categories: ['sinus'], provenance: 'modeled', labelPriority: 4, aliases: ['sinus', 'antrum', 'maxillary antrum', 'sinus floor'] }),
   { id: 'maxillary-dentition', name: 'Maxillary dentition', parent: 'maxilla', kind: 'group', categories: ['permanent-teeth'], aliases: ['upper teeth', 'upper arch', 'maxillary arch'], labelPriority: 5 },
   { id: 'upper-right-quadrant', name: 'Upper right quadrant', parent: 'maxillary-dentition', kind: 'group', aliases: ['quadrant 1', 'first quadrant', 'ur quadrant'] },
   { id: 'upper-left-quadrant', name: 'Upper left quadrant', parent: 'maxillary-dentition', kind: 'group', aliases: ['quadrant 2', 'second quadrant', 'ul quadrant'] },
@@ -75,9 +83,11 @@ export const STRUCTURE_DEFS: StructureDef[] = [
   /* ---------------- neurovascular ---------------- */
   // Nerve and vessel paths come from the Z-Anatomy atlas ('atlas'); the superior alveolar
   // nerves, the inferior alveolar vein and the pterygoid plexus are placed from landmarks ('schematic').
+  // Nerves are the priority (issue #27): they carry the labels and stay at full strength while the
+  // jaws are dissected. Trunks outside the dental region are `regional` (issue #26): drawn quiet.
   { id: 'neurovascular', name: 'Neurovascular anatomy', parent: 'dental-anatomy', kind: 'group', aliases: ['nerves and vessels'] },
   { id: 'nerves', name: 'Nerves', parent: 'neurovascular', kind: 'group', categories: ['nerves'], aliases: ['innervation', 'trigeminal'] },
-  ...bilateral('trigeminal-nerve', 'trigeminal nerve (V)', () => 'nerves', { categories: ['nerves'], provenance: 'atlas', labelPriority: 2, shortName: 'CN V', aliases: ['trigeminal', 'fifth cranial nerve', 'cn v', 'trigeminal ganglion'] }),
+  ...bilateral('trigeminal-nerve', 'trigeminal nerve (V)', () => 'nerves', { categories: ['nerves'], provenance: 'atlas', labelPriority: 1, regional: true, shortName: 'CN V', aliases: ['trigeminal', 'fifth cranial nerve', 'cn v', 'trigeminal ganglion'] }),
   { id: 'mandibular-nerve-branches', name: 'Mandibular nerve (V3) branches', parent: 'nerves', kind: 'group', categories: ['nerves'], aliases: ['v3', 'mandibular division', 'mandibular nerve'] },
   ...bilateral('mandibular-nerve', 'mandibular nerve (V3)', () => 'mandibular-nerve-branches', { categories: ['nerves'], provenance: 'atlas', labelPriority: 2, shortName: 'V3', aliases: ['v3', 'mandibular division'] }),
   ...bilateral('inferior-alveolar-nerve', 'inferior alveolar nerve', () => 'mandibular-nerve-branches', { categories: ['nerves'], provenance: 'atlas', labelPriority: 5, shortName: 'IAN', aliases: ['ian', 'inferior dental nerve', 'mandibular canal', 'inferior alveolar', 'dental branches'] }),
@@ -88,26 +98,25 @@ export const STRUCTURE_DEFS: StructureDef[] = [
   { id: 'maxillary-nerve-branches', name: 'Maxillary nerve (V2) branches', parent: 'nerves', kind: 'group', categories: ['nerves'], aliases: ['v2', 'maxillary division', 'maxillary nerve', 'superior alveolar nerves'] },
   ...bilateral('maxillary-nerve', 'maxillary nerve (V2)', () => 'maxillary-nerve-branches', { categories: ['nerves'], provenance: 'atlas', labelPriority: 2, shortName: 'V2', aliases: ['v2', 'maxillary division'] }),
   ...bilateral('infraorbital-nerve', 'infraorbital nerve', () => 'maxillary-nerve-branches', { categories: ['nerves'], provenance: 'atlas', labelPriority: 3 }),
-  ...bilateral('posterior-superior-alveolar-nerve', 'posterior superior alveolar nerve', () => 'maxillary-nerve-branches', { categories: ['nerves'], provenance: 'schematic', labelPriority: 2, shortName: 'PSA', aliases: ['psa'] }),
+  ...bilateral('posterior-superior-alveolar-nerve', 'posterior superior alveolar nerve', () => 'maxillary-nerve-branches', { categories: ['nerves'], provenance: 'schematic', labelPriority: 3, shortName: 'PSA', aliases: ['psa'] }),
   ...bilateral('middle-superior-alveolar-nerve', 'middle superior alveolar nerve', () => 'maxillary-nerve-branches', { categories: ['nerves'], provenance: 'schematic', labelPriority: 1, shortName: 'MSA', aliases: ['msa'] }),
-  ...bilateral('anterior-superior-alveolar-nerve', 'anterior superior alveolar nerve', () => 'maxillary-nerve-branches', { categories: ['nerves'], provenance: 'schematic', labelPriority: 2, shortName: 'ASA', aliases: ['asa'] }),
+  ...bilateral('anterior-superior-alveolar-nerve', 'anterior superior alveolar nerve', () => 'maxillary-nerve-branches', { categories: ['nerves'], provenance: 'schematic', labelPriority: 3, shortName: 'ASA', aliases: ['asa'] }),
   { id: 'vessels', name: 'Blood vessels', parent: 'neurovascular', kind: 'group', categories: ['arteries', 'veins'], aliases: ['blood supply', 'vasculature'] },
   { id: 'arterial-supply', name: 'Arteries', parent: 'vessels', kind: 'group', categories: ['arteries'], aliases: ['artery', 'arteries', 'arterial supply', 'external carotid branches'] },
-  ...bilateral('external-carotid-artery', 'external carotid artery', () => 'arterial-supply', { categories: ['arteries'], provenance: 'atlas', labelPriority: 2, aliases: ['carotid', 'eca'] }),
-  ...bilateral('maxillary-artery', 'maxillary artery', () => 'arterial-supply', { categories: ['arteries'], provenance: 'atlas', labelPriority: 3 }),
-  ...bilateral('inferior-alveolar-artery', 'inferior alveolar artery', () => 'arterial-supply', { categories: ['arteries'], provenance: 'atlas', labelPriority: 3, aliases: ['mental artery'] }),
+  ...bilateral('external-carotid-artery', 'external carotid artery', () => 'arterial-supply', { categories: ['arteries'], provenance: 'atlas', labelPriority: 1, regional: true, aliases: ['carotid', 'eca'] }),
+  ...bilateral('maxillary-artery', 'maxillary artery', () => 'arterial-supply', { categories: ['arteries'], provenance: 'atlas', labelPriority: 2, regional: true }),
+  ...bilateral('inferior-alveolar-artery', 'inferior alveolar artery', () => 'arterial-supply', { categories: ['arteries'], provenance: 'atlas', labelPriority: 2, aliases: ['mental artery'] }),
   ...bilateral('posterior-superior-alveolar-artery', 'posterior superior alveolar artery', () => 'arterial-supply', { categories: ['arteries'], provenance: 'atlas', labelPriority: 1, aliases: ['psa artery'] }),
   ...bilateral('descending-palatine-artery', 'descending palatine artery', () => 'arterial-supply', { categories: ['arteries'], provenance: 'atlas', labelPriority: 1, aliases: ['greater palatine artery', 'palatine artery'] }),
-  ...bilateral('buccal-artery', 'buccal artery', () => 'arterial-supply', { categories: ['arteries'], provenance: 'atlas', labelPriority: 1 }),
-  ...bilateral('facial-artery', 'facial artery', () => 'arterial-supply', { categories: ['arteries'], provenance: 'atlas', labelPriority: 2 }),
+  ...bilateral('buccal-artery', 'buccal artery', () => 'arterial-supply', { categories: ['arteries'], provenance: 'atlas', labelPriority: 1, regional: true }),
+  ...bilateral('facial-artery', 'facial artery', () => 'arterial-supply', { categories: ['arteries'], provenance: 'atlas', labelPriority: 1, regional: true }),
   { id: 'venous-drainage', name: 'Veins', parent: 'vessels', kind: 'group', categories: ['veins'], aliases: ['vein', 'veins', 'venous drainage'] },
   ...bilateral('inferior-alveolar-vein', 'inferior alveolar vein', () => 'venous-drainage', { categories: ['veins'], provenance: 'schematic', labelPriority: 2 }),
-  ...bilateral('pterygoid-plexus', 'pterygoid venous plexus', () => 'venous-drainage', { categories: ['veins'], provenance: 'schematic', labelPriority: 2, aliases: ['pterygoid plexus', 'venous plexus'] }),
-  ...bilateral('maxillary-vein', 'maxillary vein', () => 'venous-drainage', { categories: ['veins'], provenance: 'atlas', labelPriority: 1 }),
-  ...bilateral('retromandibular-vein', 'retromandibular vein', () => 'venous-drainage', { categories: ['veins'], provenance: 'atlas', labelPriority: 2 }),
-  ...bilateral('facial-vein', 'facial vein', () => 'venous-drainage', { categories: ['veins'], provenance: 'atlas', labelPriority: 2, aliases: ['common facial vein'] }),
-  ...bilateral('internal-jugular-vein', 'internal jugular vein', () => 'venous-drainage', { categories: ['veins'], provenance: 'atlas', labelPriority: 2, aliases: ['jugular', 'ijv'] }),
-  ...bilateral('external-jugular-vein', 'external jugular vein', () => 'venous-drainage', { categories: ['veins'], provenance: 'atlas', labelPriority: 1, aliases: ['jugular', 'ejv'] }),
+  ...bilateral('pterygoid-plexus', 'pterygoid venous plexus', () => 'venous-drainage', { categories: ['veins'], provenance: 'schematic', labelPriority: 2, regional: true, aliases: ['pterygoid plexus', 'venous plexus'] }),
+  ...bilateral('maxillary-vein', 'maxillary vein', () => 'venous-drainage', { categories: ['veins'], provenance: 'atlas', labelPriority: 1, regional: true }),
+  ...bilateral('retromandibular-vein', 'retromandibular vein', () => 'venous-drainage', { categories: ['veins'], provenance: 'atlas', labelPriority: 1, regional: true }),
+  ...bilateral('facial-vein', 'facial vein', () => 'venous-drainage', { categories: ['veins'], provenance: 'atlas', labelPriority: 1, regional: true, aliases: ['common facial vein'] }),
+  ...bilateral('internal-jugular-vein', 'internal jugular vein', () => 'venous-drainage', { categories: ['veins'], provenance: 'atlas', labelPriority: 1, regional: true, aliases: ['jugular', 'ijv'] }),
 
   /* ---------------- TMJ ---------------- */
   { id: 'tmj', name: 'Temporomandibular joints', parent: 'dental-anatomy', kind: 'group', categories: ['tmj'], aliases: ['tmj', 'jaw joint', 'temporomandibular joint'], labelPriority: 5 },

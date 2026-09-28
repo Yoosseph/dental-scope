@@ -116,7 +116,7 @@ export function boardSlot(meshKey: string, cats: readonly string[], fdi: number 
   const vessel = cats.includes('nerves') || cats.includes('arteries') || cats.includes('veins');
   if (/^(articular-(fossa|disc)|mandibular-condyle)/.test(meshKey)) return slot(0, 1, side * 10 + (meshKey.startsWith('articular-fossa') ? 0 : meshKey.startsWith('articular-disc') ? 1 : 2));
   if (vessel && /superior-alveolar|infraorbital|maxillary-nerve|trigeminal|descending-palatine/.test(meshKey)) return slot(0, 2, side * 10);
-  if (/^(maxilla|maxillary-alveolar|palatine)/.test(meshKey)) return slot(1, 0, side * 10 + (meshKey.startsWith('maxilla-') ? 0 : meshKey.startsWith('maxillary') ? 1 : 2));
+  if (/^(maxilla|maxillary-alveolar|palatine)/.test(meshKey)) return slot(1, 0, side * 10 + (meshKey.startsWith('maxilla-') ? 0 : meshKey.startsWith('maxillary-sinus') ? 3 : meshKey.startsWith('maxillary') ? 1 : 2));
   if (meshKey === 'gingiva-upper') return slot(1, 1, 0);
   if (meshKey === 'gingiva-lower') return slot(4, 0, 0);
   if (/^mandib/.test(meshKey)) return slot(4, 1, meshKey === 'mandible-body' ? 0 : 1);

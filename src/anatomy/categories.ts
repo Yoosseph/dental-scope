@@ -1,4 +1,4 @@
-import type { CategoryId } from './types';
+import type { CategoryId, Structure } from './types';
 
 export interface CategoryDef {
   id: CategoryId;
@@ -26,6 +26,7 @@ export const CATEGORIES: CategoryDef[] = [
   { id: 'maxilla', label: 'Maxilla', color: '#e6dfcd', group: 'Bone', initial: 'on' },
   { id: 'mandible', label: 'Mandible', color: '#e6dfcd', group: 'Bone', initial: 'on' },
   { id: 'tmj', label: 'Temporomandibular joint', color: '#7fa9bd', group: 'Bone', initial: 'on' },
+  { id: 'sinus', label: 'Maxillary sinuses', color: '#8ec3d6', group: 'Bone', initial: 'on' },
   { id: 'nerves', label: 'Nerves', color: '#d9b347', group: 'Neurovascular', initial: 'on' },
   { id: 'arteries', label: 'Arteries', color: '#c3362c', group: 'Neurovascular', initial: 'on' },
   { id: 'veins', label: 'Veins', color: '#3163c4', group: 'Neurovascular', initial: 'on' },
@@ -35,6 +36,14 @@ export const CATEGORIES: CategoryDef[] = [
 ];
 
 export const CATEGORY_BY_ID = Object.fromEntries(CATEGORIES.map((c) => [c.id, c])) as Record<CategoryId, CategoryDef>;
+
+/**
+ * The category a structure is shown under (colour dot, eyebrow): its first one other than the
+ * general teeth layer, else its only one. Undefined for structures that declare none.
+ */
+export function primaryCategory(s: Pick<Structure, 'categories'>): CategoryId | undefined {
+  return s.categories.find((c) => c !== 'permanent-teeth') ?? s.categories[0];
+}
 
 export type CategoryState = 'on' | 'ghost' | 'off';
 
@@ -61,16 +70,17 @@ export const PRESETS: LayerPreset[] = [
   {
     id: 'bone',
     label: 'Bone',
-    state: { ...all('off'), maxilla: 'on', mandible: 'on', 'alveolar-bone': 'on', tmj: 'on', skull: 'on' },
+    state: { ...all('off'), maxilla: 'on', mandible: 'on', 'alveolar-bone': 'on', tmj: 'on', sinus: 'on', skull: 'on' },
   },
   {
     id: 'nerves',
     label: 'Nerves',
     state: {
       ...all('off'),
+      // nerves in front; vessels stay as translucent reference (issue #27)
       nerves: 'on',
-      arteries: 'on',
-      veins: 'on',
+      arteries: 'ghost',
+      veins: 'ghost',
       'permanent-teeth': 'on',
       enamel: 'on',
       dentin: 'on',

@@ -90,6 +90,7 @@ export class Registry {
         stage: info?.stage ?? 1,
         anchor: d.landmark ? this.manifest.landmarks[d.landmark] : undefined,
         labelPriority: d.labelPriority ?? 1,
+        ...(d.regional ? { regional: true } : {}),
         shortName: d.shortName,
         shortNames: d.shortName
           ? { en: d.shortName, sv: short?.sv ?? d.shortName, de: short?.de ?? d.shortName, es: short?.es ?? d.shortName, la: short?.la ?? d.shortName }

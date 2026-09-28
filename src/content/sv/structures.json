@@ -178,7 +178,19 @@
     "related": [
       "maxillary-alveolar-process",
       "palatine-bone",
-      "maxillary-nerve-branches"
+      "maxillary-nerve-branches",
+      "maxillary-sinus"
+    ]
+  },
+  "maxillary-sinus": {
+    "summary": "Ett luftfyllt hålrum i överkäksbenets kropp, ovanför rötterna på överkäkens premolarer och molarer. Det mynnar i näshålan.",
+    "function": "Gör skallen lättare och ger rösten resonans. Slemhinnan dräneras till näsan.",
+    "clinical": "Rötterna på överkäkens molarer och premolarer ligger ofta strax under käkhålans botten och kan nå upp i den. En extraktion eller ett implantat i området kan öppna in till käkhålan (en oroantral kommunikation), och en tandinfektion kan sprida sig dit. Käkhålan som visas här är modellerad utifrån överkäken (ingen av källmodellerna innehåller den), så storlek och botten är ungefärliga.",
+    "related": [
+      "maxilla",
+      "maxillary-alveolar-process",
+      "posterior-superior-alveolar-nerve",
+      "infraorbital-nerve"
     ]
   },
   "maxillary-alveolar-process": {
@@ -546,12 +558,12 @@
     ]
   },
   "retromandibular-vein": {
-    "summary": "Venen som löper ned bakom underkäkens ramus, inne i öronspottkörteln, och delar sig i en främre och en bakre gren.",
+    "summary": "Venen som löper ned bakom underkäkens ramus, inne i öronspottkörteln, och delar sig i en främre och en bakre gren. Bara den främre grenen, som förenas med v. facialis, visas.",
     "function": "För blod från v. maxillaris och v. temporalis superficialis vidare till v. facialis och v. jugularis externa.",
     "related": [
       "maxillary-vein",
       "facial-vein",
-      "external-jugular-vein"
+      "internal-jugular-vein"
     ]
   },
   "facial-vein": {
@@ -569,13 +581,6 @@
     "related": [
       "facial-vein",
       "external-carotid-artery"
-    ]
-  },
-  "external-jugular-vein": {
-    "summary": "En ytlig halsven som bildas nära underkäkens vinkel av v. retromandibularis bakre gren. Endast den övre delen visas.",
-    "function": "Dränerar skalpen och ansiktets sida.",
-    "related": [
-      "retromandibular-vein"
     ]
   }
 }

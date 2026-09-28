@@ -178,7 +178,19 @@
     "related": [
       "maxillary-alveolar-process",
       "palatine-bone",
-      "maxillary-nerve-branches"
+      "maxillary-nerve-branches",
+      "maxillary-sinus"
+    ]
+  },
+  "maxillary-sinus": {
+    "summary": "Una cavidad llena de aire en el cuerpo del maxilar, por encima de las raíces de los premolares y molares superiores. Se abre a la cavidad nasal.",
+    "function": "Aligera el cráneo y da resonancia a la voz. Su mucosa drena hacia la nariz.",
+    "clinical": "Las raíces de los molares y premolares superiores suelen quedar justo debajo de su suelo y pueden llegar a introducirse en él. Una extracción o un implante en esta zona puede abrir el seno (comunicación orosinusal), y una infección dental puede extenderse hacia él. El seno que se muestra está modelado a partir del maxilar (ninguno de los modelos de origen lo incluye), por lo que su tamaño y su suelo son aproximados.",
+    "related": [
+      "maxilla",
+      "maxillary-alveolar-process",
+      "posterior-superior-alveolar-nerve",
+      "infraorbital-nerve"
     ]
   },
   "maxillary-alveolar-process": {
@@ -546,12 +558,12 @@
     ]
   },
   "retromandibular-vein": {
-    "summary": "La vena que desciende por detrás de la rama mandibular, dentro de la glándula parótida, y se divide en una rama anterior y otra posterior.",
+    "summary": "La vena que desciende por detrás de la rama mandibular, dentro de la glándula parótida, y se divide en una rama anterior y otra posterior. Solo se muestra la rama anterior, que se une a la vena facial.",
     "function": "Conduce la sangre de las venas maxilar y temporal superficial a las venas facial y yugular externa.",
     "related": [
       "maxillary-vein",
       "facial-vein",
-      "external-jugular-vein"
+      "internal-jugular-vein"
     ]
   },
   "facial-vein": {
@@ -569,13 +581,6 @@
     "related": [
       "facial-vein",
       "external-carotid-artery"
-    ]
-  },
-  "external-jugular-vein": {
-    "summary": "Una vena superficial del cuello que se forma cerca del ángulo de la mandíbula a partir de la rama posterior de la vena retromandibular. Solo se muestra su parte superior.",
-    "function": "Drena el cuero cabelludo y el lado de la cara.",
-    "related": [
-      "retromandibular-vein"
     ]
   }
 }

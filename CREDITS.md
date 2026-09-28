@@ -24,7 +24,7 @@ modifications is in [docs/assets.md](docs/assets.md). The social preview image
 Z-Anatomy is itself built on BodyParts3D.
 
 - Source: <https://github.com/Z-Anatomy/Models-of-human-anatomy> (`Z-Anatomy.zip`, `Startup.blend`)
-- Used for: the centrelines of the trigeminal, maxillary, mandibular, inferior alveolar, incisive, mental, lingual, buccal and infraorbital nerves; the external carotid, maxillary, inferior alveolar, posterior superior alveolar, descending palatine, buccal and facial arteries; and the internal and external jugular, retromandibular, maxillary and facial veins.
+- Used for: the centrelines of the trigeminal, maxillary, mandibular, inferior alveolar, incisive, mental, lingual, buccal and infraorbital nerves; the external carotid, maxillary, inferior alveolar, posterior superior alveolar, descending palatine, buccal and facial arteries; and the internal jugular, retromandibular, maxillary and facial veins.
 - Extracted and fitted by `tools/pipeline/extract_z_anatomy.py`; the fitted centrelines are in `tools/pipeline/data/z-anatomy-neurovascular.json` (same licence).
 
 ## Modifications made by Dental Scope
@@ -35,7 +35,8 @@ Z-Anatomy is itself built on BodyParts3D.
 - Derived the four third molars from the adjacent second molars.
 - Partitioned alveolar bone, mandibular condyles and articular fossae from the source bones.
 - Modeled internal tooth anatomy (enamel, dentin, cementum, periodontal ligament, pulp chamber, root canals) inside each tooth shape.
-- Sampled the Z-Anatomy nerve and vessel curves, fitted them onto the BodyParts3D jaws (similarity ICP), ended the dental nerve branches at the tooth apices, trimmed the neck vessels below the hyoid and swept them into tubes.
+- Sampled the Z-Anatomy nerve and vessel curves, fitted them onto the BodyParts3D jaws (similarity ICP), ended the dental nerve branches at the tooth apices, trimmed the neck vessels just below the angle of the mandible, reduced the trigeminal nerve to its ganglion, left out the external jugular vein and swept them into tubes.
+- Modeled the maxillary sinuses inside the BodyParts3D maxillae (neither source includes them).
 - Added schematic superior alveolar nerves, the inferior alveolar vein, the pterygoid venous plexus and TMJ discs, placed from computed landmarks and joined to the atlas paths.
 
 ## Software

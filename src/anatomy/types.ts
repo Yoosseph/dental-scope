@@ -34,6 +34,7 @@ export type CategoryId =
   | 'arteries'
   | 'veins'
   | 'tmj'
+  | 'sinus'
   | 'salivary'
   | 'muscles'
   | 'skull';
@@ -89,6 +90,8 @@ export interface Structure {
   /** short label used on the 3D label chip */
   shortName?: string;
   shortNames?: Record<Lang, string>;
+  /** nerve or vessel trunk outside the dental region: drawn quiet, never labelled on its own */
+  regional?: boolean;
 }
 
 /* ---------- manifest produced by tools/pipeline ---------- */
@@ -126,6 +129,8 @@ export interface Manifest {
   /** simplified centrelines of each nerve / vessel mesh (one polyline per branch) */
   paths: Record<string, Vec3[][]>;
   landmarks: Record<string, Vec3>;
+  /** modelled maxillary sinuses: volume (cm³) and root apex → sinus floor distance (mm) per tooth */
+  sinus?: Record<'right' | 'left', { volume: number; apexGap: Record<string, number> }>;
   /** arch dissection tiers (cm): jaw = how far each jaw moves from the bite; gingiva / teeth = how far they then move toward the bite */
   explode?: { jaw: number; upper: { gingiva: number; teeth: number }; lower: { gingiva: number; teeth: number } };
   bounds: [Vec3, Vec3];

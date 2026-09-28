@@ -4,6 +4,7 @@ import { defineConfig, type Plugin } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { ABOUT_PAGES, HOME, TOOTH_PAGES, headTags, normalizeSiteUrl, robotsTxt, sitemapXml } from './src/app/seo.ts';
 import { aboutHtml } from './src/app/about.ts';
+import { GUIDE_PAGES, guideHtml } from './src/app/guide.ts';
 
 const base = process.env.DS_BASE ?? '/';
 /** Absolute public URL of the deployed site (e.g. https://user.github.io/dental-scope/); enables canonical URLs and the sitemap. */
@@ -12,7 +13,9 @@ const vercelUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL;
 const siteUrl = normalizeSiteUrl(process.env.DS_SITE_URL || (vercelUrl ? `https://${vercelUrl}` : undefined));
 /** Google Search Console HTML-tag verification token (optional). */
 const googleVerification = process.env.DS_GOOGLE_SITE_VERIFICATION?.trim() || null;
-const seoOpts = { googleVerification };
+/** Vercel preview deployments (and any build with DS_PREVIEW=1) are kept out of search engines. */
+const preview = process.env.DS_PREVIEW === '1' || (!!process.env.VERCEL_ENV && process.env.VERCEL_ENV !== 'production');
+const seoOpts = { googleVerification, noindex: preview };
 const SEO_MARKER = /<!-- seo:[^>]*-->/;
 
 /**
@@ -38,12 +41,20 @@ function seo(): Plugin {
       if (!index.includes(homeTags)) throw new Error('seo: built index.html no longer contains the generated head tags');
       const withTags = (tags: string) => index.replace(homeTags, () => tags);
       writeFileSync(`${outDir}/404.html`, withTags(headTags(HOME, siteUrl, { ...seoOpts, notFound: true })));
-      writeFileSync(`${outDir}/robots.txt`, robotsTxt(siteUrl));
+      writeFileSync(`${outDir}/robots.txt`, robotsTxt(siteUrl, preview));
       // with a relative base (hash routing) sub-folder pages would break asset paths
       const pages = base.startsWith('.') ? [] : TOOTH_PAGES;
+      const guides = base.startsWith('.') ? [] : GUIDE_PAGES;
+      // an explorer entry page steps out of the index once the tooth's English guide page is indexable (no two pages competing)
+      const guided = new Set(guides.filter((g) => g.lang === 'en' && g.indexable && g.subject.fdi !== undefined).map((g) => `tooth/${g.subject.fdi}/`));
       for (const page of pages) {
         mkdirSync(`${outDir}/${page.path}`, { recursive: true });
-        writeFileSync(`${outDir}/${page.path}index.html`, withTags(headTags(page, siteUrl, seoOpts)));
+        writeFileSync(`${outDir}/${page.path}index.html`, withTags(headTags(page, siteUrl, { ...seoOpts, noindex: preview || guided.has(page.path) })));
+      }
+      // text-first guide page per tooth and structure, in every language
+      for (const page of guides) {
+        mkdirSync(`${outDir}/${page.path}`, { recursive: true });
+        writeFileSync(`${outDir}/${page.path}index.html`, guideHtml(page, headTags(page, siteUrl, { ...seoOpts, noindex: preview || !page.indexable }), base));
       }
       // plain-HTML about page with the readable guide to every tooth (no app bundle), in every interface language
       for (const page of ABOUT_PAGES) {
@@ -53,7 +64,20 @@ function seo(): Plugin {
         writeFileSync(`${outDir}/${page.path}index.html`, aboutHtml(headTags(page, siteUrl, seoOpts), absBase, `${absBase}favicon.svg`, page.lang));
       }
       const today = new Date().toISOString().slice(0, 10);
-      if (siteUrl) writeFileSync(`${outDir}/sitemap.xml`, sitemapXml(siteUrl, [HOME.path, ...ABOUT_PAGES.map((p) => p.path), ...pages.map((p) => p.path)], today));
+      if (siteUrl && !preview)
+        writeFileSync(
+          `${outDir}/sitemap.xml`,
+          sitemapXml(
+            siteUrl,
+            [
+              HOME.path,
+              ...ABOUT_PAGES.map((p) => ({ path: p.path, alternates: p.alternates })),
+              ...pages.filter((p) => !guided.has(p.path)).map((p) => p.path),
+              ...guides.filter((g) => g.indexable).map((g) => ({ path: g.path, alternates: g.alternates })),
+            ],
+            today,
+          ),
+        );
     },
   };
 }

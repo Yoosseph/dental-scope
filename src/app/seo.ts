@@ -21,11 +21,17 @@ export interface PageMeta {
   lang?: Lang;
   /** the same page in other languages, for hreflang links: language → path */
   alternates?: Partial<Record<Lang, string>>;
+  /** breadcrumb trail after the site root (name + path); the page itself is appended */
+  crumbs?: { name: string; path: string }[];
+  /** the anatomical structure the page is about, for structured data */
+  about?: { name: string; alternateName?: string[] };
+  /** an educational text page (schema.org LearningResource) */
+  learning?: boolean;
 }
 
 export const HOME: PageMeta = {
   path: '',
-  title: SITE_NAME,
+  title: `${SITE_NAME} – Interactive 3D dental anatomy`,
   description:
     'Free interactive 3D dental anatomy: all 32 permanent teeth with FDI, Universal and Palmer numbers, enamel to root canals, jaws and nerves. Educational tool.',
 };
@@ -80,6 +86,8 @@ export interface HeadOptions {
   notFound?: boolean;
   /** Google Search Console verification token (content of the google-site-verification meta tag) */
   googleVerification?: string | null;
+  /** keep this page out of the index (links are still followed) */
+  noindex?: boolean;
 }
 
 /** JSON for a <script type="application/ld+json">, safe inside HTML. */
@@ -126,11 +134,13 @@ export function structuredData(page: PageMeta, siteUrl: string): unknown {
   } else {
     const crumbs: { name: string; url: string }[] = [{ name: SITE_NAME, url: siteUrl }];
     const isAbout = page.path.startsWith('about/');
-    if (page.path.startsWith('tooth/')) crumbs.push({ name: 'Teeth', url: `${siteUrl}${ABOUT.path}#teeth` });
-    crumbs.push({ name: isAbout ? ABOUT_CRUMB[page.lang ?? 'en'] : page.title.replace(` — ${SITE_NAME}`, ''), url });
+    if (page.crumbs) crumbs.push(...page.crumbs.map((c) => ({ name: c.name, url: siteUrl + c.path })));
+    else if (page.path.startsWith('tooth/')) crumbs.push({ name: 'Teeth', url: `${siteUrl}${ABOUT.path}#teeth` });
+    crumbs.push({ name: isAbout ? ABOUT_CRUMB[page.lang ?? 'en'] : (page.about?.name ?? page.title.replace(` — ${SITE_NAME}`, '')), url });
     const fdi = /^tooth\/(\d{2})\/$/.exec(page.path);
     graph.push({
-      '@type': isAbout ? 'AboutPage' : 'WebPage',
+      '@type': isAbout ? 'AboutPage' : page.learning ? ['WebPage', 'LearningResource'] : 'WebPage',
+      ...(page.learning ? { learningResourceType: 'Reference', educationalUse: 'Self-study', isAccessibleForFree: true, audience: { '@type': 'EducationalAudience', educationalRole: 'student' } } : {}),
       '@id': url,
       url,
       name: page.title,
@@ -142,7 +152,9 @@ export function structuredData(page: PageMeta, siteUrl: string): unknown {
         '@type': 'BreadcrumbList',
         itemListElement: crumbs.map((c, i) => ({ '@type': 'ListItem', position: i + 1, name: c.name, item: c.url })),
       },
-      ...(fdi
+      ...(page.about
+        ? { about: { '@type': 'AnatomicalStructure', name: page.about.name, ...(page.about.alternateName ? { alternateName: page.about.alternateName } : {}) } }
+        : fdi
         ? {
             about: {
               '@type': 'AnatomicalStructure',
@@ -181,11 +193,11 @@ export function headTags(page: PageMeta, siteUrl: string | null, opts: HeadOptio
   } else if (siteUrl) {
     const url = siteUrl + page.path;
     tags.push(
-      `<meta name="robots" content="index, follow, max-image-preview:large" />`,
+      `<meta name="robots" content="${opts.noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large'}" />`,
       `<link rel="canonical" href="${esc(url)}" />`,
       `<meta property="og:url" content="${esc(url)}" />`,
-      ...Object.entries(page.alternates ?? {}).map(([l, p]) => `<link rel="alternate" hreflang="${l}" href="${esc(siteUrl + p)}" />`),
-      ...(page.alternates?.en ? [`<link rel="alternate" hreflang="x-default" href="${esc(siteUrl + page.alternates.en)}" />`] : []),
+      ...Object.entries(opts.noindex ? {} : (page.alternates ?? {})).map(([l, p]) => `<link rel="alternate" hreflang="${l}" href="${esc(siteUrl + p)}" />`),
+      ...(!opts.noindex && page.alternates?.en ? [`<link rel="alternate" hreflang="x-default" href="${esc(siteUrl + page.alternates.en)}" />`] : []),
       `<meta property="og:image" content="${esc(siteUrl + OG_IMAGE.path)}" />`,
       `<meta property="og:image:width" content="${OG_IMAGE.width}" />`,
       `<meta property="og:image:height" content="${OG_IMAGE.height}" />`,
@@ -200,12 +212,26 @@ export function headTags(page: PageMeta, siteUrl: string | null, opts: HeadOptio
   return tags.join('\n    ');
 }
 
-export function robotsTxt(siteUrl: string | null): string {
+export function robotsTxt(siteUrl: string | null, preview = false): string {
+  // preview deployments must never be indexed
+  if (preview) return 'User-agent: *\nDisallow: /\n';
   return `User-agent: *\nAllow: /\n${siteUrl ? `\nSitemap: ${siteUrl}sitemap.xml\n` : ''}`;
 }
 
-export function sitemapXml(siteUrl: string, paths: string[], lastmod?: string): string {
+/** A sitemap entry: a path, or a path with its language versions (written as xhtml:link hreflang). */
+export type SitemapEntry = string | { path: string; alternates?: Partial<Record<Lang, string>> };
+
+export function sitemapXml(siteUrl: string, entries: SitemapEntry[], lastmod?: string): string {
   const mod = lastmod ? `<lastmod>${lastmod}</lastmod>` : '';
-  const urls = paths.map((p) => `  <url><loc>${esc(siteUrl + p)}</loc>${mod}</url>`).join('\n');
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
+  const urls = entries
+    .map((entry) => {
+      const { path, alternates } = typeof entry === 'string' ? { path: entry, alternates: undefined } : entry;
+      const alt = Object.entries(alternates ?? {});
+      const links = alt.length > 1
+        ? [...alt, ...(alternates?.en ? [['x-default', alternates.en]] : [])].map(([l, p]) => `<xhtml:link rel="alternate" hreflang="${l}" href="${esc(siteUrl + p)}"/>`).join('')
+        : '';
+      return `  <url><loc>${esc(siteUrl + path)}</loc>${mod}${links}</url>`;
+    })
+    .join('\n');
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${urls}\n</urlset>\n`;
 }

@@ -10,11 +10,11 @@
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
   /* paper */
-  --bg-0: #efebe3;
+  --bg-0: #f7f5f0;
   --bg-1: #f7f5f1;
   /* 3D stage: a slightly deeper paper tone than the panels so ivory teeth and bone keep their edges */
-  --stage-0: #ddd7cb;
-  --stage-1: #ebe7de;
+  --stage-0: #efebe3;
+  --stage-1: #f7f5f0;
   --panel: rgba(250, 248, 244, 0.94);
   --panel-solid: #faf8f4;
   --panel-border: rgba(28, 24, 18, 0.16);
