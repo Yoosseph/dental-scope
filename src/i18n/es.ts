@@ -51,7 +51,7 @@ export const es: Messages = {
   provDerivedBody: 'los terceros molares, la encía (con alvéolos recortados para los dientes), el hueso alveolar, los cóndilos y las fosas articulares se derivan de esos modelos.',
   provModeled: 'Modelado',
   provModeledBody:
-    'el esmalte, la dentina, el cemento, el ligamento periodontal, la pulpa y los conductos se modelan dentro de la forma real de cada diente con proporciones simplificadas y aproximadas, no con mediciones.',
+    'el esmalte, la dentina, el cemento, el ligamento periodontal, la pulpa y los conductos se modelan dentro de la forma real de cada diente con proporciones simplificadas y aproximadas, no con mediciones. Los senos maxilares se modelan dentro del maxilar con un grosor de pared aproximado.',
   provAtlas: 'Atlas',
   provAtlasBody:
     'la mayoría de los nervios y vasos siguen el atlas Z-Anatomy (CC BY-SA 4.0), ajustado a estos maxilares: su trayecto es anatómico, pero no está medido en este individuo.',
@@ -137,6 +137,7 @@ export const es: Messages = {
     maxilla: 'Maxilar',
     mandible: 'Mandíbula',
     tmj: 'Articulación temporomandibular',
+    sinus: 'Senos maxilares',
     nerves: 'Nervios',
     arteries: 'Arterias',
     veins: 'Venas',

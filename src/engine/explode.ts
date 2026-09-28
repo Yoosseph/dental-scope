@@ -62,7 +62,7 @@ export function archOffset(registry: Registry, meshKey: string, center: THREE.Ve
   }
   if (meshKey === 'gingiva-upper') return upperGum;
   if (meshKey === 'gingiva-lower') return lowerGum;
-  if (meshKey.startsWith('maxilla-') || meshKey.startsWith('maxillary-alveolar-process') || meshKey.startsWith('palatine')) return upper.clone();
+  if (meshKey.startsWith('maxilla-') || meshKey.startsWith('maxillary-alveolar-process') || meshKey.startsWith('maxillary-sinus') || meshKey.startsWith('palatine')) return upper.clone();
   if (meshKey.startsWith('mandible') || meshKey.startsWith('mandibular')) return lower.clone();
   // the disc stays in its fossa on the temporal bone
   if (meshKey.startsWith('articular-disc') || meshKey.startsWith('articular-fossa')) return upper.clone();

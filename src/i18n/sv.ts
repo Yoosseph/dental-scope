@@ -51,7 +51,7 @@ export const sv: Messages = {
   provDerivedBody: 'tredje molarer, gingiva (med urtag för tänderna), alveolarben, ledhuvuden och ledgropar är härledda från dessa modeller.',
   provModeled: 'Modellerad',
   provModeledBody:
-    'emalj, dentin, rotcement, parodontalligament, pulpa och kanaler är modellerade inuti varje verklig tandform med förenklade, ungefärliga proportioner, inte mätningar.',
+    'emalj, dentin, rotcement, parodontalligament, pulpa och kanaler är modellerade inuti varje verklig tandform med förenklade, ungefärliga proportioner, inte mätningar. Käkhålorna är modellerade inuti överkäken med en ungefärlig väggtjocklek.',
   provAtlas: 'Atlas',
   provAtlasBody:
     'de flesta nerver och kärl följer Z-Anatomy-atlasen (CC BY-SA 4.0), anpassad till de här käkarna: förloppet är anatomiskt, men inte uppmätt hos just den här individen.',
@@ -137,6 +137,7 @@ export const sv: Messages = {
     maxilla: 'Överkäke',
     mandible: 'Underkäke',
     tmj: 'Käkleder',
+    sinus: 'Käkhålor',
     nerves: 'Nerver',
     arteries: 'Artärer',
     veins: 'Vener',

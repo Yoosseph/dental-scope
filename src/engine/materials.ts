@@ -47,6 +47,9 @@ const STYLES: Record<string, TissueStyle> = {
   nerve: { color: '#d9b347', roughness: 0.48, sheen: 0.25, cap: '#c19a33', edge: 0.2 },
   artery: { color: '#c3362c', roughness: 0.45, clearcoat: 0.12, cap: '#a52a21', edge: 0.2 },
   vein: { color: '#3163c4', roughness: 0.48, clearcoat: 0.12, cap: '#254f9f', edge: 0.2 },
+  // an air space, not tissue: always translucent (see SINUS_OPACITY in Engine), a strong
+  // silhouette so its outline reads through the bone, and a cool colour apart from bone and nerves
+  sinus: { color: '#8ec3d6', roughness: 0.3, clearcoat: 0.2, cap: '#6fa9bf', edge: 0.45 },
 };
 
 export function styleKeyFor(meshKey: string, cats: CategoryId[]): string {
@@ -58,6 +61,7 @@ export function styleKeyFor(meshKey: string, cats: CategoryId[]): string {
   if (meshKey.includes('alveolar-process')) return 'alveolar';
   if (meshKey.includes('condyle')) return 'condyle';
   if (meshKey.startsWith('articular-disc')) return 'disc';
+  if (cats.includes('sinus')) return 'sinus';
   if (cats.includes('nerves')) return 'nerve';
   if (cats.includes('arteries')) return 'artery';
   if (cats.includes('veins')) return 'vein';

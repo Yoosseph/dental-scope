@@ -30,7 +30,7 @@ const GLOSSARY: string[][] = [
   ['crown', 'root', 'cej', 'apex'],
   ['enamel', 'dentin', 'cementum', 'pulp', 'pulp-chamber', 'pulp-horn', 'root-canals', 'apical-foramen'],
   ['periodontium', 'gingiva', 'pdl', 'maxillary-alveolar-process', 'mandibular-alveolar-process'],
-  ['maxilla', 'mandible', 'mandibular-condyle', 'tmj', 'articular-disc', 'mandibular-foramen', 'mental-foramen'],
+  ['maxilla', 'maxillary-sinus', 'mandible', 'mandibular-condyle', 'tmj', 'articular-disc', 'mandibular-foramen', 'mental-foramen'],
   [
     'inferior-alveolar-nerve',
     'mental-nerve',

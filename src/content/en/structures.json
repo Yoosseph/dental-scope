@@ -107,7 +107,13 @@
     "summary": "The paired bone forming the upper jaw. It holds the maxillary teeth, forms most of the hard palate and parts of the orbit floor and nasal cavity, and contains the maxillary sinus.",
     "function": "Supports the upper dentition and the midface.",
     "clinical": "The roots of the maxillary posterior teeth can lie close to the floor of the maxillary sinus.",
-    "related": ["maxillary-alveolar-process", "palatine-bone", "maxillary-nerve-branches"]
+    "related": ["maxillary-alveolar-process", "palatine-bone", "maxillary-nerve-branches", "maxillary-sinus"]
+  },
+  "maxillary-sinus": {
+    "summary": "An air-filled space inside the body of the maxilla, above the roots of the upper premolars and molars. It opens into the nasal cavity.",
+    "function": "Lightens the skull and adds resonance to the voice. Its mucous lining drains into the nose.",
+    "clinical": "The roots of the upper molars and premolars often lie just below its floor and can reach into it. An extraction or implant in this region can open the sinus (an oroantral communication), and a dental infection can spread into it. The sinus shown here is modelled from the maxilla (neither source model contains it), so its size and floor are approximate.",
+    "related": ["maxilla", "maxillary-alveolar-process", "posterior-superior-alveolar-nerve", "infraorbital-nerve"]
   },
   "maxillary-alveolar-process": {
     "summary": "The ridge of the maxilla that contains the sockets (alveoli) of the upper teeth.",
@@ -344,9 +350,9 @@
     "related": ["pterygoid-plexus", "retromandibular-vein"]
   },
   "retromandibular-vein": {
-    "summary": "The vein that runs down behind the ramus of the mandible, inside the parotid gland, and divides into an anterior and a posterior division.",
+    "summary": "The vein that runs down behind the ramus of the mandible, inside the parotid gland, and divides into an anterior and a posterior division. Only its anterior division, which joins the facial vein, is shown.",
     "function": "Drains the maxillary and superficial temporal veins into the facial and external jugular veins.",
-    "related": ["maxillary-vein", "facial-vein", "external-jugular-vein"]
+    "related": ["maxillary-vein", "facial-vein", "internal-jugular-vein"]
   },
   "facial-vein": {
     "summary": "The main vein of the face. It runs down behind the facial artery, crosses the lower border of the mandible and joins the anterior division of the retromandibular vein as the common facial vein.",
@@ -358,10 +364,5 @@
     "summary": "The large vein at the side of the neck that carries blood from the brain, face and neck down to the heart. Only its upper part is shown.",
     "function": "Receives the facial vein and, through it, most of the venous blood of the face and jaws.",
     "related": ["facial-vein", "external-carotid-artery"]
-  },
-  "external-jugular-vein": {
-    "summary": "A superficial vein of the neck, formed near the angle of the mandible by the posterior division of the retromandibular vein. Only its upper part is shown.",
-    "function": "Drains the scalp and the side of the face.",
-    "related": ["retromandibular-vein"]
   }
 }

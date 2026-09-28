@@ -140,6 +140,42 @@ def main() -> None:
         if np.median(near) > 0.6:
             errors.append(f"inferior-alveolar-nerve-{side}: trunk lies {np.median(near) * 10:.1f} mm from the mandible")
 
+    # Neck vessels end at the angle of the mandible (issue #26): nothing hangs below the mandible.
+    core = trimesh.load(args.build / "core.glb", force="scene").geometry
+    floor_y = mandible.bounds[0][1]
+    for key, mesh in nv.geometry.items():
+        if mesh.bounds[0][1] < floor_y - 0.05:
+            errors.append(f"{key}: reaches {(floor_y - mesh.bounds[0][1]) * 10:.1f} mm below the mandible")
+    if any(k.startswith("external-jugular-vein") for k in manifest["meshes"]):
+        errors.append("external jugular vein is no longer part of the model")
+
+    # Maxillary sinus (issue #25): a closed body inside its maxilla, clear of the teeth and of the
+    # nerves that run in its walls, with a plausible volume.
+    sinus_nerves = ("posterior-superior-alveolar-nerve", "middle-superior-alveolar-nerve",
+                    "anterior-superior-alveolar-nerve", "infraorbital-nerve")
+    for side in ("right", "left"):
+        sinus = core.get(f"maxillary-sinus-{side}")
+        if sinus is None:
+            errors.append(f"missing maxillary-sinus-{side}")
+            continue
+        if not sinus.is_watertight or len(sinus.split()) != 1:
+            errors.append(f"maxillary-sinus-{side}: expected one watertight body")
+        volume = abs(sinus.volume)  # cm³ (app units are cm)
+        if not 3 <= volume <= 25:
+            errors.append(f"maxillary-sinus-{side}: implausible volume {volume:.1f} cm³")
+        maxilla = trimesh.util.concatenate([core[f"maxilla-{side}"], core[f"maxillary-alveolar-process-{side}"]])
+        outside = ~maxilla.contains(sinus.vertices[::7])
+        if outside.mean() > 0.02:
+            errors.append(f"maxillary-sinus-{side}: {outside.mean():.0%} of it lies outside the maxilla")
+        for fdi, tooth in shells.items():
+            if fdi // 10 == (1 if side == "right" else 2) and sinus.contains(tooth.vertices[::5]).any():
+                errors.append(f"maxillary-sinus-{side}: tooth {fdi} reaches into the sinus")
+        for n in sinus_nerves:
+            pts = np.vstack([np.array(p) for p in manifest["paths"][f"{n}-{side}"]])
+            if sinus.contains(pts).any():
+                errors.append(f"maxillary-sinus-{side}: {n} runs through the sinus")
+        print(f"maxillary-sinus-{side}: {volume:.1f} cm³, apex → floor (mm) {manifest.get('sinus', {}).get(side, {}).get('apexGap')}")
+
     print(f"Validated {len(expected)} GLBs, {len(manifest['meshes'])} meshes, {total_faces:,} triangles")
     print(f"Internal surfaces with nonmanifold edges: {len(nonmanifold)}")
     if nonmanifold:

@@ -20,6 +20,7 @@ import { boardAssemblyKey, boardSlot, shelfLayout, type LayoutItem } from './lay
 import { computeLabelPoint } from './labelPoint';
 import { LabelLayer, type LabelCandidate } from './labels';
 import { HIGHLIGHT, THEME_LIGHTING, highlightColor, themedColor, applyThemeToMaterial, createTissueMaterial, setFibreAxis, setMaterialOpacity, styleKeyFor, type SceneTheme, type TissueMaterial } from './materials';
+import { isSolid, quietLevel, quietOpacity } from './recede';
 import { SectionTool } from './section';
 import { colorToothShell, shadeEnamelCrevices } from './toothShading';
 
@@ -39,8 +40,17 @@ interface MeshEntry {
   labelPoint?: THREE.Vector3; // geometry-space label anchor
   /** tooth shells beside a shown gum: how the root is cut while it is in the gum (see refreshRootCuts) */
   rootCut?: { extract: number; collar: number };
-  /** nerve or vessel: faded to quiet background while the jaws are dissected (0 = full, 1 = quiet) */
+  /**
+   * Nerve or vessel. `quiet` is how far it has receded into the pale background (0 = full,
+   * 1 = quiet): vessels while the jaws are dissected, regional trunks always (see quietTarget).
+   */
   nv?: boolean;
+  /** trunk outside the dental region (Structure.regional) */
+  regional?: boolean;
+  /** dental nerve: never recedes */
+  nerve?: boolean;
+  /** maxillary sinus: an air space, always drawn translucent */
+  sinus?: boolean;
   quiet?: number;
   /** phase-2 board slot (world offset) and the eased current offset */
   boardTarget?: THREE.Vector3;
@@ -310,6 +320,9 @@ export class Engine {
         owner,
         mesh,
         nv: isNeurovascular(cats),
+        regional: !!this.registry.get(owner)?.regional,
+        nerve: cats.includes('nerves'),
+        sinus: cats.includes('sinus'),
         quiet: 0,
         archOffset: archOffset(this.registry, key, center),
         toothOffset: toothLayerOffset(this.registry, key),
@@ -352,6 +365,11 @@ export class Engine {
     this.invalidate();
   }
 
+  /** Is this a maxillary sinus (selecting one turns the maxilla see-through)? */
+  private isSinus(id: string | null): boolean {
+    return !!id && !!this.registry.get(id)?.categories.includes('sinus');
+  }
+
   /** Match lighting and bone shading to the UI theme (see THEME_LIGHTING). */
   private applyTheme(theme: SceneTheme) {
     this.renderer.toneMappingExposure = THEME_LIGHTING[theme].exposure;
@@ -374,7 +392,8 @@ export class Engine {
       s.dissectLevel !== p.dissectLevel ||
       s.clip.enabled !== p.clip.enabled ||
       s.explodePhase !== p.explodePhase ||
-      s.ghostOpacity !== p.ghostOpacity;
+      s.ghostOpacity !== p.ghostOpacity ||
+      (s.selectedId !== p.selectedId && (this.isSinus(s.selectedId) || this.isSinus(p.selectedId)));
     if (visChanged) this.refreshVisibility();
     if (s.explode !== p.explode || s.explodePhase !== p.explodePhase) this.refreshRootCuts(s);
     if (s.selectedId !== p.selectedId || s.hoveredId !== p.hoveredId || s.dissectFdi !== p.dissectFdi) this.refreshHighlight();
@@ -657,7 +676,7 @@ export class Engine {
         addMeshLabel(t.id, formatTooth(fdi, s.numbering), 'tooth', 5, keys);
       }
       for (const st of this.registry.byId.values()) {
-        if (st.toothFdi !== undefined || st.labelPriority < 3) continue;
+        if (st.toothFdi !== undefined || st.labelPriority < 3 || st.regional) continue;
         if (st.kind === 'mesh') {
           const vis = st.meshes.filter((k) => isFullyShown(this.entries.get(k)?.visual ?? 'off'));
           if (vis.length) addMeshLabel(st.id, shortOf(st, s.lang), 'structure', st.labelPriority, vis);
@@ -723,7 +742,7 @@ export class Engine {
 
   private pickables(opaqueOnly = false): THREE.Object3D[] {
     const out: THREE.Object3D[] = [];
-    for (const e of this.entries.values()) if (e.mesh.visible && (opaqueOnly ? e.visual === 'on' : e.visual !== 'off')) out.push(e.mesh);
+    for (const e of this.entries.values()) if (e.mesh.visible && (opaqueOnly ? isSolid(e) : e.visual !== 'off')) out.push(e.mesh);
     return out;
   }
 
@@ -745,7 +764,7 @@ export class Engine {
     this.raycaster.setFromCamera(this.pointer, this.rig.camera);
     let ghost: string | null = null;
     for (const { entry } of this.rayHits()) {
-      if (entry.visual === 'on') return entry.owner;
+      if (isSolid(entry)) return entry.owner;
       ghost ??= entry.owner;
     }
     return ghost;
@@ -1056,17 +1075,17 @@ export class Engine {
     for (const e of this.entries.values()) {
       let target = visualOpacity(e.visual, s.ghostOpacity);
       if (e.nv) {
-        // While the jaws are dissected the teeth are the subject: nerves and vessels recede into a
-        // pale, translucent background. A selected or hovered one comes back at full strength.
-        const quietTarget = s.explodePhase === 1 && s.dissectFdi === null && e.hiTarget === 0 ? Math.min(1, this.explodeCur * 2.5) : 0;
+        const dissecting = s.explodePhase === 1 && s.dissectFdi === null ? Math.min(1, this.explodeCur * 2.5) : 0;
+        const quietTarget = quietLevel(e, dissecting);
         if (Math.abs(e.quiet! - quietTarget) > 1e-3) {
           e.quiet = stepToward(e.quiet!, quietTarget, rate, 0.01);
           const mat = e.mesh.material;
           mat.color.copy(themedColor(mat.userData.styleKey, s.theme)).lerp(QUIET_TINT[s.theme], QUIET_MIX * e.quiet);
           moving = true;
         }
-        target *= 1 - (1 - QUIET_OPACITY) * e.quiet!;
+        target *= quietOpacity(e, e.quiet!);
       }
+      if (e.sinus) target *= SINUS_OPACITY;
       if (s.explodePhase === 2 && !e.boardTarget) target = 0; // context is not laid out: fade it away
       if (Math.abs(e.opacity - target) > 1e-3) {
         e.opacity = stepToward(e.opacity, target, rate, 0.01);
@@ -1158,10 +1177,11 @@ function tanHalfFov(cam: THREE.PerspectiveCamera): number {
 /** Along the tooth axis from the cervical line (cm): where the gum collar hides the root in the assembled mouth. */
 const ROOT_CUT_REST = -0.12;
 
-/** Nerves and vessels during the arch dissection: opacity and how far their colour moves toward the stage colour. */
-const QUIET_OPACITY = 0.3;
 const QUIET_MIX = 0.6;
 const QUIET_TINT = { light: new THREE.Color('#d8d2c6'), dark: new THREE.Color('#3a3833') };
+
+/** The maxillary sinus is air: at most this opaque, so the roots and nerves around it stay visible. */
+const SINUS_OPACITY = 0.55;
 
 /** Bone opacity while the nerve and vessel layers are on. */
 const SEE_THROUGH_OPACITY = 0.32;

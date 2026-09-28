@@ -178,7 +178,19 @@
     "related": [
       "maxillary-alveolar-process",
       "palatine-bone",
-      "maxillary-nerve-branches"
+      "maxillary-nerve-branches",
+      "maxillary-sinus"
+    ]
+  },
+  "maxillary-sinus": {
+    "summary": "Cavum aere plenum in corpore maxillae, supra radices praemolarium et molarium superiorum. In cavitatem nasi aperitur.",
+    "function": "Cranium leviorem reddit et voci resonantiam addit. Tunica mucosa eius in nasum effunditur.",
+    "clinical": "Radices molarium et praemolarium superiorum saepe paulo infra fundum sinus iacent et in eum pervenire possunt. Extractio aut implantatum hac in regione sinum aperire potest (communicatio oroantralis), et infectio dentalis in eum propagari potest. Sinus hic ostensus ex maxilla fictus est (neutrum exemplar fontis eum continet), itaque magnitudo et fundus approximata sunt.",
+    "related": [
+      "maxilla",
+      "maxillary-alveolar-process",
+      "posterior-superior-alveolar-nerve",
+      "infraorbital-nerve"
     ]
   },
   "maxillary-alveolar-process": {
@@ -546,12 +558,12 @@
     ]
   },
   "retromandibular-vein": {
-    "summary": "Vena quae post ramum mandibulae intra glandulam parotideam descendit et in ramum anteriorem et posteriorem dividitur.",
+    "summary": "Vena quae post ramum mandibulae intra glandulam parotideam descendit et in ramum anteriorem et posteriorem dividitur. Solus ramus anterior, qui cum vena faciali coniungitur, ostenditur.",
     "function": "Sanguinem venarum maxillaris et temporalis superficialis in venas facialem et jugularem externam ducit.",
     "related": [
       "maxillary-vein",
       "facial-vein",
-      "external-jugular-vein"
+      "internal-jugular-vein"
     ]
   },
   "facial-vein": {
@@ -569,13 +581,6 @@
     "related": [
       "facial-vein",
       "external-carotid-artery"
-    ]
-  },
-  "external-jugular-vein": {
-    "summary": "Vena superficialis colli, quae prope angulum mandibulae e ramo posteriore venae retromandibularis oritur. Pars tantum superior ostenditur.",
-    "function": "Pericranium et latus faciei exhaurit.",
-    "related": [
-      "retromandibular-vein"
     ]
   }
 }

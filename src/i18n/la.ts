@@ -51,7 +51,7 @@ export const la: Messages = {
   provDerivedBody: 'molares tertii, gingiva (alveolis pro dentibus excisis), os alveolare, condyli et fossae articulares ex illis exemplaribus derivantur.',
   provModeled: 'Fictum',
   provModeledBody:
-    'enamelum, dentinum, cementum, ligamentum periodontale, pulpa et canales intra veram formam cuiusque dentis proportionibus simplicibus et approximatis finguntur, non mensuris.',
+    'enamelum, dentinum, cementum, ligamentum periodontale, pulpa et canales intra veram formam cuiusque dentis proportionibus simplicibus et approximatis finguntur, non mensuris. Sinus maxillares intra maxillam crassitudine parietis approximata finguntur.',
   provAtlas: 'Atlas',
   provAtlasBody:
     'plerique nervi et vasa atlantem Z-Anatomy (CC BY-SA 4.0) sequuntur, his maxillis accommodatum: cursus anatomicus est, sed in hoc homine non mensus.',
@@ -137,6 +137,7 @@ export const la: Messages = {
     maxilla: 'Maxilla',
     mandible: 'Mandibula',
     tmj: 'Articulatio temporomandibularis',
+    sinus: 'Sinus maxillares',
     nerves: 'Nervi',
     arteries: 'Arteriae',
     veins: 'Venae',

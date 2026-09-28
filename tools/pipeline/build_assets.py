@@ -27,6 +27,7 @@ from scipy.spatial import cKDTree
 
 sys.path.insert(0, str(Path(__file__).parent))
 from geometry import catmull_rom, decimate, ellipsoid_disc, orient_outward, submesh, tube_polyline  # noqa: E402
+from sinus import build_sinus  # noqa: E402
 from tooth_layers import Frame, build_tooth_layers, make_frame  # noqa: E402
 
 # ---------------------------------------------------------------------------
@@ -343,8 +344,15 @@ def main():
     # plexus) are placed from landmarks and joined to those paths.
     print("Neurovascular paths…")
     za = json.loads((Path(__file__).parent / "data" / "z-anatomy-neurovascular.json").read_text())["structures"]
-    hyoid = load_stl(args.bp3d, CONTEXT["hyoid-bone"])
-    z_clip = hyoid.bounds[0][2] - 6  # keep the neck vessels down to just below the hyoid
+    # Neck vessels (z_splines(neck=True)) are clipped at the angle of the mandible (issue #26): below it they add clutter
+    # and nothing a dental student needs. The level stays below the lowest point of the facial
+    # vessels, so those are never cut where they loop under the lower border of the mandible.
+    mand_v = load_stl(args.bp3d, BONES["mandible"]).vertices
+    ramus = mand_v[mand_v[:, 1] > mand_v[:, 1].max() - 25]  # behind the molars
+    facial_low = min(np.array(sp["points"])[:, 2].min() for n in ("Facial artery", "Facial vein")
+                     for sd in ("right", "left") for sp in za[n][sd])
+    z_clip = min(ramus[:, 2].min() - 3, facial_low - 1)
+    print(f"  neck clip {z_clip:.1f} mm (angle of mandible {ramus[:, 2].min():.1f})")
 
     # "jaw weight" per vertex: 0 = moves with the mandible, 1 = moves with the skull and
     # maxillae when the arches separate. Vessels that run between the two stretch.
@@ -364,23 +372,29 @@ def main():
         w = ((w - 0.3) / 0.4).clip(0, 1)
         return w * w * (3 - 2 * w)
 
-    nv_paths: dict[str, list[tuple[np.ndarray, np.ndarray]]] = {}
+    # nerves in the walls of each maxillary sinus (the sinus is modelled to stay clear of them)
+    sinus_nerves: dict[str, list[tuple[np.ndarray, np.ndarray]]] = {"right": [], "left": []}
 
-    def z_splines(name, side, idx=None, scale=1.0, floor=0.3):
+    def z_splines(name, side, idx=None, scale=1.0, floor=0.3, neck=False):
+        """Atlas splines of a structure; `neck` vessels are clipped at z_clip (below the angle)."""
         out = []
         for i, sp in enumerate(za[name][side]):
             if idx is not None and i not in idx:
                 continue
             p = np.array(sp["points"])
             r = np.maximum(np.array(sp["radius"]) * 0.5 * scale, floor)
-            keep = p[:, 2] >= z_clip
-            if keep.sum() < 2:
+            run = longest_run(p[:, 2] >= z_clip) if neck else slice(0, len(p))
+            if run is None:
                 continue
-            out.append((p[keep], r[keep]))
+            out.append((p[run], r[run]))
         return out
+
+    sa_polys: dict[str, list[tuple[np.ndarray, np.ndarray]]] = {}
 
     def put(key, polys, provenance):
         polys = [(p, r) for p, r in polys if len(p) >= 2]
+        if "superior-alveolar-nerve" in key:
+            sa_polys[key] = polys
         parts, weights = [], []
         for p, r in polys:
             sides = 12 if r.max() > 0.6 else 8
@@ -399,6 +413,18 @@ def main():
         add("neurovascular", key, m, provenance)
         manifest["paths"][key] = [S.p(p[:: max(1, len(p) // 24)]).round(4).tolist() for p, _ in polys]
 
+    def longest_run(mask: np.ndarray):
+        """Slice of the longest run of True (a path clipped at a plane stays one piece)."""
+        best, start = None, None
+        for i, m in enumerate(np.r_[mask, False]):
+            if m and start is None:
+                start = i
+            elif not m and start is not None:
+                if i - start >= 2 and (best is None or i - start > best.stop - best.start):
+                    best = slice(start, i)
+                start = None
+        return best
+
     def smooth_path(pts, n=6):
         return catmull_rom(np.asarray(pts, float), n)
 
@@ -408,8 +434,14 @@ def main():
     NERVE, ART, VEIN = 2.0, 1.0, 1.0  # Z-Anatomy radius factor → mm (its bevel is 0.5 mm)
     for side, q_lo, q_up, sgn in (("right", 4, 1, -1), ("left", 3, 2, 1)):
         # --- nerves -------------------------------------------------------
-        put(f"trigeminal-nerve-{side}", z_splines("Trigeminal nerve (V)", side, scale=NERVE), "atlas")
-        put(f"mandibular-nerve-{side}", z_splines("Anterior division of mandibular nerve", side, scale=NERVE)
+        # Z-Anatomy's trigeminal nerve is its sensory root back to the pons (spline 0, ending at the
+        # ganglion) and the start of V3 down to the foramen ovale (spline 1). Only the ganglion is
+        # kept, where V2 and V3 meet (issue #27: no nerve far outside the dental region); the V3
+        # part joins the mandibular nerve.
+        root, v3_top = z_splines("Trigeminal nerve (V)", side, scale=NERVE)
+        ganglion = np.linalg.norm(root[0] - root[0][-1], axis=1) <= 8.0
+        put(f"trigeminal-nerve-{side}", [(root[0][ganglion], root[1][ganglion])], "atlas")
+        put(f"mandibular-nerve-{side}", [v3_top] + z_splines("Anterior division of mandibular nerve", side, scale=NERVE)
             + z_splines("Posterior division of mandibular nerve", side, scale=NERVE), "atlas")
         ian = za["Inferior alveolar nerve"][side]
         # Z-Anatomy's dental branches run on into its own (different) teeth: end each at the
@@ -425,6 +457,9 @@ def main():
             k, j = np.unravel_index(d.argmin(), d.shape)
             ian_polys[i] = (np.vstack([p[: k + 1], apices[j]]), np.r_[r[: k + 1], r[k]])
             served.add(j)
+        # The trunk at its real calibre (about 2.2 mm across), thicker than the artery and vein
+        # beside it in the canal, so it reads as the main structure there (issue #27).
+        ian_polys[0] = (ian_polys[0][0], np.clip(ian_polys[0][1] * 1.7, 0.9, 1.2))
         ian_trunk_pts = ian_polys[0][0]
         for j in set(range(8)) - served:
             k = int(np.argmin(np.linalg.norm(ian_trunk_pts - apices[j], axis=1)))
@@ -446,6 +481,7 @@ def main():
         put(f"maxillary-nerve-{side}", [(trunk[: k_io + 1], trunk_r[: k_io + 1])], "atlas")
         io_trunk = trunk[k_io:]
         put(f"infraorbital-nerve-{side}", [(io_trunk, trunk_r[k_io:])] + mxn[1:], "atlas")
+        sinus_nerves[side].append((io_trunk, trunk_r[k_io:]))
         tang = np.gradient(io_trunk, axis=0)
         tang /= np.linalg.norm(tang, axis=1, keepdims=True)
         k_f = int(np.argmax(tang[:, 2] < -0.6))  # where the nerve turns down out of the foramen
@@ -470,6 +506,9 @@ def main():
             [(p := smooth_path([asa_start, ap_[3] + upz * 2.5, ap_[3] + upz, ap_[2] + upz, ap_[1] + upz + np.array([-sgn * 1.5, 0, 0])]), np.linspace(0.5, 0.32, len(p)))],
             "schematic")
 
+        sinus_nerves[side] += [(p, r) for k in ("posterior", "middle", "anterior")
+                               for p, r in sa_polys[f"{k}-superior-alveolar-nerve-{side}"]]
+
         # landmarks on the mandible from the alveolar nerve itself
         ian_trunk = np.array(ian[0]["points"])
         inside = mand_hi.contains(ian_trunk)
@@ -480,7 +519,7 @@ def main():
         manifest["landmarks"][f"mental-foramen-{side}"] = S.p(mental_f).round(4).tolist()
 
         # --- arteries -----------------------------------------------------
-        put(f"external-carotid-artery-{side}", z_splines("External carotid artery", side, scale=ART), "atlas")
+        put(f"external-carotid-artery-{side}", z_splines("External carotid artery", side, scale=ART, neck=True), "atlas")
         put(f"maxillary-artery-{side}", z_splines("Maxillary artery", side, scale=ART, floor=0.25), "atlas")
         iaa = z_splines("Inferior alveolar artery", side, scale=ART, floor=0.3) + z_splines(
             "Mental branch of inferior alveolar artery", side, scale=ART, floor=0.25)
@@ -489,17 +528,18 @@ def main():
         put(f"descending-palatine-artery-{side}", z_splines("Descending palatine artery", side, scale=ART)
             + z_splines("Greater palatine artery", side, scale=ART), "atlas")
         put(f"buccal-artery-{side}", z_splines("Buccal artery", side, scale=ART * 0.5), "atlas")
-        put(f"facial-artery-{side}", z_splines("Facial artery", side, scale=ART), "atlas")
+        put(f"facial-artery-{side}", z_splines("Facial artery", side, scale=ART, neck=True), "atlas")
 
         # --- veins ----------------------------------------------------------
-        put(f"internal-jugular-vein-{side}", z_splines("Internal jugular vein", side, scale=VEIN * 0.8), "atlas")
-        put(f"external-jugular-vein-{side}", z_splines("External jugular vein", side, scale=VEIN * 0.8), "atlas")
-        put(f"retromandibular-vein-{side}", z_splines("Retromandibular vein", side, scale=VEIN)
-            + z_splines("Anterior division of retromandibular vein", side, scale=VEIN)
-            + z_splines("Posterior division of retromandibular vein", side, scale=VEIN), "atlas")
+        # The external jugular vein and the posterior division of the retromandibular vein that forms
+        # it drain the scalp, not the jaws: left out (issue #26). The dental chain ends in the
+        # internal jugular vein through the anterior division and the common facial vein.
+        put(f"internal-jugular-vein-{side}", z_splines("Internal jugular vein", side, scale=VEIN * 0.8, neck=True), "atlas")
+        put(f"retromandibular-vein-{side}", z_splines("Retromandibular vein", side, scale=VEIN, neck=True)
+            + z_splines("Anterior division of retromandibular vein", side, scale=VEIN, neck=True), "atlas")
         mxv = z_splines("Maxillary veins", side, scale=VEIN)
         put(f"maxillary-vein-{side}", mxv, "atlas")
-        put(f"facial-vein-{side}", z_splines("Facial vein", side, scale=VEIN) + z_splines("Common facial vein", side, scale=VEIN), "atlas")
+        put(f"facial-vein-{side}", z_splines("Facial vein", side, scale=VEIN, neck=True) + z_splines("Common facial vein", side, scale=VEIN, neck=True), "atlas")
 
         # Pterygoid plexus (schematic): a small venous network on the lateral pterygoid,
         # draining into the maxillary vein. The mesh is a set of interlinked vessels.
@@ -537,7 +577,20 @@ def main():
         offs = np.array([sgn * 0.5, 0.3, -0.9])
         path = np.vstack([start, ia_pts[len(ia_pts) // 6:] + offs])
         path = path[::max(1, len(path) // 18)]
-        put(f"inferior-alveolar-vein-{side}", [(p := smooth_path(path, 4), np.linspace(0.75, 0.45, len(p)))], "schematic")
+        put(f"inferior-alveolar-vein-{side}", [(p := smooth_path(path, 4), np.linspace(0.55, 0.35, len(p)))], "schematic")
+
+    # ---- maxillary sinus (modelled; see sinus.py) ------------------------------
+    print("Maxillary sinuses…")
+    manifest["sinus"] = {}
+    for side, q_up in (("right", 1), ("left", 2)):
+        concha = load_stl(args.bp3d, CONTEXT[f"inferior-nasal-concha-{side}"]).vertices[:, 0]
+        nasal_wall_x = concha.min() if side == "right" else concha.max()  # its lateral edge
+        up = {f: teeth[f] for f in teeth if f // 10 == q_up}
+        res = build_sinus(load_stl(args.bp3d, BONES[f"maxilla-{side}"]), up, {f: apex(f) for f in up},
+                          sinus_nerves[side], nasal_wall_x)
+        add("core", f"maxillary-sinus-{side}", res.mesh, "modeled", BONES[f"maxilla-{side}"])
+        manifest["sinus"][side] = {"volume": res.volume_cm3, "apexGap": {str(k): v for k, v in res.apex_gap.items()}}
+        print(f"  {side}: {res.volume_cm3} cm³, apex → floor (mm): {res.apex_gap}")
 
     # ---- tooth internal assets -------------------------------------------
     print("Tooth assets…")

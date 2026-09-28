@@ -18,11 +18,16 @@ const RANK: Record<MeshVisual, number> = { off: 0, faint: 1, ghost: 2, 'see-thro
 const BONE = new Set(['maxilla', 'mandible', 'alveolar-bone']);
 const NEUROVASCULAR = ['nerves', 'arteries', 'veins'] as const;
 
-/** Bone turns see-through whenever a nerve or vessel layer is fully on (the paths run inside it). */
-function boneSeeThrough(cats: readonly string[], state: AppState): boolean {
+/**
+ * Bone turns see-through whenever a nerve or vessel layer is fully on (the paths run inside it),
+ * and the maxilla also while a maxillary sinus is selected (the sinus lies inside it).
+ */
+function boneSeeThrough(cats: readonly string[], state: AppState, registry: Registry): boolean {
   // not while sectioning (the cut shows solid bone) or on the laid-out board (nothing runs inside it there)
   if (state.clip.enabled || state.explodePhase === 2 || !cats.some((c) => BONE.has(c))) return false;
-  return NEUROVASCULAR.some((c) => state.categories[c] === 'on');
+  if (NEUROVASCULAR.some((c) => state.categories[c] === 'on')) return true;
+  const selected = state.selectedId ? registry.get(state.selectedId) : undefined;
+  return !!selected?.categories.includes('sinus') && cats.includes('maxilla');
 }
 const minVis = (a: MeshVisual, b: MeshVisual): MeshVisual => (RANK[a] <= RANK[b] ? a : b);
 
@@ -86,7 +91,7 @@ export function resolveMesh(meshKey: string, ctx: VisibilityContext): MeshVisual
     v = minVis(v, cs);
   }
 
-  if (owner.toothFdi === undefined && boneSeeThrough(registry.categoriesOfMesh(meshKey), state)) v = minVis(v, 'see-through');
+  if (owner.toothFdi === undefined && boneSeeThrough(registry.categoriesOfMesh(meshKey), state, registry)) v = minVis(v, 'see-through');
 
   // explicit hide / ghost on the structure or any ancestor
   const chain = [owner, ...registry.ancestors(ownerId)];

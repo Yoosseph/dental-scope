@@ -178,7 +178,19 @@
     "related": [
       "maxillary-alveolar-process",
       "palatine-bone",
-      "maxillary-nerve-branches"
+      "maxillary-nerve-branches",
+      "maxillary-sinus"
+    ]
+  },
+  "maxillary-sinus": {
+    "summary": "Ein lufthaltiger Hohlraum im Körper des Oberkieferknochens, über den Wurzeln der oberen Prämolaren und Molaren. Er mündet in die Nasenhöhle.",
+    "function": "Macht den Schädel leichter und gibt der Stimme Resonanz. Die Schleimhaut entleert sich in die Nase.",
+    "clinical": "Die Wurzeln der oberen Molaren und Prämolaren liegen oft knapp unter dem Kieferhöhlenboden und können in die Höhle hineinragen. Eine Extraktion oder ein Implantat in diesem Bereich kann die Kieferhöhle eröffnen (Mund-Antrum-Verbindung), und eine dentale Infektion kann sich dorthin ausbreiten. Die gezeigte Kieferhöhle ist aus dem Oberkiefer modelliert (keines der Quellmodelle enthält sie); Größe und Boden sind daher Näherungen.",
+    "related": [
+      "maxilla",
+      "maxillary-alveolar-process",
+      "posterior-superior-alveolar-nerve",
+      "infraorbital-nerve"
     ]
   },
   "maxillary-alveolar-process": {
@@ -546,12 +558,12 @@
     ]
   },
   "retromandibular-vein": {
-    "summary": "Die Vene, die hinter dem Unterkieferast in der Ohrspeicheldrüse absteigt und sich in einen vorderen und einen hinteren Ast teilt.",
+    "summary": "Die Vene, die hinter dem Unterkieferast in der Ohrspeicheldrüse absteigt und sich in einen vorderen und einen hinteren Ast teilt. Gezeigt wird nur der vordere Ast, der sich mit der V. facialis vereinigt.",
     "function": "Leitet das Blut der V. maxillaris und der V. temporalis superficialis in die V. facialis und die V. jugularis externa.",
     "related": [
       "maxillary-vein",
       "facial-vein",
-      "external-jugular-vein"
+      "internal-jugular-vein"
     ]
   },
   "facial-vein": {
@@ -569,13 +581,6 @@
     "related": [
       "facial-vein",
       "external-carotid-artery"
-    ]
-  },
-  "external-jugular-vein": {
-    "summary": "Eine oberflächliche Halsvene, die nahe dem Kieferwinkel aus dem hinteren Ast der V. retromandibularis entsteht. Nur ihr oberer Abschnitt ist dargestellt.",
-    "function": "Drainiert Kopfhaut und seitliches Gesicht.",
-    "related": [
-      "retromandibular-vein"
     ]
   }
 }
