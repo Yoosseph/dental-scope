@@ -28,6 +28,7 @@ from scipy.spatial import cKDTree
 sys.path.insert(0, str(Path(__file__).parent))
 from geometry import catmull_rom, decimate, ellipsoid_disc, orient_outward, submesh, tube_polyline  # noqa: E402
 from sinus import build_sinus  # noqa: E402
+from gingiva import expose_third_molar_crowns  # noqa: E402
 from tooth_layers import Frame, build_tooth_layers, make_frame  # noqa: E402
 
 # ---------------------------------------------------------------------------
@@ -122,11 +123,24 @@ def derive_third_molar(m2: trimesh.Trimesh, m1: trimesh.Trimesh, lower: bool) ->
     distal /= np.linalg.norm(distal)
     width = np.ptp(m2.vertices @ distal)
     out = m2.copy()
-    # The mandibular second-molar mesh is broad along the arch tangent. Using
-    # its full projected width leaves an obvious gap behind it; the smaller
-    # wisdom tooth contacts naturally at roughly two thirds of that span.
-    spacing = 0.667 if lower else 0.93
-    out.vertices = (out.vertices - c2) * 0.9 + c2 + distal * width * spacing
+    out.vertices = (out.vertices - c2) * 0.9 + c2
+    if not lower:
+        out.vertices += distal * width * 0.93
+        return out
+    # Fit crown contact, not root proximity: the lower second molars have
+    # broad, tilted roots, which otherwise leave a visible gap at the bite.
+    # Scaling around the cusp height keeps the erupted occlusal plane level.
+    out.vertices[:, 2] += m2.vertices[:, 2].max() - out.vertices[:, 2].max()
+    frame = make_frame(m2, np.array([0., 0., 1.]), -distal, np.array([np.sign(c2[0]), 0., 0.]))
+    height = frame.to_local(m2.vertices)[:, 2]
+    crown = height > height.max() - np.ptp(height) * 0.35 + 1.0
+    tree = cKDTree(m2.vertices[crown])
+    distance = width * 0.667
+    while tree.query(out.vertices[crown] + distal * distance)[0].min() > 0.25:
+        distance -= 0.02
+        if distance < width * 0.35:
+            raise ValueError("Could not fit mandibular third-molar crown contact")
+    out.vertices += distal * distance
     return out
 
 
@@ -212,7 +226,7 @@ def main():
         fr = frames[f]
         jobs.append((f, teeth[f].vertices, teeth[f].faces, arch, ttype,
                      dict(origin=fr.origin, axis=fr.axis, mesial=fr.mesial, buccal=fr.buccal),
-                     str(cache / f"layers-v7-{f}.pkl")))
+                     str(cache / f"layers-{'v8' if f in (38, 48) else 'v7'}-{f}.pkl")))
     print(f"Modelling internal anatomy for {len(jobs)} teeth…")
     with Pool(args.jobs) as pool:
         layers = dict(pool.map(_layers_job, jobs))
@@ -256,7 +270,9 @@ def main():
     for key, fma in CORE.items():
         gum = decimate(load_stl(args.bp3d, fma), 14000)
         upper = key == "gingiva-upper"
-        fitted = carve_tooth_sockets(gum, [m for f, m in teeth.items() if (f < 30) == upper])
+        arch_teeth = {f: m for f, m in teeth.items() if (f < 30) == upper}
+        gum = expose_third_molar_crowns(gum, arch_teeth, frames, layers)
+        fitted = carve_tooth_sockets(gum, list(arch_teeth.values()))
         add("core", key, fitted, "derived", fma)
 
     # ---- bone partition ---------------------------------------------------

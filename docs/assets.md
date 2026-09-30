@@ -28,8 +28,8 @@ The provenance of every mesh is recorded in `manifest.json`; the About dialog ex
 
 ## Derivations in detail
 
-- **Third molars (18, 28, 38, 48)** — copy of the second molar of the same quadrant, scaled to 90 % and moved distally along the arch. Mandibular placement is shortened to keep a natural contact with the second molar.
-- **Gingiva** — the source gum surface is cut around each tooth with a narrow clearance so that gum and tooth solids do not occupy the same visible space.
+- **Third molars (18, 28, 38, 48)** — copy of the second molar of the same quadrant, scaled to 90 % and moved distally along the arch. Mandibular placement is fitted to the neighbouring crown (rather than its roots), keeping the cusp height level with the second molar.
+- **Gingiva** — the source gum surface is cut around each tooth with a narrow clearance so that gum and tooth solids do not occupy the same visible space. The source has only 28 teeth; `gingiva.py` adds a continuous lower posterior ridge around the second and third molar necks, blending it into the source with signed distance fields. Its crest follows the individual cervical contours, so the erupted crowns sit in closed, fitted sockets. The ridge extends to the source basal surface and retains the original gum body below the necks, preventing underside notches at the joins. The upper gingiva retains its source shape. Validation checks both crown visibility and gum support around the viewer's root cutoff.
 - **Alveolar processes** — faces of the maxilla / mandible within 4 mm of a tooth root (the part below the cervical line).
 - **Mandibular condyles** — the top 10 mm of the posterior ramus on each side.
 - **Articular fossae** — faces of the temporal bone within reach of the condylar head.
@@ -82,7 +82,7 @@ The Z-Anatomy centrelines are committed, so the steps above do not need Blender.
 | `facial-vein-left` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 2,736 |
 | `facial-vein-right` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 2,736 |
 | `frontal-bone` | context.glb | FMA52734 | source | Axis/unit transform, decimation, meshopt compression | 15,000 |
-| `gingiva-lower` | core.glb | FMA59764 | derived | Transform + partition or approximation from the named source mesh (see below) | 59,024 |
+| `gingiva-lower` | core.glb | FMA59764 | derived | Transform + partition or approximation from the named source mesh (see below) | 93,038 |
 | `gingiva-upper` | core.glb | FMA59763 | derived | Transform + partition or approximation from the named source mesh (see below) | 62,608 |
 | `hyoid-bone` | context.glb | FMA52749 | source | Axis/unit transform, decimation, meshopt compression | 5,534 |
 | `incisive-nerve-left` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 656 |
@@ -107,8 +107,8 @@ The Z-Anatomy centrelines are committed, so the steps above do not need Blender.
 | `lateral-pterygoid-upper-right` | context.glb | FMA49024 | source | Axis/unit transform, decimation, meshopt compression | 2,328 |
 | `lingual-nerve-left` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 1,168 |
 | `lingual-nerve-right` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 1,168 |
-| `mandible-body` | core.glb | FMA52748 | source | Axis/unit transform, decimation, meshopt compression | 10,607 |
-| `mandibular-alveolar-process` | core.glb | FMA52748 | derived | Transform + partition or approximation from the named source mesh (see below) | 8,150 |
+| `mandible-body` | core.glb | FMA52748 | source | Axis/unit transform, decimation, meshopt compression | 10,599 |
+| `mandibular-alveolar-process` | core.glb | FMA52748 | derived | Transform + partition or approximation from the named source mesh (see below) | 8,158 |
 | `mandibular-condyle-left` | core.glb | FMA52748 | derived | Transform + partition or approximation from the named source mesh (see below) | 1,406 |
 | `mandibular-condyle-right` | core.glb | FMA52748 | derived | Transform + partition or approximation from the named source mesh (see below) | 1,495 |
 | `mandibular-nerve-left` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 1,800 |

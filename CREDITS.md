@@ -33,6 +33,7 @@ Z-Anatomy is itself built on BodyParts3D.
 - Transformed to a Y-up, centimetre coordinate frame centred on the dentition.
 - Simplified meshes (quadric decimation) and compressed them (meshopt).
 - Derived the four third molars from the adjacent second molars.
+- Fitted the lower third molars to the neighbouring crowns; added a continuous posterior gingival ridge around the second and third molar necks, blended into the source gum, and carved fitted tooth sockets.
 - Partitioned alveolar bone, mandibular condyles and articular fossae from the source bones.
 - Modeled internal tooth anatomy (enamel, dentin, cementum, periodontal ligament, pulp chamber, root canals) inside each tooth shape.
 - Sampled the Z-Anatomy nerve and vessel curves, fitted them onto the BodyParts3D jaws (similarity ICP), ended the dental nerve branches at the tooth apices, trimmed the neck vessels just below the angle of the mandible, reduced the trigeminal nerve to its ganglion, left out the external jugular vein and swept them into tubes.

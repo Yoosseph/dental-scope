@@ -73,6 +73,21 @@ def main() -> None:
         if gap > 0.05:
             errors.append(f"tooth contact {a}/{b}: {gap * 10:.2f} mm gap")
 
+    # Root proximity alone can hide a large gap between the visible crowns.
+    # The derived lower wisdom teeth must meet their neighbours at the bite.
+    for fdi in (38, 48):
+        pair = []
+        for number in (fdi - 1, fdi):
+            info = manifest["teeth"][str(number)]
+            tooth = shells[number]
+            height = (tooth.vertices - info["landmarks"]["cervical-line"]) @ np.array(info["frame"]["axis"])
+            pair.append(tooth.vertices[height > 0.15])
+        gap = cKDTree(pair[0]).query(pair[1])[0].min()
+        if gap > 0.06:
+            errors.append(f"tooth crown contact {fdi - 1}/{fdi}: {gap * 10:.2f} mm gap")
+        if abs(shells[fdi].bounds[1, 1] - shells[fdi - 1].bounds[1, 1]) > 0.02:
+            errors.append(f"tooth {fdi}: cusp height out of line with neighbouring molar")
+
     # The gingiva must be a single closed body, fitted around both tooth rows.
     # Sampling tooth vertices catches regressions where a source gum is used
     # without carving sockets; the 0.08 mm clearance keeps samples away from
@@ -90,6 +105,53 @@ def main() -> None:
                 tooth = shells.get(fdi)
                 if tooth is not None and gum.contains(tooth.vertices[::40]).any():
                     errors.append(f"{arch}: tooth {fdi} intersects gingiva")
+
+    # All four wisdom teeth are shown fully erupted. A socket can be closed
+    # over by the source's retromolar gum without intersecting the tooth, so
+    # check crown visibility as well as solid intersection. Coordinates are cm.
+    for fdi in (18, 28, 38, 48):
+        tooth = shells.get(fdi)
+        gum = gums.get("gingiva-upper" if fdi < 30 else "gingiva-lower")
+        if tooth is None or gum is None:
+            continue  # Missing geometry is reported above.
+        info = manifest["teeth"][str(fdi)]
+        axis = np.array(info["frame"]["axis"])
+        axis /= np.linalg.norm(axis)
+        cervical = np.array(info["landmarks"]["cervical-line"])
+        height = (tooth.vertices - cervical) @ axis
+        crown = tooth.vertices[height > max(0.15, height.max() * 0.5)][::5]
+        if not len(crown):
+            errors.append(f"tooth {fdi}: missing erupted crown")
+            continue
+        if fdi in (38, 48):
+            # The assembled renderer clips roots at -0.12 cm from the CEJ.
+            # A crown can be fully visible yet float over an empty socket:
+            # require a close gum wall around that cut, not just no collisions.
+            neck = tooth.vertices[(height > -0.13) & (height < -0.07)]
+            outward = neck - cervical
+            outward -= np.outer(outward @ axis, axis)
+            outward /= np.linalg.norm(outward, axis=1)[:, None]
+            hits, rays, _ = gum.ray.intersects_location(neck, outward, multiple_hits=False)
+            supported = np.zeros(len(neck), dtype=bool)
+            supported[rays] = np.linalg.norm(hits - neck[rays], axis=1) < 0.05
+            # Allow the small proximal contact shared with the neighbouring
+            # tooth's socket, where a ray can cross that socket instead.
+            if not len(neck) or supported.mean() < 0.95:
+                errors.append(f"tooth {fdi}: gum does not support the rendered neck")
+        buccal = np.array(info["frame"]["buccal"])
+        for view, direction in (("occlusal", axis), ("buccal", buccal)):
+            direction = direction / np.linalg.norm(direction)
+            # Only outward-facing surface samples represent the visible
+            # crown; a ray through the tooth's back can meet its own collar.
+            visible = (height > max(0.15, height.max() * 0.5)) & (tooth.vertex_normals @ direction > 0.15)
+            points = tooth.vertices[visible][::3]
+            point_heights = height[visible][::3]
+            blocked = gum.ray.intersects_any(points + direction * 0.002, np.tile(direction, (len(points), 1)))
+            # A small proximal papilla may overlap the lower side of a
+            # crown; it must never cover the cusps or the occlusal surface.
+            tolerance = 0.05 if view == "buccal" else 0.0
+            if not len(points) or blocked.mean() > tolerance or blocked[point_heights > height.max() * 0.75].any():
+                errors.append(f"tooth {fdi}: gingiva covers {blocked.mean():.0%} of sampled crown ({view})")
 
     # Arch dissection: at every point of the slider the visible part of each tooth must stay
     # clear of the gum. While a tooth slides out, the engine cuts away the part still below the
