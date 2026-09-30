@@ -132,7 +132,9 @@ export function aboutHtml(head: string, base: string, faviconHref: string, lang:
     <meta name="theme-color" content="#11100e" media="(prefers-color-scheme: dark)" />
     ${head}
     ${jsonLd(faqLd)}
-    <link rel="icon" type="image/svg+xml" href="${faviconHref}" />
+    <link rel="icon" type="image/x-icon" sizes="16x16 32x32 48x48" href="${base}favicon.ico" />
+    <link rel="icon" type="image/png" sizes="96x96" href="${base}favicon.png" />
+    <link rel="icon" type="image/svg+xml" sizes="any" href="${faviconHref}" />
     <style>${CSS}</style>
     <script defer src="/_vercel/insights/script.js"></script>
   </head>

@@ -354,7 +354,9 @@ export function guideHtml(page: GuidePage, head: string, base: string): string {
     <meta name="theme-color" content="#f7f5f0" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#11100e" media="(prefers-color-scheme: dark)" />
     ${head}
-    <link rel="icon" type="image/svg+xml" href="${base}favicon.svg" />
+    <link rel="icon" type="image/x-icon" sizes="16x16 32x32 48x48" href="${base}favicon.ico" />
+    <link rel="icon" type="image/png" sizes="96x96" href="${base}favicon.png" />
+    <link rel="icon" type="image/svg+xml" sizes="any" href="${base}favicon.svg" />
     <style>${PAGE_CSS}${GUIDE_CSS}</style>
     <script defer src="/_vercel/insights/script.js"></script>
   </head>
