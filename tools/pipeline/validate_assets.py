@@ -123,21 +123,20 @@ def main() -> None:
         if not len(crown):
             errors.append(f"tooth {fdi}: missing erupted crown")
             continue
-        if fdi in (38, 48):
-            # The assembled renderer clips roots at -0.12 cm from the CEJ.
-            # A crown can be fully visible yet float over an empty socket:
-            # require a close gum wall around that cut, not just no collisions.
-            neck = tooth.vertices[(height > -0.13) & (height < -0.07)]
-            outward = neck - cervical
-            outward -= np.outer(outward @ axis, axis)
-            outward /= np.linalg.norm(outward, axis=1)[:, None]
-            hits, rays, _ = gum.ray.intersects_location(neck, outward, multiple_hits=False)
-            supported = np.zeros(len(neck), dtype=bool)
-            supported[rays] = np.linalg.norm(hits - neck[rays], axis=1) < 0.05
-            # Allow the small proximal contact shared with the neighbouring
-            # tooth's socket, where a ray can cross that socket instead.
-            if not len(neck) or supported.mean() < 0.95:
-                errors.append(f"tooth {fdi}: gum does not support the rendered neck")
+        # The assembled renderer clips roots at -0.12 cm from the CEJ.
+        # A crown can be fully visible yet float over an empty socket:
+        # require a close gum wall around that cut, not just no collisions.
+        neck = tooth.vertices[(height > -0.13) & (height < -0.07)]
+        outward = neck - cervical
+        outward -= np.outer(outward @ axis, axis)
+        outward /= np.linalg.norm(outward, axis=1)[:, None]
+        hits, rays, _ = gum.ray.intersects_location(neck, outward, multiple_hits=False)
+        supported = np.zeros(len(neck), dtype=bool)
+        supported[rays] = np.linalg.norm(hits - neck[rays], axis=1) < 0.05
+        # Allow the small proximal contact shared with the neighbouring
+        # tooth's socket, where a ray can cross that socket instead.
+        if not len(neck) or supported.mean() < 0.95:
+            errors.append(f"tooth {fdi}: gum does not support the rendered neck")
         buccal = np.array(info["frame"]["buccal"])
         for view, direction in (("occlusal", axis), ("buccal", buccal)):
             direction = direction / np.linalg.norm(direction)

@@ -1,8 +1,8 @@
-"""Fit a continuous posterior gum ridge around the derived lower molars.
+"""Fit a continuous posterior gum ridge around the derived wisdom teeth.
 
-Inputs are in BodyParts3D millimetres. The source has no wisdom teeth; merely
-lowering its retromolar surface can leave their necks unsupported. Blend a
-solid ridge around both posterior molars into the source before carving sockets.
+Inputs are in BodyParts3D millimetres. The source has no wisdom teeth. Join
+rounded upper collars and a fitted lower ridge to the source gum before carving
+sockets, so every derived wisdom tooth has continuous support at its neck.
 """
 from __future__ import annotations
 
@@ -25,26 +25,28 @@ def _smooth_min(a, b, radius):
 def expose_third_molar_crowns(gum: trimesh.Trimesh, teeth: dict[int, trimesh.Trimesh],
                              frames: dict[int, Frame], layers: dict[int, ToothLayers],
                              pitch: float = 0.22) -> trimesh.Trimesh:
-    posterior = [f for f in (37, 38, 47, 48) if f in teeth]
+    posterior = [f for f in (17, 18, 27, 28, 37, 38, 47, 48) if f in teeth]
     if not posterior:
         return gum.copy()
+    upper = all(f < 30 for f in posterior)
 
     collars = []
     for fdi in posterior:
         frame = frames[fdi]
         local = frame.to_local(teeth[fdi].vertices)
-        ratio = TYPE_PARAMS[("mandibular", "third-molar" if fdi % 10 == 8 else "second-molar")]["crown_ratio"]
+        arch = "maxillary" if fdi < 30 else "mandibular"
+        ratio = TYPE_PARAMS[(arch, "third-molar" if fdi % 10 == 8 else "second-molar")]["crown_ratio"]
         cej = layers[fdi].cej_height if fdi in layers else local[:, 2].max() - ratio * np.ptp(local[:, 2])
         neck = local[np.abs(local[:, 2] - cej) < 1.5]
         centre = (neck[:, :2].min(0) + neck[:, :2].max(0)) / 2
-        # A rounded rectangular ridge, with enough tissue outside the socket
-        # to support its entire circumference, including the distal wall.
-        radii = np.max(np.abs(neck[:, :2] - centre), axis=0) + 2.0
+        # Leave tissue outside the socket around its entire circumference,
+        # including the distal wall of each derived wisdom tooth.
+        radii = np.max(np.abs(neck[:, :2] - centre), axis=0) + (1.5 if upper else 2.0)
         source_local = frame.to_local(gum.vertices)
         nearby = np.linalg.norm(source_local[:, :2] - centre, axis=1) < 12.0
         # Continue to the source gum's basal surface. A fixed shallow collar
         # leaves an overhanging shelf and a notch below the added rear molars.
-        bottom = min(cej - 8.0, np.percentile(source_local[nearby, 2], 5))
+        bottom = cej - 4.0 if upper else min(cej - 8.0, np.percentile(source_local[nearby, 2], 5))
         collars.append((fdi, frame, cej, centre, radii, bottom, neck[:, :2] - centre))
 
     envelope = [gum.bounds]
@@ -80,7 +82,8 @@ def expose_third_molar_crowns(gum: trimesh.Trimesh, teeth: dict[int, trimesh.Tri
         x = project(frame.mesial) - centre[0]
         y = project(frame.buccal) - centre[1]
         z = project(frame.axis)
-        radial = ((x / radii[0]) ** 4 + (y / radii[1]) ** 4) ** 0.25
+        power = 2 if upper else 4
+        radial = (np.abs(x / radii[0]) ** power + np.abs(y / radii[1]) ** power) ** (1 / power)
         side = (radial - 1) * min(radii)
         # Slightly rounded crest at the cervical line; the final boolean
         # socket cut supplies the close-fitting scalloped tooth margin.
@@ -109,13 +112,15 @@ def expose_third_molar_crowns(gum: trimesh.Trimesh, teeth: dict[int, trimesh.Tri
             influence = np.maximum(influence, 1 - blend * blend * (3 - 2 * blend))
     crest = crest_sum / np.maximum(crest_weight, 1e-20)
     ridge = np.maximum(ridge, crest)
-    fitted = field * (1 - influence) + ridge * influence
+    # The upper source already exposes the crowns: add rounded collars to it
+    # without replacing its natural palatal and basal contours with a ridge.
+    fitted = _smooth_min(field, ridge, 1.0) if upper else field * (1 - influence) + ridge * influence
     # Replace the raised source pad only at the crest. Below the tooth necks,
     # retain and smoothly join the original body instead of cutting it away.
     basal_union = _smooth_min(field, fitted, 2.5)
     basal = np.clip((-crest - 2.0) / 3.0, 0, 1)
     basal = basal * basal * (3 - 2 * basal) * influence
-    field = fitted * (1 - basal) + basal_union * basal
+    field = fitted if upper else fitted * (1 - basal) + basal_union * basal
     field = ndimage.gaussian_filter(field, sigma=0.8)
     vertices, faces, _, _ = measure.marching_cubes(field, level=0, spacing=(pitch,) * 3)
     result = trimesh.Trimesh(vertices + lo, faces, process=True)
