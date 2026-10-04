@@ -2301,6 +2301,7 @@ button.ds-layer-name:hover {
   overscroll-behavior: contain;
 }
 .ds-search-field input { min-width: 0; }
+.ds-lang-select { display: none; }
 .ds-search { max-height: 70dvh; }
 .ds-about { max-height: 84dvh; }
 
@@ -2418,9 +2419,9 @@ button.ds-layer-name:hover {
 }
 
 @media (max-width: 600px) {
-  .ds-title { font-size: 24px; }
-  .ds-top-actions .ds-lang { position: absolute; top: 52px; right: 0; }
-  .ds-mobile-bar button { flex-direction: column; gap: 2px; font-size: 11px; }
+  .ds-title { font-size: 18px; }
+  .ds-top-actions .ds-lang { display: none; }
+  .ds-mobile-bar button { flex-direction: column; gap: 2px; font-size: 10px; }
   .ds-view-picker-text { display: none; }
   .ds-view-picker-btn { padding-inline: 8px; }
   .ds-development-heading { flex-wrap: wrap; }
@@ -2429,15 +2430,80 @@ button.ds-layer-name:hover {
   .ds-layers > .ds-segmented--fill button { white-space: normal; }
 }
 
+/* Phone proportions: reserve most of the screen for anatomy. Panels scroll
+   inside a short tray rather than expanding over the face. */
+@media (max-width: 600px), (max-width: 1023px) and (orientation: landscape) and (max-height: 600px) {
+  .ds-identity { top: calc(16px + var(--safe-top)); left: calc(10px + var(--safe-left)); }
+  .ds-title { font-size: 18px; }
+  .ds-credit, .ds-footer { display: none; }
+  .ds-top-actions { top: calc(8px + var(--safe-top)); right: calc(8px + var(--safe-right)); gap: 4px; }
+  .ds-top-actions .ds-lang { display: none; }
+  .ds-lang-select {
+    display: block; width: 88px; height: 32px; padding: 0 4px;
+    font: inherit; font-size: 16px; color: var(--ink); background: var(--panel-solid);
+    border: 1px solid var(--panel-border); border-radius: 6px;
+  }
+  .ds-icon-btn { width: 32px; height: 32px; min-width: 32px; min-height: 32px; border-radius: 6px; }
+  .ds-icon-btn svg { width: 16px; height: 16px; }
+  .ds-reset-all { top: calc(50px + var(--safe-top)); left: calc(10px + var(--safe-left)); width: 30px; height: 30px; min-width: 30px; min-height: 30px; }
+  .ds-mobile-bar { width: min(320px, calc(100% - 20px - var(--safe-left) - var(--safe-right))); padding: 3px; border-radius: 10px; }
+  .ds-mobile-bar button { min-height: 34px; padding: 3px 4px; font-size: 10px; gap: 2px; border-radius: 7px; }
+  .ds-mobile-bar svg { width: 14px; height: 14px; }
+  .ds-app .ds-dock:not(.is-mobile-open) { display: none !important; }
+  .ds-layers, .ds-detail, .ds-app.is-dissecting .ds-detail, .ds-dock.is-mobile-open {
+    bottom: calc(58px + var(--safe-bottom));
+    border-radius: 12px;
+    max-height: min(34dvh, 260px);
+  }
+  .ds-layers.is-mobile-open { height: min(34dvh, 260px); padding: 6px; gap: 6px; }
+  .ds-detail.is-mobile-open { max-height: min(34dvh, 260px); overflow-y: auto; overscroll-behavior: contain; }
+  .ds-detail-body { flex: none; overflow: visible; padding: 0 10px 8px; }
+  .ds-detail-head { padding: 8px 10px; }
+  .ds-detail-title { font-size: 17px; margin-top: 4px; }
+  .ds-detail-bar { margin-bottom: 4px; }
+  .ds-detail-summary { font-size: 12px; margin-bottom: 8px; }
+  .ds-detail-body { font-size: 12px; }
+  .ds-detail-actions { padding: 6px 10px; gap: 5px; }
+  .ds-primary { height: 34px; font-size: 12px; }
+  .ds-secondary { font-size: 11px; }
+  .ds-layer-row { height: 34px; gap: 4px; }
+  .ds-layer-name { min-height: 32px; font-size: 12px; }
+  .ds-dot-toggle, .ds-ghost-btn { width: 32px; height: 32px; }
+  .ds-tabs { padding-bottom: 5px; }
+  .ds-tabs button, .ds-segmented button, .ds-secondary, .ds-chip--button { min-height: 32px; font-size: 11px; }
+  .ds-layer-hint { padding: 4px 8px; font-size: 10px; }
+  .ds-tree-row { min-height: 32px; }
+  .ds-tree-caret, .ds-tree-eye { min-width: 32px; min-height: 32px; }
+  .ds-dock-main { padding: 7px 9px; gap: 6px; }
+  .ds-dock-main:not(.ds-dissect) > .ds-slider { min-width: calc(100% - 44px); }
+  .ds-camera { padding: 4px 2px; flex-wrap: nowrap; }
+  .ds-tb-btn { width: 30px; height: 32px; min-height: 32px; }
+  .ds-view-picker-btn { width: auto; padding-inline: 6px; }
+  .ds-view-picker-text { display: none; }
+  .ds-tb-btn svg { width: 16px; height: 16px; }
+  .ds-tool { min-height: 32px; font-size: 10px; padding-block: 3px; }
+  .ds-range, .ds-development-timeline input[type='range'] { min-height: 28px; }
+  .ds-play { width: 30px; height: 30px; }
+  .ds-play-row { gap: 8px; }
+  .ds-slider-label { font-size: 11px; }
+  .ds-slider-head { margin-bottom: 0; }
+  .ds-slider-ends { font-size: 9px; }
+  .ds-development-play, .ds-development-stops button { min-height: 30px; }
+  .ds-development-timeline { padding: 7px 9px; }
+  .ds-development-heading { font-size: 10px; }
+  .ds-dock.is-mobile-open .ds-compact-settings { padding: 6px 9px; font-size: 11px; }
+  .ds-section-panel .ds-icon-btn { min-width: 32px; min-height: 32px; }
+}
+
 /* A side sheet keeps the model usable on a phone rotated horizontally. */
 @media (max-width: 1023px) and (orientation: landscape) and (max-height: 600px),
        (pointer: coarse) and (max-width: 1366px) and (orientation: landscape) and (max-height: 600px) {
-  .ds-layers, .ds-detail, .ds-app.is-dissecting .ds-detail, .ds-dock.is-mobile-open {
+  .ds-layers, .ds-detail, .ds-detail.is-mobile-open, .ds-app.is-dissecting .ds-detail, .ds-dock.is-mobile-open {
     left: auto;
     right: max(8px, var(--safe-right));
-    top: calc(76px + var(--safe-top));
-    bottom: calc(76px + var(--safe-bottom));
-    width: min(440px, 52vw);
+    top: calc(50px + var(--safe-top));
+    bottom: calc(58px + var(--safe-bottom));
+    width: min(340px, 42vw);
     height: auto;
     max-height: none;
   }
