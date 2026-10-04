@@ -1,4 +1,4 @@
-import type { Lang } from './lang';
+import type { Lang } from './lang.ts';
 
 const en = {
   nervesMuscles: 'Nerves & muscles', transparencyHint: 'Use the translucent button beside a layer, or select a structure and choose Translucent (G), to see the nerves behind it.',

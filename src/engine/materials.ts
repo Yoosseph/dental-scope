@@ -26,6 +26,10 @@ export interface TissueStyle {
 }
 
 const STYLES: Record<string, TissueStyle> = {
+  'development-primary': { color: '#e8bd77', roughness: 0.42 },
+  'development-unerupted': { color: '#70b4d0', roughness: 0.42 },
+  'development-erupting': { color: '#a5c796', roughness: 0.42 },
+  'development-permanent': { color: '#eee5d4', roughness: 0.42 },
   shell: { color: '#e9e0d0', roughness: 0.34, clearcoat: 0.1, specularIntensity: 0.75, cap: '#d8c79c', mottle: 0.15, edge: 0.1 },
   enamel: { color: '#ece5d8', roughness: 0.33, clearcoat: 0.12, specularIntensity: 0.8, cap: '#eae4d5', mottle: 0.13, edge: 0.08 },
   'dentin-coronal': { color: '#e3c285', roughness: 0.6, cap: '#d9b56f' },
@@ -53,6 +57,7 @@ const STYLES: Record<string, TissueStyle> = {
 };
 
 export function styleKeyFor(meshKey: string, cats: CategoryId[]): string {
+  if (meshKey.startsWith('development-tooth-')) return 'development-permanent';
   if (/^tooth-\d\d$/.test(meshKey)) return 'shell';
   const m = /^(enamel|dentin-coronal|dentin-radicular|cementum|pulp-chamber|pdl)-\d\d$/.exec(meshKey);
   if (m) return m[1];
@@ -139,7 +144,7 @@ export function createTissueMaterial(styleKey: string): TissueMaterial {
   const st = styleFor(styleKey);
   const mat = new THREE.MeshPhysicalMaterial({
     color: st.color,
-    vertexColors: styleKey === 'shell' || styleKey === 'enamel',
+    vertexColors: styleKey === 'shell' || styleKey === 'enamel' || styleKey.startsWith('development-'),
     roughness: st.roughness,
     metalness: st.metalness ?? 0,
     clearcoat: st.clearcoat ?? 0,

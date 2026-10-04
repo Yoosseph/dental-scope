@@ -2,20 +2,22 @@
  * Educational content lookup. Content is data (JSON), separate from anatomy
  * and UI, so it can be replaced by verified sources without code changes.
  */
-import type { Registry } from '../anatomy/registry';
-import type { Lang } from '../i18n/lang';
-import teeth from './en/teeth.json';
-import structures from './en/structures.json';
-import teethSv from './sv/teeth.json';
-import structuresSv from './sv/structures.json';
-import teethDe from './de/teeth.json';
-import structuresDe from './de/structures.json';
-import teethEs from './es/teeth.json';
-import structuresEs from './es/structures.json';
-import teethLa from './la/teeth.json';
-import structuresLa from './la/structures.json';
-import { feedbackAnatomy } from './feedbackAnatomy';
-import { supportingAnatomy } from './supportingAnatomy';
+import type { Registry } from '../anatomy/registry.ts';
+import type { Lang } from '../i18n/lang.ts';
+import teeth from './en/teeth.json' with { type: 'json' };
+import structures from './en/structures.json' with { type: 'json' };
+import teethSv from './sv/teeth.json' with { type: 'json' };
+import structuresSv from './sv/structures.json' with { type: 'json' };
+import teethDe from './de/teeth.json' with { type: 'json' };
+import structuresDe from './de/structures.json' with { type: 'json' };
+import teethEs from './es/teeth.json' with { type: 'json' };
+import structuresEs from './es/structures.json' with { type: 'json' };
+import teethLa from './la/teeth.json' with { type: 'json' };
+import structuresLa from './la/structures.json' with { type: 'json' };
+import { feedbackAnatomy } from './feedbackAnatomy.ts';
+import { supportingAnatomy } from './supportingAnatomy.ts';
+import { developmentAnatomy } from './developmentAnatomy.ts';
+import { developmentContentKey } from '../anatomy/development.ts';
 
 export type ContentStatus = 'placeholder' | 'draft' | 'reviewed';
 
@@ -48,6 +50,7 @@ const db = (t: unknown, s: unknown, lang: Lang): Record<string, RawEntry> => {
   const base = { ...(t as Record<string, RawEntry>), ...(s as Record<string, RawEntry>) };
   for (const [key, entry] of Object.entries(feedbackAnatomy(lang))) base[key] = { ...base[key], ...entry };
   for (const [key, entry] of Object.entries(supportingAnatomy(lang))) base[key] = { ...base[key], ...entry };
+  Object.assign(base, developmentAnatomy(lang, base));
   return base;
 };
 /** Content per interface language; every language has the same keys (checked by i18n.test.ts). */
@@ -73,6 +76,7 @@ const STATUS: ContentStatus = 'draft';
 export function contentKeys(registry: Registry, id: string): string[] {
   const s = registry.get(id);
   const keys: string[] = [];
+  if (s?.development) keys.push(developmentContentKey(s.development));
   if (s?.tooth) keys.push(`tooth:${s.tooth.type}:${s.tooth.arch}`);
   let k = id;
   if (s?.toothFdi !== undefined) {

@@ -9,24 +9,28 @@ import { IconCheck, IconGhost, IconLayers, IconReset, IconTree } from './icons';
 import { PanelHandle } from './PanelHandle';
 import { StructureTree } from './StructureTree';
 import { NerveControls } from './NerveControls';
+import { DevelopmentPanel } from './DevelopmentControls';
+import { DEVELOPMENT_TEXT } from '../i18n/development';
 
 export function LayersPanel() {
   const panel = useApp((s) => s.panel);
   const mobileOpen = useApp((s) => s.mobileSheet === 'layers');
   const collapsed = useApp((s) => s.collapsed.layers);
+  const development = useApp((s) => s.developmentStage !== null);
+  const lang = useLang();
   const m = useT();
   return (
     <aside className={`ds-panel ds-layers${mobileOpen ? ' is-mobile-open' : ''}${collapsed ? ' is-collapsed' : ''}`} aria-label={m.layersAria}>
       <PanelHandle panel="layers" />
       <div className="ds-tabs" role="tablist" aria-label={m.panelTabs}>
-        <button type="button" role="tab" aria-selected={panel === 'layers'} className={panel === 'layers' ? 'is-active' : ''} onClick={() => actions.setPanel('layers')}>
-          <IconLayers size={14} /> {m.layers}
+        <button type="button" role="tab" aria-selected={development || panel === 'layers'} className={development || panel === 'layers' ? 'is-active' : ''} onClick={() => actions.setPanel('layers')}>
+          <IconLayers size={14} /> {development ? DEVELOPMENT_TEXT[lang].title : m.layers}
         </button>
-        <button type="button" role="tab" aria-selected={panel === 'tree'} className={panel === 'tree' ? 'is-active' : ''} onClick={() => actions.setPanel('tree')}>
+        {!development && <button type="button" role="tab" aria-selected={panel === 'tree'} className={panel === 'tree' ? 'is-active' : ''} onClick={() => actions.setPanel('tree')}>
           <IconTree size={14} /> {m.structures}
-        </button>
+        </button>}
       </div>
-      {panel === 'layers' ? <Categories /> : <StructureTree />}
+      {development ? <DevelopmentPanel /> : panel === 'layers' ? <Categories /> : <StructureTree />}
     </aside>
   );
 }
@@ -92,6 +96,7 @@ function CategoryRow({ id, label, color, count, state, planned }: { id: Category
     );
   }
   const on = state !== 'off';
+  const showPrimary = () => actions.setDevelopmentStage('primary');
   return (
     <div className={`ds-layer-row${on ? '' : ' is-off'}`} role="listitem">
       {/* the layer's own colour is the visibility toggle: filled with a check when shown, outlined when hidden */}
@@ -99,7 +104,7 @@ function CategoryRow({ id, label, color, count, state, planned }: { id: Category
         type="button"
         className={`ds-dot-toggle${on ? ' is-on' : ''}${state === 'ghost' ? ' is-ghost' : ''}`}
         style={{ '--dot': color, '--dot-ink': inkOn(color) } as React.CSSProperties}
-        onClick={() => actions.setCategory(id, on ? 'off' : 'on')}
+        onClick={() => id === 'primary-teeth' ? showPrimary() : actions.setCategory(id, on ? 'off' : 'on')}
         aria-pressed={on}
         aria-label={m.showX(label)}
         title={on ? m.hideX(label) : m.showX(label)}
@@ -108,14 +113,14 @@ function CategoryRow({ id, label, color, count, state, planned }: { id: Category
           <IconCheck size={11} strokeWidth={2.6} />
         </span>
       </button>
-      <button type="button" className="ds-layer-name" onClick={() => actions.showOnlyCategory(id)} title={m.showOnlyX(label)} aria-label={m.showOnlyX(label)}>
+      <button type="button" className="ds-layer-name" onClick={() => id === 'primary-teeth' ? showPrimary() : actions.showOnlyCategory(id)} title={m.showOnlyX(label)} aria-label={m.showOnlyX(label)}>
         {label}
       </button>
       <span className="ds-count">{count}</span>
       <button
         type="button"
         className={`ds-ghost-btn${state === 'ghost' ? ' is-active' : ''}`}
-        onClick={() => actions.setCategory(id, state === 'ghost' ? 'on' : 'ghost')}
+        onClick={() => id === 'primary-teeth' ? showPrimary() : actions.setCategory(id, state === 'ghost' ? 'on' : 'ghost')}
         aria-pressed={state === 'ghost'}
         aria-label={m.translucentX(label)}
         title={m.translucent}

@@ -34,11 +34,11 @@ describe('page metadata', () => {
     expect(p.description).toContain('Palmer LL6');
     expect(p.description.length).toBeLessThanOrEqual(170);
   });
-  it('titles the document after the current selection', () => {
+  it('keeps the tool name as the document title for every selection', () => {
     expect(documentTitle(undefined)).toBe(HOME.title);
-    expect(documentTitle(registry.get('tooth-36'))).toBe(toothPage(36).title);
-    expect(documentTitle(registry.get('enamel-36'))).toBe(`${registry.get('enamel-36')!.name} — Dental Scope`);
-    expect(documentTitle({ name: 'Inferior alveolar nerve' })).toBe('Inferior alveolar nerve — Dental Scope');
+    expect(documentTitle(registry.get('tooth-36'))).toBe('Dental Scope');
+    expect(documentTitle(registry.get('enamel-36'))).toBe('Dental Scope');
+    expect(documentTitle({ name: 'Inferior alveolar nerve' })).toBe('Dental Scope');
   });
 });
 
