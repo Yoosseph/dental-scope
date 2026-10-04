@@ -13,6 +13,7 @@ import { PanelHandle } from './PanelHandle';
 import { CanalFrequency } from './CanalFrequency';
 import { FEEDBACK_TEXT } from '../i18n/feedback';
 import { passageFor } from '../anatomy/passages';
+import { HyoidConnections } from './HyoidConnections';
 
 export function DetailPanel() {
   const { registry, engine } = useServices();
@@ -82,6 +83,7 @@ export function DetailPanel() {
         {content.location && <Section title={FEEDBACK_TEXT[lang].location}>{content.location}</Section>}
         {content.function && <Section title={m.function}>{content.function}</Section>}
         {content.clinical && <Section title={m.clinical}>{content.clinical}</Section>}
+        {s.id === 'hyoid-bone' && <HyoidConnections />}
 
         {(content.facts.length > 0 || tooth?.tooth) && (
           <dl className="ds-facts">

@@ -2083,3 +2083,17 @@ button.ds-layer-name:hover {
 .ds-jaw-row .ds-slider { flex: 1; min-width: 120px; }
 .ds-jaw-controls .ds-evidence { margin: 8px 0 0; max-width: 520px; }
 .ds-jaw-controls .ds-play:disabled { opacity: 0.4; cursor: default; }
+
+.ds-hyoid { margin: 16px 0; }
+.ds-hyoid .ds-segmented { margin-top: 8px; }
+.ds-hyoid-map { display: block; width: 100%; margin: 10px 0; }
+.ds-hyoid-path { fill: none; stroke: var(--muted); stroke-width: 2; opacity: 0.25; }
+.ds-hyoid-path.is-active { stroke: #a34d44; opacity: 1; stroke-width: 3; }
+.ds-hyoid-path .is-ligament { stroke: #9a8060; }
+.ds-hyoid-node rect { fill: var(--panel-solid); stroke: var(--line); }
+.ds-hyoid-node text { fill: var(--ink); text-anchor: middle; font-size: 12px; }
+.ds-hyoid-node.is-hyoid rect { fill: var(--panel-solid); stroke: #9a8060; stroke-width: 2; }
+.ds-attachments { margin: 0; font-size: 12px; line-height: 1.5; }
+.ds-attachments > div { margin-top: 10px; }
+.ds-attachments dt { font-weight: 600; }
+.ds-attachments dd { margin: 3px 0 0; color: var(--muted); }
