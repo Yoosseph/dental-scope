@@ -1,7 +1,7 @@
-import data from './canal-counts.json';
-import { archOf, typeOf } from '../anatomy/notation';
-import { FEEDBACK_TEXT } from '../i18n/feedback';
-import type { Lang } from '../i18n/lang';
+import data from './canal-counts.json' with { type: 'json' };
+import { archOf, typeOf } from '../anatomy/notation.ts';
+import { FEEDBACK_TEXT } from '../i18n/feedback.ts';
+import type { Lang } from '../i18n/lang.ts';
 
 export function canalFrequency(fdi: number) {
   const key = `tooth:${typeOf(fdi)}:${archOf(fdi)}` as keyof typeof data.entries;

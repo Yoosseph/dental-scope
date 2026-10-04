@@ -1,6 +1,6 @@
 /** Core anatomical data types. See docs/architecture.md §8. */
 import type { Lang } from '../i18n/lang.ts';
-import type { DevelopmentTooth } from './development';
+import type { DevelopmentTooth } from './development.ts';
 
 export type Provenance = 'source' | 'derived' | 'modeled' | 'atlas' | 'schematic';
 export type StructureKind = 'group' | 'mesh' | 'region' | 'landmark';

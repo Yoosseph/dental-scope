@@ -1,6 +1,6 @@
-import { DEVELOPMENT_TEETH, developmentContentKey } from '../anatomy/development';
-import type { Lang } from '../i18n/lang';
-import { DEVELOPMENT_TEXT } from '../i18n/development';
+import { DEVELOPMENT_TEETH, developmentContentKey } from '../anatomy/development.ts';
+import type { Lang } from '../i18n/lang.ts';
+import { DEVELOPMENT_TEXT } from '../i18n/development.ts';
 
 export const DEVELOPMENT_SOURCES = [
   { title: 'Bastir et al. · Craniofacial maturation (2006)', url: 'https://pubmed.ncbi.nlm.nih.gov/17062021/' },

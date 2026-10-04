@@ -1,5 +1,5 @@
-import type { Arch, Side, ToothType } from './types';
-import { archOf, sideOf, typeOf, notationFor } from './notation';
+import type { Arch, Side, ToothType } from './types.ts';
+import { archOf, sideOf, typeOf, notationFor } from './notation.ts';
 
 export const DEVELOPMENT_MORPH_SECONDS = 1.9;
 

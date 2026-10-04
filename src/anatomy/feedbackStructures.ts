@@ -1,4 +1,4 @@
-import type { StructureDef } from './structures';
+import type { StructureDef } from './structures.ts';
 
 const nerves = [
   ['ophthalmic-nerve', 'ophthalmic nerve (V1)', 'n. ophthalmicus', 'cn v1'],

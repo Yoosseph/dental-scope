@@ -1,4 +1,4 @@
-import { LANGS, type Lang } from '../i18n/lang';
+import { LANGS, type Lang } from '../i18n/lang.ts';
 
 type Translation = [string, string, string, string, string]; // en, sv, de, es, la
 type Entry = { summary: Translation; function?: Translation; related: string[]; sources: { title: string; url: string }[] };

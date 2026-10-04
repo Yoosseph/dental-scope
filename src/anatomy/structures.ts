@@ -3,8 +3,8 @@
  * Teeth and their internal parts are generated in registry.ts from tables.
  * `meshes` are scene node keys produced by tools/pipeline/build_assets.py.
  */
-import type { CategoryId, Provenance, StructureKind } from './types';
-import { FEEDBACK_STRUCTURES } from './feedbackStructures';
+import type { CategoryId, Provenance, StructureKind } from './types.ts';
+import { FEEDBACK_STRUCTURES } from './feedbackStructures.ts';
 
 export interface StructureDef {
   id: string;

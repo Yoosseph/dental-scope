@@ -2,10 +2,10 @@
  * Structure registry: the single source of truth for anatomy in the app.
  * Built once from the asset manifest + declarative tables.
  */
-import { STRUCTURE_DEFS } from './structures';
-import { DEVELOPMENT_TEETH, developmentId } from './development';
-import { DEVELOPMENT_TEXT } from '../i18n/development';
-import { LANGS } from '../i18n/lang';
+import { STRUCTURE_DEFS } from './structures.ts';
+import { DEVELOPMENT_TEETH, developmentId } from './development.ts';
+import { DEVELOPMENT_TEXT } from '../i18n/development.ts';
+import { LANGS } from '../i18n/lang.ts';
 import {
   PERMANENT_FDI,
   archOf,
@@ -14,8 +14,8 @@ import {
   toothAliases,
   toothName,
   typeOf,
-} from './notation';
-import type { CategoryId, Manifest, ManifestMesh, RootInfo, Structure, Vec3 } from './types';
+} from './notation.ts';
+import type { CategoryId, Manifest, ManifestMesh, RootInfo, Structure, Vec3 } from './types.ts';
 import {
   PART_ALIASES,
   STRUCTURE_SHORT,
@@ -31,7 +31,7 @@ import {
   toothSearchAliases,
   type Names,
   type PartKey,
-} from '../i18n/anatomy';
+} from '../i18n/anatomy.ts';
 
 /** Translated names as extra search terms. */
 const nameTerms = (n: Names) => [n.sv, n.de, n.es, n.la];

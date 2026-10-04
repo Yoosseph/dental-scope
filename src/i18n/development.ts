@@ -1,5 +1,5 @@
-import type { Lang } from './lang';
-import type { DevelopmentStageId, DevelopmentStatus } from '../anatomy/development';
+import type { Lang } from './lang.ts';
+import type { DevelopmentStageId, DevelopmentStatus } from '../anatomy/development.ts';
 
 interface DevelopmentText {
   title: string; atlas: string; adult: string; years: string; stage: string; showUnerupted: string; jaw: string;

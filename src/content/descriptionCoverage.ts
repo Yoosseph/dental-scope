@@ -1,7 +1,7 @@
-import type { Registry } from '../anatomy/registry';
-import { LANGS } from '../i18n/lang';
-import { CONTENT, resolveContent } from './content';
-import { STRUCTURE_DEFS } from '../anatomy/structures';
+import type { Registry } from '../anatomy/registry.ts';
+import { LANGS } from '../i18n/lang.ts';
+import { CONTENT, resolveContent } from './content.ts';
+import { STRUCTURE_DEFS } from '../anatomy/structures.ts';
 
 /** Do not publish new selectable anatomy without descriptions in every supported language. */
 export function descriptionGaps(registry: Registry): string[] {
