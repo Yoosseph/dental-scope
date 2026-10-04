@@ -8,16 +8,12 @@ import type { Registry } from '../anatomy/registry';
 import type { Structure } from '../anatomy/types';
 import type { Engine } from '../engine/Engine';
 import { actions, getState, store } from '../state/store';
-import { documentTitle, SITE_NAME } from './seo';
-import { fdiToUniversal } from '../anatomy/notation';
-import { nameOf, type Lang } from '../i18n';
+import { documentTitle } from './seo';
+import type { Lang } from '../i18n';
 
-/** Tab title for a selection in the interface language (English matches the static pages' titles). */
-export function localTitle(sel: (Pick<Structure, 'name' | 'tooth'> & { names?: Partial<Record<Lang, string>> }) | undefined, lang: Lang): string {
-  if (lang === 'en' || !sel) return documentTitle(sel);
-  const name = nameOf(sel, lang);
-  if (sel.tooth) return `${name} (FDI ${sel.tooth.fdi} · Universal ${fdiToUniversal(sel.tooth.fdi)}) — ${SITE_NAME}`;
-  return `${name} — ${SITE_NAME}`;
+/** Tool name stays the same in every interface language. */
+export function localTitle(sel: (Pick<Structure, 'name' | 'tooth'> & { names?: Partial<Record<Lang, string>> }) | undefined, _lang: Lang): string {
+  return documentTitle(sel);
 }
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
@@ -92,7 +88,7 @@ export function startRouter(engine: Engine, registry: Registry): () => void {
   const syncTitle = (id: string | null) => {
     document.title = localTitle(id ? registry.get(id) : undefined, getState().lang);
   };
-  if (getState().lang !== 'en') syncTitle(getState().selectedId);
+  syncTitle(getState().selectedId);
   const unsub = store.subscribe((s, p) => {
     if (s.selectedId !== p.selectedId || s.lang !== p.lang) syncTitle(s.selectedId);
     if (applying) return;

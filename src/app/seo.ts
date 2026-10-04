@@ -31,7 +31,7 @@ export interface PageMeta {
 
 export const HOME: PageMeta = {
   path: '',
-  title: `${SITE_NAME} – Interactive 3D dental anatomy`,
+  title: SITE_NAME,
   description:
     'Free interactive 3D dental anatomy: all 32 permanent teeth with FDI, Universal and Palmer numbers, enamel to root canals, jaws and nerves. Educational tool.',
 };
@@ -65,11 +65,9 @@ export function toothPage(fdi: number): PageMeta {
 
 export const TOOTH_PAGES: PageMeta[] = PERMANENT_FDI.map(toothPage);
 
-/** Title for the current selection (kept in sync by the router). */
-export function documentTitle(sel: Pick<Structure, 'name' | 'tooth'> | undefined): string {
-  if (!sel) return HOME.title;
-  if (sel.tooth) return toothPage(sel.tooth.fdi).title;
-  return `${sel.name} — ${SITE_NAME}`;
+/** The browser tab keeps the tool name while navigating and inspecting anatomy. */
+export function documentTitle(_sel: Pick<Structure, 'name' | 'tooth'> | undefined): string {
+  return SITE_NAME;
 }
 
 /** Absolute site root (with trailing slash), or null when not configured. */
@@ -175,7 +173,7 @@ export function structuredData(page: PageMeta, siteUrl: string): unknown {
  */
 export function headTags(page: PageMeta, siteUrl: string | null, opts: HeadOptions = {}): string {
   const tags = [
-    `<title>${esc(page.title)}</title>`,
+    `<title>${SITE_NAME}</title>`,
     `<meta name="description" content="${esc(page.description)}" />`,
     `<meta name="author" content="${AUTHOR}" />`,
     `<meta property="og:type" content="website" />`,
