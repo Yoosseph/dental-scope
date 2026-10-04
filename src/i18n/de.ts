@@ -114,7 +114,7 @@ export const de: Messages = {
   panelTabs: 'Bereich',
   structures: 'Strukturen',
   layerPresets: 'Ebenen-Voreinstellungen',
-  preset: { overview: 'Übersicht', dentition: 'Zähne', bone: 'Knochen', nerves: 'Nerven' },
+  preset: { 'nerve-muscles': 'Nerven & Muskeln', overview: 'Übersicht', dentition: 'Zähne', bone: 'Knochen', nerves: 'Nerven' },
   group: {
     Dentition: 'Gebiss',
     'Tooth tissues': 'Zahngewebe',

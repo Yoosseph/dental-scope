@@ -10,6 +10,9 @@ import { actions, useApp } from '../state/store';
 import { useServices } from './context';
 import { IconArrowLeft, IconClose, IconEyeOff, IconFocus, IconGhost, IconIsolate, IconTooth } from './icons';
 import { PanelHandle } from './PanelHandle';
+import { CanalFrequency } from './CanalFrequency';
+import { FEEDBACK_TEXT } from '../i18n/feedback';
+import { passageFor } from '../anatomy/passages';
 
 export function DetailPanel() {
   const { registry, engine } = useServices();
@@ -74,6 +77,9 @@ export function DetailPanel() {
 
       <div className="ds-detail-body">
         {content.summary ? <p className="ds-detail-summary">{content.summary}</p> : <p className="ds-detail-summary is-muted">{m.noDescription}</p>}
+        {s.provenance === 'schematic' && <p className="ds-evidence">{FEEDBACK_TEXT[lang].schematicAnatomy}</p>}
+        {s.kind === 'landmark' && passageFor(registry, s.id).length > 0 && <p className="ds-evidence">{FEEDBACK_TEXT[lang].foramenNote}</p>}
+        {content.location && <Section title={FEEDBACK_TEXT[lang].location}>{content.location}</Section>}
         {content.function && <Section title={m.function}>{content.function}</Section>}
         {content.clinical && <Section title={m.clinical}>{content.clinical}</Section>}
 
@@ -97,6 +103,8 @@ export function DetailPanel() {
           </dl>
         )}
 
+        {s.tooth && <CanalFrequency fdi={s.tooth.fdi} />}
+        {content.sources.length > 0 && <p className="ds-evidence">{FEEDBACK_TEXT[lang].source}: {content.sources.map((ref, i) => <span key={ref.url}>{i > 0 && ' · '}<a href={ref.url} target="_blank" rel="noopener noreferrer">{ref.title}</a></span>)}</p>}
         {children.length > 0 && (
           <div className="ds-detail-block">
             <div className="ds-label-sm">{m.contains}</div>

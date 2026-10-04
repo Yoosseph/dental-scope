@@ -114,7 +114,7 @@ export const es: Messages = {
   panelTabs: 'Panel',
   structures: 'Estructuras',
   layerPresets: 'Preajustes de capas',
-  preset: { overview: 'General', dentition: 'Dientes', bone: 'Hueso', nerves: 'Nervios' },
+  preset: { 'nerve-muscles': 'Nervios y músculos', overview: 'General', dentition: 'Dientes', bone: 'Hueso', nerves: 'Nervios' },
   group: {
     Dentition: 'Dentición',
     'Tooth tissues': 'Tejidos dentales',

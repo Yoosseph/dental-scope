@@ -4,7 +4,7 @@ import { defineConfig, type Plugin } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { ABOUT_PAGES, HOME, TOOTH_PAGES, headTags, normalizeSiteUrl, robotsTxt, sitemapXml } from './src/app/seo.ts';
 import { aboutHtml } from './src/app/about.ts';
-import { GUIDE_PAGES, guideHtml } from './src/app/guide.ts';
+import { GUIDE_PAGES, GUIDE_REDIRECTS, guideHtml } from './src/app/guide.ts';
 
 const base = process.env.DS_BASE ?? '/';
 /** Absolute public URL of the deployed site (e.g. https://user.github.io/dental-scope/); enables canonical URLs and the sitemap. */
@@ -55,6 +55,11 @@ function seo(): Plugin {
       for (const page of guides) {
         mkdirSync(`${outDir}/${page.path}`, { recursive: true });
         writeFileSync(`${outDir}/${page.path}index.html`, guideHtml(page, headTags(page, siteUrl, { ...seoOpts, noindex: preview || !page.indexable }), base));
+      }
+      for (const redirect of base.startsWith('.') ? [] : GUIDE_REDIRECTS) {
+        const target = `${base}${redirect.to}`;
+        mkdirSync(`${outDir}/${redirect.path}`, { recursive: true });
+        writeFileSync(`${outDir}/${redirect.path}index.html`, `<!doctype html><html lang="sv"><head><meta charset="UTF-8"><meta name="robots" content="noindex"><meta http-equiv="refresh" content="0;url=${target}"><link rel="canonical" href="${siteUrl ? `${siteUrl}${redirect.to}` : target}"><title>Bihålor i överkäken</title></head><body><a href="${target}">Bihålor i överkäken</a></body></html>`);
       }
       // plain-HTML about page with the readable guide to every tooth (no app bundle), in every interface language
       for (const page of ABOUT_PAGES) {
