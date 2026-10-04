@@ -2040,3 +2040,23 @@ button.ds-layer-name:hover {
     height: 12px;
   }
 }
+
+/* Sourced canal counts and anatomy evidence. */
+.ds-frequency table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.ds-frequency th,
+.ds-frequency td {
+  padding: 5px 0;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+.ds-frequency td { text-align: right; }
+.ds-evidence {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.ds-evidence a { color: var(--accent); }
