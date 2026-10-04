@@ -212,3 +212,12 @@ The pipeline (details in [assets.md](assets.md)): BodyParts3D STL → `tools/pip
   - Keyboard shortcuts are handled in `useKeyboard.ts` and listed in the About dialog and the README.
   - `prefers-reduced-motion` (or `?motion=reduce`) makes camera and explode changes instant.
   - Text contrast is at least 4.5:1, with visible focus rings.
+
+
+## 13. Dental feedback features
+
+`anatomy/feedbackStructures.ts` extends the existing registry; `passages.ts` links passage routes and resolves landmark hosts. The visibility resolver filters unrelated nerves during a passage view. The existing transparency controls are reused by the Nerves & muscles preset.
+
+`content/canal-counts.json` contains sourced counts for 16 tooth types, consumed by `canalFrequency.ts`, the detail table and static guides. `feedbackAnatomy.ts` supplements the existing multilingual content without changing its draft review status. `feedbackNames.ts` and `feedback.ts` supply translated names and controls.
+
+`engine/jawMotion.ts` provides pure joint transforms and compliant-tissue targets. The engine applies rigid mesh matrices to the lower arch/discs and uses morph target 1 for jaw deformation, retaining dissection target 0. Playback remains outside React; DOM progress is updated at 10 Hz. `jawControls`, `jawSide`, `jawOpening` and `jawPlaying` coexist with the existing store; dissection and arch-layout actions close the joint controls. See [feedback-anatomy.md](feedback-anatomy.md) for the fitted asset plan and review workflow.

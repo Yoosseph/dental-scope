@@ -172,9 +172,9 @@
     ]
   },
   "maxilla": {
-    "summary": "Det parade ben som bildar överkäken. Det bär överkäkens tänder, bildar större delen av hårda gommen och delar av orbitabotten och näshålan, och innehåller käkhålan (sinus maxillaris).",
+    "summary": "Det parade ben som bildar överkäken. Det bär överkäkens tänder, bildar större delen av hårda gommen och delar av orbitabotten och näshålan, och innehåller bihålan i överkäken (sinus maxillaris).",
     "function": "Stöder överkäkens tänder och mellanansiktet.",
-    "clinical": "Rötterna på överkäkens bakre tänder kan ligga nära käkhålans botten.",
+    "clinical": "Rötterna på överkäkens bakre tänder kan ligga nära bihålans botten.",
     "related": [
       "maxillary-alveolar-process",
       "palatine-bone",
@@ -185,7 +185,7 @@
   "maxillary-sinus": {
     "summary": "Ett luftfyllt hålrum i överkäksbenets kropp, ovanför rötterna på överkäkens premolarer och molarer. Det mynnar i näshålan.",
     "function": "Gör skallen lättare och ger rösten resonans. Slemhinnan dräneras till näsan.",
-    "clinical": "Rötterna på överkäkens molarer och premolarer ligger ofta strax under käkhålans botten och kan nå upp i den. En extraktion eller ett implantat i området kan öppna in till käkhålan (en oroantral kommunikation), och en tandinfektion kan sprida sig dit. Käkhålan som visas här är modellerad utifrån överkäken (ingen av källmodellerna innehåller den), så storlek och botten är ungefärliga.",
+    "clinical": "Rötterna på överkäkens molarer och premolarer ligger ofta strax under bihålans botten och kan nå upp i den. En extraktion eller ett implantat i området kan öppna in till bihålan i överkäken (en oroantral kommunikation), och en tandinfektion kan sprida sig dit. Bihålan i överkäken som visas här är modellerad utifrån överkäken (ingen av källmodellerna innehåller den), så storlek och botten är ungefärliga.",
     "related": [
       "maxilla",
       "maxillary-alveolar-process",

@@ -46,7 +46,7 @@
   "tooth:first-molar:maxillary": {
     "summary": "Den största tanden i överkäkens tandbåge, med fyra huvudkuspar och tre rötter: mesiobuckal, distobuckal och palatinal.",
     "function": "Den viktigaste maltanden; avgörande för det ocklusala förhållandet mellan käkarna.",
-    "clinical": "Den mesiobuckala roten innehåller ofta en andra kanal (MB2), som lätt missas vid rotbehandling. Rötterna ligger nära käkhålans (sinus maxillaris) botten.",
+    "clinical": "Den mesiobuckala roten innehåller ofta en andra kanal (MB2), som lätt missas vid rotbehandling. Rötterna ligger nära bihålans (sinus maxillaris) botten.",
     "roots": "Tre (mesiobuckal, distobuckal, palatinal)",
     "canals": "Tre eller fyra – en andra mesiobuckal kanal (MB2) finns ofta",
     "eruption": "Cirka 6–7 år"
@@ -54,7 +54,7 @@
   "tooth:second-molar:maxillary": {
     "summary": "En mindre molar bakom den första molaren, med tre rötter som ofta ligger närmare varandra.",
     "function": "Maler föda.",
-    "clinical": "Rötterna kan vara delvis sammanvuxna; förhållandet till käkhålan är kliniskt betydelsefullt.",
+    "clinical": "Rötterna kan vara delvis sammanvuxna; förhållandet till bihålan i överkäken är kliniskt betydelsefullt.",
     "roots": "Oftast tre, ibland sammanvuxna",
     "canals": "Oftast tre",
     "eruption": "Cirka 12–13 år"

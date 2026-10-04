@@ -30,8 +30,8 @@ export const CATEGORIES: CategoryDef[] = [
   { id: 'nerves', label: 'Nerves', color: '#d9b347', group: 'Neurovascular', initial: 'on' },
   { id: 'arteries', label: 'Arteries', color: '#c3362c', group: 'Neurovascular', initial: 'on' },
   { id: 'veins', label: 'Veins', color: '#3163c4', group: 'Neurovascular', initial: 'on' },
-  { id: 'skull', label: 'Skull (context)', color: '#d8d2c3', group: 'Supporting anatomy', initial: 'ghost' },
-  { id: 'muscles', label: 'Muscles of mastication', color: '#a34d44', group: 'Supporting anatomy', initial: 'off' },
+  { id: 'skull', label: 'Skull (context)', color: '#d8d2c3', group: 'Supporting anatomy', initial: 'on' },
+  { id: 'muscles', label: 'Muscles of mastication', color: '#a34d44', group: 'Supporting anatomy', initial: 'on' },
   { id: 'salivary', label: 'Salivary glands', color: '#c9a3b8', group: 'Supporting anatomy', initial: 'off', planned: true },
 ];
 
@@ -61,6 +61,7 @@ export const INITIAL_CATEGORY_STATE: Record<CategoryId, CategoryState> = Object.
 ) as Record<CategoryId, CategoryState>;
 
 export const PRESETS: LayerPreset[] = [
+  { id: 'nerve-muscles', label: 'Nerves & muscles', state: { ...all('off'), nerves: 'on', muscles: 'ghost', maxilla: 'ghost', mandible: 'ghost', 'alveolar-bone': 'ghost', skull: 'ghost', tmj: 'ghost', 'permanent-teeth': 'on', enamel: 'on', dentin: 'on', cementum: 'on', 'dental-pulp': 'on', 'root-canals': 'on' } },
   { id: 'overview', label: 'Overview', state: INITIAL_CATEGORY_STATE },
   {
     id: 'dentition',

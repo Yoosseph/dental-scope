@@ -6,6 +6,7 @@
 import type { Registry } from '../anatomy/registry';
 import type { CategoryState } from '../anatomy/categories';
 import type { AppState } from './store';
+import { nerveInView, nerveViewFor } from '../anatomy/nerveViews';
 
 /**
  * 'faint' is a quieter ghost used for surrounding context. 'see-through' is bone with the
@@ -82,6 +83,8 @@ export function resolveMesh(meshKey: string, ctx: VisibilityContext): MeshVisual
   const ownerId = registry.meshOwner.get(meshKey);
   if (!ownerId) return 'off';
   const owner = registry.require(ownerId);
+  if (state.passageIds.length && owner.categories.includes('nerves') && !state.passageIds.some((id) => registry.isDescendant(ownerId, id))) return 'off';
+  if (!state.passageIds.length && owner.categories.includes('nerves') && !nerveInView(registry, ownerId, state.nerveView, state.nerveSide)) return 'off';
 
   let v: MeshVisual = 'on';
 
@@ -90,6 +93,10 @@ export function resolveMesh(meshKey: string, ctx: VisibilityContext): MeshVisual
     const cs: CategoryState = state.categories[c] ?? 'on';
     v = minVis(v, cs);
   }
+
+  // Solid in the assembled skull; translucent context once the arches separate.
+  // Ghosted skull and muscles stay out of the laid-out board and fade away there.
+  if (owner.categories.some((c) => c === 'muscles' || c === 'skull') && (state.explode > 0 || state.explodePhase === 2)) v = minVis(v, 'ghost');
 
   if (owner.toothFdi === undefined && boneSeeThrough(registry.categoriesOfMesh(meshKey), state, registry)) v = minVis(v, 'see-through');
 
@@ -158,6 +165,12 @@ export function revealPatch(registry: Registry, id: string, state: AppState): Pa
   for (const m of meshes) for (const c of registry.categoriesOfMesh(m)) cats.add(c);
   for (const c of cats) if (categories[c] === 'off') categories[c] = 'on';
   const patch: Partial<AppState> = { hidden, categories };
+  if (s?.categories.includes('nerves')) {
+    if (!nerveInView(registry, id, state.nerveView, 'both') || /^trigeminal-nerve-(right|left)$/.test(id)) patch.nerveView = nerveViewFor(registry, id);
+    const side = /-(right|left)$/.exec(id)?.[1] as 'right' | 'left' | undefined;
+    if (side && state.nerveSide !== 'both' && state.nerveSide !== side) patch.nerveSide = side;
+    if (!side) patch.nerveSide = 'both';
+  }
   if (state.isolateId && !registry.isDescendant(id, state.isolateId)) {
     patch.isolateId = null;
     patch.isolateContext = false;

@@ -114,7 +114,7 @@ export const la: Messages = {
   panelTabs: 'Tabula',
   structures: 'Structurae',
   layerPresets: 'Strata praeparata',
-  preset: { overview: 'Conspectus', dentition: 'Dentes', bone: 'Os', nerves: 'Nervi' },
+  preset: { 'nerve-muscles': 'Nervi et musculi', overview: 'Conspectus', dentition: 'Dentes', bone: 'Os', nerves: 'Nervi' },
   group: {
     Dentition: 'Dentitio',
     'Tooth tissues': 'Textus dentis',

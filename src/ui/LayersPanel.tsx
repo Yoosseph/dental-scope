@@ -1,12 +1,14 @@
 import { useMemo } from 'react';
 import { CATEGORIES, PRESETS, type CategoryState } from '../anatomy/categories';
 import type { CategoryId } from '../anatomy/types';
-import { useT } from '../i18n';
+import { useT, useLang } from '../i18n';
+import { FEEDBACK_TEXT } from '../i18n/feedback';
 import { actions, useApp } from '../state/store';
 import { useServices } from './context';
 import { IconCheck, IconGhost, IconLayers, IconReset, IconTree } from './icons';
 import { PanelHandle } from './PanelHandle';
 import { StructureTree } from './StructureTree';
+import { NerveControls } from './NerveControls';
 
 export function LayersPanel() {
   const panel = useApp((s) => s.panel);
@@ -30,6 +32,7 @@ export function LayersPanel() {
 }
 
 function Categories() {
+  const lang = useLang();
   const { registry } = useServices();
   const cats = useApp((s) => s.categories);
   const hiddenCount = useApp((s) => Object.keys(s.hidden).length + Object.keys(s.ghosted).length);
@@ -49,10 +52,12 @@ function Categories() {
       <div className="ds-segmented ds-segmented--fill" role="radiogroup" aria-label={m.layerPresets}>
         {PRESETS.map((p) => (
           <button key={p.id} type="button" role="radio" aria-checked={presetActive === p.id} className={presetActive === p.id ? 'is-active' : ''} onClick={() => actions.setCategories(p.state)}>
-            {m.preset[p.id] ?? p.label}
+            {p.id === 'nerve-muscles' ? FEEDBACK_TEXT[lang].nervesMuscles : m.preset[p.id] ?? p.label}
           </button>
         ))}
       </div>
+      <p className="ds-layer-hint">{FEEDBACK_TEXT[lang].transparencyHint}</p>
+      {cats.nerves !== 'off' && <NerveControls />}
       <div className="ds-layer-list">
         {groups.map(([group, list]) => (
           <div key={group} className="ds-layer-group" role="list" aria-label={m.group[group] ?? group}>

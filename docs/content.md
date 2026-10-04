@@ -1,6 +1,15 @@
 # Educational content
 
 Text lives in `src/content/en/*.json`, separate from anatomy data and UI.
+Localized additions also live in `src/content/feedbackAnatomy.ts` and `src/content/supportingAnatomy.ts`; both merge into the same resolver.
+
+## Required description coverage
+
+Every selectable registry item must have a meaningful summary in all five languages. New static anatomy parts require their own content key (left/right pairs may share one); generic prefix fallback is not enough. Generated tooth tissues may reuse their tissue description.
+
+`src/content/coverage.test.ts` audits the registry against the current model manifest, and the production build runs the same `descriptionGaps` check. Missing entries or translations fail the build. The rule is also recorded in the repository's `AGENTS.md` for future changes.
+
+The hyoid detail panel includes a sourced, translated attachment diagram in `src/ui/HyoidConnections.tsx`. Its attachment descriptions live in `src/content/hyoidAttachments.ts`. These are schematic explanatory connections, not additional 3D anatomy meshes.
 
 ## Files
 

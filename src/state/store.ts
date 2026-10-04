@@ -8,6 +8,7 @@ import { useStore } from 'zustand';
 import { INITIAL_CATEGORY_STATE, type CategoryState } from '../anatomy/categories';
 import type { CategoryId, NumberingSystem } from '../anatomy/types';
 import { DEFAULT_LANG, isLang, type Lang } from '../i18n/lang';
+import type { NerveSide, NerveView } from '../anatomy/nerveViews';
 
 export type ClipAxis = 'sagittal' | 'coronal' | 'axial' | 'view';
 export type ModeId = 'explore' | 'learn' | 'quiz' | 'compare';
@@ -37,6 +38,13 @@ export interface ClipState {
 export const DISSECT_LEVELS = [{ id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }] as const;
 
 export interface AppState {
+  nerveView: NerveView;
+  nerveSide: NerveSide;
+  passageIds: string[];
+  jawControls: boolean;
+  jawSide: 'right' | 'left';
+  jawOpening: number;
+  jawPlaying: boolean;
   ready: boolean;
   loading: Record<string, number>; // stage → 0…1
   error?: string;
@@ -82,6 +90,8 @@ export interface AppState {
 export type CollapsiblePanel = 'layers' | 'detail' | 'dock';
 
 export const initialState: AppState = {
+  nerveView: 'dental', nerveSide: 'both',
+  passageIds: [], jawControls: false, jawSide: 'right', jawOpening: 0, jawPlaying: false,
   ready: false,
   loading: {},
   selectedId: null,
@@ -143,6 +153,22 @@ function persist(key: string, value: string) {
 let orbitBeforeTooth: OrbitMode | null = null;
 
 export const actions = {
+  setNerveView(nerveView: NerveView) {
+    if (getState().dissectFdi !== null) actions.exitDissect();
+    setState({ nerveView, passageIds: [], selectedId: null, hoveredId: null, isolateId: null, isolateContext: false });
+  },
+  setNerveSide(nerveSide: NerveSide) {
+    if (getState().dissectFdi !== null) actions.exitDissect();
+    setState({ nerveSide, passageIds: [], selectedId: null, hoveredId: null, isolateId: null, isolateContext: false });
+  },
+  openJawControls(on: boolean) {
+    if (on && getState().dissectFdi !== null) actions.exitDissect();
+    setState((s) => ({ jawControls: on, jawPlaying: false, jawOpening: on ? s.jawOpening : 0, explode: 0, explodePhase: 1, collapsed: { ...s.collapsed, dock: false }, mobileSheet: on ? 'tools' : s.mobileSheet }));
+  },
+  setJawOpening(value: number, playing = false) {
+    if (getState().dissectFdi !== null) actions.exitDissect();
+    setState({ jawOpening: clamp01(value), jawPlaying: playing, jawControls: true, explode: 0, explodePhase: 1, isolateId: null, isolateContext: false, passageIds: [] });
+  },
   setCollapsed(panel: CollapsiblePanel, v: boolean) {
     setState((s) => ({ collapsed: { ...s.collapsed, [panel]: v } }));
   },
@@ -154,16 +180,16 @@ export const actions = {
     persist(PREF.orbit, initialState.orbitMode);
   },
   select(id: string | null) {
-    setState({ selectedId: id, mobileSheet: id ? 'detail' : 'none' });
+    setState((s) => ({ selectedId: id, mobileSheet: id ? 'detail' : 'none', passageIds: id && s.passageIds.includes(id) ? s.passageIds : [] }));
   },
   hover(id: string | null) {
     if (getState().hoveredId !== id) setState({ hoveredId: id });
   },
   setCategory(id: CategoryId, state: CategoryState) {
-    setState((s) => ({ categories: { ...s.categories, [id]: state } }));
+    setState((s) => ({ categories: { ...s.categories, [id]: state }, passageIds: [] }));
   },
   setCategories(next: Partial<Record<CategoryId, CategoryState>>) {
-    setState((s) => ({ categories: { ...s.categories, ...next } }));
+    setState((s) => ({ categories: { ...s.categories, ...next }, passageIds: [], hidden: {}, ghosted: {}, isolateId: null, isolateContext: false }));
   },
   showOnlyCategory(id: CategoryId) {
     setState((s) => {
@@ -206,15 +232,15 @@ export const actions = {
     setState({ isolateContext: on });
   },
   resetVisibility() {
-    setState({ hidden: {}, ghosted: {}, isolateId: null, isolateContext: false, categories: { ...INITIAL_CATEGORY_STATE } });
+    setState({ hidden: {}, ghosted: {}, isolateId: null, isolateContext: false, passageIds: [], categories: { ...INITIAL_CATEGORY_STATE } });
   },
   setExplode(v: number) {
     const explode = clamp01(v);
     // scrubbing the slider back leaves the laid-out phase
-    setState((s) => ({ explode, explodePhase: explode < 1 ? 1 : s.explodePhase }));
+    setState((s) => ({ explode, explodePhase: explode < 1 ? 1 : s.explodePhase, jawOpening: 0, jawPlaying: false, jawControls: false }));
   },
   setExplodePhase(phase: ExplodePhase) {
-    setState((s) => (phase === 2 ? { explodePhase: 2, explode: 1, clip: { ...s.clip, enabled: false } } : { explodePhase: 1 }));
+    setState((s) => (phase === 2 ? { explodePhase: 2, explode: 1, clip: { ...s.clip, enabled: false }, jawOpening: 0, jawPlaying: false, jawControls: false } : { explodePhase: 1 }));
   },
   setToothExplode(v: number) {
     setState({ toothExplode: clamp01(v) });
@@ -243,6 +269,7 @@ export const actions = {
     persist(PREF.orbit, m);
   },
   enterDissect(fdi: number) {
+    setState({ jawOpening: 0, jawPlaying: false, jawControls: false, passageIds: [] });
     // Inside a tooth the free orbit is the useful one (pan and focus on a canal or a root);
     // the mouth-level orbit comes back when the tooth is left. Not saved as a preference.
     if (getState().dissectFdi === null && getState().orbitMode !== 'free') orbitBeforeTooth = getState().orbitMode;

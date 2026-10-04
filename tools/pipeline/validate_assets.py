@@ -123,21 +123,20 @@ def main() -> None:
         if not len(crown):
             errors.append(f"tooth {fdi}: missing erupted crown")
             continue
-        if fdi in (38, 48):
-            # The assembled renderer clips roots at -0.12 cm from the CEJ.
-            # A crown can be fully visible yet float over an empty socket:
-            # require a close gum wall around that cut, not just no collisions.
-            neck = tooth.vertices[(height > -0.13) & (height < -0.07)]
-            outward = neck - cervical
-            outward -= np.outer(outward @ axis, axis)
-            outward /= np.linalg.norm(outward, axis=1)[:, None]
-            hits, rays, _ = gum.ray.intersects_location(neck, outward, multiple_hits=False)
-            supported = np.zeros(len(neck), dtype=bool)
-            supported[rays] = np.linalg.norm(hits - neck[rays], axis=1) < 0.05
-            # Allow the small proximal contact shared with the neighbouring
-            # tooth's socket, where a ray can cross that socket instead.
-            if not len(neck) or supported.mean() < 0.95:
-                errors.append(f"tooth {fdi}: gum does not support the rendered neck")
+        # The assembled renderer clips roots at -0.12 cm from the CEJ.
+        # A crown can be fully visible yet float over an empty socket:
+        # require a close gum wall around that cut, not just no collisions.
+        neck = tooth.vertices[(height > -0.13) & (height < -0.07)]
+        outward = neck - cervical
+        outward -= np.outer(outward @ axis, axis)
+        outward /= np.linalg.norm(outward, axis=1)[:, None]
+        hits, rays, _ = gum.ray.intersects_location(neck, outward, multiple_hits=False)
+        supported = np.zeros(len(neck), dtype=bool)
+        supported[rays] = np.linalg.norm(hits - neck[rays], axis=1) < 0.05
+        # Allow the small proximal contact shared with the neighbouring
+        # tooth's socket, where a ray can cross that socket instead.
+        if not len(neck) or supported.mean() < 0.95:
+            errors.append(f"tooth {fdi}: gum does not support the rendered neck")
         buccal = np.array(info["frame"]["buccal"])
         for view, direction in (("occlusal", axis), ("buccal", buccal)):
             direction = direction / np.linalg.norm(direction)
@@ -237,6 +236,28 @@ def main() -> None:
             if sinus.contains(pts).any():
                 errors.append(f"maxillary-sinus-{side}: {n} runs through the sinus")
         print(f"maxillary-sinus-{side}: {volume:.1f} cm³, apex → floor (mm) {manifest.get('sinus', {}).get(side, {}).get('apexGap')}")
+
+    # The teaching extension must remain connected and complete after rebuilding.
+    for side in ("right", "left"):
+        root = np.asarray(manifest["paths"][f"trigeminal-nerve-{side}"][0])
+        for base in ("ophthalmic", "maxillary", "mandibular"):
+            path = np.asarray(manifest["paths"][f"{base}-nerve-{side}"][0])
+            if not np.allclose(path[0], root[-1], atol=0.001):
+                errors.append(f"{base}-{side}: disconnected from trigeminal ganglion")
+        for base in ("ophthalmic", "facial", "glossopharyngeal", "vagus", "hypoglossal"):
+            key = f"{base}-nerve-{side}"
+            if key not in manifest["meshes"] or manifest["meshes"][key]["provenance"] != "schematic":
+                errors.append(f"{key}: missing teaching path or incorrect provenance")
+        for base in ("superior-orbital-fissure", "foramen-rotundum", "foramen-ovale", "stylomastoid-foramen", "jugular-foramen", "hypoglossal-canal", "articular-eminence", "infraorbital-foramen"):
+            point = np.asarray(manifest["landmarks"].get(f"{base}-{side}", []))
+            if point.shape != (3,) or not np.isfinite(point).all():
+                errors.append(f"{base}-{side}: missing or non-finite landmark")
+    for key, paths in manifest["paths"].items():
+        if any(len(path) < 2 or not np.isfinite(path).all() for path in paths):
+            errors.append(f"{key}: invalid nerve/vessel centreline")
+    motion = manifest.get("jawMotion", {})
+    if motion.get("provenance") != "schematic" or len(motion.get("pivot", [])) != 3 or len(motion.get("translation", [])) != 3:
+        errors.append("Missing schematic jaw movement plan")
 
     print(f"Validated {len(expected)} GLBs, {len(manifest['meshes'])} meshes, {total_faces:,} triangles")
     print(f"Internal surfaces with nonmanifold edges: {len(nonmanifold)}")

@@ -31,6 +31,8 @@ Dental Scope is an open-source, interactive 3D dental anatomy explorer. Start wi
 - **Responsive** (bottom sheets on phones), **keyboard-accessible** (tree view, shortcuts, focus rings), **reduced-motion** aware, light and dark themes.
 - **Fast:** ≈1 MB of geometry for first paint, the rest streams in; ≈205 KB per tooth's internal anatomy on average, loaded on demand; render-on-demand loop.
 
+The dental feedback additions include nerve passage views, a Nerves & muscles transparency preset, sourced canal-count tables for every permanent tooth type, additional cranial nerves and an illustrative TMJ opening control. Scope, sources and the server review checklist are in [docs/feedback-anatomy.md](docs/feedback-anatomy.md).
+
 ## Tech stack
 
 Vite · React 19 · TypeScript (strict) · Three.js (imperative engine) · Zustand · glTF + meshopt compression.
@@ -85,6 +87,8 @@ Details and a handoff guide (commands, runtime flows, where to start): [docs/arc
 3D anatomy is derived from **BodyParts3D**, © The Database Center for Life Science, licensed under [CC BY-SA 2.1 Japan](https://creativecommons.org/licenses/by-sa/2.1/jp/deed.en). Third molars, alveolar bone and TMJ regions are derived from it; internal tooth anatomy is modeled inside each real tooth shape. Most nerves and vessels follow the [Z-Anatomy](https://github.com/Z-Anatomy/Models-of-human-anatomy) atlas (CC BY-SA 4.0), fitted onto these jaws; the superior alveolar nerves, the inferior alveolar vein, the pterygoid plexus and the joint discs are schematic. See [CREDITS.md](CREDITS.md) and [docs/assets.md](docs/assets.md); the statements in the app's About dialog are sourced in [docs/sources.md](docs/sources.md).
 
 ## Roadmap
+
+Actionable follow-ups from dental feedback: [feedback TODOs](docs/feedback-todos.md).
 
 - [ ] Expert review of all educational text (see [docs/content.md](docs/content.md))
 - [x] Atlas nerve and vessel paths (Z-Anatomy, CC BY-SA 4.0)

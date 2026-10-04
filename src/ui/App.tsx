@@ -22,6 +22,7 @@ export function App() {
   const laidOut = useApp((s) => s.explodePhase === 2);
   const detailHidden = useApp((s) => s.collapsed.detail);
   const dockHidden = useApp((s) => s.collapsed.dock);
+  const jawControls = useApp((s) => s.jawControls);
   const lang = useApp((s) => s.lang);
   const m = useT();
 
@@ -63,7 +64,7 @@ export function App() {
     update();
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
-  }, [engine, selected, dissect, laidOut, sheet, detailHidden, dockHidden]);
+  }, [engine, selected, dissect, laidOut, sheet, detailHidden, dockHidden, jawControls]);
 
   return (
     <div className={`ds-app${selected ? ' has-selection' : ''}${dissect ? ' is-dissecting' : ''}`}>

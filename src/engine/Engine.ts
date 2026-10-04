@@ -23,6 +23,9 @@ import { HIGHLIGHT, THEME_LIGHTING, highlightColor, themedColor, applyThemeToMat
 import { isSolid, quietLevel, quietOpacity } from './recede';
 import { SectionTool } from './section';
 import { colorToothShell, shadeEnamelCrevices } from './toothShading';
+import { jawDeformation, jawMatrix, rigidJawPart } from './jawMotion';
+import { landmarkHost, passageFor } from '../anatomy/passages';
+import { PRESETS } from '../anatomy/categories';
 
 interface MeshEntry {
   key: string;
@@ -38,6 +41,7 @@ interface MeshEntry {
   hiTarget: number;
   hover: boolean;
   labelPoint?: THREE.Vector3; // geometry-space label anchor
+  labelVertex?: number; // nearest vertex supplies the anchor's morph displacement
   /** tooth shells beside a shown gum: how the root is cut while it is in the gum (see refreshRootCuts) */
   rootCut?: { extract: number; collar: number };
   /**
@@ -120,6 +124,11 @@ export class Engine {
   private skullBounds = new THREE.Box3();
   private resizeObs?: ResizeObserver;
   private disposed = false;
+  private jawCur = 0;
+  private clipJaw = 0;
+  private jawDirection = 1;
+  private jawProgressListeners = new Set<(opening: number) => void>();
+  private jawProgressTime = 0;
 
   constructor(registry: Registry) {
     this.registry = registry;
@@ -302,6 +311,15 @@ export class Engine {
         geo.computeBoundingSphere();
       }
       const mesh = new THREE.Mesh(geo, mat);
+      const rigid = rigidJawPart(key, this.registry.get(owner)?.toothFdi);
+      if (!rigid && (cats.includes('muscles') || isNeurovascular(cats))) {
+        // Index 0 remains the existing arch-dissection stretch; index 1 is jaw motion.
+        if (!geo.morphAttributes.position) geo.morphAttributes.position = [new THREE.BufferAttribute(new Float32Array(geo.getAttribute('position').count * 3), 3)];
+        geo.morphAttributes.position.push(new THREE.BufferAttribute(jawDeformation(geo, key, this.registry.manifest, isNeurovascular(cats)), 3));
+        geo.morphTargetsRelative = true;
+        geo.computeBoundingSphere();
+      }
+      mesh.matrixAutoUpdate = false;
       if (geo.morphAttributes.position) {
         mesh.updateMorphTargets();
         mesh.morphTargetInfluences![0] = 0;
@@ -384,6 +402,9 @@ export class Engine {
   private onState(s: AppState, p: AppState) {
     const visChanged =
       s.categories !== p.categories ||
+      s.passageIds !== p.passageIds ||
+      s.nerveView !== p.nerveView || s.nerveSide !== p.nerveSide ||
+      s.jawControls !== p.jawControls || s.jawSide !== p.jawSide ||
       s.hidden !== p.hidden ||
       s.ghosted !== p.ghosted ||
       s.isolateId !== p.isolateId ||
@@ -391,10 +412,17 @@ export class Engine {
       s.dissectFdi !== p.dissectFdi ||
       s.dissectLevel !== p.dissectLevel ||
       s.clip.enabled !== p.clip.enabled ||
+      (s.explode > 0) !== (p.explode > 0) ||
       s.explodePhase !== p.explodePhase ||
       s.ghostOpacity !== p.ghostOpacity ||
       (s.selectedId !== p.selectedId && (this.isSinus(s.selectedId) || this.isSinus(p.selectedId)));
     if (visChanged) this.refreshVisibility();
+    if (s.jawOpening !== p.jawOpening && !s.jawPlaying) this.jawCur = s.jawOpening;
+    if (s.jawPlaying && !p.jawPlaying) {
+      if (this.animator.reducedMotion) { actions.setJawOpening(s.jawOpening); return; }
+      this.jawDirection = this.jawCur >= 0.999 ? -1 : 1;
+    }
+    if (s.jawOpening !== p.jawOpening || s.jawPlaying !== p.jawPlaying) this.labels?.markSceneChanged();
     if (s.explode !== p.explode || s.explodePhase !== p.explodePhase) this.refreshRootCuts(s);
     if (s.selectedId !== p.selectedId || s.hoveredId !== p.hoveredId || s.dissectFdi !== p.dissectFdi) this.refreshHighlight();
     if (s.clip !== p.clip || s.dissectFdi !== p.dissectFdi) this.refreshClip();
@@ -590,7 +618,7 @@ export class Engine {
     const b = new THREE.Box3();
     for (const e of this.entries.values()) {
       if (this.isContextMesh(e.key)) continue;
-      b.union(e.mesh.geometry.boundingBox!);
+      b.union(e.mesh.geometry.boundingBox!.clone().applyMatrix4(e.mesh.matrixWorld));
     }
     return b.isEmpty() ? this.sceneBounds : b;
   }
@@ -671,21 +699,32 @@ export class Engine {
       }
     } else {
       for (const t of this.registry.teeth()) {
+        if (s.jawControls) continue;
         const fdi = t.toothFdi!;
+        if (s.passageIds.length) {
+          const lower = s.passageIds.some((id) => id.startsWith('mandibular-foramen-'));
+          const upper = s.passageIds.some((id) => id.startsWith('infraorbital-foramen-'));
+          const side = s.passageIds[0].endsWith('-right') ? 'right' : 'left';
+          if ((!lower && !upper) || t.tooth?.side !== side || t.tooth?.arch !== (lower ? 'mandibular' : 'maxillary')) continue;
+        }
         const keys = layersActive(fdi, this.visibilityCtx()) ? [`enamel-${fdi}`] : [t.id];
         addMeshLabel(t.id, formatTooth(fdi, s.numbering), 'tooth', 5, keys);
       }
       for (const st of this.registry.byId.values()) {
-        if (st.toothFdi !== undefined || st.labelPriority < 3 || st.regional) continue;
-        if (st.kind === 'mesh') {
-          const vis = st.meshes.filter((k) => isFullyShown(this.entries.get(k)?.visual ?? 'off'));
-          if (vis.length) addMeshLabel(st.id, shortOf(st, s.lang), 'structure', st.labelPriority, vis);
+        if (s.jawControls && (!st.id.endsWith(`-${s.jawSide}`) || !/^(mandibular-condyle|articular-|lateral-pterygoid|medial-pterygoid|temporalis|masseter)/.test(st.id))) continue;
+        if (s.passageIds.length && st.kind === 'landmark' && !s.passageIds.includes(st.id)) continue;
+        const passageLabel = s.passageIds.includes(st.id);
+        if (st.toothFdi !== undefined || !passageLabel && (st.labelPriority < 3 || st.regional)) continue;
+        if (st.kind === 'mesh' || s.jawControls && st.kind === 'group') {
+          const vis = this.registry.meshesOf(st.id).filter((k) => s.jawControls || s.passageIds.includes(st.id) ? visibleMesh(k) : isFullyShown(this.entries.get(k)?.visual ?? 'off'));
+          if (vis.length) addMeshLabel(st.id, shortOf(st, s.lang), 'structure', passageLabel ? Math.max(3, st.labelPriority) : st.labelPriority, vis);
         } else if (st.kind === 'landmark' && st.anchor) {
           const ok = st.categories.every((c) => s.categories[c] !== 'off');
           if (!ok) continue;
           const a = new THREE.Vector3(...st.anchor);
-          const jaw = this.entries.get('mandible-body');
-          out.push({ id: st.id, text: nameOf(st, s.lang), kind: 'landmark', priority: st.labelPriority, radius: 0.35, owners: new Set([st.id]), anchor: () => (jaw ? a.clone().add(jaw.mesh.position) : a) });
+          const hostKey = landmarkHost(this.registry, st.id);
+          const host = hostKey ? this.entries.get(hostKey) : undefined;
+          out.push({ id: st.id, text: nameOf(st, s.lang), kind: 'landmark', priority: st.labelPriority, radius: 0.35, owners: new Set([st.id, ...(host ? [host.owner] : [])]), anchor: () => this.landmarkPosition(st) ?? a });
         }
       }
     }
@@ -695,7 +734,24 @@ export class Engine {
 
   private labelAnchor(e: MeshEntry): THREE.Vector3 {
     if (!e.labelPoint) e.labelPoint = computeLabelPoint(e.mesh.geometry, e.key, e.owner, this.registry);
-    return e.labelPoint.clone().add(e.mesh.position);
+    const point = e.labelPoint.clone();
+    const morphs = e.mesh.geometry.morphAttributes.position;
+    if (morphs?.length) {
+      if (e.labelVertex === undefined) {
+        const pos = e.mesh.geometry.getAttribute('position');
+        const vertex = new THREE.Vector3();
+        let distance = Infinity;
+        for (let i = 0; i < pos.count; i++) {
+          const d = vertex.fromBufferAttribute(pos, i).distanceToSquared(point);
+          if (d < distance) { distance = d; e.labelVertex = i; }
+        }
+      }
+      const delta = new THREE.Vector3();
+      morphs.forEach((attribute, i) => {
+        point.addScaledVector(delta.fromBufferAttribute(attribute, e.labelVertex!), e.mesh.morphTargetInfluences?.[i] ?? 0);
+      });
+    }
+    return e.mesh.localToWorld(point);
   }
 
   /* ========================================================== picking */
@@ -854,13 +910,75 @@ export class Engine {
     this.rig.focusSphere(sphere.center, sphere.radius, { direction: dir, padding });
   }
 
+  async showPassage(id: string) {
+    const ids = passageFor(this.registry, id);
+    if (!ids.length) return;
+    const geos = await this.loader.load('neurovascular.glb');
+    this.addGeometries(geos);
+    if (getState().dissectFdi !== null) actions.exitDissect();
+    actions.openJawControls(false);
+    actions.setCategories(PRESETS.find((p) => p.id === 'nerve-muscles')!.state);
+    actions.select(id);
+    setState({ passageIds: ids, labels: true, explode: 0, explodePhase: 1, orbitMode: 'free' });
+    const box = new THREE.Box3();
+    for (const routeId of ids) {
+      const item = this.registry.require(routeId);
+      const anchor = item.kind === 'landmark' ? this.landmarkPosition(item) : null;
+      if (anchor) box.expandByPoint(anchor);
+      else box.union(this.boundsOf(routeId, false));
+    }
+    const sphere = box.getBoundingSphere(new THREE.Sphere());
+    const side = id.endsWith('-right') ? -1 : 1;
+    this.rig.focusSphere(sphere.center, Math.max(0.7, sphere.radius), { direction: new THREE.Vector3(side, 0.15, 0.6), padding: 1.25 });
+  }
+
+  async showJaw(side: 'right' | 'left' = 'right') {
+    this.addGeometries(await this.loader.load('context.glb'));
+    const categories = { ...getState().categories };
+    for (const key of Object.keys(categories) as (keyof typeof categories)[]) categories[key] = 'off';
+    Object.assign(categories, { tmj: 'on', mandible: 'on', 'alveolar-bone': 'ghost', skull: 'ghost', muscles: 'on', 'permanent-teeth': 'ghost', enamel: 'ghost', dentin: 'ghost', cementum: 'ghost' });
+    actions.setCategories(categories);
+    actions.openJawControls(true);
+    const other = side === 'right' ? 'left' : 'right';
+    const hidden: Record<string, true> = { 'mandibular-canal-right': true, 'mandibular-canal-left': true };
+    for (const structure of this.registry.byId.values()) {
+      if (structure.id.endsWith(`-${other}`) && structure.categories.some((c) => c === 'tmj' || c === 'muscles')) hidden[structure.id] = true;
+    }
+    setState({ orbitMode: 'free', labels: true, jawSide: side, ghosted: { 'mandible-body': true }, hidden });
+    const id = `tmj-${side}`;
+    actions.select(id);
+    // Selecting on a phone opens Details; keep the movement controls reachable.
+    if (window.innerWidth <= 767) actions.setMobileSheet('tools');
+    this.focus(id);
+    const joint = this.registry.manifest.landmarks[`condyle-top-${side}`];
+    if (joint) this.rig.focusSphere(new THREE.Vector3(...joint).add(new THREE.Vector3(0, -0.3, 0.35)), 2.7, { direction: new THREE.Vector3(side === 'right' ? -1 : 1, 0.12, 0.25), padding: 1.15 });
+  }
+
+  subscribeJawProgress(callback: (opening: number) => void): () => void {
+    this.jawProgressListeners.add(callback);
+    callback(this.jawCur);
+    return () => { this.jawProgressListeners.delete(callback); };
+  }
+
+  pauseJaw() { actions.setJawOpening(this.jawCur); }
+
+  closeJaw() {
+    actions.openJawControls(false);
+    actions.resetVisibility();
+    actions.select(null);
+    setState({ orbitMode: 'fixed', labels: false, clip: { ...getState().clip, enabled: false } });
+    this.resetToStart();
+  }
+
+  playJaw() { actions.setJawOpening(this.jawCur, true); }
+
   /** World position of a landmark: its anchor, moved with its parent mesh (explode offsets). */
   private landmarkPosition(s: Structure): THREE.Vector3 | null {
     if (!s.anchor) return null;
-    const parentKey = s.parent ? this.registry.get(s.parent)?.meshes[0] : undefined;
+    const parentKey = landmarkHost(this.registry, s.id);
     const pos = new THREE.Vector3(...s.anchor);
     const parent = parentKey ? this.entries.get(parentKey) : undefined;
-    return parent ? pos.add(parent.mesh.position) : pos;
+    return parent ? parent.mesh.localToWorld(pos) : pos;
   }
 
   /** World bounds of a structure's meshes (current exploded positions). */
@@ -872,7 +990,8 @@ export class Engine {
       const e = this.entries.get(k);
       if (e) {
         if (visibleOnly && e.visual === 'off' && keys.some((kk) => this.entries.get(kk)?.visual !== 'off')) continue;
-        tmp.copy(e.mesh.geometry.boundingBox!).translate(e.mesh.position);
+        e.mesh.updateMatrixWorld(true);
+        tmp.copy(e.mesh.geometry.boundingBox!).applyMatrix4(e.mesh.matrixWorld);
         box.union(tmp);
       } else {
         const m = this.registry.manifest.meshes[k];
@@ -1029,7 +1148,9 @@ export class Engine {
     const fx = this.tickVisuals(dt);
     this.updateHover();
     if (controlsChanged || animating) this.rig.updateClipping();
-    if (getState().clip.enabled && (controlsChanged || animating)) this.refreshClip();
+    const jawMoved = this.clipJaw !== this.jawCur;
+    this.clipJaw = this.jawCur;
+    if (getState().clip.enabled && (controlsChanged || animating || jawMoved)) this.refreshClip();
 
     if (!(this.needsRender || controlsChanged || animating || fx)) return;
     this.needsRender = false;
@@ -1042,6 +1163,21 @@ export class Engine {
   private tickVisuals(dt: number): boolean {
     const s = getState();
     let moving = false;
+    const previousJaw = this.jawCur;
+    if (s.jawPlaying) {
+      this.jawCur = Math.max(0, Math.min(1, this.jawCur + dt / 2.5 * this.jawDirection));
+      if (this.jawCur >= 1) this.jawDirection = -1;
+      else if (this.jawCur <= 0 && this.jawDirection < 0) actions.setJawOpening(0);
+      moving = true;
+    } else this.jawCur = s.jawOpening;
+    const jawChanged = previousJaw !== this.jawCur;
+    this.jawProgressTime += dt;
+    if (this.jawProgressTime >= 0.1 || jawChanged && !s.jawPlaying) {
+      this.jawProgressTime = 0;
+      for (const callback of this.jawProgressListeners) callback(this.jawCur);
+    }
+    const mandiblePose = jawMatrix(this.registry.manifest, this.jawCur);
+    const discPose = jawMatrix(this.registry.manifest, this.jawCur, true);
     const k = 1 - Math.exp(-dt * 14);
     const instant = this.animator.reducedMotion;
     const rate = instant ? 1 : k;
@@ -1070,13 +1206,13 @@ export class Engine {
     }
 
     // label occlusion only needs recomputing when meshes move or appear/disappear
-    let layoutChanged = false;
+    let layoutChanged = jawChanged;
     const prevPos = new THREE.Vector3();
     for (const e of this.entries.values()) {
       let target = visualOpacity(e.visual, s.ghostOpacity);
       if (e.nv) {
         const dissecting = s.explodePhase === 1 && s.dissectFdi === null ? Math.min(1, this.explodeCur * 2.5) : 0;
-        const quietTarget = quietLevel(e, dissecting);
+        const quietTarget = s.passageIds.includes(e.owner) ? 0 : quietLevel(e, dissecting);
         if (Math.abs(e.quiet! - quietTarget) > 1e-3) {
           e.quiet = stepToward(e.quiet!, quietTarget, rate, 0.01);
           const mat = e.mesh.material;
@@ -1086,6 +1222,7 @@ export class Engine {
         target *= quietOpacity(e, e.quiet!);
       }
       if (e.sinus) target *= SINUS_OPACITY;
+      if (e.key.startsWith('mandibular-canal-')) target = s.passageIds.includes(e.owner) && e.visual !== 'off' ? 0.22 : target * 0.22;
       if (s.explodePhase === 2 && !e.boardTarget) target = 0; // context is not laid out: fade it away
       if (Math.abs(e.opacity - target) > 1e-3) {
         e.opacity = stepToward(e.opacity, target, rate, 0.01);
@@ -1119,6 +1256,7 @@ export class Engine {
       if (e.mesh.morphTargetInfluences) {
         const stretch = this.explodeCur * (1 - this.phaseCur);
         if (e.mesh.morphTargetInfluences[0] !== stretch) e.mesh.morphTargetInfluences[0] = stretch;
+        if (e.mesh.morphTargetInfluences.length > 1) e.mesh.morphTargetInfluences[1] = this.jawCur;
       }
       if (toothPart) e.mesh.position.addScaledVector(this.tmpOffset.lerpVectors(e.toothOffset, e.pulpOffset, this.pulpModeCur), this.toothExplodeCur);
       if (e.boardPos && this.phaseCur > 0) {
@@ -1129,6 +1267,11 @@ export class Engine {
         e.mesh.position.lerp(e.boardPos, this.phaseCur);
       }
       if (!layoutChanged && !prevPos.equals(e.mesh.position)) layoutChanged = true;
+      e.mesh.matrix.makeTranslation(e.mesh.position.x, e.mesh.position.y, e.mesh.position.z);
+      const rigid = rigidJawPart(e.key, this.registry.get(e.owner)?.toothFdi);
+      if (rigid) e.mesh.matrix.premultiply(rigid === 'disc' ? discPose : mandiblePose);
+      e.mesh.matrixWorldNeedsUpdate = true;
+      e.mesh.updateMatrixWorld(true);
     }
     if (layoutChanged) this.labels?.markSceneChanged();
 

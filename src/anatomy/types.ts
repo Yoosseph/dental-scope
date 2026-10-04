@@ -122,6 +122,8 @@ export interface ManifestTooth {
 }
 
 export interface Manifest {
+  /** Illustrative joint kinematics in app cm/radians, fitted to the condylar axis. */
+  jawMotion?: { pivot: Vec3; translation: Vec3; rotation: number; provenance: 'schematic' };
   units: string;
   source: string;
   meshes: Record<string, ManifestMesh>;

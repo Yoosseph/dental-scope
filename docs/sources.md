@@ -44,3 +44,8 @@ Last checked: 2026-09-28.
 | D3 | Controls: drag to orbit, right-drag to pan, scroll to zoom, click to select, double-click to focus. On touch: one finger orbits, two fingers pan, pinch zooms. | `src/engine/camera.ts` creates three.js OrbitControls and keeps its default bindings: left-drag rotates, right-drag pans, the wheel zooms, one finger rotates, and two fingers zoom and pan. `src/engine/Engine.ts` selects on `pointerup` and focuses on `dblclick`. |
 | D4 | Keyboard shortcuts (`/`, `Esc`, `F`, `I`, `H`, `G`, `D`, `[` `]`, `E`, `C`, `L`, arrows, `+` `−`, `R`) | `src/ui/useKeyboard.ts` handles every listed key, and the action it runs matches the dialog. `E` separates the tooth layers when you are inside a tooth, and otherwise dissects the arch. |
 | D5 | Orbit mode. Fixed: always turn around the model centre. Free: pan and focus move the pivot. | `src/engine/camera.ts` (`CameraRig.setMode`, `tick`, `fixedFocusPose`) and `src/engine/Engine.ts` (`updatePivot`: the pivot is the dentition, or the tooth being dissected). The switch is in `src/ui/CameraControls.tsx`. |
+
+
+## Dental feedback additions (2026-10-04)
+
+The earlier F6 schematic inventory and F8 atlas inventory are extended by `cranial.py` and `manifest.json`. Dental nerve and vessel atlas paths are retained, including the full sampled CN V root. New V1, VII (five terminal branch groups), IX, X and XII paths, additional skull-exit markers and TMJ movement are schematic teaching examples. This is stated in all five About translations. It does not assert that every cranial branch or all paranasal sinuses are modeled. Citations, canal count definitions, geometry limits and pending dental review are listed in [feedback-anatomy.md](feedback-anatomy.md).

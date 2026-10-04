@@ -114,7 +114,7 @@ export const en = {
   isolateStructure: 'Isolate structure',
   focus: 'Focus',
   focusTitle: 'Focus (F)',
-  ghost: 'Ghost',
+  ghost: 'Translucent',
   ghostTitle: 'Translucent (G)',
   hide: 'Hide',
   hideTitle: 'Hide (H)',
@@ -125,7 +125,7 @@ export const en = {
   panelTabs: 'Panel',
   structures: 'Structures',
   layerPresets: 'Layer presets',
-  preset: { overview: 'Overview', dentition: 'Teeth', bone: 'Bone', nerves: 'Nerves' } as Record<string, string>,
+  preset: { 'nerve-muscles': 'Nerves & muscles', overview: 'Overview', dentition: 'Teeth', bone: 'Bone', nerves: 'Nerves' } as Record<string, string>,
   group: {
     Dentition: 'Dentition',
     'Tooth tissues': 'Tooth tissues',

@@ -13,6 +13,8 @@ import { LANGS, LANG_NATIVE, type Lang } from '../i18n/lang.ts';
 import { ABOUT_TEXT } from './about-text.ts';
 import { PAGE_CSS, aboutPath } from './about.ts';
 import { AUTHOR, REPOSITORY, SITE_NAME, type PageMeta } from './seo.ts';
+import { canalFrequency, formatPercent, frequencyContext } from '../content/canalFrequency.ts';
+import { FEEDBACK_TEXT } from '../i18n/feedback.ts';
 
 /** Words of real text (summary, function, clinical notes, facts) a page needs before it is indexed. */
 export const MIN_INDEX_WORDS = 150;
@@ -24,6 +26,7 @@ interface Entry {
   function?: string;
   clinical?: string;
   location?: string;
+  sources?: { title: string; url: string }[];
   facts?: { label: string; value: string }[];
   related?: string[];
   roots?: string;
@@ -282,6 +285,9 @@ export function guidePage(s: GuideSubject, lang: Lang): GuidePage {
 
 export const GUIDE_PAGES: GuidePage[] = GUIDE_SUBJECTS.flatMap((s) => LANGS.map((l) => guidePage(s, l)));
 
+/** Keep published Swedish sinus links usable after the terminology change. */
+export const GUIDE_REDIRECTS = [{ path: 'sv/anatomi/kakhalor/', to: guidePath(BY_ID.get('structure:maxillary-sinus')!, 'sv') }];
+
 /* ------------------------------------------------------------------ html */
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -329,6 +335,11 @@ export function guideHtml(page: GuidePage, head: string, base: string): string {
   if (e.anatomy) sections.push(`<h2>${esc(T.anatomyTitle)}</h2><p>${esc(e.anatomy)}</p>`);
   if (e.function) sections.push(`<h2>${esc(T.functionTitle)}</h2><p>${esc(e.function)}</p>`);
   if (e.clinical) sections.push(`<h2>${esc(T.clinicalTitle)}</h2><p>${esc(e.clinical)}</p>`);
+  const F = FEEDBACK_TEXT[lang];
+  if (e.location) sections.push(`<h2>${esc(F.location)}</h2><p>${esc(e.location)}</p>`);
+  if (e.sources?.length) sections.push(`<p class="note">${esc(F.source)}: ${e.sources.map((r) => `<a href="${esc(r.url)}" rel="noopener">${esc(r.title)}</a>`).join(' · ')}</p>`);
+  const frequency = s.fdi !== undefined ? canalFrequency(s.fdi) : undefined;
+  if (frequency && s.fdi !== undefined) sections.push(`<h2>${esc(F.canalFrequency)}</h2><table class="canal-counts"><thead><tr><th scope="col">${esc(F.canals)}</th><th scope="col">${esc(F.frequency)}</th></tr></thead><tbody>${frequency.rows.map((r) => `<tr><th scope="row">${r.canals}</th><td>${esc(formatPercent(r.percent, lang))}</td></tr>`).join('')}</tbody></table><p class="note">${esc(F.sample)}: ${frequency.n}. ${esc(frequencyContext(s.fdi, lang).join(' '))}</p><p class="note">${esc(F.evidenceNote)} ${esc(F.modeledNote)}</p><p><a href="${frequency.source.url}" rel="noopener">${esc(frequency.source.citation)}</a></p>`);
   if (s.fdi !== undefined) {
     const rows: [string, number | undefined][] = [
       [T.mesial, neighbour(s.fdi, 'mesial')],
@@ -382,6 +393,7 @@ export function guideHtml(page: GuidePage, head: string, base: string): string {
 }
 
 const GUIDE_CSS = `
+.canal-counts{border-collapse:collapse;width:100%;max-width:480px}.canal-counts th,.canal-counts td{text-align:left;padding:6px 12px;border-bottom:1px solid var(--line)}
 .crumbs{margin:16px 0 0;color:var(--muted);font-size:14px}
 .facts{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;margin:16px 0;padding:14px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;font-size:15px}
 .facts dt{color:var(--muted)}

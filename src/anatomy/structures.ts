@@ -4,6 +4,7 @@
  * `meshes` are scene node keys produced by tools/pipeline/build_assets.py.
  */
 import type { CategoryId, Provenance, StructureKind } from './types';
+import { FEEDBACK_STRUCTURES } from './feedbackStructures';
 
 export interface StructureDef {
   id: string;
@@ -87,15 +88,18 @@ export const STRUCTURE_DEFS: StructureDef[] = [
   // jaws are dissected. Trunks outside the dental region are `regional` (issue #26): drawn quiet.
   { id: 'neurovascular', name: 'Neurovascular anatomy', parent: 'dental-anatomy', kind: 'group', aliases: ['nerves and vessels'] },
   { id: 'nerves', name: 'Nerves', parent: 'neurovascular', kind: 'group', categories: ['nerves'], aliases: ['innervation', 'trigeminal'] },
-  ...bilateral('trigeminal-nerve', 'trigeminal nerve (V)', () => 'nerves', { categories: ['nerves'], provenance: 'atlas', labelPriority: 1, regional: true, shortName: 'CN V', aliases: ['trigeminal', 'fifth cranial nerve', 'cn v', 'trigeminal ganglion'] }),
-  { id: 'mandibular-nerve-branches', name: 'Mandibular nerve (V3) branches', parent: 'nerves', kind: 'group', categories: ['nerves'], aliases: ['v3', 'mandibular division', 'mandibular nerve'] },
+  { id: 'trigeminal-nerves', name: 'Trigeminal nerves (V)', parent: 'nerves', kind: 'group', categories: ['nerves'], aliases: ['cn v', 'trigeminal divisions'] },
+  { id: 'facial-nerves', name: 'Facial nerves (VII)', parent: 'nerves', kind: 'group', categories: ['nerves'], aliases: ['cn vii', 'facial branches'] },
+  { id: 'lower-cranial-nerves', name: 'Cranial nerves IX, X and XII', parent: 'nerves', kind: 'group', categories: ['nerves'], aliases: ['lower cranial nerves'] },
+  ...bilateral('trigeminal-nerve', 'trigeminal nerve (V)', () => 'trigeminal-nerves', { categories: ['nerves'], provenance: 'atlas', labelPriority: 1, regional: true, shortName: 'CN V', aliases: ['trigeminal', 'fifth cranial nerve', 'cn v', 'trigeminal ganglion'] }),
+  { id: 'mandibular-nerve-branches', name: 'Mandibular nerve (V3) branches', parent: 'trigeminal-nerves', kind: 'group', categories: ['nerves'], aliases: ['v3', 'mandibular division', 'mandibular nerve'] },
   ...bilateral('mandibular-nerve', 'mandibular nerve (V3)', () => 'mandibular-nerve-branches', { categories: ['nerves'], provenance: 'atlas', labelPriority: 2, shortName: 'V3', aliases: ['v3', 'mandibular division'] }),
   ...bilateral('inferior-alveolar-nerve', 'inferior alveolar nerve', () => 'mandibular-nerve-branches', { categories: ['nerves'], provenance: 'atlas', labelPriority: 5, shortName: 'IAN', aliases: ['ian', 'inferior dental nerve', 'mandibular canal', 'inferior alveolar', 'dental branches'] }),
   ...bilateral('mental-nerve', 'mental nerve', () => 'mandibular-nerve-branches', { categories: ['nerves'], provenance: 'atlas', labelPriority: 3 }),
   ...bilateral('incisive-nerve', 'incisive nerve', () => 'mandibular-nerve-branches', { categories: ['nerves'], provenance: 'atlas', labelPriority: 2 }),
   ...bilateral('lingual-nerve', 'lingual nerve', () => 'mandibular-nerve-branches', { categories: ['nerves'], provenance: 'atlas', labelPriority: 4 }),
   ...bilateral('buccal-nerve', 'buccal nerve', () => 'mandibular-nerve-branches', { categories: ['nerves'], provenance: 'atlas', labelPriority: 2, aliases: ['long buccal nerve'] }),
-  { id: 'maxillary-nerve-branches', name: 'Maxillary nerve (V2) branches', parent: 'nerves', kind: 'group', categories: ['nerves'], aliases: ['v2', 'maxillary division', 'maxillary nerve', 'superior alveolar nerves'] },
+  { id: 'maxillary-nerve-branches', name: 'Maxillary nerve (V2) branches', parent: 'trigeminal-nerves', kind: 'group', categories: ['nerves'], aliases: ['v2', 'maxillary division', 'maxillary nerve', 'superior alveolar nerves'] },
   ...bilateral('maxillary-nerve', 'maxillary nerve (V2)', () => 'maxillary-nerve-branches', { categories: ['nerves'], provenance: 'atlas', labelPriority: 2, shortName: 'V2', aliases: ['v2', 'maxillary division'] }),
   ...bilateral('infraorbital-nerve', 'infraorbital nerve', () => 'maxillary-nerve-branches', { categories: ['nerves'], provenance: 'atlas', labelPriority: 3 }),
   ...bilateral('posterior-superior-alveolar-nerve', 'posterior superior alveolar nerve', () => 'maxillary-nerve-branches', { categories: ['nerves'], provenance: 'schematic', labelPriority: 3, shortName: 'PSA', aliases: ['psa'] }),
@@ -155,4 +159,5 @@ export const STRUCTURE_DEFS: StructureDef[] = [
   ...bilateral('buccinator', 'buccinator', () => 'muscles', { categories: ['muscles'], provenance: 'source', labelPriority: 2, aliases: ['cheek muscle'] }),
   ...bilateral('mentalis', 'mentalis', () => 'muscles', { categories: ['muscles'], provenance: 'source', labelPriority: 1 }),
   { id: 'orbicularis-oris', name: 'Orbicularis oris', parent: 'muscles', categories: ['muscles'], meshes: ['orbicularis-oris'], provenance: 'source', labelPriority: 2, aliases: ['lip muscle', 'lips'] },
+  ...FEEDBACK_STRUCTURES,
 ];

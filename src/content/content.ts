@@ -14,6 +14,8 @@ import teethEs from './es/teeth.json';
 import structuresEs from './es/structures.json';
 import teethLa from './la/teeth.json';
 import structuresLa from './la/structures.json';
+import { feedbackAnatomy } from './feedbackAnatomy';
+import { supportingAnatomy } from './supportingAnatomy';
 
 export type ContentStatus = 'placeholder' | 'draft' | 'reviewed';
 
@@ -22,6 +24,7 @@ interface RawEntry {
   function?: string;
   clinical?: string;
   location?: string;
+  sources?: { title: string; url: string }[];
   facts?: { label: string; value: string }[];
   related?: string[];
   roots?: string;
@@ -34,19 +37,26 @@ export interface ResolvedContent {
   summary?: string;
   function?: string;
   clinical?: string;
+  location?: string;
+  sources: { title: string; url: string }[];
   facts: { label: string; value: string }[];
   related: string[];
   status: ContentStatus;
 }
 
-const db = (t: unknown, s: unknown): Record<string, RawEntry> => ({ ...(t as Record<string, RawEntry>), ...(s as Record<string, RawEntry>) });
+const db = (t: unknown, s: unknown, lang: Lang): Record<string, RawEntry> => {
+  const base = { ...(t as Record<string, RawEntry>), ...(s as Record<string, RawEntry>) };
+  for (const [key, entry] of Object.entries(feedbackAnatomy(lang))) base[key] = { ...base[key], ...entry };
+  for (const [key, entry] of Object.entries(supportingAnatomy(lang))) base[key] = { ...base[key], ...entry };
+  return base;
+};
 /** Content per interface language; every language has the same keys (checked by i18n.test.ts). */
 export const CONTENT: Record<Lang, Record<string, RawEntry>> = {
-  en: db(teeth, structures),
-  sv: db(teethSv, structuresSv),
-  de: db(teethDe, structuresDe),
-  es: db(teethEs, structuresEs),
-  la: db(teethLa, structuresLa),
+  en: db(teeth, structures, 'en'),
+  sv: db(teethSv, structuresSv, 'sv'),
+  de: db(teethDe, structuresDe, 'de'),
+  es: db(teethEs, structuresEs, 'es'),
+  la: db(teethLa, structuresLa, 'la'),
 };
 const DB = CONTENT.en;
 
@@ -98,6 +108,8 @@ export function resolveContent(registry: Registry, id: string, lang: Lang = 'en'
     summary: raw?.summary,
     function: raw?.function,
     clinical: raw?.clinical,
+    location: raw?.location,
+    sources: raw?.sources ?? [],
     facts,
     related: [...new Set(related)],
     status: raw ? STATUS : 'placeholder',
