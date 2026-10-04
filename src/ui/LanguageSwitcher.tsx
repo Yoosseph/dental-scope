@@ -10,23 +10,28 @@ export function LanguageSwitcher() {
   const lang = useLang();
   const m = useT();
   return (
-    <div className="ds-lang" role="radiogroup" aria-label={m.langLabel}>
-      {LANGS.map((l) => (
-        <button
-          key={l}
-          type="button"
-          role="radio"
-          lang={l}
-          aria-checked={lang === l}
-          className={lang === l ? 'is-active' : ''}
-          onClick={() => actions.setLang(l)}
-          aria-label={LANG_NATIVE[l]}
-          title={lang === l ? LANG_NATIVE[l] : MESSAGES[l].switchTo}
-        >
-          <Flag lang={l} />
-        </button>
-      ))}
-    </div>
+    <>
+      <select className="ds-lang-select" aria-label={m.langLabel} value={lang} onChange={(e) => actions.setLang(e.currentTarget.value as Lang)}>
+        {LANGS.map((l) => <option key={l} value={l}>{LANG_NATIVE[l]}</option>)}
+      </select>
+      <div className="ds-lang" role="radiogroup" aria-label={m.langLabel}>
+        {LANGS.map((l) => (
+          <button
+            key={l}
+            type="button"
+            role="radio"
+            lang={l}
+            aria-checked={lang === l}
+            className={lang === l ? 'is-active' : ''}
+            onClick={() => actions.setLang(l)}
+            aria-label={LANG_NATIVE[l]}
+            title={lang === l ? LANG_NATIVE[l] : MESSAGES[l].switchTo}
+          >
+            <Flag lang={l} />
+          </button>
+        ))}
+      </div>
+    </>
   );
 }
 
