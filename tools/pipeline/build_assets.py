@@ -26,7 +26,8 @@ import trimesh
 from scipy.spatial import cKDTree
 
 sys.path.insert(0, str(Path(__file__).parent))
-from geometry import catmull_rom, decimate, ellipsoid_disc, orient_outward, submesh, tube_polyline  # noqa: E402
+from geometry import catmull_rom, decimate, orient_outward, submesh, tube_polyline  # noqa: E402
+from tmj import articular_disc, disc_frame  # noqa: E402
 from sinus import build_sinus  # noqa: E402
 from gingiva import expose_third_molar_crowns  # noqa: E402
 from tooth_layers import Frame, build_tooth_layers, make_frame  # noqa: E402
@@ -329,19 +330,7 @@ def main():
     # TMJ: articular fossa region of the temporal bone + schematic disc
     for side, mask in (("right", cond_r), ("left", cond_l)):
         cverts = mand.vertices[np.unique(mand.faces[mask])]
-        top = cverts[np.argmax(cverts[:, 2])]
-        head = cverts[cverts[:, 2] > top[2] - 5]
-        hc = head.mean(0)
-        cov = np.cov((head - hc).T)
-        w, vec = np.linalg.eigh(cov)
-        major = vec[:, 2]
-        major[2] = 0
-        major /= np.linalg.norm(major)
-        up = np.array([0, 0, 1.0])
-        minor = np.cross(up, major)
-        axes = np.stack([major, minor, up])
-        ml = np.ptp(head @ major)
-        apw = np.ptp(head @ minor)
+        top, _, ml, _ = disc_frame(cverts)
         tb = temporal[side]
         tc = tb.triangles_center
         fossa = (np.linalg.norm(tc - (top + np.array([0, 0, 2.0])), axis=1) < max(ml, 12) * 0.62) & (tc[:, 2] > top[2] - 1.0)
@@ -349,7 +338,7 @@ def main():
             CONTEXT[f"temporal-bone-{side}"])
         add("context", f"articular-fossa-{side}", submesh(tb, fossa), "derived",
             CONTEXT[f"temporal-bone-{side}"])
-        disc = ellipsoid_disc(top + np.array([0, 0, 1.4]), axes, (ml * 0.55, apw * 0.75, 1.1), concavity=0.45)
+        disc = articular_disc(cverts)
         add("context", f"articular-disc-{side}", disc, "schematic")
         manifest["landmarks"][f"condyle-top-{side}"] = S.p(top).round(4).tolist()
 

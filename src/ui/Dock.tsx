@@ -60,25 +60,30 @@ function ArchControls() {
   const [local, setLocal] = useState<number | null>(null);
   const [playing, setPlaying] = useState(false);
   const raf = useRef(0);
+  const preparation = useRef<(() => void) | null>(null);
 
   const stored = phase === 2 ? 2 : explode;
   const value = local ?? stored;
   const atEnd = phase === 2 && local === null;
 
   const stop = () => {
+    preparation.current?.();
+    preparation.current = null;
     cancelAnimationFrame(raf.current);
     setPlaying(false);
   };
-  useEffect(() => () => cancelAnimationFrame(raf.current), []);
+  useEffect(() => () => { preparation.current?.(); cancelAnimationFrame(raf.current); }, []);
   // the global Reset button stops playback and clears the local dot position
   const resetId = useApp((s) => s.resetId);
   useEffect(() => {
+    preparation.current?.();
+    preparation.current = null;
     cancelAnimationFrame(raf.current);
     setPlaying(false);
     setLocal(null);
   }, [resetId]);
   useEffect(() => {
-    if (jawControls) { cancelAnimationFrame(raf.current); setPlaying(false); setLocal(null); }
+    if (jawControls) { preparation.current?.(); preparation.current = null; cancelAnimationFrame(raf.current); setPlaying(false); setLocal(null); }
   }, [jawControls]);
 
   const tween = (from: number, to: number, seconds: number, apply: (v: number) => void, done: () => void) =>
@@ -95,10 +100,15 @@ function ArchControls() {
     }
     setPlaying(true);
     if (from < 1) {
-      tween(from, 1, (1 - from) * PLAY_SECONDS_TO_CHECKPOINT, actions.setExplode, () => {
-        actions.setExplode(1);
-        setPlaying(false); // pause at the checkpoint
-      });
+      const separate = () => {
+        preparation.current = null;
+        tween(from, 1, (1 - from) * PLAY_SECONDS_TO_CHECKPOINT, actions.setExplode, () => {
+          actions.setExplode(1);
+          setPlaying(false); // pause at the checkpoint
+        });
+      };
+      if (from === 0) preparation.current = engine.prepareArchDissection(separate, () => { preparation.current = null; setPlaying(false); });
+      else separate();
     } else {
       actions.setExplodePhase(2);
       tween(1, 2, PLAY_SECONDS_TO_LAYOUT, setLocal, () => {

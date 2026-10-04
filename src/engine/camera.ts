@@ -3,7 +3,7 @@
  *
  * Two orbit modes (store `orbitMode`):
  *  - fixed: a turntable around `pivot`, the centre of the current scene (the
- *    dentition, or the tooth being dissected). Pan and wheel zoom never move it
+ *    skull, separated dentition, or tooth being dissected). Pan and wheel zoom never move it
  *    for good: after a pan the target glides back (`pivotSpring`), wheel zoom is
  *    centred, and focus/presets keep the target on the pivot (`fixedFocusPose`).
  *  - free: OrbitControls as usual; pan, zoom-to-cursor and focus move the target.
@@ -21,6 +21,9 @@ export interface FocusOptions {
   /** explicit camera distance (overrides the sphere fit) */
   distance?: number;
   duration?: number;
+  /** Re-centre the orbit along with the camera, rather than retaining its old pivot. */
+  movePivot?: boolean;
+  done?: () => void;
 }
 
 export const PRESET_DIRS: Record<ViewPreset, THREE.Vector3> = {
@@ -133,7 +136,7 @@ export class CameraRig {
     const dist = Math.max(opts.distance ?? this.distanceFor(Math.max(radius, 0.15), opts.padding ?? 1.3), this.controls.minDistance * 1.05);
     let target1 = center.clone();
     let pos1 = center.clone().addScaledVector(dir, dist);
-    if (this.mode === 'fixed') ({ target: target1, position: pos1 } = fixedFocusPose(this.pivot, center, radius, dist, dir));
+    if (this.mode === 'fixed' && !opts.movePivot) ({ target: target1, position: pos1 } = fixedFocusPose(this.pivot, center, radius, dist, dir));
 
     // interpolate in spherical coordinates around a moving target so the camera arcs instead of cutting through geometry
     const off0 = pos0.clone().sub(target0);
@@ -150,6 +153,7 @@ export class CameraRig {
       opts.duration ?? 0.85,
       (k) => {
         this.controls.target.lerpVectors(target0, target1, k);
+        if (opts.movePivot) this.pivot.copy(this.controls.target);
         tmp.radius = THREE.MathUtils.lerp(s0.radius, s1.radius, k);
         tmp.phi = THREE.MathUtils.lerp(s0.phi, s1.phi, k);
         tmp.theta = s0.theta + dTheta * k;
@@ -158,6 +162,7 @@ export class CameraRig {
         cam.lookAt(this.controls.target);
         this.updateClipping();
       },
+      { done: opts.done },
     );
   }
 
