@@ -49,22 +49,26 @@ export function App() {
 
   // keep the focused anatomy clear of the panels that cover the canvas
   useEffect(() => {
+    const dock = document.querySelector<HTMLElement>('.ds-dock');
     const update = () => {
       const mobile = window.innerWidth <= 767;
       if (mobile) engine.setInsets(0, sheet !== 'none' ? window.innerHeight * 0.5 : developmentStage ? 215 : 155);
       // the bottom toolbar covers the lower edge of the canvas; the dissection tools and the phase-2 board make it taller
       else {
         // the bottom toolbar: measured, since its height depends on what it shows
-        const dock = document.querySelector<HTMLElement>('.ds-dock');
         const parent = dock?.offsetParent as HTMLElement | null;
         const measured = dock && parent ? parent.clientHeight - dock.offsetTop : 0;
         const bottom = dockHidden ? 0 : measured > 0 ? measured : dissect ? 210 : laidOut ? 170 : 70;
+        dock?.parentElement?.style.setProperty('--dock-clearance', `${Math.max(64, bottom + 12)}px`);
         engine.setInsets(selected && !detailHidden && window.innerWidth > 980 ? 360 : 0, bottom);
       }
     };
     update();
+    // Section controls and translated labels can change the taskbar's height.
+    const observer = new ResizeObserver(update);
+    if (dock) observer.observe(dock);
     window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
+    return () => { observer.disconnect(); window.removeEventListener('resize', update); };
   }, [engine, selected, dissect, laidOut, sheet, detailHidden, dockHidden, jawControls, developmentStage, lang]);
 
   return (
