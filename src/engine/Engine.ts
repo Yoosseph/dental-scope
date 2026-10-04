@@ -30,6 +30,7 @@ import { DevelopmentScene } from './DevelopmentScene';
 import { developmentNotation } from '../anatomy/development';
 import { isCompactLayout } from '../app/viewport';
 import { renderPixelRatio } from './renderQuality';
+import { dentitionFrame, skullOverviewFrame } from './framing';
 
 interface MeshEntry {
   key: string;
@@ -117,6 +118,9 @@ export class Engine {
   private boardTimer = 0;
   private boardAspect = 1;
   private explodeTimer = 0;
+  private preparingArch = false;
+  private cancelArchPreparation?: () => void;
+  private explodePreset?: ViewPreset;
   /** canvas area covered by panels (px), animated; shifts the optical centre */
   private insets = { right: 0, bottom: 0 };
   /** where the insets are animating to (the start framing fits into this) */
@@ -203,6 +207,7 @@ export class Engine {
     this.rig = new CameraRig(camera, renderer.domElement, this.animator);
     this.rig.setMode(getState().orbitMode);
     this.rig.onUserInteract = () => {
+      this.cancelArchPreparation?.();
       if (getState().view) setState({ view: null });
     };
     this.rig.controls.addEventListener('change', () => this.invalidate());
@@ -237,6 +242,7 @@ export class Engine {
 
   dispose() {
     this.disposed = true;
+    this.cancelArchPreparation?.();
     cancelAnimationFrame(this.raf);
     clearTimeout(this.boardTimer);
     clearTimeout(this.explodeTimer);
@@ -399,11 +405,12 @@ export class Engine {
 
   /* ========================================================= state sync */
 
-  /** Fixed-orbit centre: the tooth being dissected, otherwise the dentition (camera home). */
+  /** Orbit the whole skull at rest, then the dentition during arch exploration. */
   private updatePivot() {
-    const { dissectFdi, developmentStage } = getState();
+    const { dissectFdi, developmentStage, explode, explodePhase, jawControls } = getState();
     const tooth = developmentStage || this.developmentScene.active ? this.developmentScene.bounds : dissectFdi !== null ? this.boundsOf(`tooth-${dissectFdi}`, false) : null;
-    this.rig.setPivot(tooth && !tooth.isEmpty() ? tooth.getCenter(new THREE.Vector3()) : this.rig.home.target);
+    const assembled = !this.preparingArch && explode === 0 && explodePhase === 1 && !jawControls;
+    this.rig.setPivot(tooth && !tooth.isEmpty() ? tooth.getCenter(new THREE.Vector3()) : assembled ? this.skullBounds.getCenter(new THREE.Vector3()) : this.rig.home.target);
     this.invalidate();
   }
 
@@ -425,6 +432,7 @@ export class Engine {
 
   private onState(s: AppState, p: AppState) {
     const developmentChanged = s.developmentStage !== p.developmentStage;
+    if (s.resetId !== p.resetId || developmentChanged || s.dissectFdi !== p.dissectFdi || s.jawControls !== p.jawControls || s.selectedId !== p.selectedId) this.cancelArchPreparation?.();
     if (developmentChanged || s.developmentPlaying !== p.developmentPlaying || s.developmentShowUnerupted !== p.developmentShowUnerupted || s.developmentSoftTissue !== p.developmentSoftTissue || s.theme !== p.theme) {
       this.developmentScene.update(s, developmentChanged && !!p.developmentStage && s.resetId === p.resetId && !this.animator.reducedMotion, s.developmentPlaying || !s.developmentStage && p.developmentPlaying);
       this.notifyDevelopmentProgress();
@@ -465,7 +473,7 @@ export class Engine {
     if (s.autoRotate !== p.autoRotate) this.rig.controls.autoRotate = s.autoRotate;
     if (s.theme !== p.theme) this.applyTheme(s.theme);
     if (s.orbitMode !== p.orbitMode) this.rig.setMode(s.orbitMode);
-    if (s.dissectFdi !== p.dissectFdi) this.updatePivot();
+    if (s.dissectFdi !== p.dissectFdi || (s.explode > 0) !== (p.explode > 0) || s.explodePhase !== p.explodePhase || s.jawControls !== p.jawControls) this.updatePivot();
     if (developmentChanged) {
       this.updatePivot();
       if (this.developmentScene.active) {
@@ -479,8 +487,8 @@ export class Engine {
     if (s.explodePhase !== p.explodePhase || (s.explodePhase === 2 && visChanged)) this.layoutBoard(true);
     if (s.explodePhase === 1 && p.explodePhase === 2 && s.dissectFdi === null && !s.isolateId) {
       // back from the board: frame the in-position dissection again
-      this.reframeForExplode(s, 'three-quarter');
-      if (s.view !== 'three-quarter') setState({ view: 'three-quarter' });
+      this.reframeForExplode(s, s.explode > 0 ? 'three-quarter' : 'front');
+      if (s.explode > 0 && s.view !== 'three-quarter') setState({ view: 'three-quarter' });
     } else if (s.explode !== p.explode && s.explodePhase === 1) this.reframeForExplode(s);
     this.invalidate();
   }
@@ -492,6 +500,8 @@ export class Engine {
   private layoutBoard(frame: boolean) {
     clearTimeout(this.boardTimer);
     clearTimeout(this.explodeTimer);
+    this.explodeTimer = 0;
+    this.explodePreset = undefined;
     if (getState().explodePhase !== 2) return;
     const items: LayoutItem[] = [];
     const assemblies = new Map<string, { bounds: THREE.Box3; members: MeshEntry[] }>();
@@ -547,13 +557,25 @@ export class Engine {
   private reframeForExplode(s: AppState, preset?: ViewPreset) {
     if (s.developmentStage) return this.setView(preset ?? 'three-quarter');
     if (s.dissectFdi !== null || s.isolateId) return;
-    clearTimeout(this.explodeTimer);
+    if (s.explode === 0) {
+      clearTimeout(this.explodeTimer);
+      this.explodeTimer = 0;
+      this.explodePreset = undefined;
+      this.startView(0.6);
+      return;
+    }
+    if (preset) this.explodePreset = preset;
+    // Throttle framing while Play/scrubbing changes the slider continuously;
+    // debouncing would leave the camera unchanged until separation finished.
+    if (this.explodeTimer) return;
     this.explodeTimer = window.setTimeout(() => {
-      const ex = getState().explode;
-      if (ex < 1e-3) {
-        this.startView(0.6);
-        return;
-      }
+      this.explodeTimer = 0;
+      const state = getState();
+      const direction = this.explodePreset;
+      this.explodePreset = undefined;
+      if (state.explodePhase !== 1 || state.developmentStage || state.dissectFdi !== null || state.isolateId) return;
+      const ex = state.explode;
+      if (ex === 0) return this.startView(0.6);
       const box = this.explodedBounds(ex);
       if (box.isEmpty()) return;
       const cam = this.rig.camera;
@@ -566,8 +588,8 @@ export class Engine {
       const halfW = Math.max(box.max.x - c.x, c.x - box.min.x);
       // leave room for the bottom toolbar and the side panels
       const fit = Math.max((halfH / tanV) * 1.15, (halfW / (tanV * cam.aspect)) * 1.25);
-      const dir = preset ? PRESET_DIRS[preset].clone() : cam.position.clone().sub(this.rig.controls.target).normalize();
-      this.rig.focusSphere(c, size.length() / 2, { direction: dir, distance: fit + size.z / 2, duration: 0.6 });
+      const dir = direction ? PRESET_DIRS[direction].clone() : cam.position.clone().sub(this.rig.controls.target).normalize();
+      this.rig.focusSphere(c, size.length() / 2, { direction: dir, distance: fit + size.z / 2, duration: 0.2 });
       this.invalidate();
     }, 120);
   }
@@ -943,6 +965,7 @@ export class Engine {
   }
 
   focus(id: string) {
+    this.cancelArchPreparation?.();
     const s = this.registry.get(id);
     if (!s) return;
     const fdi = s.toothFdi;
@@ -1074,6 +1097,7 @@ export class Engine {
   }
 
   setView(p: ViewPreset) {
+    this.cancelArchPreparation?.();
     const { dissectFdi, selectedId } = getState();
     setState({ view: p });
     if (this.developmentScene.active) { this.frameDevelopment(p); return; }
@@ -1085,6 +1109,12 @@ export class Engine {
     } else if (getState().explode > 0 && getState().explodePhase === 1) {
       // the separated jaws need a wider frame than the assembled mouth
       this.reframeForExplode(getState(), p);
+    } else if (getState().explode === 0 && getState().explodePhase === 1 && !getState().jawControls) {
+      if (p === 'front') this.startView();
+      else {
+        const skull = this.skullBounds.getBoundingSphere(new THREE.Sphere());
+        this.rig.preset(p, skull.center, skull.radius);
+      }
     } else {
       this.rig.preset(p);
     }
@@ -1122,58 +1152,71 @@ export class Engine {
   resetCamera() {
     if (getState().developmentStage) return this.setView('three-quarter');
     if (getState().dissectFdi !== null) return this.setView('three-quarter');
+    if (getState().explode === 0 && getState().explodePhase === 1) return this.resetToStart();
     setState({ view: 'three-quarter' });
     this.rig.home_();
   }
 
-  /** Fresh start: orbit centred on the dentition again and a straight-on front view of the whole mouth. */
+  /** Fresh start: the assembled skull centred in a straight-on front view. */
   resetToStart() {
+    this.cancelArchPreparation?.();
     this.updatePivot();
     if (getState().developmentStage) return this.setView('three-quarter');
     this.startView();
   }
 
-  /**
-   * Start framing: the skull from the front, centred left-right, large enough that the
-   * face and jaws fill the view (the top of the cranium may run off the top edge) with
-   * the chin resting just above the bottom toolbar.
-   */
+  /** Start with the whole skull centred and visible above the controls. */
   private startView(duration = 0.9) {
     if (getState().view !== 'front') setState({ view: 'front' });
-    const box = this.skullBounds;
-    const center = box.getCenter(new THREE.Vector3());
-    const size = box.getSize(new THREE.Vector3());
     const cam = this.rig.camera;
-    const tanV = tanHalfFov(cam);
-    const h = this.container?.clientHeight || 1;
-    const ins = this.insetTarget;
-    // the skull is drawn about as tall as the whole canvas; on narrow (portrait) screens its width decides
-    const SKULL_TO_CANVAS = 1.2;
-    const fitH = size.y / 2 / tanV / SKULL_TO_CANVAS;
-    const fitW = (size.x / 2 / (tanV * cam.aspect)) * 1.06;
-    const fit = Math.max(fitH, fitW); // camera distance from the front of the skull
-    if (this.rig.mode === 'fixed') {
-      // the fixed orbit keeps its target on the pivot
-      this.rig.focusSphere(this.rig.pivot, size.y / 2, { direction: new THREE.Vector3(0, 0.02, 1), distance: fit + (box.max.z - this.rig.pivot.z), duration });
-      this.invalidate();
-      return;
-    }
-    // world units per screen pixel at the front of the skull; the view offset puts the target
-    // in the middle of the area above the toolbar, so lift it until the chin sits a margin above it
-    const perPx = (2 * fit * tanV) / h;
-    // on phones the bottom bar floats over the canvas without an inset; keep the chin clear of it
-    const reserve = Math.max(ins.bottom, (this.container?.clientWidth ?? 1000) < 768 ? 120 : 0);
-    const aboveBar = h - reserve - h * 0.01 - (h - ins.bottom) / 2;
-    const target = new THREE.Vector3(center.x, box.min.y + aboveBar * perPx, center.z);
-    this.rig.focusSphere(target, size.y / 2, { direction: new THREE.Vector3(0, 0.02, 1), distance: fit + (box.max.z - center.z), duration });
+    const frame = skullOverviewFrame(this.skullBounds, cam.fov, {
+      width: this.container.clientWidth, height: this.container.clientHeight, ...this.insetTarget,
+    });
+    this.rig.focusSphere(frame.target, frame.radius, { direction: PRESET_DIRS.front, distance: frame.distance, duration, movePivot: true });
     this.invalidate();
   }
 
+  /** Play first establishes the close dental view, then starts separation.
+   * Cancellation leaves the current camera/orbit centre where the user paused. */
+  prepareArchDissection(ready: () => void, cancelled: () => void): () => void {
+    this.cancelArchPreparation?.();
+    clearTimeout(this.explodeTimer);
+    this.explodeTimer = 0;
+    this.explodePreset = undefined;
+    this.preparingArch = true;
+    let active = true;
+    const cancel = () => {
+      if (!active) return;
+      active = false;
+      this.preparingArch = false;
+      this.cancelArchPreparation = undefined;
+      this.animator.cancel('camera');
+      cancelled();
+    };
+    this.cancelArchPreparation = cancel;
+    setState({ view: 'front', autoRotate: false });
+    const frame = dentitionFrame(this.skullBounds, this.rig.home.target, this.rig.camera.fov, this.rig.camera.aspect);
+    this.rig.focusSphere(frame.target, frame.radius, {
+      direction: PRESET_DIRS.front, distance: frame.distance, duration: 0.8, movePivot: true,
+      done: () => {
+        if (!active) return;
+        active = false;
+        this.preparingArch = false;
+        this.cancelArchPreparation = undefined;
+        ready();
+      },
+    });
+    this.invalidate();
+    return cancel;
+  }
+
   zoom(f: number) {
+    this.cancelArchPreparation?.();
     this.rig.zoom(f);
   }
 
   orbit(dx: number, dy: number) {
+    this.cancelArchPreparation?.();
     this.rig.orbit(dx, dy);
     this.invalidate();
   }
@@ -1198,7 +1241,7 @@ export class Engine {
     const first = !this.insetsKnown;
     this.insetsKnown = true;
     if (s.developmentStage) this.frameDevelopment(s.view ?? undefined);
-    else if (s.view === 'front' && !s.selectedId && s.dissectFdi === null) {
+    else if (!this.preparingArch && s.view === 'front' && !s.selectedId && s.dissectFdi === null) {
       if (s.explode > 0 && s.explodePhase === 1) this.reframeForExplode(s);
       else if (s.explodePhase === 1) this.startView(first ? 0 : 0.35);
     }
@@ -1231,6 +1274,7 @@ export class Engine {
     this.rig.camera.aspect = w / Math.max(h, 1);
     this.applyViewOffset();
     if (getState().developmentStage) this.frameDevelopment(getState().view ?? undefined);
+    else if (this.insetsKnown && !this.preparingArch && getState().view === 'front' && getState().explode === 0 && getState().explodePhase === 1 && !getState().selectedId && getState().dissectFdi === null) this.startView(0);
     // re-pack the phase-2 board when the viewport shape really changes (e.g. a phone is rotated),
     // not for small resizes such as a mobile address bar, so the user's own camera move is kept
     if (getState().explodePhase === 2 && Math.abs(Math.log(this.rig.camera.aspect / this.boardAspect)) > 0.2) {

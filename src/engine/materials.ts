@@ -42,7 +42,7 @@ const STYLES: Record<string, TissueStyle> = {
   bone: { color: '#e8e0cc', roughness: 0.82, cap: '#ddd0b2' },
   alveolar: { color: '#e4dac2', roughness: 0.85, cap: '#dacdb0' },
   condyle: { color: '#e4dac3', roughness: 0.75, cap: '#d0c2a1' },
-  disc: { color: '#86b2c4', roughness: 0.45, cap: '#6d9aae' },
+  disc: { color: '#d3c5be', roughness: 0.6, sheen: 0.22, specularIntensity: 0.55, cap: '#b7a79f', grain: 0.12, mottle: 0.08, edge: 0.12 },
   skull: { color: '#e6dfcd', roughness: 0.85, cap: '#d6caac' },
   // soft tissue: deeper, less saturated colours than before, matte with a little sheen, and edge
   // definition instead of self-glow. Muscles get a faint fibre grain; nerve and vessel paths stay
