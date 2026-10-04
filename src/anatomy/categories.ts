@@ -61,6 +61,7 @@ export const INITIAL_CATEGORY_STATE: Record<CategoryId, CategoryState> = Object.
 ) as Record<CategoryId, CategoryState>;
 
 export const PRESETS: LayerPreset[] = [
+  { id: 'nerve-muscles', label: 'Nerves & muscles', state: { ...all('off'), nerves: 'on', muscles: 'ghost', maxilla: 'ghost', mandible: 'ghost', 'alveolar-bone': 'ghost', skull: 'ghost', tmj: 'ghost', 'permanent-teeth': 'on', enamel: 'on', dentin: 'on', cementum: 'on', 'dental-pulp': 'on', 'root-canals': 'on' } },
   { id: 'overview', label: 'Overview', state: INITIAL_CATEGORY_STATE },
   {
     id: 'dentition',

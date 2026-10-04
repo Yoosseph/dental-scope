@@ -82,6 +82,7 @@ export function resolveMesh(meshKey: string, ctx: VisibilityContext): MeshVisual
   const ownerId = registry.meshOwner.get(meshKey);
   if (!ownerId) return 'off';
   const owner = registry.require(ownerId);
+  if (state.passageIds.length && owner.categories.includes('nerves') && !state.passageIds.some((id) => registry.isDescendant(ownerId, id))) return 'off';
 
   let v: MeshVisual = 'on';
 

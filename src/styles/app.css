@@ -2041,7 +2041,14 @@ button.ds-layer-name:hover {
   }
 }
 
-/* Sourced canal counts and anatomy evidence. */
+/* ----------------------------------------------------- dental feedback */
+.ds-layer-hint {
+  margin: 0;
+  padding: 8px 14px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--muted);
+}
 .ds-frequency table {
   width: 100%;
   border-collapse: collapse;
@@ -2060,3 +2067,19 @@ button.ds-layer-name:hover {
   color: var(--muted);
 }
 .ds-evidence a { color: var(--accent); }
+.ds-segmented--fill { flex-wrap: wrap; }
+.ds-jaw-controls {
+  padding: 12px 16px;
+  width: 560px;
+  max-width: 100%;
+}
+.ds-jaw-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.ds-jaw-row .ds-slider { flex: 1; min-width: 120px; }
+.ds-jaw-controls .ds-evidence { margin: 8px 0 0; max-width: 520px; }
+.ds-jaw-controls .ds-play:disabled { opacity: 0.4; cursor: default; }

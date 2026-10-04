@@ -6,6 +6,9 @@ import { actions, DISSECT_LEVELS, getState, useApp, type ClipAxis } from '../sta
 import { CameraControls } from './CameraControls';
 import { useServices } from './context';
 import { PanelHandle } from './PanelHandle';
+import { JawMotionControls } from './JawMotionControls';
+import { FEEDBACK_TEXT } from '../i18n/feedback';
+import { useLang } from '../i18n';
 import { IconArrowLeft, IconExplode, IconFlip, IconLabel, IconPause, IconPlay, IconReplay, IconSection, IconWarning } from './icons';
 
 /** Section planes; names and titles are in the messages (`axis`, `toothAxis`). */
@@ -15,13 +18,14 @@ export function Dock() {
   const dissectFdi = useApp((s) => s.dissectFdi);
   const mobileOpen = useApp((s) => s.mobileSheet === 'tools');
   const collapsed = useApp((s) => s.collapsed.dock);
+  const jawControls = useApp((s) => s.jawControls);
   const m = useT();
   return (
     <div className={`ds-dock${mobileOpen ? ' is-mobile-open' : ''}${collapsed ? ' is-collapsed' : ''}`}>
       <PanelHandle panel="dock" />
       <div className="ds-panel ds-toolbar" role="toolbar" aria-label={dissectFdi !== null ? m.toolbarDissect : m.toolbarScene}>
         <CameraControls />
-        {dissectFdi !== null ? <DissectControls fdi={dissectFdi} /> : <ArchControls />}
+        {dissectFdi !== null ? <DissectControls fdi={dissectFdi} /> : jawControls ? <JawMotionControls /> : <ArchControls />}
       </div>
       <SectionControls />
     </div>
@@ -38,9 +42,12 @@ const PLAY_SECONDS_TO_CHECKPOINT = 2.2;
 const PLAY_SECONDS_TO_LAYOUT = 1.2;
 
 function ArchControls() {
+  const { engine } = useServices();
+  const lang = useLang();
   const explode = useApp((s) => s.explode);
   const phase = useApp((s) => s.explodePhase);
   const labels = useApp((s) => s.labels);
+  const jawControls = useApp((s) => s.jawControls);
   const loading = useApp((s) => s.loading.teeth);
   const clip = useApp((s) => s.clip.enabled);
   const m = useT();
@@ -65,6 +72,9 @@ function ArchControls() {
     setPlaying(false);
     setLocal(null);
   }, [resetId]);
+  useEffect(() => {
+    if (jawControls) { cancelAnimationFrame(raf.current); setPlaying(false); setLocal(null); }
+  }, [jawControls]);
 
   const tween = (from: number, to: number, seconds: number, apply: (v: number) => void, done: () => void) =>
     animateFrames(raf, from, to, seconds, easeInOutQuad, apply, done);
@@ -154,6 +164,7 @@ function ArchControls() {
         </div>
       </div>
       <div className="ds-dock-tools">
+        <button type="button" className="ds-tool" onClick={() => void engine.showJaw()} title={FEEDBACK_TEXT[lang].jawMotion}>{FEEDBACK_TEXT[lang].jawMotion}</button>
         <ToolToggle active={clip} onClick={() => actions.setClip({ enabled: !clip })} icon={<IconSection />} label={m.section} title={m.sectionTitle} />
         <LabelsToggle active={labels} />
       </div>
