@@ -13,6 +13,18 @@ Implemented 2026-10-04 in the existing React/Three.js explorer, with no new runt
 
 ## Evidence and model limits
 
+### Description and navigation follow-up
+
+The registry-wide audit found 36 selectable items without summaries, including paired skull bones, the hyoid, category groups and the infraorbital foramina. They now have localized descriptions in all five languages. Masseter parts, lateral pterygoid heads and upper/lower gingiva also have specific descriptions, and each facial terminal branch describes its own distribution.
+
+Skull descriptions were checked against [OpenStax, The Skull](https://openstax.org/books/anatomy-and-physiology-2e/pages/7-2-the-skull). Muscle and gingiva entries cite [mastication muscles](https://www.ncbi.nlm.nih.gov/books/NBK541027/), [masseter](https://www.ncbi.nlm.nih.gov/books/NBK539869/), [lateral pterygoid](https://www.ncbi.nlm.nih.gov/books/NBK549799/) and [oral gingiva](https://www.ncbi.nlm.nih.gov/books/NBK560662/). Vascular group text cites [carotid arteries](https://www.ncbi.nlm.nih.gov/books/NBK545238/) and [pterygoid plexus](https://www.ncbi.nlm.nih.gov/books/NBK555896/).
+
+The hyoid panel shows its suspension from the skull and mandible and its lower attachments. Sources: [hyoid bone](https://www.ncbi.nlm.nih.gov/books/NBK539726/), [suprahyoid muscles](https://www.ncbi.nlm.nih.gov/books/NBK546710/), [sternohyoid](https://www.ncbi.nlm.nih.gov/books/NBK547693/) and [thyrohyoid membrane](https://www.ncbi.nlm.nih.gov/books/NBK532995/). It distinguishes the stylohyoid ligament, muscles and digastric tendon sling from a bony articulation. These explanatory attachments are not new 3D meshes.
+
+Nerves now start with the dental V2/V3 supply. The layer panel offers dental, trigeminal, facial, IX/X/XII and all-nerve views, with anatomical left/right filtering. Search selection reveals the relevant hidden family and side. Focused nerve passage views override the family filter. Existing nerve geometry is unchanged.
+
+Review the hyoid panel's three attachment tabs and the description for each skull bone, then switch nerve groups and sides on desktop and phone layouts. Missing descriptions or translations now fail tests and the production build.
+
 | Topic | Source and interpretation |
 |---|---|
 | Canal counts, first through second molars | [Monsarrat et al., 2016, Table 2](https://doi.org/10.1371/journal.pone.0165329). 2,424 teeth from 102 retained adult CBCT scans, Toulouse, France, 200 µm voxels. Counts grouped across left/right teeth and across root-count columns by total canal count. Small canals may be missed. No third molars in this dataset. |
@@ -51,8 +63,8 @@ Dental review of the new paths, landmark coordinates, deformation and content is
 ## Engineering checks
 
 - Skull context and muscles start opaque in the overview; muscles are also opaque in the joint view. Arch disassembly makes the skull context and muscles translucent, the laid-out board fades them away, and reset restores the assembled visibility; this sequence was checked in the browser.
-- TypeScript checks and production build pass; 140 tests pass, including new count reconciliation, nerve connectivity, landmark hosts, route filtering and jaw-state regressions.
+- TypeScript checks and production build pass; 148 tests pass, including count reconciliation, nerve connectivity, landmark hosts, route filtering, jaw-state regressions, nerve group/side navigation and description coverage (including rejection of missing translations and generic parent fallback).
 - Asset validation passes for 35 GLBs, 407 meshes and 2,637,212 triangles, including cranial path connectivity and schematic provenance. It still reports 34 existing internal tooth surfaces with nonmanifold edges; this extension does not alter those tooth assets.
-- Browser checks cover desktop and 390×844 layouts: canal tables, Swedish passage details, transparency, jaw scrubbing/playback, and the production Swedish guide redirect.
+- Browser checks cover desktop and 390×844 layouts: canal tables, Swedish passage details, transparency, jaw scrubbing/playback, the production Swedish guide redirect, hyoid attachment tabs, skull descriptions and nerve group/side controls.
 - The current gingiva/core asset was preserved, as were context and per-tooth geometry. The cranial extension changes `neurovascular.glb` and the manifest.
-- Changes are committed locally in eight commits on `codex/dental-feedback`. Nothing has been pushed or merged; server review and merge approval remain pending.
+- The original feedback extension is organized in eight commits on `codex/dental-feedback`. The description, hyoid and nerve organization follow-up is organized in three further commits. Server review and merge approval remain pending.

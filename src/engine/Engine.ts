@@ -403,6 +403,7 @@ export class Engine {
     const visChanged =
       s.categories !== p.categories ||
       s.passageIds !== p.passageIds ||
+      s.nerveView !== p.nerveView || s.nerveSide !== p.nerveSide ||
       s.jawControls !== p.jawControls || s.jawSide !== p.jawSide ||
       s.hidden !== p.hidden ||
       s.ghosted !== p.ghosted ||

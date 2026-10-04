@@ -8,6 +8,7 @@ import { useStore } from 'zustand';
 import { INITIAL_CATEGORY_STATE, type CategoryState } from '../anatomy/categories';
 import type { CategoryId, NumberingSystem } from '../anatomy/types';
 import { DEFAULT_LANG, isLang, type Lang } from '../i18n/lang';
+import type { NerveSide, NerveView } from '../anatomy/nerveViews';
 
 export type ClipAxis = 'sagittal' | 'coronal' | 'axial' | 'view';
 export type ModeId = 'explore' | 'learn' | 'quiz' | 'compare';
@@ -37,6 +38,8 @@ export interface ClipState {
 export const DISSECT_LEVELS = [{ id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }] as const;
 
 export interface AppState {
+  nerveView: NerveView;
+  nerveSide: NerveSide;
   passageIds: string[];
   jawControls: boolean;
   jawSide: 'right' | 'left';
@@ -87,6 +90,7 @@ export interface AppState {
 export type CollapsiblePanel = 'layers' | 'detail' | 'dock';
 
 export const initialState: AppState = {
+  nerveView: 'dental', nerveSide: 'both',
   passageIds: [], jawControls: false, jawSide: 'right', jawOpening: 0, jawPlaying: false,
   ready: false,
   loading: {},
@@ -149,6 +153,14 @@ function persist(key: string, value: string) {
 let orbitBeforeTooth: OrbitMode | null = null;
 
 export const actions = {
+  setNerveView(nerveView: NerveView) {
+    if (getState().dissectFdi !== null) actions.exitDissect();
+    setState({ nerveView, passageIds: [], selectedId: null, hoveredId: null, isolateId: null, isolateContext: false });
+  },
+  setNerveSide(nerveSide: NerveSide) {
+    if (getState().dissectFdi !== null) actions.exitDissect();
+    setState({ nerveSide, passageIds: [], selectedId: null, hoveredId: null, isolateId: null, isolateContext: false });
+  },
   openJawControls(on: boolean) {
     if (on && getState().dissectFdi !== null) actions.exitDissect();
     setState((s) => ({ jawControls: on, jawPlaying: false, jawOpening: on ? s.jawOpening : 0, explode: 0, explodePhase: 1, collapsed: { ...s.collapsed, dock: false }, mobileSheet: on ? 'tools' : s.mobileSheet }));

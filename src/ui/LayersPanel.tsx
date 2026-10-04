@@ -8,6 +8,7 @@ import { useServices } from './context';
 import { IconCheck, IconGhost, IconLayers, IconReset, IconTree } from './icons';
 import { PanelHandle } from './PanelHandle';
 import { StructureTree } from './StructureTree';
+import { NerveControls } from './NerveControls';
 
 export function LayersPanel() {
   const panel = useApp((s) => s.panel);
@@ -56,6 +57,7 @@ function Categories() {
         ))}
       </div>
       <p className="ds-layer-hint">{FEEDBACK_TEXT[lang].transparencyHint}</p>
+      {cats.nerves !== 'off' && <NerveControls />}
       <div className="ds-layer-list">
         {groups.map(([group, list]) => (
           <div key={group} className="ds-layer-group" role="list" aria-label={m.group[group] ?? group}>

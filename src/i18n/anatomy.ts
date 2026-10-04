@@ -414,6 +414,9 @@ export function canalNames(root: string, n: number, i: number, arch: Arch): { na
 
 /** Names by exact structure id. */
 const EXACT: Record<string, Tr> = {
+  'trigeminal-nerves': { sv: 'Trigeminusnerver (V)', de: 'Trigeminusnerven (V)', es: 'Nervios trigéminos (V)', la: 'Nervi trigemini (V)' },
+  'facial-nerves': { sv: 'Facialisnerver (VII)', de: 'Gesichtsnerven (VII)', es: 'Nervios faciales (VII)', la: 'Nervi faciales (VII)' },
+  'lower-cranial-nerves': { sv: 'Kranialnerver IX, X och XII', de: 'Hirnnerven IX, X und XII', es: 'Nervios craneales IX, X y XII', la: 'Nervi craniales IX, X et XII' },
   'dental-anatomy': { sv: 'Tandanatomi', de: 'Zahnanatomie' , es: 'Anatomía dental', la: 'Anatomia dentalis' },
   maxilla: { sv: 'Överkäke', de: 'Oberkiefer' , es: 'Maxilar', la: 'Maxillae' },
   'maxillary-alveolar-process': { sv: 'Överkäkens alveolarutskott', de: 'Alveolarfortsatz des Oberkiefers' , es: 'Apófisis alveolar del maxilar', la: 'Processus alveolaris maxillae' },
