@@ -24,6 +24,7 @@ export const de: Messages = {
   layers: 'Ebenen',
   search: 'Suche',
   tools: 'Werkzeuge',
+  details: 'Details',
   closePanel: 'Bereich schließen',
   resetAll: 'Alles zurücksetzen',
   resetAllTitle: 'Alles zurücksetzen: Startansicht und Standardeinstellungen',

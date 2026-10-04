@@ -11,6 +11,7 @@ import { FEEDBACK_TEXT } from '../i18n/feedback';
 import { useLang } from '../i18n';
 import { IconArrowLeft, IconExplode, IconFlip, IconLabel, IconPause, IconPlay, IconReplay, IconSection, IconWarning } from './icons';
 import { DevelopmentTimeline, DevelopmentTools } from './DevelopmentControls';
+import { NumberingControls } from './TopBar';
 
 /** Section planes; names and titles are in the messages (`axis`, `toothAxis`). */
 const AXES: ClipAxis[] = ['sagittal', 'coronal', 'axial', 'view'];
@@ -25,6 +26,7 @@ export function Dock() {
   return (
     <div className={`ds-dock${mobileOpen ? ' is-mobile-open' : ''}${collapsed ? ' is-collapsed' : ''}`}>
       <PanelHandle panel="dock" />
+      <div className="ds-compact-settings ds-panel"><span>{m.numberingGroup}</span><NumberingControls /></div>
       <DevelopmentTimeline />
       <div className="ds-panel ds-toolbar" role="toolbar" aria-label={dissectFdi !== null ? m.toolbarDissect : m.toolbarScene}>
         <CameraControls />

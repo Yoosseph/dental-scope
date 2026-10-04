@@ -24,6 +24,7 @@ export const es: Messages = {
   layers: 'Capas',
   search: 'Buscar',
   tools: 'Herramientas',
+  details: 'Detalles',
   closePanel: 'Cerrar panel',
   resetAll: 'Restablecer todo',
   resetAllTitle: 'Restablecer todo: vista inicial y ajustes predeterminados',

@@ -28,6 +28,8 @@ import { landmarkHost, passageFor } from '../anatomy/passages';
 import { PRESETS } from '../anatomy/categories';
 import { DevelopmentScene } from './DevelopmentScene';
 import { developmentNotation } from '../anatomy/development';
+import { isCompactLayout } from '../app/viewport';
+import { renderPixelRatio } from './renderQuality';
 
 interface MeshEntry {
   key: string;
@@ -99,6 +101,7 @@ export class Engine {
   private pointerInside = false;
   private down: { x: number; y: number; t: number } | null = null;
   private needsRender = true;
+  private visualsMoving = true;
   private lastT = performance.now();
   private raf = 0;
   private unsub: (() => void)[] = [];
@@ -126,6 +129,7 @@ export class Engine {
   /** everything in the manifest (the whole skull), for the start framing */
   private skullBounds = new THREE.Box3();
   private resizeObs?: ResizeObserver;
+  private environmentTarget?: THREE.WebGLRenderTarget;
   private disposed = false;
   private jawCur = 0;
   private clipJaw = 0;
@@ -188,7 +192,11 @@ export class Engine {
     this.overlay.appendChild(this.tip);
 
     const pmrem = new THREE.PMREMGenerator(renderer);
-    this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    const environment = new RoomEnvironment();
+    this.environmentTarget = pmrem.fromScene(environment, 0.04);
+    this.scene.environment = this.environmentTarget.texture;
+    environment.dispose();
+    pmrem.dispose();
     this.applyTheme(getState().theme);
 
     const camera = new THREE.PerspectiveCamera(32, 1, 0.05, 200);
@@ -201,7 +209,9 @@ export class Engine {
     const reduce = matchMedia('(prefers-reduced-motion: reduce)');
     // ?motion=reduce forces reduced motion (useful for screenshots and slow devices)
     this.animator.reducedMotion = reduce.matches || new URLSearchParams(location.search).get('motion') === 'reduce';
-    reduce.addEventListener?.('change', (e) => (this.animator.reducedMotion = e.matches));
+    const motionChange = (e: MediaQueryListEvent) => { this.animator.reducedMotion = e.matches; this.invalidate(); };
+    reduce.addEventListener('change', motionChange);
+    this.unsub.push(() => reduce.removeEventListener('change', motionChange));
 
     // initial framing: the whole skull, straight on (see startView)
     const sphere = this.sceneBounds.getBoundingSphere(new THREE.Sphere());
@@ -219,6 +229,9 @@ export class Engine {
     this.resizeObs = new ResizeObserver(() => this.resize());
     this.resizeObs.observe(container);
     this.unsub.push(store.subscribe((s, prev) => this.onState(s, prev)));
+    document.addEventListener('visibilitychange', this.visibilityChange);
+    this.unsub.push(() => document.removeEventListener('visibilitychange', this.visibilityChange));
+    this.lastT = performance.now();
     this.loop();
   }
 
@@ -233,7 +246,8 @@ export class Engine {
     this.developmentScene.dispose();
     this.developmentProgressListeners.clear();
     this.rig?.controls.dispose();
-    this.scene.environment?.dispose();
+    this.environmentTarget?.dispose();
+    this.scene.environment = null;
     this.renderer?.dispose();
     this.renderer?.domElement.remove();
     this.overlay?.remove();
@@ -791,6 +805,8 @@ export class Engine {
   private bindPointer() {
     const dom = this.renderer.domElement;
     dom.addEventListener('pointermove', (ev) => {
+      // Touch gestures orbit/pinch; hover raycasts only help mouse and pen input.
+      if (ev.pointerType === 'touch') return;
       this.setPointer(ev);
       this.pointerInside = true;
       this.pointerDirty = true;
@@ -802,8 +818,9 @@ export class Engine {
       this.tip.classList.remove('is-visible');
     });
     dom.addEventListener('pointerdown', (ev) => {
-      this.down = { x: ev.clientX, y: ev.clientY, t: performance.now() };
+      this.down = ev.isPrimary ? { x: ev.clientX, y: ev.clientY, t: performance.now() } : null;
     });
+    dom.addEventListener('pointercancel', () => { this.down = null; });
     dom.addEventListener('pointerup', (ev) => {
       const d = this.down;
       this.down = null;
@@ -987,7 +1004,7 @@ export class Engine {
     const id = `tmj-${side}`;
     actions.select(id);
     // Selecting on a phone opens Details; keep the movement controls reachable.
-    if (window.innerWidth <= 767) actions.setMobileSheet('tools');
+    if (isCompactLayout()) actions.setMobileSheet('tools');
     this.focus(id);
     const joint = this.registry.manifest.landmarks[`condyle-top-${side}`];
     if (joint) this.rig.focusSphere(new THREE.Vector3(...joint).add(new THREE.Vector3(0, -0.3, 0.35)), 2.7, { direction: new THREE.Vector3(side === 'right' ? -1 : 1, 0.12, 0.25), padding: 1.15 });
@@ -1207,6 +1224,9 @@ export class Engine {
     if (!this.container || !this.renderer) return;
     const w = this.container.clientWidth;
     const h = this.container.clientHeight;
+    if (!w || !h) return;
+    const ratio = renderPixelRatio(w, h, window.devicePixelRatio, matchMedia('(pointer: coarse)').matches);
+    if (this.renderer.getPixelRatio() !== ratio) this.renderer.setPixelRatio(ratio);
     this.renderer.setSize(w, h, false);
     this.rig.camera.aspect = w / Math.max(h, 1);
     this.applyViewOffset();
@@ -1220,7 +1240,7 @@ export class Engine {
   }
 
   private loop = () => {
-    if (this.disposed) return;
+    if (this.disposed || document.hidden) return;
     this.raf = requestAnimationFrame(this.loop);
     const now = performance.now();
     const dt = Math.min(0.05, (now - this.lastT) / 1000);
@@ -1237,7 +1257,9 @@ export class Engine {
     this.notifyDevelopmentProgress();
     if (heldAdult !== this.developmentScene.holdsAdult) this.refreshVisibility();
     if (growthActive && !this.developmentScene.active) { this.updatePivot(); this.refreshLabels(); this.resetToStart(); }
-    const fx = this.tickVisuals(dt);
+    // Once effects settle, avoid walking every mesh on each idle animation frame.
+    const fx = this.needsRender || this.visualsMoving || animating || growthChanged ? this.tickVisuals(dt) : false;
+    this.visualsMoving = fx;
     this.updateHover();
     if (controlsChanged || animating) this.rig.updateClipping();
     const jawMoved = this.clipJaw !== this.jawCur;
@@ -1249,6 +1271,14 @@ export class Engine {
     this.renderer.render(this.scene, this.rig.camera);
     const r = this.renderer.domElement;
     this.labels?.update(this.rig.camera, r.clientWidth, r.clientHeight, now, !(controlsChanged || animating || fx));
+  };
+
+  private visibilityChange = () => {
+    cancelAnimationFrame(this.raf);
+    if (document.hidden || this.disposed) return;
+    this.lastT = performance.now();
+    this.invalidate();
+    this.loop();
   };
 
   /** Animate opacity, highlight, explode offsets and marker. Returns true while anything is moving. */
@@ -1372,9 +1402,9 @@ export class Engine {
     if (markerAt) {
       this.marker.position.copy(markerAt);
       const d = this.rig.camera.position.distanceTo(this.marker.position);
-      const pulse = 1 + 0.18 * Math.sin(performance.now() / 260);
+      const pulse = this.animator.reducedMotion ? 1 : 1 + 0.18 * Math.sin(performance.now() / 260);
       this.marker.scale.setScalar(d * 0.0075 * pulse);
-      moving = true;
+      if (!this.animator.reducedMotion) moving = true;
     }
     return moving;
   }
