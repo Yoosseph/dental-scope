@@ -4,6 +4,7 @@
  * `meshes` are scene node keys produced by tools/pipeline/build_assets.py.
  */
 import type { CategoryId, Provenance, StructureKind } from './types';
+import { FEEDBACK_STRUCTURES } from './feedbackStructures';
 
 export interface StructureDef {
   id: string;
@@ -155,4 +156,5 @@ export const STRUCTURE_DEFS: StructureDef[] = [
   ...bilateral('buccinator', 'buccinator', () => 'muscles', { categories: ['muscles'], provenance: 'source', labelPriority: 2, aliases: ['cheek muscle'] }),
   ...bilateral('mentalis', 'mentalis', () => 'muscles', { categories: ['muscles'], provenance: 'source', labelPriority: 1 }),
   { id: 'orbicularis-oris', name: 'Orbicularis oris', parent: 'muscles', categories: ['muscles'], meshes: ['orbicularis-oris'], provenance: 'source', labelPriority: 2, aliases: ['lip muscle', 'lips'] },
+  ...FEEDBACK_STRUCTURES,
 ];

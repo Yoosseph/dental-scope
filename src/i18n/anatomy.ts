@@ -13,6 +13,7 @@
  */
 import type { Arch, Side, ToothType } from '../anatomy/types.ts';
 import type { Lang } from './lang.ts';
+import { FEEDBACK_NAMES } from './feedbackNames.ts';
 
 export type Names = Record<Lang, string>;
 /** A name in every language but English (English comes from the structure definition). */
@@ -416,7 +417,7 @@ const EXACT: Record<string, Tr> = {
   'dental-anatomy': { sv: 'Tandanatomi', de: 'Zahnanatomie' , es: 'Anatomía dental', la: 'Anatomia dentalis' },
   maxilla: { sv: 'Överkäke', de: 'Oberkiefer' , es: 'Maxilar', la: 'Maxillae' },
   'maxillary-alveolar-process': { sv: 'Överkäkens alveolarutskott', de: 'Alveolarfortsatz des Oberkiefers' , es: 'Apófisis alveolar del maxilar', la: 'Processus alveolaris maxillae' },
-  'maxillary-sinus': { sv: 'Käkhålor', de: 'Kieferhöhlen', es: 'Senos maxilares', la: 'Sinus maxillares' },
+  'maxillary-sinus': { sv: 'Bihålor i överkäken', de: 'Kieferhöhlen', es: 'Senos maxilares', la: 'Sinus maxillares' },
   'maxillary-dentition': { sv: 'Överkäkens tandbåge', de: 'Oberer Zahnbogen' , es: 'Arcada dentaria superior', la: 'Arcus dentalis superior' },
   'upper-right-quadrant': { sv: 'Övre högra kvadranten', de: 'Oberer rechter Quadrant' , es: 'Cuadrante superior derecho', la: 'Quadrans superior dexter' },
   'upper-left-quadrant': { sv: 'Övre vänstra kvadranten', de: 'Oberer linker Quadrant' , es: 'Cuadrante superior izquierdo', la: 'Quadrans superior sinister' },
@@ -451,9 +452,10 @@ const EXACT: Record<string, Tr> = {
 
 /** Names of paired structures by base id (the id without -right / -left); the side follows in brackets. */
 const SIDED: Record<string, Tr> = {
+  ...FEEDBACK_NAMES,
   maxilla: { sv: 'Maxilla', de: 'Maxilla' , es: 'Maxilar', la: 'Maxilla' },
   'maxillary-alveolar-process': { sv: 'Överkäkens alveolarutskott', de: 'Alveolarfortsatz des Oberkiefers' , es: 'Apófisis alveolar del maxilar', la: 'Processus alveolaris maxillae' },
-  'maxillary-sinus': { sv: 'Käkhåla', de: 'Kieferhöhle', es: 'Seno maxilar', la: 'Sinus maxillaris' },
+  'maxillary-sinus': { sv: 'Bihåla i överkäken (sinus maxillaris)', de: 'Kieferhöhle', es: 'Seno maxilar', la: 'Sinus maxillaris' },
   'mandibular-condyle': { sv: 'Underkäkens ledhuvud', de: 'Unterkieferköpfchen' , es: 'Cóndilo mandibular', la: 'Caput mandibulae' },
   'mandibular-foramen': { sv: 'Foramen mandibulae', de: 'Foramen mandibulae' , es: 'Agujero mandibular', la: 'Foramen mandibulae' },
   'mental-foramen': { sv: 'Foramen mentale', de: 'Foramen mentale' , es: 'Agujero mentoniano', la: 'Foramen mentale' },
@@ -587,7 +589,7 @@ export const STRUCTURE_ALIASES: Record<string, string[]> = {
   'facial-artery': ['ansiktsartären', 'a. facialis', 'Gesichtsarterie', 'A. facialis', 'arteria facial', 'arteria facialis'],
   'venous-drainage': ['ven', 'vener', 'Vene', 'Venen', 'vena', 'venas', 'venae'],
   'pterygoid-plexus': ['plexus pterygoideus', 'venplexus', 'Venengeflecht', 'Plexus pterygoideus', 'plexo pterigoideo', 'plexo venoso', 'plexus pterygoideus'],
-  'maxillary-sinus': ['käkhåla', 'käkhålan', 'bihåla', 'sinus maxillaris', 'Kieferhöhle', 'Nasennebenhöhle', 'Sinus maxillaris', 'seno maxilar', 'antro de Highmore', 'sinus maxillaris'],
+  'maxillary-sinus': ['käkhåla', 'käkhålan', 'käkhålor', 'bihåla', 'bihålor', 'sinus maxillaris', 'Kieferhöhle', 'Nasennebenhöhle', 'Sinus maxillaris', 'seno maxilar', 'antro de Highmore', 'sinus maxillaris'],
   'maxillary-vein': ['v. maxillaris', 'V. maxillaris', 'vena maxilar', 'vena maxillaris'],
   'retromandibular-vein': ['v. retromandibularis', 'V. retromandibularis', 'vena retromandibular', 'vena retromandibularis'],
   'facial-vein': ['ansiktsvenen', 'v. facialis', 'Gesichtsvene', 'V. facialis', 'vena facial', 'vena facialis'],
