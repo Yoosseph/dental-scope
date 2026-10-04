@@ -22,23 +22,25 @@ Every 3D asset shipped in `public/models/`, where it comes from, its licence and
 | `derived` | Cut from or approximated using source geometry (alveolar bone, condyles, fossae, third molars) |
 | `modeled` | Internal tooth anatomy generated inside the real tooth shape with simplified, approximate proportions (not measured); the maxillary sinuses, hollowed out of the maxilla with an approximate wall thickness |
 | `atlas` | Nerve and vessel centrelines from the Z-Anatomy atlas (CC BY-SA 4.0), fitted onto these jaws: anatomical course, not measured in this individual |
-| `schematic` | Superior alveolar nerves, inferior alveolar vein, pterygoid plexus and joint discs placed from landmarks to show relationships |
+| `schematic` | Teaching paths and landmarks placed to illustrate relationships: superior alveolar nerves, V1, VII/IX/X/XII, mandibular canal envelopes, inferior alveolar vein, pterygoid plexus and joint discs |
 
 The provenance of every mesh is recorded in `manifest.json`; the About dialog explains the levels.
 
 ## Derivations in detail
 
 - **Third molars (18, 28, 38, 48)** — copy of the second molar of the same quadrant, scaled to 90 % and moved distally along the arch. Mandibular placement is fitted to the neighbouring crown (rather than its roots), keeping the cusp height level with the second molar.
-- **Gingiva** — the source gum surface is cut around each tooth with a narrow clearance so that gum and tooth solids do not occupy the same visible space. The source has only 28 teeth; `gingiva.py` adds a continuous lower posterior ridge around the second and third molar necks, blending it into the source with signed distance fields. Its crest follows the individual cervical contours, so the erupted crowns sit in closed, fitted sockets. The ridge extends to the source basal surface and retains the original gum body below the necks, preventing underside notches at the joins. The upper gingiva retains its source shape. Validation checks both crown visibility and gum support around the viewer's root cutoff.
+- **Gingiva** — the source gum surface is cut around each tooth with a narrow clearance so that gum and tooth solids do not occupy the same visible space. The source has only 28 teeth; `gingiva.py` adds a continuous posterior ridge on each arch around the second and third molar necks, blending it into the source with signed distance fields. Its crest follows the individual cervical contours, so the erupted crowns sit in closed, fitted sockets. The lower ridge extends to the source basal surface and retains the original gum body below the necks, preventing underside notches at the joins. Rounded upper collars are joined to the source gum while preserving its palatal and basal contours. Validation checks crown visibility and gum support around the viewer's root cutoff for all four wisdom teeth.
 - **Alveolar processes** — faces of the maxilla / mandible within 4 mm of a tooth root (the part below the cervical line).
 - **Mandibular condyles** — the top 10 mm of the posterior ramus on each side.
 - **Articular fossae** — faces of the temporal bone within reach of the condylar head.
 - **Tooth layers** — see `tools/pipeline/tooth_layers.py`: signed-distance field of each tooth → cervical line from a typical crown/root ratio → enamel and cementum by depth → pulp chamber by inner offset → canals traced along each detected root; canal count per root follows the most common textbook configuration.
-- **Atlas nerves and vessels** — `tools/pipeline/extract_z_anatomy.py` (run once with Blender's `bpy` module) samples the Z-Anatomy Bezier curves, fits the Z-Anatomy mandible and maxillae onto the BodyParts3D ones with a similarity ICP (median residual on the mandible 0.27 mm) and writes the centrelines to `tools/pipeline/data/z-anatomy-neurovascular.json`. `build_assets.py` sweeps them into tubes, ends the inferior alveolar nerve's dental branches at the tooth apices (adding one for a tooth without a branch), clips the neck vessels (external carotid artery, internal jugular, retromandibular and facial veins) just below the angle of the mandible, keeps only the ganglion of the trigeminal nerve, leaves out the external jugular vein and the posterior division of the retromandibular vein, gives the inferior alveolar nerve trunk its real calibre (about 2.2 mm) and uses the atlas nerve path to place the mandibular, mental and infraorbital foramen landmarks.
+- **Atlas nerves and vessels** — `tools/pipeline/extract_z_anatomy.py` (run once with Blender's `bpy` module) samples the Z-Anatomy Bezier curves, fits the Z-Anatomy mandible and maxillae onto the BodyParts3D ones with a similarity ICP (median residual on the mandible 0.27 mm) and writes the centrelines to `tools/pipeline/data/z-anatomy-neurovascular.json`. `build_assets.py` sweeps them into tubes, ends the inferior alveolar nerve's dental branches at the tooth apices (adding one for a tooth without a branch), clips the neck vessels (external carotid artery, internal jugular, retromandibular and facial veins) just below the angle of the mandible, retains the complete sampled trigeminal root and ganglion via `cranial.py`, leaves out the external jugular vein and the posterior division of the retromandibular vein, gives the inferior alveolar nerve trunk its real calibre (about 2.2 mm) and uses the atlas nerve path to place the mandibular, mental and infraorbital foramen landmarks.
 - **Schematic nerves and vessels / TMJ discs** — the superior alveolar nerves branch from the atlas maxillary and infraorbital nerves to the upper apices; the pterygoid plexus is a small venous network on the lateral pterygoid draining into the atlas maxillary vein; the inferior alveolar vein runs beside the atlas artery from the plexus to the mental foramen. Discs sit between condylar head and fossa.
 - **Maxillary sinuses** — `tools/pipeline/sinus.py`. Neither source has them (both maxillae are solid), so each is modelled: the BodyParts3D maxilla is voxelised (0.4 mm), eroded by a 1 mm wall, cut medially at the lateral nasal wall (the lateral edge of the inferior nasal concha), kept 1 mm from the tooth roots and 0.8 mm from the superior alveolar and infraorbital nerves, opened (2 mm) to drop thin remnants of the processes, and the largest cavity is meshed with marching cubes. `manifest.sinus` holds each volume and the distance from each upper root apex to the sinus floor.
 - **Jaw weights** — every nerve and vessel vertex stores (in its vertex colour) how far it moves with the skull (1) rather than the mandible (0) when the arches separate, from its distances to the two bones, so paths between the jaws stretch instead of breaking.
 - **Dissection tiers** (`manifest.explode`, `teeth[].extract`, `teeth[].collar`) — measured by `explode_plan` in `build_assets.py`; `validate_assets.py` checks that no tooth passes visibly through its gum at any point of the slider.
+
+- **Cranial teaching extension and joint movement** — `cranial.py` restores the sampled atlas trigeminal root, adds representative V1/VII/IX/X/XII paths and skull-exit landmarks, and fits an illustrative rotation/translation plan to the condyles. The mandibular canal is a translucent envelope around the atlas nerve trunk, not a carved bone opening. See [feedback-anatomy.md](feedback-anatomy.md) for citations, provenance and review limits.
 
 ## Rebuilding
 
@@ -79,12 +81,28 @@ The Z-Anatomy centrelines are committed, so the steps above do not need Blender.
 | `external-carotid-artery-right` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 840 |
 | `facial-artery-left` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 1,752 |
 | `facial-artery-right` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 1,752 |
+| `facial-buccal-branch-left` | neurovascular.glb | — | schematic | Teaching path or canal envelope generated by `cranial.py` (see feedback-anatomy.md) | 260 |
+| `facial-buccal-branch-right` | neurovascular.glb | — | schematic | Teaching path or canal envelope generated by `cranial.py` (see feedback-anatomy.md) | 260 |
+| `facial-cervical-branch-left` | neurovascular.glb | — | schematic | Teaching path or canal envelope generated by `cranial.py` (see feedback-anatomy.md) | 260 |
+| `facial-cervical-branch-right` | neurovascular.glb | — | schematic | Teaching path or canal envelope generated by `cranial.py` (see feedback-anatomy.md) | 260 |
+| `facial-marginal-mandibular-branch-left` | neurovascular.glb | — | schematic | Teaching path or canal envelope generated by `cranial.py` (see feedback-anatomy.md) | 260 |
+| `facial-marginal-mandibular-branch-right` | neurovascular.glb | — | schematic | Teaching path or canal envelope generated by `cranial.py` (see feedback-anatomy.md) | 260 |
+| `facial-nerve-left` | neurovascular.glb | — | schematic | Teaching path or canal envelope generated by `cranial.py` (see feedback-anatomy.md) | 620 |
+| `facial-nerve-right` | neurovascular.glb | — | schematic | Teaching path or canal envelope generated by `cranial.py` (see feedback-anatomy.md) | 620 |
+| `facial-temporal-branch-left` | neurovascular.glb | — | schematic | Teaching path or canal envelope generated by `cranial.py` (see feedback-anatomy.md) | 260 |
+| `facial-temporal-branch-right` | neurovascular.glb | — | schematic | Teaching path or canal envelope generated by `cranial.py` (see feedback-anatomy.md) | 260 |
 | `facial-vein-left` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 2,736 |
 | `facial-vein-right` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 2,736 |
+| `facial-zygomatic-branch-left` | neurovascular.glb | — | schematic | Teaching path or canal envelope generated by `cranial.py` (see feedback-anatomy.md) | 260 |
+| `facial-zygomatic-branch-right` | neurovascular.glb | — | schematic | Teaching path or canal envelope generated by `cranial.py` (see feedback-anatomy.md) | 260 |
 | `frontal-bone` | context.glb | FMA52734 | source | Axis/unit transform, decimation, meshopt compression | 15,000 |
 | `gingiva-lower` | core.glb | FMA59764 | derived | Transform + partition or approximation from the named source mesh (see below) | 93,038 |
-| `gingiva-upper` | core.glb | FMA59763 | derived | Transform + partition or approximation from the named source mesh (see below) | 62,608 |
+| `gingiva-upper` | core.glb | FMA59763 | derived | Transform + partition or approximation from the named source mesh (see below) | 99,072 |
+| `glossopharyngeal-nerve-left` | neurovascular.glb | — | schematic | Teaching path or canal envelope generated by `cranial.py` (see feedback-anatomy.md) | 500 |
+| `glossopharyngeal-nerve-right` | neurovascular.glb | — | schematic | Teaching path or canal envelope generated by `cranial.py` (see feedback-anatomy.md) | 500 |
 | `hyoid-bone` | context.glb | FMA52749 | source | Axis/unit transform, decimation, meshopt compression | 5,534 |
+| `hypoglossal-nerve-left` | neurovascular.glb | — | schematic | Teaching path or canal envelope generated by `cranial.py` (see feedback-anatomy.md) | 620 |
+| `hypoglossal-nerve-right` | neurovascular.glb | — | schematic | Teaching path or canal envelope generated by `cranial.py` (see feedback-anatomy.md) | 620 |
 | `incisive-nerve-left` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 656 |
 | `incisive-nerve-right` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 656 |
 | `inferior-alveolar-artery-left` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 4,024 |
@@ -109,6 +127,8 @@ The Z-Anatomy centrelines are committed, so the steps above do not need Blender.
 | `lingual-nerve-right` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 1,168 |
 | `mandible-body` | core.glb | FMA52748 | source | Axis/unit transform, decimation, meshopt compression | 10,599 |
 | `mandibular-alveolar-process` | core.glb | FMA52748 | derived | Transform + partition or approximation from the named source mesh (see below) | 8,158 |
+| `mandibular-canal-left` | neurovascular.glb | — | schematic | Teaching path or canal envelope generated by `cranial.py` (see feedback-anatomy.md) | 460 |
+| `mandibular-canal-right` | neurovascular.glb | — | schematic | Teaching path or canal envelope generated by `cranial.py` (see feedback-anatomy.md) | 460 |
 | `mandibular-condyle-left` | core.glb | FMA52748 | derived | Transform + partition or approximation from the named source mesh (see below) | 1,406 |
 | `mandibular-condyle-right` | core.glb | FMA52748 | derived | Transform + partition or approximation from the named source mesh (see below) | 1,495 |
 | `mandibular-nerve-left` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 1,800 |
@@ -140,6 +160,8 @@ The Z-Anatomy centrelines are committed, so the steps above do not need Blender.
 | `nasal-bone-left` | context.glb | FMA53648 | source | Axis/unit transform, decimation, meshopt compression | 1,124 |
 | `nasal-bone-right` | context.glb | FMA53647 | source | Axis/unit transform, decimation, meshopt compression | 1,024 |
 | `occipital-bone` | context.glb | FMA52735 | source | Axis/unit transform, decimation, meshopt compression | 11,998 |
+| `ophthalmic-nerve-left` | neurovascular.glb | — | schematic | Teaching path or canal envelope generated by `cranial.py` (see feedback-anatomy.md) | 500 |
+| `ophthalmic-nerve-right` | neurovascular.glb | — | schematic | Teaching path or canal envelope generated by `cranial.py` (see feedback-anatomy.md) | 500 |
 | `orbicularis-oris` | context.glb | FMA46841 | source | Axis/unit transform, decimation, meshopt compression | 9,000 |
 | `palatine-bone-left` | context.glb | FMA53656 | source | Axis/unit transform, decimation, meshopt compression | 3,642 |
 | `palatine-bone-right` | context.glb | FMA53655 | source | Axis/unit transform, decimation, meshopt compression | 3,592 |
@@ -190,8 +212,10 @@ The Z-Anatomy centrelines are committed, so the steps above do not need Blender.
 | `tooth-46` | core.glb | FMA55705 | source | Axis/unit transform, decimation, meshopt compression | 8,818 |
 | `tooth-47` | core.glb | FMA55706 | source | Axis/unit transform, decimation, meshopt compression | 8,102 |
 | `tooth-48` | core.glb | — | derived | Transform + partition or approximation from the named source mesh (see below) | 8,102 |
-| `trigeminal-nerve-left` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 144 |
-| `trigeminal-nerve-right` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 144 |
+| `trigeminal-nerve-left` | neurovascular.glb | — | atlas | Full sampled Z-Anatomy root and ganglion, swept into a tube by `cranial.py` | 660 |
+| `trigeminal-nerve-right` | neurovascular.glb | — | atlas | Full sampled Z-Anatomy root and ganglion, swept into a tube by `cranial.py` | 660 |
+| `vagus-nerve-left` | neurovascular.glb | — | schematic | Teaching path or canal envelope generated by `cranial.py` (see feedback-anatomy.md) | 500 |
+| `vagus-nerve-right` | neurovascular.glb | — | schematic | Teaching path or canal envelope generated by `cranial.py` (see feedback-anatomy.md) | 500 |
 | `vomer` | context.glb | FMA9710 | source | Axis/unit transform, decimation, meshopt compression | 2,422 |
 | `zygomatic-bone-left` | context.glb | FMA52893 | source | Axis/unit transform, decimation, meshopt compression | 4,560 |
 | `zygomatic-bone-right` | context.glb | FMA52892 | source | Axis/unit transform, decimation, meshopt compression | 4,612 |

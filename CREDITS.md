@@ -33,12 +33,20 @@ Z-Anatomy is itself built on BodyParts3D.
 - Transformed to a Y-up, centimetre coordinate frame centred on the dentition.
 - Simplified meshes (quadric decimation) and compressed them (meshopt).
 - Derived the four third molars from the adjacent second molars.
-- Fitted the lower third molars to the neighbouring crowns; added a continuous posterior gingival ridge around the second and third molar necks, blended into the source gum, and carved fitted tooth sockets.
+- Fitted the lower third molars to the neighbouring crowns; added continuous posterior gingival ridges around the upper and lower second and third molar necks, blended into the source gum, and carved fitted tooth sockets.
 - Partitioned alveolar bone, mandibular condyles and articular fossae from the source bones.
 - Modeled internal tooth anatomy (enamel, dentin, cementum, periodontal ligament, pulp chamber, root canals) inside each tooth shape.
-- Sampled the Z-Anatomy nerve and vessel curves, fitted them onto the BodyParts3D jaws (similarity ICP), ended the dental nerve branches at the tooth apices, trimmed the neck vessels just below the angle of the mandible, reduced the trigeminal nerve to its ganglion, left out the external jugular vein and swept them into tubes.
+- Sampled the Z-Anatomy nerve and vessel curves, fitted them onto the BodyParts3D jaws (similarity ICP), ended the dental nerve branches at the tooth apices, trimmed the neck vessels just below the angle of the mandible, retained the complete sampled trigeminal root and ganglion, left out the external jugular vein and swept them into tubes.
 - Modeled the maxillary sinuses inside the BodyParts3D maxillae (neither source includes them).
 - Added schematic superior alveolar nerves, the inferior alveolar vein, the pterygoid venous plexus and TMJ discs, placed from computed landmarks and joined to the atlas paths.
+
+- Added schematic V1, VII (five terminal branch groups), IX, X and XII head/upper-neck teaching paths, skull-exit markers and translucent mandibular canal envelopes using `cranial.py`. These additions are not Z-Anatomy source geometry.
+- Added illustrative TMJ opening, disc translation and attachment-weighted muscle deformation. Sources and limits are recorded in [docs/feedback-anatomy.md](docs/feedback-anatomy.md).
+
+## Educational count data
+
+- [Monsarrat et al. (2016), Table 2](https://doi.org/10.1371/journal.pone.0165329), PLOS ONE, CC BY: canal counts grouped by tooth type and arch.
+- [Al-Qudah et al. (2023), Table 2](https://doi.org/10.1038/s41598-023-34134-7), Scientific Reports, CC BY 4.0: third-molar canal counts. Percentages are calculated from the cited raw counts; methods and definitions remain separate.
 
 ## Software
 
