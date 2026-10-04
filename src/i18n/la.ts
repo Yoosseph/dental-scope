@@ -24,6 +24,7 @@ export const la: Messages = {
   layers: 'Strata',
   search: 'Quaere',
   tools: 'Instrumenta',
+  details: 'Singula',
   closePanel: 'Tabulam claude',
   resetAll: 'Omnia restitue',
   resetAllTitle: 'Omnia restitue: aspectus initialis et optiones praefinitae',

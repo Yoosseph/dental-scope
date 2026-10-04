@@ -28,13 +28,13 @@
 .ds-development-play { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--accent); padding: 5px 10px; border-radius: 5px; background: var(--accent-soft); margin: 2px 0 8px; min-height: 30px; }
 .ds-development-tooth-list .is-active { background: var(--accent-soft); border-color: var(--accent); }
 .ds-development-panel .ds-evidence a { display: block; margin-top: 5px; }
-@media (max-width: 767px) {
+@media (max-width: 1023px), (pointer: coarse) and (max-width: 1366px) {
   .ds-development-timeline { width: 100%; padding: 10px; }
   .ds-development-heading { gap: 8px; font-size: 11px; }
   .ds-development-stops { font-size: 8px; gap: 1px; }
   .ds-development-stops button { min-height: 32px; }
   .ds-development-tools { flex-wrap: wrap; gap: 10px; }
-  .ds-app:not(.is-dissecting) .ds-dock:not(.is-mobile-open):not(.is-collapsed) { display: flex; bottom: calc(70px + env(safe-area-inset-bottom)); }
+  .ds-app[data-sheet='none']:not(.is-dissecting) .ds-dock:not(.is-mobile-open):not(.is-collapsed) { display: flex; bottom: calc(70px + env(safe-area-inset-bottom)); }
   .ds-app:not(.is-dissecting) .ds-dock:not(.is-mobile-open) .ds-toolbar,
   .ds-app:not(.is-dissecting) .ds-dock:not(.is-mobile-open) .ds-section-panel { display: none; }
   .ds-app.has-selection .ds-dock:not(.is-mobile-open) .ds-development-timeline { display: none; }
@@ -1252,7 +1252,7 @@ button.ds-layer-name:hover {
   text-overflow: ellipsis;
 }
 /* desktop: the level steps span the full row like a slider, first dot at the left edge, last at the right */
-@media (min-width: 768px) {
+@media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
   .ds-dissect {
     padding: 10px 16px 10px 12px;
   }
@@ -1349,7 +1349,7 @@ button.ds-layer-name:hover {
 .ds-reset-all:active {
   transform: scale(0.97);
 }
-@media (max-width: 767px) {
+@media (max-width: 1023px), (pointer: coarse) and (max-width: 1366px) {
   /* icon only, above the mobile bar; hidden while the tooth dissection tools take the bottom */
   .ds-reset-all {
     left: 12px;
@@ -1373,7 +1373,7 @@ button.ds-layer-name:hover {
 .ds-panel-handle {
   display: none;
 }
-@media (min-width: 768px) {
+@media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
   .ds-layers,
   .ds-detail,
   .ds-dock {
@@ -1758,13 +1758,14 @@ button.ds-layer-name:hover {
 
 /* ------------------------------------------------------------------ mobile */
 .ds-mobile-bar,
-.ds-scrim {
+.ds-scrim,
+.ds-compact-settings {
   display: none;
 }
 
 /* Compact desktop dock: share one surface without stretching controls across
    empty space on wide screens. */
-@media (min-width: 768px) {
+@media (min-width: 1024px) and (pointer: fine), (min-width: 1367px) {
   .ds-dock {
     width: min(1160px, calc(100% - 32px));
     bottom: 48px;
@@ -1934,22 +1935,6 @@ button.ds-layer-name:hover {
   }
 }
 
-@media (min-width: 768px) and (max-width: 1023px) {
-  .ds-dock {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .ds-dock > .ds-development-timeline {
-    grid-column: 1;
-    grid-row: 2;
-    border-left: 0;
-    border-top: 1px solid var(--line);
-    padding: 6px 16px;
-  }
-  .ds-dock > .ds-section-panel {
-    grid-row: 3;
-  }
-}
-
 @media (max-width: 1180px) {
   .ds-detail {
     width: 310px;
@@ -1979,7 +1964,7 @@ button.ds-layer-name:hover {
   }
 }
 
-@media (max-width: 767px) {
+@media (max-width: 1023px), (pointer: coarse) and (max-width: 1366px) {
   .ds-identity {
     top: 14px;
     left: 16px;
@@ -2219,7 +2204,7 @@ button.ds-layer-name:hover {
   background: var(--hover);
   box-shadow: inset 0 0 0 1.5px var(--accent);
 }
-@media (max-width: 767px) {
+@media (max-width: 1023px), (pointer: coarse) and (max-width: 1366px) {
   .ds-lang button {
     width: 30px;
   }
@@ -2301,3 +2286,161 @@ button.ds-layer-name:hover {
 .ds-attachments > div { margin-top: 10px; }
 .ds-attachments dt { font-weight: 600; }
 .ds-attachments dd { margin: 3px 0 0; color: var(--muted); }
+
+/* Touch explorer: one panel at a time, with room for the model and browser chrome.
+   This query is shared with src/app/viewport.ts. */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+.ds-app { height: 100dvh; }
+.ds-layer-list, .ds-detail-body, .ds-development-panel, .ds-search-results {
+  min-height: 0;
+  overscroll-behavior: contain;
+}
+.ds-search-field input { min-width: 0; }
+.ds-search { max-height: 70dvh; }
+.ds-about { max-height: 84dvh; }
+
+@media (max-width: 1023px), (pointer: coarse) and (max-width: 1366px) {
+  .ds-identity { top: calc(16px + var(--safe-top)); left: calc(16px + var(--safe-left)); }
+  .ds-title { font-size: 26px; }
+  .ds-top-actions { top: calc(12px + var(--safe-top)); right: calc(12px + var(--safe-right)); z-index: 7; }
+  .ds-icon-btn, .ds-lang button { min-width: 44px; min-height: 44px; }
+  .ds-lang { gap: 0; padding: 2px; }
+  .ds-lang svg { width: 22px; height: 15px; }
+  .ds-panel { background: var(--panel-solid); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .ds-mobile-bar {
+    width: min(520px, calc(100% - 16px - var(--safe-left) - var(--safe-right)));
+    bottom: calc(8px + var(--safe-bottom));
+    gap: 2px;
+  }
+  .ds-mobile-bar button {
+    flex: 1;
+    min-width: 0;
+    min-height: 48px;
+    height: auto;
+    padding: 5px 6px;
+    font-size: 12px;
+    justify-content: center;
+  }
+  .ds-mobile-bar button span { overflow-wrap: anywhere; }
+  .ds-mobile-bar svg { flex-shrink: 0; }
+  .ds-views { display: none; }
+  .ds-view-picker { display: block; }
+  .ds-view-grid { top: calc(100% + 6px); bottom: auto; left: 50%; transform: translateX(-50%); width: min(308px, 100%); grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .ds-view-grid button { min-height: 56px; }
+  .ds-layers, .ds-detail, .ds-app.is-dissecting .ds-detail {
+    left: max(8px, var(--safe-left));
+    right: max(8px, var(--safe-right));
+    top: auto;
+    bottom: calc(76px + var(--safe-bottom));
+    width: auto;
+    max-height: min(58dvh, calc(100dvh - 190px - var(--safe-top) - var(--safe-bottom)));
+    transform: none;
+  }
+  .ds-layers.is-mobile-open { height: min(58dvh, calc(100dvh - 190px - var(--safe-top) - var(--safe-bottom))); }
+  .ds-layers.is-mobile-open { overflow-y: auto; overscroll-behavior: contain; }
+  .ds-layers > * { flex-shrink: 0; }
+  .ds-layers .ds-layer-list { flex: none; overflow: visible; }
+  .ds-layers > .ds-nerve-controls { order: 1; border-bottom: 0; border-top: 1px solid var(--line); }
+  .ds-layers > .ds-panel-footer { order: 2; }
+  .ds-layer-row { height: 46px; flex-shrink: 0; }
+  .ds-layer-name { min-height: 44px; }
+  .ds-dot-toggle, .ds-ghost-btn { width: 44px; height: 44px; }
+  .ds-ghost-btn { opacity: 1; flex-shrink: 0; }
+  .ds-tabs button, .ds-segmented button, .ds-secondary, .ds-chip--button { min-height: 44px; height: auto; }
+  .ds-tree-row { min-height: 44px; }
+  .ds-tree-caret, .ds-tree-eye { min-width: 44px; min-height: 44px; }
+  .ds-layers .ds-tree { flex: none; overflow: visible; }
+  .ds-nerve-controls select { min-height: 44px; font-size: 16px; }
+  .ds-detail-head, .ds-detail-actions, .ds-tabs, .ds-panel-footer { flex-shrink: 0; }
+  .ds-detail-head { padding: 12px 16px 10px; }
+  .ds-detail-title { font-size: 22px; padding-right: 36px; overflow-wrap: anywhere; }
+  .ds-detail-body { padding-inline: 16px; }
+  .ds-detail-actions { padding: 10px 12px; }
+  .ds-detail-close { top: 6px; right: 6px; }
+  .ds-dock { left: max(8px, var(--safe-left)); right: max(8px, var(--safe-right)); }
+  .ds-app[data-sheet='layers'] .ds-dock, .ds-app[data-sheet='detail'] .ds-dock { display: none; }
+  .ds-dock.is-mobile-open {
+    bottom: calc(76px + var(--safe-bottom));
+    max-height: min(58dvh, calc(100dvh - 190px - var(--safe-top) - var(--safe-bottom)));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    flex-direction: column;
+    gap: 0;
+    background: var(--panel-solid);
+    border: 1px solid var(--panel-border);
+    border-radius: 18px;
+    box-shadow: var(--panel-shadow);
+  }
+  .ds-dock.is-mobile-open > .ds-panel { flex-shrink: 0; min-width: 0; width: 100%; border: 0; border-radius: 0; box-shadow: none; }
+  .ds-dock.is-mobile-open .ds-toolbar { order: 1; }
+  .ds-dock.is-mobile-open .ds-development-timeline { order: 2; border-top: 1px solid var(--line); }
+  .ds-dock.is-mobile-open .ds-section-panel { order: 3; }
+  .ds-dock.is-mobile-open .ds-compact-settings {
+    display: flex; order: 4; align-items: center; justify-content: space-between;
+    gap: 12px; padding: 10px 12px; border-top: 1px solid var(--line); color: var(--muted);
+  }
+  .ds-compact-settings .ds-numbering { flex-shrink: 0; }
+  .ds-dock-main, .ds-dissect, .ds-jaw-controls { width: 100%; min-width: 0; }
+  .ds-dock-main { display: flex; flex-wrap: wrap; gap: 10px; padding: 12px; }
+  .ds-dock-main:not(.ds-dissect) > .ds-slider { min-width: calc(100% - 64px); }
+  .ds-dock-main:not(.ds-dissect) > .ds-dock-tools { width: 100%; justify-content: flex-end; }
+  .ds-dissect-bar { flex-wrap: wrap; }
+  .ds-dissect { flex-wrap: nowrap; }
+  .ds-dissect > .ds-dissect-bar, .ds-dissect > .ds-play-row { width: 100%; max-width: 100%; min-width: 0; }
+  .ds-dissect-head { min-width: 0; width: 100%; }
+  .ds-dissect-head > div { min-width: 0; }
+  .ds-dissect-title { flex-wrap: wrap; overflow-wrap: anywhere; }
+  .ds-dissect .ds-slider-head { flex-wrap: wrap; gap: 4px; }
+  .ds-dissect .ds-step-hint { white-space: normal; }
+  .ds-slider, .ds-slider--dissect { width: auto; min-width: 0; flex: 1; }
+  .ds-dock-tools { border: 0; padding-left: 0; flex-shrink: 0; }
+  .ds-tool { min-height: 44px; }
+  .ds-camera { flex-wrap: wrap; padding: 8px 4px; }
+  .ds-tb-btn { min-height: 44px; }
+  .ds-range, .ds-development-timeline input[type='range'] { min-height: 44px; }
+  .ds-development-stops button { min-height: 44px; font-size: 10px; }
+  .ds-development-play { min-height: 44px; }
+  .ds-section-panel .ds-icon-btn { min-width: 44px; min-height: 44px; }
+  .ds-search-layer { top: var(--visual-top, 0px); bottom: auto; height: var(--visual-height, 100dvh); padding-top: calc(12px + var(--safe-top)); }
+  .ds-search { max-height: calc(var(--visual-height, 100dvh) - 32px - var(--safe-top) - var(--safe-bottom)); }
+  .ds-search-field { padding-left: 12px; }
+  .ds-search-result { min-height: 48px; }
+  .ds-sr-hint { display: none; }
+  .ds-footer { bottom: calc(84px + var(--safe-bottom)); }
+  .ds-app[data-sheet='layers'] .ds-footer, .ds-app[data-sheet='detail'] .ds-footer, .ds-app[data-sheet='tools'] .ds-footer { display: none; }
+  .ds-reset-all { top: calc(74px + var(--safe-top)); bottom: auto; left: calc(16px + var(--safe-left)); min-width: 44px; min-height: 44px; }
+  .ds-app.is-dissecting .ds-reset-all { bottom: auto; }
+}
+
+@media (max-width: 600px) {
+  .ds-title { font-size: 24px; }
+  .ds-top-actions .ds-lang { position: absolute; top: 52px; right: 0; }
+  .ds-mobile-bar button { flex-direction: column; gap: 2px; font-size: 11px; }
+  .ds-view-picker-text { display: none; }
+  .ds-view-picker-btn { padding-inline: 8px; }
+  .ds-development-heading { flex-wrap: wrap; }
+  .ds-development-heading strong { text-align: left; }
+  .ds-layers > .ds-segmented--fill { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ds-layers > .ds-segmented--fill button { white-space: normal; }
+}
+
+/* A side sheet keeps the model usable on a phone rotated horizontally. */
+@media (max-width: 1023px) and (orientation: landscape) and (max-height: 600px),
+       (pointer: coarse) and (max-width: 1366px) and (orientation: landscape) and (max-height: 600px) {
+  .ds-layers, .ds-detail, .ds-app.is-dissecting .ds-detail, .ds-dock.is-mobile-open {
+    left: auto;
+    right: max(8px, var(--safe-right));
+    top: calc(76px + var(--safe-top));
+    bottom: calc(76px + var(--safe-bottom));
+    width: min(440px, 52vw);
+    height: auto;
+    max-height: none;
+  }
+  .ds-layers.is-mobile-open { height: auto; }
+  .ds-dock:not(.is-mobile-open) { display: none !important; }
+}

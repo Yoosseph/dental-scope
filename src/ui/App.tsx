@@ -5,12 +5,13 @@ import { actions, useApp } from '../state/store';
 import { useServices } from './context';
 import { DetailPanel } from './DetailPanel';
 import { Dock } from './Dock';
-import { IconLayers, IconReset, IconSearch, IconSection } from './icons';
+import { IconInfo, IconLayers, IconReset, IconSearch, IconSection } from './icons';
 import { LayersPanel } from './LayersPanel';
 import { AboutDialog, Footer, LoadingCard } from './Overlays';
 import { SearchPanel } from './SearchPanel';
 import { Identity, TopActions } from './TopBar';
 import { useKeyboard } from './useKeyboard';
+import { COMPACT_LAYOUT } from '../app/viewport';
 
 export function App() {
   const { engine, registry } = useServices();
@@ -49,30 +50,53 @@ export function App() {
 
   // keep the focused anatomy clear of the panels that cover the canvas
   useEffect(() => {
-    const dock = document.querySelector<HTMLElement>('.ds-dock');
-    const update = () => {
-      const mobile = window.innerWidth <= 767;
-      if (mobile) engine.setInsets(0, sheet !== 'none' ? window.innerHeight * 0.5 : developmentStage ? 215 : 155);
-      // the bottom toolbar covers the lower edge of the canvas; the dissection tools and the phase-2 board make it taller
-      else {
-        // the bottom toolbar: measured, since its height depends on what it shows
-        const parent = dock?.offsetParent as HTMLElement | null;
-        const measured = dock && parent ? parent.clientHeight - dock.offsetTop : 0;
-        const bottom = dockHidden ? 0 : measured > 0 ? measured : dissect ? 210 : laidOut ? 170 : 70;
-        dock?.parentElement?.style.setProperty('--dock-clearance', `${Math.max(64, bottom + 12)}px`);
-        engine.setInsets(selected && !detailHidden && window.innerWidth > 980 ? 360 : 0, bottom);
-      }
+    const ui = document.querySelector<HTMLElement>('.ds-ui');
+    const compact = window.matchMedia(COMPACT_LAYOUT);
+    let frame = 0;
+    const visibleRect = (selector: string) => {
+      const element = ui?.querySelector<HTMLElement>(selector);
+      if (!element || (!compact.matches && element.classList.contains('is-collapsed'))) return null;
+      const rect = element.getBoundingClientRect();
+      return rect.width && rect.height ? rect : null;
     };
+    const update = () => {
+      frame = 0;
+      if (!ui) return;
+      const bounds = ui.getBoundingClientRect();
+      document.documentElement.style.setProperty('--visual-height', `${window.visualViewport?.height ?? bounds.height}px`);
+      document.documentElement.style.setProperty('--visual-top', `${window.visualViewport?.offsetTop ?? 0}px`);
+      const toolbar = visibleRect('.ds-dock');
+      const bar = visibleRect('.ds-mobile-bar');
+      const panel = compact.matches ? visibleRect('.ds-layers.is-mobile-open, .ds-detail.is-mobile-open') : visibleRect('.ds-detail');
+      const sideSheet = compact.matches && window.matchMedia('(orientation: landscape) and (max-height: 600px)').matches;
+      const bottoms = [toolbar, bar, ...(!sideSheet && compact.matches ? [panel] : [])].filter((r): r is DOMRect => !!r);
+      const bottom = Math.max(0, ...bottoms.map((r) => bounds.bottom - r.top + 12));
+      const side = sideSheet ? panel ?? (sheet === 'tools' ? toolbar : null) : !compact.matches ? panel : null;
+      const right = side ? bounds.right - side.left + 12 : 0;
+      // Landscape tool sheets occupy the side, not the lower half of the model.
+      const clearance = sideSheet && sheet === 'tools' ? (bar ? bounds.bottom - bar.top + 12 : 0) : bottom;
+      ui.style.setProperty('--dock-clearance', `${Math.max(64, bottom + 12)}px`);
+      engine.setInsets(Math.min(right, bounds.width - 100), Math.min(clearance, bounds.height - 100));
+    };
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
     update();
-    // Section controls and translated labels can change the taskbar's height.
-    const observer = new ResizeObserver(update);
-    if (dock) observer.observe(dock);
-    window.addEventListener('resize', update);
-    return () => { observer.disconnect(); window.removeEventListener('resize', update); };
+    const observer = new ResizeObserver(schedule);
+    if (ui) observer.observe(ui);
+    for (const element of ui?.querySelectorAll('.ds-dock, .ds-layers, .ds-detail, .ds-mobile-bar') ?? []) observer.observe(element);
+    compact.addEventListener('change', schedule);
+    window.addEventListener('resize', schedule);
+    window.visualViewport?.addEventListener('resize', schedule);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+      compact.removeEventListener('change', schedule);
+      window.removeEventListener('resize', schedule);
+      window.visualViewport?.removeEventListener('resize', schedule);
+    };
   }, [engine, selected, dissect, laidOut, sheet, detailHidden, dockHidden, jawControls, developmentStage, lang]);
 
   return (
-    <div className={`ds-app${selected ? ' has-selection' : ''}${dissect ? ' is-dissecting' : ''}`}>
+    <div className={`ds-app${selected ? ' has-selection' : ''}${dissect ? ' is-dissecting' : ''}`} data-sheet={sheet}>
       <div className="ds-stage" ref={stage} />
       <div className="ds-ui">
         <Identity />
@@ -93,6 +117,9 @@ export function App() {
           <button type="button" className={sheet === 'tools' ? 'is-active' : ''} onClick={() => actions.setMobileSheet(sheet === 'tools' ? 'none' : 'tools')} aria-pressed={sheet === 'tools'}>
             <IconSection /> <span>{m.tools}</span>
           </button>
+          {selected && <button type="button" className={sheet === 'detail' ? 'is-active' : ''} onClick={() => actions.setMobileSheet(sheet === 'detail' ? 'none' : 'detail')} aria-pressed={sheet === 'detail'}>
+            <IconInfo /> <span>{m.details}</span>
+          </button>}
         </nav>
         {sheet !== 'none' && <button type="button" className="ds-scrim" aria-label={m.closePanel} onClick={() => actions.setMobileSheet('none')} />}
       </div>

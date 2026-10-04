@@ -30,6 +30,7 @@ export const en = {
   layers: 'Layers',
   search: 'Search',
   tools: 'Tools',
+  details: 'Details',
   closePanel: 'Close panel',
   resetAll: 'Reset all',
   resetAllTitle: 'Reset all: start view and default settings',

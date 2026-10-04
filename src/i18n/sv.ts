@@ -24,6 +24,7 @@ export const sv: Messages = {
   layers: 'Lager',
   search: 'Sök',
   tools: 'Verktyg',
+  details: 'Detaljer',
   closePanel: 'Stäng panelen',
   resetAll: 'Återställ allt',
   resetAllTitle: 'Återställ allt: startvy och standardinställningar',
