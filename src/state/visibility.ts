@@ -7,6 +7,7 @@ import type { Registry } from '../anatomy/registry';
 import type { CategoryState } from '../anatomy/categories';
 import type { AppState } from './store';
 import { nerveInView, nerveViewFor } from '../anatomy/nerveViews';
+import { developmentStatus } from '../anatomy/development';
 
 /**
  * 'faint' is a quieter ghost used for surrounding context. 'see-through' is bone with the
@@ -83,6 +84,12 @@ export function resolveMesh(meshKey: string, ctx: VisibilityContext): MeshVisual
   const ownerId = registry.meshOwner.get(meshKey);
   if (!ownerId) return 'off';
   const owner = registry.require(ownerId);
+  const developmental = ownerId.startsWith('development-');
+  if (developmental !== (state.developmentStage !== null)) return 'off';
+  if (owner.development && state.developmentStage) {
+    const status = developmentStatus(owner.development, state.developmentStage);
+    if (status === 'absent' || status === 'unerupted' && !state.developmentShowUnerupted) return 'off';
+  }
   if (state.passageIds.length && owner.categories.includes('nerves') && !state.passageIds.some((id) => registry.isDescendant(ownerId, id))) return 'off';
   if (!state.passageIds.length && owner.categories.includes('nerves') && !nerveInView(registry, ownerId, state.nerveView, state.nerveSide)) return 'off';
 
@@ -93,6 +100,7 @@ export function resolveMesh(meshKey: string, ctx: VisibilityContext): MeshVisual
     const cs: CategoryState = state.categories[c] ?? 'on';
     v = minVis(v, cs);
   }
+  if (developmental && !owner.development) v = minVis(v, 'ghost');
 
   // Solid in the assembled skull; translucent context once the arches separate.
   // Ghosted skull and muscles stay out of the laid-out board and fade away there.

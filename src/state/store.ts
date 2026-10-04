@@ -9,6 +9,7 @@ import { INITIAL_CATEGORY_STATE, type CategoryState } from '../anatomy/categorie
 import type { CategoryId, NumberingSystem } from '../anatomy/types';
 import { DEFAULT_LANG, isLang, type Lang } from '../i18n/lang';
 import type { NerveSide, NerveView } from '../anatomy/nerveViews';
+import { DEVELOPMENT_STAGES, type DevelopmentStageId } from '../anatomy/development';
 
 export type ClipAxis = 'sagittal' | 'coronal' | 'axial' | 'view';
 export type ModeId = 'explore' | 'learn' | 'quiz' | 'compare';
@@ -38,6 +39,10 @@ export interface ClipState {
 export const DISSECT_LEVELS = [{ id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }] as const;
 
 export interface AppState {
+  developmentStage: DevelopmentStageId | null;
+  developmentShowUnerupted: boolean;
+  developmentSoftTissue: boolean;
+  developmentPlaying: boolean;
   nerveView: NerveView;
   nerveSide: NerveSide;
   passageIds: string[];
@@ -90,6 +95,7 @@ export interface AppState {
 export type CollapsiblePanel = 'layers' | 'detail' | 'dock';
 
 export const initialState: AppState = {
+  developmentStage: null, developmentShowUnerupted: true, developmentSoftTissue: false, developmentPlaying: false,
   nerveView: 'dental', nerveSide: 'both',
   passageIds: [], jawControls: false, jawSide: 'right', jawOpening: 0, jawPlaying: false,
   ready: false,
@@ -151,8 +157,38 @@ function persist(key: string, value: string) {
 
 /** orbit mode to restore when the user leaves a tooth (set when entering one switched it to free) */
 let orbitBeforeTooth: OrbitMode | null = null;
+let adultSceneBeforeDevelopment: Partial<AppState> | null = null;
 
 export const actions = {
+  setDevelopmentStage(developmentStage: DevelopmentStageId | null, playing = false) {
+    const previous = getState();
+    if (previous.developmentStage === developmentStage) {
+      setState({ developmentPlaying: playing && developmentStage !== null });
+      return;
+    }
+    if (getState().dissectFdi !== null) actions.exitDissect();
+    if (developmentStage && !previous.developmentStage) {
+      const s = getState();
+      adultSceneBeforeDevelopment = { categories: s.categories, hidden: s.hidden, ghosted: s.ghosted, isolateId: s.isolateId, isolateContext: s.isolateContext, explode: s.explode, explodePhase: s.explodePhase, clip: s.clip, jawControls: s.jawControls, jawOpening: s.jawOpening, labels: s.labels };
+    }
+    const restore = developmentStage ? {} : adultSceneBeforeDevelopment ?? {};
+    if (!developmentStage) adultSceneBeforeDevelopment = null;
+    setState((s) => ({ developmentStage, developmentPlaying: playing && developmentStage !== null, selectedId: null, hoveredId: null, hidden: {}, ghosted: {}, isolateId: null, isolateContext: false, passageIds: [], jawControls: false, jawOpening: 0, jawPlaying: false, explode: 0, explodePhase: 1, clip: { ...s.clip, enabled: false }, categories: { ...s.categories, 'primary-teeth': 'on', 'permanent-teeth': 'on', 'alveolar-bone': 'on' }, ...restore }));
+  },
+  playDevelopment() {
+    actions.setDevelopmentStage(getState().developmentStage ?? DEVELOPMENT_STAGES[0].id, true);
+  },
+  pauseDevelopment() { setState({ developmentPlaying: false }); },
+  advanceDevelopment() {
+    const s = getState();
+    if (!s.developmentPlaying || !s.developmentStage) return;
+    const index = DEVELOPMENT_STAGES.findIndex((stage) => stage.id === s.developmentStage);
+    actions.setDevelopmentStage(DEVELOPMENT_STAGES[index + 1]?.id ?? null, true);
+  },
+  setDevelopmentSoftTissue(developmentSoftTissue: boolean) { setState({ developmentSoftTissue }); },
+  setDevelopmentShowUnerupted(developmentShowUnerupted: boolean) {
+    setState({ developmentShowUnerupted, selectedId: null, hoveredId: null, isolateId: null, isolateContext: false });
+  },
   setNerveView(nerveView: NerveView) {
     if (getState().dissectFdi !== null) actions.exitDissect();
     setState({ nerveView, passageIds: [], selectedId: null, hoveredId: null, isolateId: null, isolateContext: false });
@@ -175,6 +211,7 @@ export const actions = {
   /** Back to the start: every scene setting and preference to its default. Theme, language and loading progress are kept. */
   resetAll() {
     orbitBeforeTooth = null;
+    adultSceneBeforeDevelopment = null;
     setState((s) => ({ ...initialState, ready: s.ready, loading: s.loading, error: s.error, theme: s.theme, lang: s.lang, resetId: s.resetId + 1 }));
     persist(PREF.numbering, initialState.numbering);
     persist(PREF.orbit, initialState.orbitMode);
@@ -269,7 +306,8 @@ export const actions = {
     persist(PREF.orbit, m);
   },
   enterDissect(fdi: number) {
-    setState({ jawOpening: 0, jawPlaying: false, jawControls: false, passageIds: [] });
+    if (getState().developmentStage) actions.setDevelopmentStage(null);
+    setState({ developmentStage: null, jawOpening: 0, jawPlaying: false, jawControls: false, passageIds: [] });
     // Inside a tooth the free orbit is the useful one (pan and focus on a canal or a root);
     // the mouth-level orbit comes back when the tooth is left. Not saved as a preference.
     if (getState().dissectFdi === null && getState().orbitMode !== 'free') orbitBeforeTooth = getState().orbitMode;
