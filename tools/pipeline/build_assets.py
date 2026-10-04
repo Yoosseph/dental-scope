@@ -619,6 +619,10 @@ def main():
             register(key, ma, 4, f"teeth/tooth-{f}.glb", "modeled")
         sc.export(out / "teeth" / f"tooth-{f}.glb")
 
+    from cranial import extend_cranial
+    context_geometry = dict(scenes["core"].geometry)
+    context_geometry.update(scenes["context"].geometry)
+    extend_cranial(scenes["neurovascular"], context_geometry, manifest, S, {"structures": za})
     manifest["explode"] = explode_plan(scenes["core"].geometry, manifest["teeth"])
 
     for name, sc in scenes.items():
