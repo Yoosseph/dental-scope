@@ -16,6 +16,8 @@ import teethLa from './la/teeth.json';
 import structuresLa from './la/structures.json';
 import { feedbackAnatomy } from './feedbackAnatomy';
 import { supportingAnatomy } from './supportingAnatomy';
+import { developmentAnatomy } from './developmentAnatomy';
+import { developmentContentKey } from '../anatomy/development';
 
 export type ContentStatus = 'placeholder' | 'draft' | 'reviewed';
 
@@ -48,6 +50,7 @@ const db = (t: unknown, s: unknown, lang: Lang): Record<string, RawEntry> => {
   const base = { ...(t as Record<string, RawEntry>), ...(s as Record<string, RawEntry>) };
   for (const [key, entry] of Object.entries(feedbackAnatomy(lang))) base[key] = { ...base[key], ...entry };
   for (const [key, entry] of Object.entries(supportingAnatomy(lang))) base[key] = { ...base[key], ...entry };
+  Object.assign(base, developmentAnatomy(lang, base));
   return base;
 };
 /** Content per interface language; every language has the same keys (checked by i18n.test.ts). */
@@ -73,6 +76,7 @@ const STATUS: ContentStatus = 'draft';
 export function contentKeys(registry: Registry, id: string): string[] {
   const s = registry.get(id);
   const keys: string[] = [];
+  if (s?.development) keys.push(developmentContentKey(s.development));
   if (s?.tooth) keys.push(`tooth:${s.tooth.type}:${s.tooth.arch}`);
   let k = id;
   if (s?.toothFdi !== undefined) {

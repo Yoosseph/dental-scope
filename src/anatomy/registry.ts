@@ -3,6 +3,9 @@
  * Built once from the asset manifest + declarative tables.
  */
 import { STRUCTURE_DEFS } from './structures';
+import { DEVELOPMENT_TEETH, developmentId } from './development';
+import { DEVELOPMENT_TEXT } from '../i18n/development';
+import { LANGS } from '../i18n/lang';
 import {
   PERMANENT_FDI,
   archOf,
@@ -54,6 +57,7 @@ export class Registry {
     this.manifest = manifest;
     this.buildStatic();
     this.buildTeeth();
+    this.buildDevelopment();
     this.link();
   }
 
@@ -231,6 +235,22 @@ export class Registry {
     }
   }
 
+  private buildDevelopment() {
+    const namesFor = (get: (lang: typeof LANGS[number]) => string) => Object.fromEntries(LANGS.map((lang) => [lang, get(lang)])) as Names;
+    const groupNames = namesFor((lang) => DEVELOPMENT_TEXT[lang].title);
+    this.add({ id: 'development-dentition', name: groupNames.en, names: groupNames, kind: 'group', parent: this.rootId, children: [], categories: [], meshes: [], aliases: nameTerms(groupNames), provenance: 'schematic', stage: 1, labelPriority: 2 });
+    for (const upper of [true, false]) {
+      const id = upper ? 'development-maxillary-arch' : 'development-mandibular-arch';
+      const names = namesFor((lang) => DEVELOPMENT_TEXT[lang][upper ? 'upperArch' : 'lowerArch']);
+      this.add({ id, name: names.en, names, kind: 'mesh', parent: 'development-dentition', children: [], categories: ['alveolar-bone'], meshes: [id], aliases: nameTerms(names), provenance: 'schematic', stage: 1, labelPriority: 2 });
+    }
+    for (const t of DEVELOPMENT_TEETH) {
+      const id = developmentId(t.fdi);
+      const names = namesFor((lang) => `${DEVELOPMENT_TEXT[lang][t.dentition === 'primary' ? 'primaryPrefix' : 'permanentPrefix']} ${toothNameIn(t.type, t.arch, t.side, lang)} (FDI ${t.fdi})`);
+      this.add({ id, name: names.en, names, kind: 'mesh', parent: 'development-dentition', children: [], categories: [t.dentition === 'primary' ? 'primary-teeth' : 'permanent-teeth'], meshes: [id], aliases: [String(t.fdi), `fdi ${t.fdi}`, ...Object.values(names)], provenance: 'schematic', stage: 1, labelPriority: 4, development: t });
+    }
+  }
+
   private link() {
     for (const s of this.byId.values()) {
       if (s.parent) {
@@ -306,7 +326,12 @@ export class Registry {
   countByCategory(): Record<string, number> {
     const counts: Record<string, number> = {};
     for (const [mesh] of this.meshOwner) {
-      for (const c of this.categoriesOfMesh(mesh)) counts[c] = (counts[c] ?? 0) + 1;
+      for (const c of this.categoriesOfMesh(mesh)) {
+        // The developmental permanent teeth and arches are a separate scene;
+        // their copies must not inflate the adult atlas layer counts.
+        if (mesh.startsWith('development-') && c !== 'primary-teeth') continue;
+        counts[c] = (counts[c] ?? 0) + 1;
+      }
     }
     // tooth layers not yet loaded still count (they are listed in the manifest)
     return counts;

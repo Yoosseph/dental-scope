@@ -14,7 +14,7 @@ export interface CategoryDef {
 
 export const CATEGORIES: CategoryDef[] = [
   { id: 'permanent-teeth', label: 'Permanent teeth', color: '#e9e2cf', group: 'Dentition', initial: 'on' },
-  { id: 'primary-teeth', label: 'Primary teeth', color: '#d9d4c6', group: 'Dentition', initial: 'off', planned: true },
+  { id: 'primary-teeth', label: 'Primary teeth', color: '#e8bd77', group: 'Dentition', initial: 'off' },
   { id: 'enamel', label: 'Enamel', color: '#f1eee4', group: 'Tooth tissues', initial: 'on' },
   { id: 'dentin', label: 'Dentin', color: '#e2c07f', group: 'Tooth tissues', initial: 'on' },
   { id: 'cementum', label: 'Cementum', color: '#c6a270', group: 'Tooth tissues', initial: 'on' },

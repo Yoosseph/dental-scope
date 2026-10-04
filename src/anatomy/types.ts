@@ -1,5 +1,6 @@
 /** Core anatomical data types. See docs/architecture.md §8. */
 import type { Lang } from '../i18n/lang.ts';
+import type { DevelopmentTooth } from './development';
 
 export type Provenance = 'source' | 'derived' | 'modeled' | 'atlas' | 'schematic';
 export type StructureKind = 'group' | 'mesh' | 'region' | 'landmark';
@@ -67,6 +68,8 @@ export interface ToothMeta {
 }
 
 export interface Structure {
+  /** Schematic childhood dentition, separate from the adult atlas tooth layers. */
+  development?: DevelopmentTooth;
   id: string;
   /** English name (the reference); `names` holds it in every interface language */
   name: string;
