@@ -411,6 +411,7 @@ export class Engine {
       s.dissectFdi !== p.dissectFdi ||
       s.dissectLevel !== p.dissectLevel ||
       s.clip.enabled !== p.clip.enabled ||
+      (s.explode > 0) !== (p.explode > 0) ||
       s.explodePhase !== p.explodePhase ||
       s.ghostOpacity !== p.ghostOpacity ||
       (s.selectedId !== p.selectedId && (this.isSinus(s.selectedId) || this.isSinus(p.selectedId)));

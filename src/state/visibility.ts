@@ -92,6 +92,10 @@ export function resolveMesh(meshKey: string, ctx: VisibilityContext): MeshVisual
     v = minVis(v, cs);
   }
 
+  // Solid in the assembled skull; translucent context once the arches separate.
+  // Ghosted skull and muscles stay out of the laid-out board and fade away there.
+  if (owner.categories.some((c) => c === 'muscles' || c === 'skull') && (state.explode > 0 || state.explodePhase === 2)) v = minVis(v, 'ghost');
+
   if (owner.toothFdi === undefined && boneSeeThrough(registry.categoriesOfMesh(meshKey), state, registry)) v = minVis(v, 'see-through');
 
   // explicit hide / ghost on the structure or any ancestor
