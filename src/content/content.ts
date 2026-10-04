@@ -15,6 +15,7 @@ import structuresEs from './es/structures.json';
 import teethLa from './la/teeth.json';
 import structuresLa from './la/structures.json';
 import { feedbackAnatomy } from './feedbackAnatomy';
+import { supportingAnatomy } from './supportingAnatomy';
 
 export type ContentStatus = 'placeholder' | 'draft' | 'reviewed';
 
@@ -46,6 +47,7 @@ export interface ResolvedContent {
 const db = (t: unknown, s: unknown, lang: Lang): Record<string, RawEntry> => {
   const base = { ...(t as Record<string, RawEntry>), ...(s as Record<string, RawEntry>) };
   for (const [key, entry] of Object.entries(feedbackAnatomy(lang))) base[key] = { ...base[key], ...entry };
+  for (const [key, entry] of Object.entries(supportingAnatomy(lang))) base[key] = { ...base[key], ...entry };
   return base;
 };
 /** Content per interface language; every language has the same keys (checked by i18n.test.ts). */

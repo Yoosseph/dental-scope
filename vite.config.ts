@@ -5,6 +5,8 @@ import react from '@vitejs/plugin-react';
 import { ABOUT_PAGES, HOME, TOOTH_PAGES, headTags, normalizeSiteUrl, robotsTxt, sitemapXml } from './src/app/seo.ts';
 import { aboutHtml } from './src/app/about.ts';
 import { GUIDE_PAGES, GUIDE_REDIRECTS, guideHtml } from './src/app/guide.ts';
+import { Registry } from './src/anatomy/registry.ts';
+import { descriptionGaps } from './src/content/descriptionCoverage.ts';
 
 const base = process.env.DS_BASE ?? '/';
 /** Absolute public URL of the deployed site (e.g. https://user.github.io/dental-scope/); enables canonical URLs and the sitemap. */
@@ -28,6 +30,11 @@ function seo(): Plugin {
   let outDir = 'dist';
   return {
     name: 'dental-scope-seo',
+    buildStart() {
+      const registry = new Registry(JSON.parse(readFileSync('public/models/manifest.json', 'utf8')));
+      const gaps = descriptionGaps(registry);
+      if (gaps.length) throw new Error(`Missing anatomy descriptions:\n${gaps.join('\n')}`);
+    },
     configResolved(config) {
       outDir = resolve(config.root, config.build.outDir);
     },
