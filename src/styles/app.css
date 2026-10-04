@@ -1,4 +1,44 @@
 /* Dental Scope — explorer UI */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.ds-development-timeline { width: min(740px, calc(100vw - 32px)); padding: 12px 18px; }
+.ds-development-heading { display: flex; justify-content: space-between; gap: 16px; font-size: 12px; margin-bottom: 6px; }
+.ds-development-heading > span { color: var(--muted); }
+.ds-development-heading strong { font-weight: 500; text-align: right; }
+.ds-development-timeline input[type="range"] { display: block; width: 100%; accent-color: var(--accent); margin: 6px 0; cursor: pointer; }
+.ds-development-stops { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px; font-family: var(--font-mono); font-size: 10px; }
+.ds-development-stops button { padding: 5px 2px; border-radius: 5px; color: var(--muted); overflow-wrap: anywhere; }
+.ds-development-stops .is-active { background: var(--accent-soft); color: var(--accent); }
+.ds-development-tools { display: flex; align-items: center; gap: 18px; padding: 10px 16px; font-size: 12px; }
+.ds-development-tools label, .ds-development-tools button { display: flex; align-items: center; gap: 7px; }
+.ds-development-tools input { accent-color: var(--accent); }
+.ds-development-tools .is-active { color: var(--accent); }
+.ds-development-panel { padding: 14px 16px; overflow-y: auto; min-height: 0; }
+.ds-development-panel h2 { font-family: var(--font-display); font-size: 21px; font-weight: 500; margin: 0 0 10px; }
+.ds-development-panel h3 { font-size: 12px; font-weight: 500; margin: 18px 0 8px; }
+.ds-development-panel p { margin: 0 0 12px; }
+.ds-development-draft { color: var(--muted); font-size: 11px; }
+.ds-development-legend { display: grid; gap: 6px; font-size: 11px; margin: 14px 0; }
+.ds-development-legend span { display: flex; align-items: center; gap: 7px; }
+.ds-development-dot { display: inline-block; flex-shrink: 0; width: 9px; height: 9px; border-radius: 50%; background: #eee5d4; border: 1px solid #7775; }
+.ds-development-dot.is-primary { background: #e8bd77; }
+.ds-development-dot.is-unerupted { background: #70b4d0; }
+.ds-development-dot.is-erupting { background: #a5c796; }
+.ds-development-tooth-list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; margin-bottom: 16px; }
+.ds-development-tooth-list .ds-development-tooth { display: flex; align-items: center; justify-content: center; gap: 7px; padding: 7px 3px; border: 1px solid var(--line); border-radius: 6px; font-family: var(--font-mono); font-size: 11px; }
+.ds-development-play { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--accent); padding: 5px 10px; border-radius: 5px; background: var(--accent-soft); margin: 2px 0 8px; min-height: 30px; }
+.ds-development-tooth-list .is-active { background: var(--accent-soft); border-color: var(--accent); }
+.ds-development-panel .ds-evidence a { display: block; margin-top: 5px; }
+@media (max-width: 767px) {
+  .ds-development-timeline { width: 100%; padding: 10px; }
+  .ds-development-heading { gap: 8px; font-size: 11px; }
+  .ds-development-stops { font-size: 8px; gap: 1px; }
+  .ds-development-stops button { min-height: 32px; }
+  .ds-development-tools { flex-wrap: wrap; gap: 10px; }
+  .ds-app:not(.is-dissecting) .ds-dock:not(.is-mobile-open):not(.is-collapsed) { display: flex; bottom: calc(70px + env(safe-area-inset-bottom)); }
+  .ds-app:not(.is-dissecting) .ds-dock:not(.is-mobile-open) .ds-toolbar,
+  .ds-app:not(.is-dissecting) .ds-dock:not(.is-mobile-open) .ds-section-panel { display: none; }
+  .ds-app.has-selection .ds-dock:not(.is-mobile-open) .ds-development-timeline { display: none; }
+}
 *,
 *::before,
 *::after {

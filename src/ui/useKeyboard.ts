@@ -56,10 +56,12 @@ export function useKeyboard(engine: Engine) {
           actions.setDissectLevel(s.dissectLevel + 1);
           break;
         case 'e':
+          if (s.developmentStage) break;
           if (s.dissectFdi !== null) actions.setToothExplode(s.toothExplode > 0.5 ? 0 : 1);
           else actions.setExplode(s.explode > 0.5 ? 0 : 1);
           break;
         case 'c':
+          if (s.developmentStage) break;
           actions.setClip({ enabled: !s.clip.enabled });
           break;
         case 'l':

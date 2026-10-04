@@ -14,6 +14,8 @@ import { CanalFrequency } from './CanalFrequency';
 import { FEEDBACK_TEXT } from '../i18n/feedback';
 import { passageFor } from '../anatomy/passages';
 import { HyoidConnections } from './HyoidConnections';
+import { developmentNotation, developmentStatus } from '../anatomy/development';
+import { DEVELOPMENT_TEXT } from '../i18n/development';
 
 export function DetailPanel() {
   const { registry, engine } = useServices();
@@ -25,6 +27,7 @@ export function DetailPanel() {
   const mobileOpen = useApp((s) => s.mobileSheet === 'detail');
   const collapsed = useApp((s) => s.collapsed.detail);
   const lang = useApp((s) => s.lang);
+  const developmentStage = useApp((s) => s.developmentStage);
   const m = useT();
   const s = selectedId ? registry.get(selectedId) : undefined;
   const content = useMemo(() => (s ? resolveContent(registry, s.id, lang) : null), [registry, s, lang]);
@@ -53,6 +56,7 @@ export function DetailPanel() {
           <IconClose />
         </button>
         <h2 className="ds-detail-title">{nameOf(s, lang)}</h2>
+        {s.development && <div className="ds-notation">{NUMBERING_SYSTEMS.map((n) => <span key={n} className={`ds-chip ds-chip--mono${numbering === n ? ' is-active' : ''}`}><em>{NUMBERING_SHORT[n]}</em> {developmentNotation(s.development!)[n]}</span>)}</div>}
         {tooth?.tooth && fdi !== undefined && (
           <div className="ds-notation" aria-label={m.toothNotation}>
             {NUMBERING_SYSTEMS.map((n) => (
@@ -79,6 +83,7 @@ export function DetailPanel() {
       <div className="ds-detail-body">
         {content.summary ? <p className="ds-detail-summary">{content.summary}</p> : <p className="ds-detail-summary is-muted">{m.noDescription}</p>}
         {s.provenance === 'schematic' && <p className="ds-evidence">{FEEDBACK_TEXT[lang].schematicAnatomy}</p>}
+        {s.id.startsWith('development-') && <p className="ds-development-draft">{DEVELOPMENT_TEXT[lang].draft}{s.development && developmentStage ? ` · ${DEVELOPMENT_TEXT[lang].status[developmentStatus(s.development, developmentStage)]}` : ''}</p>}
         {s.kind === 'landmark' && passageFor(registry, s.id).length > 0 && <p className="ds-evidence">{FEEDBACK_TEXT[lang].foramenNote}</p>}
         {content.location && <Section title={FEEDBACK_TEXT[lang].location}>{content.location}</Section>}
         {content.function && <Section title={m.function}>{content.function}</Section>}

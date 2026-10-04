@@ -23,6 +23,7 @@ export function App() {
   const detailHidden = useApp((s) => s.collapsed.detail);
   const dockHidden = useApp((s) => s.collapsed.dock);
   const jawControls = useApp((s) => s.jawControls);
+  const developmentStage = useApp((s) => s.developmentStage);
   const lang = useApp((s) => s.lang);
   const m = useT();
 
@@ -50,7 +51,7 @@ export function App() {
   useEffect(() => {
     const update = () => {
       const mobile = window.innerWidth <= 767;
-      if (mobile) engine.setInsets(0, sheet !== 'none' ? window.innerHeight * 0.5 : 0);
+      if (mobile) engine.setInsets(0, sheet !== 'none' ? window.innerHeight * 0.5 : developmentStage ? 215 : 155);
       // the bottom toolbar covers the lower edge of the canvas; the dissection tools and the phase-2 board make it taller
       else {
         // the bottom toolbar: measured, since its height depends on what it shows
@@ -64,7 +65,7 @@ export function App() {
     update();
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
-  }, [engine, selected, dissect, laidOut, sheet, detailHidden, dockHidden, jawControls]);
+  }, [engine, selected, dissect, laidOut, sheet, detailHidden, dockHidden, jawControls, developmentStage, lang]);
 
   return (
     <div className={`ds-app${selected ? ' has-selection' : ''}${dissect ? ' is-dissecting' : ''}`}>

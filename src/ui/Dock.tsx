@@ -10,6 +10,7 @@ import { JawMotionControls } from './JawMotionControls';
 import { FEEDBACK_TEXT } from '../i18n/feedback';
 import { useLang } from '../i18n';
 import { IconArrowLeft, IconExplode, IconFlip, IconLabel, IconPause, IconPlay, IconReplay, IconSection, IconWarning } from './icons';
+import { DevelopmentTimeline, DevelopmentTools } from './DevelopmentControls';
 
 /** Section planes; names and titles are in the messages (`axis`, `toothAxis`). */
 const AXES: ClipAxis[] = ['sagittal', 'coronal', 'axial', 'view'];
@@ -19,15 +20,17 @@ export function Dock() {
   const mobileOpen = useApp((s) => s.mobileSheet === 'tools');
   const collapsed = useApp((s) => s.collapsed.dock);
   const jawControls = useApp((s) => s.jawControls);
+  const development = useApp((s) => s.developmentStage !== null);
   const m = useT();
   return (
     <div className={`ds-dock${mobileOpen ? ' is-mobile-open' : ''}${collapsed ? ' is-collapsed' : ''}`}>
       <PanelHandle panel="dock" />
+      <DevelopmentTimeline />
       <div className="ds-panel ds-toolbar" role="toolbar" aria-label={dissectFdi !== null ? m.toolbarDissect : m.toolbarScene}>
         <CameraControls />
-        {dissectFdi !== null ? <DissectControls fdi={dissectFdi} /> : jawControls ? <JawMotionControls /> : <ArchControls />}
+        {development ? <DevelopmentTools /> : dissectFdi !== null ? <DissectControls fdi={dissectFdi} /> : jawControls ? <JawMotionControls /> : <ArchControls />}
       </div>
-      <SectionControls />
+      {!development && <SectionControls />}
     </div>
   );
 }
