@@ -31,7 +31,7 @@ from tmj import articular_disc, disc_frame  # noqa: E402
 from sinus import build_sinus, build_paranasal_teaching_spaces  # noqa: E402
 from gingiva import expose_third_molar_crowns  # noqa: E402
 from tooth_layers import Frame, build_tooth_layers, make_frame  # noqa: E402
-from morphology import CrownRelief  # noqa: E402
+from morphology import CrownRelief, finalize  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Source table
@@ -228,7 +228,7 @@ def main():
         fr = frames[f]
         jobs.append((f, teeth[f].vertices, teeth[f].faces, arch, ttype,
                      dict(origin=fr.origin, axis=fr.axis, mesial=fr.mesial, buccal=fr.buccal),
-                     str(cache / f"layers-{'v8' if f in (38, 48) else 'v7'}-{f}.pkl")))
+                     str(cache / f"layers-v9-{f}.pkl")))
     print(f"Modelling internal anatomy for {len(jobs)} teeth…")
     with Pool(args.jobs) as pool:
         layers = dict(pool.map(_layers_job, jobs))
@@ -260,14 +260,14 @@ def main():
         if f in layers:
             L = layers[f]
             relief = CrownRelief(m, L.frame, arch, ttype, L.cej_height)
-            refined = relief.refine(m)
-            L.meshes['enamel'] = relief.enamel(L.meshes['enamel'], m)
+            refined = finalize(relief.refine(m), 20000)
+            L.meshes['enamel'] = finalize(relief.enamel(L.meshes['enamel'], m), 16000)
             for key, mesh in L.meshes.items():
                 if key != 'enamel': mesh.vertices = relief.deform(mesh.vertices)
             L.landmarks = {key: relief.deform(np.array([point]))[0] for key, point in L.landmarks.items()}
             features = relief.annotations(refined)
             m, prov = refined, 'schematic'
-        add("core", f"tooth-{f}", decimate(m, 20000), prov, TEETH_FMA[f])
+        add("core", f"tooth-{f}", finalize(m, 20000), prov, TEETH_FMA[f])
         fr = frames[f]
         info = dict(arch=arch, side=side, type=ttype, provenance=prov,
                     frame=dict(origin=S.p(fr.origin).round(4).tolist(), axis=S.d(fr.axis).round(4).tolist(),
@@ -619,6 +619,7 @@ def main():
         sc = trimesh.Scene()
         for name, m in L.meshes.items():
             key = f"{name}-{f}"
+            m = finalize(m, 16000)
             ma = S.mesh(m)
             sc.add_geometry(ma, node_name=key, geom_name=key)
             register(key, ma, 4, f"teeth/tooth-{f}.glb", "schematic")

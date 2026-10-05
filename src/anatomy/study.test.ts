@@ -21,6 +21,10 @@ describe('tooth-specific surface teaching', () => {
     expect(features(13)).toContain('lingual-ridge');
     expect(features(13)).toContain('labial-ridge');
     expect(features(14)).toContain('buccal-ridge');
+    expect(features(14)).toContain('mesial-marginal-groove');
+    expect(features(15)).not.toContain('mesial-marginal-groove');
+    expect(features(15)).toContain('buccal-triangular-ridge');
+    expect(features(35)).toContain('lingual-triangular-ridge');
     expect(features(11)).not.toContain('labial-ridge');
     expect(features(11)).not.toContain('lingual-ridge');
   });
@@ -45,8 +49,13 @@ describe('tooth-specific surface teaching', () => {
 
 describe('sinus and vessel study views', () => {
   beforeEach(() => setState({ ...initialState, categories: { ...initialState.categories } }));
-  it('registers all four sinus groups and bilateral schematic additions', () => {
-    for (const group of ['maxillary-sinus', 'frontal-sinus', 'sphenoidal-sinus', 'ethmoidal-air-cells']) {
+  it('removes every ethmoidal air-cell entry and mesh while retaining the ethmoid bone', () => {
+    expect([...registry.byId.keys()].filter(id => id.startsWith('ethmoidal-air-cells'))).toEqual([]);
+    expect(Object.keys(manifest.meshes).filter(id => id.startsWith('ethmoidal-air-cells'))).toEqual([]);
+    expect(registry.require('ethmoid-bone')).toBeDefined();
+  });
+  it('registers all three sinus groups and bilateral schematic additions', () => {
+    for (const group of ['maxillary-sinus', 'frontal-sinus', 'sphenoidal-sinus']) {
       expect(registry.require(group).parent).toBe('paranasal-sinuses');
       for (const side of ['right', 'left']) {
         const structure = registry.require(`${group}-${side}`);

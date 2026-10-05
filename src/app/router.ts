@@ -76,10 +76,9 @@ export function startRouter(engine: Engine, registry: Registry): () => void {
       }
       const s = registry.get(r.id)!;
       if (r.dissect && s.tooth) {
-        actions.enterDissect(s.tooth.fdi);
-        await engine.ensureTooth(s.tooth.fdi);
-      }
-      await engine.selectFromUI(r.id, { focus: true });
+        actions.select(r.id);
+        await engine.exploreTooth(s.tooth.fdi);
+      } else await engine.selectFromUI(r.id, { focus: true });
     } finally {
       applying = false;
     }

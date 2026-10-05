@@ -23,6 +23,7 @@ export function App() {
   const laidOut = useApp((s) => s.explodePhase === 2);
   const detailHidden = useApp((s) => s.collapsed.detail);
   const dockHidden = useApp((s) => s.collapsed.dock);
+  const layersHidden = useApp((s) => s.collapsed.layers);
   const jawControls = useApp((s) => s.jawControls);
   const developmentStage = useApp((s) => s.developmentStage);
   const lang = useApp((s) => s.lang);
@@ -73,10 +74,12 @@ export function App() {
       const bottom = Math.max(0, ...bottoms.map((r) => bounds.bottom - r.top + 12));
       const side = sideSheet ? panel ?? (sheet === 'tools' ? toolbar : null) : !compact.matches ? panel : null;
       const right = side ? bounds.right - side.left + 12 : 0;
+      const layers = !compact.matches && dissect ? visibleRect('.ds-layers') : null;
+      const left = layers ? layers.right - bounds.left + 12 : 0;
       // Landscape tool sheets occupy the side, not the lower half of the model.
       const clearance = sideSheet && sheet === 'tools' ? (bar ? bounds.bottom - bar.top + 12 : 0) : bottom;
       ui.style.setProperty('--dock-clearance', `${Math.max(64, bottom + 12)}px`);
-      engine.setInsets(Math.min(right, bounds.width - 100), Math.min(clearance, bounds.height - 100));
+      engine.setInsets(Math.min(right, bounds.width - 100), Math.min(clearance, bounds.height - 100), Math.min(left, bounds.width - 100));
     };
     const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
     update();
@@ -93,7 +96,7 @@ export function App() {
       window.removeEventListener('resize', schedule);
       window.visualViewport?.removeEventListener('resize', schedule);
     };
-  }, [engine, selected, dissect, laidOut, sheet, detailHidden, dockHidden, jawControls, developmentStage, lang]);
+  }, [engine, selected, dissect, laidOut, sheet, detailHidden, dockHidden, layersHidden, jawControls, developmentStage, lang]);
 
   return (
     <div className={`ds-app${selected ? ' has-selection' : ''}${dissect ? ' is-dissecting' : ''}`} data-sheet={sheet}>

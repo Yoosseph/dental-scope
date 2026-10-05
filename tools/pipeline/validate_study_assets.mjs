@@ -22,8 +22,12 @@ for (const [file, bytes] of Object.entries(manifest.files)) {
     const primitive = node.getMesh().listPrimitives()[0];
     const positions = primitive.getAttribute('POSITION').getArray();
     const indices = primitive.getIndices().getArray();
+    const normals = primitive.getAttribute('NORMAL')?.getArray();
     const metadata = manifest.meshes[key];
     if (indices.length / 3 !== metadata.triangles || !positions.every(Number.isFinite)) throw Error(`${key}: invalid geometry/count`);
+    // Source atlas meshes may omit normals; the loader computes those. Revised
+    // tooth assets must supply them, and every supplied normal must be finite.
+    if ((!normals && /^(tooth|enamel|dentin|pulp|cementum|canal|pdl)-/.test(key)) || normals && !normals.every(Number.isFinite) || indices.some(i => i < 0 || i >= positions.length / 3)) throw Error(`${key}: invalid normals/indices`);
     const min = new Vector3(Infinity, Infinity, Infinity), max = new Vector3(-Infinity, -Infinity, -Infinity);
     const matrix = new Matrix4().fromArray(node.getWorldMatrix());
     for (let i = 0; i < positions.length; i += 3) { const point = new Vector3(...positions.slice(i, i + 3)).applyMatrix4(matrix); min.min(point); max.max(point); }

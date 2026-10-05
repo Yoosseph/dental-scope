@@ -192,9 +192,7 @@ export function DetailPanel() {
   }
 
   async function enterDissect(f: number) {
-    actions.enterDissect(f);
-    await engine.ensureTooth(f);
-    engine.focus(`tooth-${f}`);
+    await engine.exploreTooth(f);
     pushCurrentPath(registry);
   }
 }

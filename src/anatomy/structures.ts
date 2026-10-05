@@ -53,8 +53,8 @@ export const STRUCTURE_DEFS: StructureDef[] = [
   { id: 'dental-anatomy', name: 'Dental anatomy', parent: null, kind: 'group' },
 
   { id: 'paranasal-sinuses', name: 'Paranasal sinuses', parent: 'dental-anatomy', kind: 'group', categories: ['sinus'], aliases: ['all sinuses', 'sinus paranasales'], labelPriority: 5 },
-  ...(['frontal-sinus', 'sphenoidal-sinus', 'ethmoidal-air-cells'] as const).flatMap((id) => {
-    const name = id === 'frontal-sinus' ? 'frontal sinus' : id === 'sphenoidal-sinus' ? 'sphenoidal sinus' : 'ethmoidal air cells';
+  ...(['frontal-sinus', 'sphenoidal-sinus'] as const).flatMap((id) => {
+    const name = id === 'frontal-sinus' ? 'frontal sinus' : 'sphenoidal sinus';
     return [{ id, name: cap(name), parent: 'paranasal-sinuses', kind: 'group' as const, categories: ['sinus' as const], aliases: [name, name.replace('sphenoidal', 'sphenoid'), 'paranasal'], labelPriority: 4 }, ...bilateral(id, name, () => id, { categories: ['sinus'], provenance: 'schematic', labelPriority: 4 })];
   }),
 

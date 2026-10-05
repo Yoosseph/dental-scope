@@ -1,0 +1,258 @@
+[
+  {
+    "fdi": 11,
+    "min_sampled_jacobian": 0.6781996922081549,
+    "outside_shell_cm": {
+      "dentin-coronal": 0.0,
+      "pulp-chamber": 0.0
+    }
+  },
+  {
+    "fdi": 12,
+    "min_sampled_jacobian": 0.6112197820315811,
+    "outside_shell_cm": {
+      "dentin-coronal": 0.0,
+      "pulp-chamber": 0.0
+    }
+  },
+  {
+    "fdi": 13,
+    "min_sampled_jacobian": 0.6743588846505141,
+    "outside_shell_cm": {
+      "dentin-coronal": 0.0,
+      "pulp-chamber": 0.0
+    }
+  },
+  {
+    "fdi": 14,
+    "min_sampled_jacobian": 0.7444289086782596,
+    "outside_shell_cm": {
+      "dentin-coronal": 0.0,
+      "pulp-chamber": 0.0
+    }
+  },
+  {
+    "fdi": 15,
+    "min_sampled_jacobian": 0.7431920212396738,
+    "outside_shell_cm": {
+      "dentin-coronal": 0.0,
+      "pulp-chamber": 0.0
+    }
+  },
+  {
+    "fdi": 16,
+    "min_sampled_jacobian": 0.7477771095370843,
+    "outside_shell_cm": {
+      "dentin-coronal": 0.0,
+      "pulp-chamber": 0.0
+    }
+  },
+  {
+    "fdi": 17,
+    "min_sampled_jacobian": 0.7573231896077477,
+    "outside_shell_cm": {
+      "dentin-coronal": 0.0,
+      "pulp-chamber": 0.0
+    }
+  },
+  {
+    "fdi": 18,
+    "min_sampled_jacobian": 0.6935856043170799,
+    "outside_shell_cm": {
+      "dentin-coronal": 0.0,
+      "pulp-chamber": 0.0
+    }
+  },
+  {
+    "fdi": 21,
+    "min_sampled_jacobian": 0.6448194638071152,
+    "outside_shell_cm": {
+      "dentin-coronal": 0.0,
+      "pulp-chamber": 0.0
+    }
+  },
+  {
+    "fdi": 22,
+    "min_sampled_jacobian": 0.6349951600298799,
+    "outside_shell_cm": {
+      "dentin-coronal": 0.0,
+      "pulp-chamber": 0.0
+    }
+  },
+  {
+    "fdi": 23,
+    "min_sampled_jacobian": 0.6920004095264165,
+    "outside_shell_cm": {
+      "dentin-coronal": 0.0,
+      "pulp-chamber": 0.0
+    }
+  },
+  {
+    "fdi": 24,
+    "min_sampled_jacobian": 0.6724372534944267,
+    "outside_shell_cm": {
+      "dentin-coronal": 0.0,
+      "pulp-chamber": 0.0
+    }
+  },
+  {
+    "fdi": 25,
+    "min_sampled_jacobian": 0.7926861426685367,
+    "outside_shell_cm": {
+      "dentin-coronal": 0.0,
+      "pulp-chamber": 0.0
+    }
+  },
+  {
+    "fdi": 26,
+    "min_sampled_jacobian": 0.761460948379565,
+    "outside_shell_cm": {
+      "dentin-coronal": 0.0,
+      "pulp-chamber": 0.0
+    }
+  },
+  {
+    "fdi": 27,
+    "min_sampled_jacobian": 0.6980365600923643,
+    "outside_shell_cm": {
+      "dentin-coronal": 0.0,
+      "pulp-chamber": 0.0
+    }
+  },
+  {
+    "fdi": 28,
+    "min_sampled_jacobian": 0.73421687575819,
+    "outside_shell_cm": {
+      "dentin-coronal": 0.0,
+      "pulp-chamber": 0.0
+    }
+  },
+  {
+    "fdi": 31,
+    "min_sampled_jacobian": 0.8518482312997931,
+    "outside_shell_cm": {
+      "dentin-coronal": 0.0,
+      "pulp-chamber": 0.0
+    }
+  },
+  {
+    "fdi": 32,
+    "min_sampled_jacobian": 0.8474186994538,
+    "outside_shell_cm": {
+      "dentin-coronal": 0.0,
+      "pulp-chamber": 0.0
+    }
+  },
+  {
+    "fdi": 33,
+    "min_sampled_jacobian": 0.6942286207904759,
+    "outside_shell_cm": {
+      "dentin-coronal": 0.0,
+      "pulp-chamber": 0.0
+    }
+  },
+  {
+    "fdi": 34,
+    "min_sampled_jacobian": 0.6256066952677232,
+    "outside_shell_cm": {
+      "dentin-coronal": 0.0,
+      "pulp-chamber": 0.0
+    }
+  },
+  {
+    "fdi": 35,
+    "min_sampled_jacobian": 0.7613553079549473,
+    "outside_shell_cm": {
+      "dentin-coronal": 0.0,
+      "pulp-chamber": 0.0
+    }
+  },
+  {
+    "fdi": 36,
+    "min_sampled_jacobian": 0.6349482434612315,
+    "outside_shell_cm": {
+      "dentin-coronal": 0.0,
+      "pulp-chamber": 0.0
+    }
+  },
+  {
+    "fdi": 37,
+    "min_sampled_jacobian": 0.5860483407898962,
+    "outside_shell_cm": {
+      "dentin-coronal": 0.0,
+      "pulp-chamber": 0.0
+    }
+  },
+  {
+    "fdi": 38,
+    "min_sampled_jacobian": 0.5855781454840301,
+    "outside_shell_cm": {
+      "dentin-coronal": 0.0,
+      "pulp-chamber": 0.0
+    }
+  },
+  {
+    "fdi": 41,
+    "min_sampled_jacobian": 0.826078007773624,
+    "outside_shell_cm": {
+      "dentin-coronal": 0.0,
+      "pulp-chamber": 0.0
+    }
+  },
+  {
+    "fdi": 42,
+    "min_sampled_jacobian": 0.8645525421539966,
+    "outside_shell_cm": {
+      "dentin-coronal": 0.0,
+      "pulp-chamber": 0.0
+    }
+  },
+  {
+    "fdi": 43,
+    "min_sampled_jacobian": 0.691914815125042,
+    "outside_shell_cm": {
+      "dentin-coronal": 0.0,
+      "pulp-chamber": 0.0
+    }
+  },
+  {
+    "fdi": 44,
+    "min_sampled_jacobian": 0.6512503591427162,
+    "outside_shell_cm": {
+      "dentin-coronal": 0.0,
+      "pulp-chamber": 0.0
+    }
+  },
+  {
+    "fdi": 45,
+    "min_sampled_jacobian": 0.6919498204759151,
+    "outside_shell_cm": {
+      "dentin-coronal": 0.0,
+      "pulp-chamber": 0.0
+    }
+  },
+  {
+    "fdi": 46,
+    "min_sampled_jacobian": 0.6298044574151915,
+    "outside_shell_cm": {
+      "dentin-coronal": 0.0,
+      "pulp-chamber": 0.0
+    }
+  },
+  {
+    "fdi": 47,
+    "min_sampled_jacobian": 0.6394272119571186,
+    "outside_shell_cm": {
+      "dentin-coronal": 0.0,
+      "pulp-chamber": 0.0
+    }
+  },
+  {
+    "fdi": 48,
+    "min_sampled_jacobian": 0.587985013230832,
+    "outside_shell_cm": {
+      "dentin-coronal": 0.0,
+      "pulp-chamber": 0.0
+    }
+  }
+]

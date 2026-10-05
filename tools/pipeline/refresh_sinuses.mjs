@@ -8,6 +8,13 @@ const io = new NodeIO().registerExtensions([EXTMeshoptCompression, KHRMeshQuanti
 const doc = await io.read('public/models/context.glb');
 const manifest = JSON.parse(readFileSync('public/models/manifest.json', 'utf8'));
 const data = JSON.parse(readFileSync('tools/pipeline/.cache/paranasal.json', 'utf8'));
+// Remove retired teaching clusters from both packed geometry and the registry manifest.
+for (const side of ['right', 'left']) {
+  const key = `ethmoidal-air-cells-${side}`;
+  doc.getRoot().listNodes().filter(n => n.getName() === key).forEach(n => n.dispose());
+  delete manifest.meshes[key];
+  delete data[key];
+}
 const buffer = doc.getRoot().listBuffers()[0];
 const accessor = (type, array) => doc.createAccessor().setType(type).setArray(array).setBuffer(buffer);
 for (const [key, mesh] of Object.entries(data)) {

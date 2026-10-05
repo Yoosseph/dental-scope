@@ -1,5 +1,7 @@
 # Student feedback implementation — 2026-10-05
 
+> Follow-up: all ethmoidal air-cell teaching clusters and selectable entries have been removed at the owner’s request. The ethmoid bone remains. Earlier four-group descriptions below record the initial implementation. See `tooth-visualization-review.md` for the subsequent crown/material revision.
+
 Implemented locally and subsequently authorized for commit by the owner; no deployment, educator endorsement or student follow-up is implied. Quiz/self-test and contributor credits are excluded. The original screenshots remain reference material, not production assets.
 
 ## Tooth morphology and appearance

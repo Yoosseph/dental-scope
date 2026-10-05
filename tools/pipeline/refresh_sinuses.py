@@ -18,4 +18,4 @@ for key, mesh in build_paranasal_teaching_spaces().items():
     data[key] = dict(positions=app.vertices.ravel().tolist(), normals=app.vertex_normals.ravel().tolist(), indices=app.faces.ravel().tolist(), bounds=app.bounds.round(4).tolist(), triangles=len(app.faces))
 out = Path('tools/pipeline/.cache/paranasal.json'); out.parent.mkdir(parents=True, exist_ok=True)
 out.write_text(json.dumps(data))
-print('Six sinus groups exported; ethmoidal groups contain eight separate teaching cells each.')
+print('Four bilateral frontal/sphenoidal teaching volumes exported.')

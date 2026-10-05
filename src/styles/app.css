@@ -1873,6 +1873,26 @@ button.ds-layer-name:hover {
   .ds-dock .ds-dissect-bar {
     flex-wrap: wrap;
   }
+  .ds-app.is-dissecting .ds-dock > .ds-toolbar {
+    grid-column: 1 / -1;
+  }
+  .ds-app.is-dissecting .ds-dock .ds-dissect {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    gap: 8px 24px;
+    padding: 8px 12px;
+  }
+  .ds-app.is-dissecting .ds-dissect-bar {
+    grid-column: 1 / -1;
+  }
+  .ds-app.is-dissecting .ds-dissect > .ds-play-row {
+    min-width: 0;
+    gap: 10px;
+  }
+  .ds-app.is-dissecting .ds-dissect > .ds-play-row:last-child {
+    padding-left: 24px;
+    border-left: 1px solid var(--line);
+  }
   .ds-dock-tools {
     gap: 2px;
     padding-left: 8px;

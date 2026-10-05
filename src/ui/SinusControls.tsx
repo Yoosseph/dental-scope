@@ -7,7 +7,7 @@ export function SinusControls() {
   const { registry, engine } = useServices();
   if (study !== 'sinuses') return null;
   const text = STUDY_TEXT[lang];
-  const groups = ['maxillary-sinus', 'frontal-sinus', 'sphenoidal-sinus', 'ethmoidal-air-cells'];
+  const groups = ['maxillary-sinus', 'frontal-sinus', 'sphenoidal-sinus'];
   return <section className="ds-study-controls" aria-label={text.sinuses}>
     <p className="ds-layer-hint">{text.sinusHint}</p>
     <div className="ds-chip-row">{groups.map(id => <button type="button" key={id} className="ds-chip ds-chip--button" onClick={() => void engine.selectFromUI(id, { focus: true })}>{nameOf(registry.require(id), lang)}</button>)}</div>

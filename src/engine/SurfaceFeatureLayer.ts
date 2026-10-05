@@ -16,7 +16,7 @@ export class SurfaceFeatureLayer {
         if (!feature.path || feature.path.length < 2) continue;
         const geometry = new THREE.BufferGeometry().setFromPoints(feature.path.map(p => new THREE.Vector3(...p)));
         const color = feature.key.includes('groove') ? '#267e91' : feature.key.includes('ridge') ? '#bc8431' : '#8063aa';
-        const line = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color, transparent: true, opacity: .85, depthTest: true }));
+        const line = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color, transparent: true, opacity: .85, depthTest: true, depthWrite: false }));
         line.name = `surface-${feature.key}-${fdi}`;
         this.paths.push(line); this.root.add(line);
       }
