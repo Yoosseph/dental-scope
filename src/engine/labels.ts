@@ -15,6 +15,8 @@ export interface LabelCandidate {
   priority: number;
   /** structure ids that count as "this label's structure" for occlusion tests */
   owners: Set<string>;
+  /** Surface features need a tighter tolerance than internal landmarks (cm). */
+  occlusionTolerance?: number;
   kind: 'tooth' | 'structure' | 'landmark';
 }
 
@@ -215,7 +217,7 @@ export class LabelLayer {
       if (!hit) continue;
       const dist = camera.position.distanceTo(p);
       // anchors sit on the structure's surface (landmarks just inside it): allow a small tolerance
-      const tol = c.kind === 'landmark' ? 0.08 : 0.04;
+      const tol = c.occlusionTolerance ?? (c.kind === 'landmark' ? 0.08 : 0.04);
       if (hit.distance < dist - tol && !c.owners.has(hit.id)) this.occluded.add(c.id);
     }
   }

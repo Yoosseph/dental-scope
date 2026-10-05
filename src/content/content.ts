@@ -18,6 +18,9 @@ import { feedbackAnatomy } from './feedbackAnatomy.ts';
 import { supportingAnatomy } from './supportingAnatomy.ts';
 import { developmentAnatomy } from './developmentAnatomy.ts';
 import { developmentContentKey } from '../anatomy/development.ts';
+import { VESSEL_REFERENCES } from './vesselReferences.ts';
+import { paranasalContent } from '../anatomy/paranasal.ts';
+import { surfaceFeatureContent } from '../anatomy/surfaceFeatures.ts';
 
 export type ContentStatus = 'placeholder' | 'draft' | 'reviewed';
 
@@ -51,6 +54,11 @@ const db = (t: unknown, s: unknown, lang: Lang): Record<string, RawEntry> => {
   for (const [key, entry] of Object.entries(feedbackAnatomy(lang))) base[key] = { ...base[key], ...entry };
   for (const [key, entry] of Object.entries(supportingAnatomy(lang))) base[key] = { ...base[key], ...entry };
   Object.assign(base, developmentAnatomy(lang, base));
+  Object.assign(base, surfaceFeatureContent(lang), paranasalContent(lang));
+  for (const [key, source] of Object.entries(VESSEL_REFERENCES)) {
+    const entry = base[key];
+    if (entry && !entry.sources?.some(ref => ref.url === source.url)) entry.sources = [...entry.sources ?? [], source];
+  }
   return base;
 };
 /** Content per interface language; every language has the same keys (checked by i18n.test.ts). */

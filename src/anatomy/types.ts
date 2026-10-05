@@ -68,6 +68,8 @@ export interface ToothMeta {
 }
 
 export interface Structure {
+  /** Fitted educational surface landmark/curve, not a measured anatomical segmentation. */
+  surfaceFeature?: string;
   /** Schematic childhood dentition, separate from the adult atlas tooth layers. */
   development?: DevelopmentTooth;
   id: string;
@@ -109,6 +111,7 @@ export interface ManifestMesh {
 }
 
 export interface ManifestTooth {
+  surfaceFeatures?: { key: string; anchor: Vec3; path: Vec3[] | null }[];
   arch: Arch;
   side: Side;
   type: ToothType;

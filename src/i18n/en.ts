@@ -126,7 +126,7 @@ export const en = {
   panelTabs: 'Panel',
   structures: 'Structures',
   layerPresets: 'Layer presets',
-  preset: { 'nerve-muscles': 'Nerves & muscles', overview: 'Overview', dentition: 'Teeth', bone: 'Bone', nerves: 'Nerves' } as Record<string, string>,
+  preset: { sinuses: 'Sinuses', vessels: 'Vessels', 'nerve-muscles': 'Nerves & muscles', overview: 'Overview', dentition: 'Teeth', bone: 'Bone', nerves: 'Nerves' } as Record<string, string>,
   group: {
     Dentition: 'Dentition',
     'Tooth tissues': 'Tooth tissues',
@@ -149,7 +149,7 @@ export const en = {
     maxilla: 'Maxilla',
     mandible: 'Mandible',
     tmj: 'Temporomandibular joint',
-    sinus: 'Maxillary sinuses',
+    sinus: 'Paranasal sinuses',
     nerves: 'Nerves',
     arteries: 'Arteries',
     veins: 'Veins',

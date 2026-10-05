@@ -111,6 +111,12 @@ ROOT_DIRS = {  # unit direction in (mesial, buccal) plane
 }
 
 
+def cervical_height(x, y, base, curve):
+    """Shared modeled CEJ used by tissue fields and crown-only refinement."""
+    radius = np.sqrt(x * x + y * y) + 1e-6
+    return base + curve * (x / radius) ** 2
+
+
 @dataclass
 class Frame:
     origin: np.ndarray  # world point
@@ -245,12 +251,17 @@ def surface(field: np.ndarray, lo, h, frame: Frame, target_faces: int, smooth=4)
         if not simplified.is_watertight:
             # Thin closed shells need gentler reduction. Accept extra detail up
             # to a bounded limit; never keep a huge unsimplified volume.
-            for aggressiveness in (5.0, 4.0, 3.0):
-                trial = reduce(clean, aggressiveness)
+            for aggressiveness in (5.0, 4.0, 3.0, 1.0, 0.0):
+                # Restart from the closed input; a pinched intermediate cannot
+                # be repaired by simplifying it further.
+                trial = reduce(m, aggressiveness)
                 if trial.is_watertight and len(trial.faces) <= target_faces * 2.5:
                     simplified = trial
                     break
-        m = simplified
+        # Some thin walls pinch to edges shared by four faces at every tested
+        # reduction. Retain the closed marching-cubes solid in that case.
+        if simplified.is_watertight and simplified.is_winding_consistent:
+            m = simplified
     m.vertices = frame.to_world(np.asarray(m.vertices))
     return orient_outward(m)
 
@@ -321,9 +332,7 @@ def build_tooth_layers(mesh: trimesh.Trimesh, arch: str, ttype: str, frame: Fram
     crown_len = P["crown_ratio"] * H
     z_cej = z_top - crown_len
     # cervical line curves crownward on the proximal (mesial/distal) surfaces
-    r_xy = np.sqrt(XX ** 2 + YY ** 2) + 1e-6
-    prox = (XX / r_xy) ** 2
-    cej = z_cej + P["cej_curve"] * prox
+    cej = cervical_height(XX, YY, z_cej, P['cej_curve'])
     hc = ZZ - cej  # height above the cervical line (mm)
 
     # ---- enamel ------------------------------------------------------------

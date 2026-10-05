@@ -115,7 +115,7 @@ export const sv: Messages = {
   panelTabs: 'Panel',
   structures: 'Strukturer',
   layerPresets: 'Förinställda lager',
-  preset: { 'nerve-muscles': 'Nerver & muskler', overview: 'Översikt', dentition: 'Tänder', bone: 'Ben', nerves: 'Nerver' },
+  preset: { sinuses: 'Bihålor', vessels: 'Blodkärl', 'nerve-muscles': 'Nerver & muskler', overview: 'Översikt', dentition: 'Tänder', bone: 'Ben', nerves: 'Nerver' },
   group: {
     Dentition: 'Tandsättning',
     'Tooth tissues': 'Tandvävnader',

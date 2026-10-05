@@ -5,7 +5,7 @@
  */
 import { createStore } from 'zustand/vanilla';
 import { useStore } from 'zustand';
-import { INITIAL_CATEGORY_STATE, type CategoryState } from '../anatomy/categories';
+import { INITIAL_CATEGORY_STATE, PRESETS, type CategoryState } from '../anatomy/categories';
 import type { CategoryId, NumberingSystem } from '../anatomy/types';
 import { DEFAULT_LANG, isLang, type Lang } from '../i18n/lang';
 import type { NerveSide, NerveView } from '../anatomy/nerveViews';
@@ -39,6 +39,10 @@ export interface ClipState {
 export const DISSECT_LEVELS = [{ id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }] as const;
 
 export interface AppState {
+  studyView: 'vessels' | 'sinuses' | null;
+  vesselSide: 'both' | 'right' | 'left';
+  vesselMode: 'both' | 'arteries' | 'veins';
+  surfaceFeatures: boolean;
   developmentStage: DevelopmentStageId | null;
   developmentShowUnerupted: boolean;
   developmentSoftTissue: boolean;
@@ -95,6 +99,8 @@ export interface AppState {
 export type CollapsiblePanel = 'layers' | 'detail' | 'dock';
 
 export const initialState: AppState = {
+  studyView: null, vesselSide: 'both', vesselMode: 'both',
+  surfaceFeatures: false,
   developmentStage: null, developmentShowUnerupted: true, developmentSoftTissue: false, developmentPlaying: false,
   nerveView: 'dental', nerveSide: 'both',
   passageIds: [], jawControls: false, jawSide: 'right', jawOpening: 0, jawPlaying: false,
@@ -160,6 +166,19 @@ let orbitBeforeTooth: OrbitMode | null = null;
 let adultSceneBeforeDevelopment: Partial<AppState> | null = null;
 
 export const actions = {
+  applyStudyPreset(id: string) {
+    if (getState().dissectFdi !== null) actions.exitDissect();
+    if (getState().developmentStage) actions.setDevelopmentStage(null);
+    const preset = PRESETS.find(p => p.id === id);
+    if (!preset) return;
+    setState({ categories: { ...getState().categories, ...preset.state }, studyView: id === 'vessels' || id === 'sinuses' ? id : null,
+      vesselSide: 'both', vesselMode: 'both', selectedId: null, hoveredId: null, isolateId: null, isolateContext: false,
+      hidden: {}, ghosted: {}, passageIds: [], labels: id === 'vessels' || id === 'sinuses' ? true : getState().labels,
+      jawControls: false, jawPlaying: false, jawOpening: 0, explode: 0, explodePhase: 1, toothExplode: 0, clip: { ...getState().clip, enabled: false } });
+  },
+  setVesselSide(vesselSide: AppState['vesselSide']) { setState({ vesselSide, selectedId: null, hoveredId: null, isolateId: null, isolateContext: false }); },
+  setVesselMode(vesselMode: AppState['vesselMode']) { setState({ vesselMode, selectedId: null, hoveredId: null, isolateId: null, isolateContext: false }); },
+  setSurfaceFeatures(surfaceFeatures: boolean) { setState({ surfaceFeatures }); },
   setDevelopmentStage(developmentStage: DevelopmentStageId | null, playing = false) {
     const previous = getState();
     if (previous.developmentStage === developmentStage) {
@@ -269,6 +288,7 @@ export const actions = {
     setState({ isolateContext: on });
   },
   resetVisibility() {
+    setState({ studyView: null, vesselSide: 'both', vesselMode: 'both' });
     setState({ hidden: {}, ghosted: {}, isolateId: null, isolateContext: false, passageIds: [], categories: { ...INITIAL_CATEGORY_STATE } });
   },
   setExplode(v: number) {
@@ -307,7 +327,7 @@ export const actions = {
   },
   enterDissect(fdi: number) {
     if (getState().developmentStage) actions.setDevelopmentStage(null);
-    setState({ developmentStage: null, jawOpening: 0, jawPlaying: false, jawControls: false, passageIds: [] });
+    setState(s => ({ developmentStage: null, studyView: null, jawOpening: 0, jawPlaying: false, jawControls: false, passageIds: [], categories: { ...s.categories, 'permanent-teeth': 'on', enamel: 'on', dentin: 'on', cementum: 'on', 'dental-pulp': 'on', 'root-canals': 'on', 'periodontal-ligament': 'on' } }));
     // Inside a tooth the free orbit is the useful one (pan and focus on a canal or a root);
     // the mouth-level orbit comes back when the tooth is left. Not saved as a preference.
     if (getState().dissectFdi === null && getState().orbitMode !== 'free') orbitBeforeTooth = getState().orbitMode;

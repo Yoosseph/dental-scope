@@ -26,6 +26,7 @@ import { colorToothShell, shadeEnamelCrevices } from './toothShading';
 import { jawDeformation, jawMatrix, rigidJawPart } from './jawMotion';
 import { landmarkHost, passageFor } from '../anatomy/passages';
 import { PRESETS } from '../anatomy/categories';
+import { SurfaceFeatureLayer } from './SurfaceFeatureLayer';
 import { DevelopmentScene } from './DevelopmentScene';
 import { developmentNotation } from '../anatomy/development';
 import { isCompactLayout } from '../app/viewport';
@@ -122,13 +123,17 @@ export class Engine {
   private cancelArchPreparation?: () => void;
   private explodePreset?: ViewPreset;
   /** canvas area covered by panels (px), animated; shifts the optical centre */
-  private insets = { right: 0, bottom: 0 };
+  private insets = { right: 0, bottom: 0, left: 0 };
   /** where the insets are animating to (the start framing fits into this) */
-  private insetTarget = { right: 0, bottom: 0 };
+  private insetTarget = { right: 0, bottom: 0, left: 0 };
   private insetsKnown = false;
   private marker: THREE.Mesh;
+  private toothLight = new THREE.DirectionalLight('#ffffff', 2.4);
+  private studyLightOffset = new THREE.Vector3();
+  private overviewLights = new THREE.Group();
   private root = new THREE.Group();
   private developmentScene: DevelopmentScene;
+  private surfaceLayer: SurfaceFeatureLayer;
   private sceneBounds = new THREE.Box3();
   /** everything in the manifest (the whole skull), for the start framing */
   private skullBounds = new THREE.Box3();
@@ -145,6 +150,8 @@ export class Engine {
 
   constructor(registry: Registry) {
     this.registry = registry;
+    this.surfaceLayer = new SurfaceFeatureLayer(registry.manifest);
+    this.scene.add(this.surfaceLayer.root, this.toothLight, this.toothLight.target);
     this.developmentScene = new DevelopmentScene(registry);
     this.scene.add(this.developmentScene.root);
     this.marker = new THREE.Mesh(
@@ -159,7 +166,8 @@ export class Engine {
     fill.position.set(-6, 2, 4);
     const rim = new THREE.DirectionalLight('#ffffff', 0.45);
     rim.position.set(0, 3, -8);
-    this.scene.add(new THREE.HemisphereLight('#ffffff', '#8b8478', 0.4), key, fill, rim);
+    this.overviewLights.add(new THREE.HemisphereLight('#ffffff', '#8b8478', 0.4), key, fill, rim);
+    this.scene.add(this.overviewLights);
     this.scene.add(this.root, this.marker, this.section.outline);
     const [lo, hi] = registry.manifest.bounds;
     this.sceneBounds.set(new THREE.Vector3(...lo).min(new THREE.Vector3(...hi)), new THREE.Vector3(...lo).max(new THREE.Vector3(...hi)));
@@ -250,6 +258,7 @@ export class Engine {
     this.resizeObs?.disconnect();
     this.labels?.dispose();
     this.developmentScene.dispose();
+    this.surfaceLayer.dispose();
     this.developmentProgressListeners.clear();
     this.rig?.controls.dispose();
     this.environmentTarget?.dispose();
@@ -318,7 +327,7 @@ export class Engine {
       if (!owner) continue;
       const cats = this.registry.categoriesOfMesh(key);
       const style = styleKeyFor(key, cats);
-      if (style === 'enamel') shadeEnamelCrevices(geo);
+      if (style === 'enamel') shadeEnamelCrevices(geo, this.registry, Number(key.split('-').at(-1)));
       const mat = createTissueMaterial(style);
       const shell = shellFdi(key);
       if (shell !== null) colorToothShell(geo, mat, this.registry, shell);
@@ -445,6 +454,7 @@ export class Engine {
       developmentChanged || s.developmentShowUnerupted !== p.developmentShowUnerupted ||
       s.categories !== p.categories ||
       s.passageIds !== p.passageIds ||
+      s.studyView !== p.studyView || s.vesselSide !== p.vesselSide || s.vesselMode !== p.vesselMode ||
       s.nerveView !== p.nerveView || s.nerveSide !== p.nerveSide ||
       s.jawControls !== p.jawControls || s.jawSide !== p.jawSide ||
       s.hidden !== p.hidden ||
@@ -482,7 +492,7 @@ export class Engine {
       }
       else this.resetToStart();
     }
-    if (visChanged || s.labels !== p.labels || s.numbering !== p.numbering || s.selectedId !== p.selectedId || s.lang !== p.lang) this.refreshLabels();
+    if (visChanged || s.labels !== p.labels || s.surfaceFeatures !== p.surfaceFeatures || s.numbering !== p.numbering || s.selectedId !== p.selectedId || s.lang !== p.lang) this.refreshLabels();
     // a new phase or a changed set of visible structures re-packs the board and frames it
     if (s.explodePhase !== p.explodePhase || (s.explodePhase === 2 && visChanged)) this.layoutBoard(true);
     if (s.explodePhase === 1 && p.explodePhase === 2 && s.dissectFdi === null && !s.isolateId) {
@@ -714,9 +724,9 @@ export class Engine {
   private refreshLabels() {
     if (!this.labels) return;
     const s = getState();
-    this.labels.enabled = s.labels && !this.developmentScene.active;
+    this.labels.enabled = (s.labels || s.surfaceFeatures && s.dissectFdi !== null) && !this.developmentScene.active;
     this.labels.selectedId = s.selectedId;
-    if (!s.labels) {
+    if (!s.labels && !(s.surfaceFeatures && s.dissectFdi !== null)) {
       this.labels.setCandidates([]);
       this.invalidate();
       return;
@@ -744,13 +754,14 @@ export class Engine {
     if (s.dissectFdi !== null) {
       const fdi = s.dissectFdi;
       const tooth = this.registry.get(`tooth-${fdi}`)!;
-      for (const k of tooth.tooth?.layers ?? []) {
+      for (const k of s.labels ? tooth.tooth?.layers ?? [] : []) {
         const st = this.registry.get(k);
         if (st && this.entries.get(k)?.visual === 'on') addMeshLabel(k, shortOf(st, s.lang), 'structure', st.labelPriority + 3, [k]);
       }
       for (const d of this.registry.descendants(tooth.id)) {
+        if (d.surfaceFeature ? !s.surfaceFeatures || s.dissectLevel > 1 || s.clip.enabled : !s.labels) continue;
         if (d.kind !== 'landmark' || !d.anchor || d.id.startsWith('pulp-horn-') && !d.id.startsWith('pulp-horn-1-')) continue;
-        const parentKey = d.parent && this.registry.get(d.parent)?.meshes[0];
+        const parentKey = d.surfaceFeature ? (this.entries.get(`enamel-${fdi}`)?.visual === 'on' ? `enamel-${fdi}` : tooth.id) : d.parent && this.registry.get(d.parent)?.meshes[0];
         const parentEntry = parentKey ? this.entries.get(parentKey) : undefined;
         if (parentEntry && parentEntry.visual === 'off') continue;
         const anchor = new THREE.Vector3(...d.anchor);
@@ -760,13 +771,15 @@ export class Engine {
           kind: 'landmark',
           priority: d.labelPriority + 2,
           radius: 0.2,
-          owners: new Set([d.id, ...(parentKey ? [this.registry.meshOwner.get(parentKey)!] : [])]),
-          anchor: () => (parentEntry ? anchor.clone().add(parentEntry.mesh.position) : anchor),
+          occlusionTolerance: d.surfaceFeature ? 0.012 : undefined,
+          // Surface landmarks must be hidden by the far side of their own crown.
+          owners: new Set([d.id, ...(!d.surfaceFeature && parentKey ? [this.registry.meshOwner.get(parentKey)!] : [])]),
+          anchor: () => (parentEntry ? anchor.clone().applyMatrix4(parentEntry.mesh.matrixWorld) : anchor),
         });
       }
     } else {
       for (const t of this.registry.teeth()) {
-        if (s.jawControls) continue;
+        if (s.jawControls || s.studyView) continue;
         const fdi = t.toothFdi!;
         if (s.passageIds.length) {
           const lower = s.passageIds.some((id) => id.startsWith('mandibular-foramen-'));
@@ -778,14 +791,16 @@ export class Engine {
         addMeshLabel(t.id, formatTooth(fdi, s.numbering), 'tooth', 5, keys);
       }
       for (const st of this.registry.byId.values()) {
+        if (s.studyView && st.id !== s.selectedId && !(s.studyView === 'sinuses' ? st.categories.includes('sinus') : st.categories.some(c => c === 'arteries' || c === 'veins'))) continue;
         if (s.jawControls && (!st.id.endsWith(`-${s.jawSide}`) || !/^(mandibular-condyle|articular-|lateral-pterygoid|medial-pterygoid|temporalis|masseter)/.test(st.id))) continue;
         if (s.passageIds.length && st.kind === 'landmark' && !s.passageIds.includes(st.id)) continue;
         const passageLabel = s.passageIds.includes(st.id);
-        if (st.toothFdi !== undefined || !passageLabel && (st.labelPriority < 3 || st.regional)) continue;
+        const studyLabel = s.studyView === 'vessels' && st.categories.some(c => c === 'arteries' || c === 'veins');
+        if (st.toothFdi !== undefined || !passageLabel && !studyLabel && (st.labelPriority < 3 || st.regional)) continue;
         if (st.kind === 'mesh' || s.jawControls && st.kind === 'group') {
           const vis = this.registry.meshesOf(st.id).filter((k) => s.jawControls || s.passageIds.includes(st.id) ? visibleMesh(k) : isFullyShown(this.entries.get(k)?.visual ?? 'off'));
           const notation = st.development ? developmentNotation(st.development)[s.numbering] : null;
-          if (vis.length) addMeshLabel(st.id, notation ?? shortOf(st, s.lang), st.development ? 'tooth' : 'structure', passageLabel ? Math.max(3, st.labelPriority) : st.labelPriority, vis);
+          if (vis.length) addMeshLabel(st.id, notation ?? shortOf(st, s.lang), st.development ? 'tooth' : 'structure', passageLabel || studyLabel ? Math.max(3, st.labelPriority) : st.labelPriority, vis);
         } else if (st.kind === 'landmark' && st.anchor) {
           const ok = st.categories.every((c) => s.categories[c] !== 'off');
           if (!ok) continue;
@@ -964,7 +979,53 @@ export class Engine {
     if (focus) this.focus(id);
   }
 
-  focus(id: string) {
+  async showStudyView(id: 'sinuses' | 'vessels', selected?: string) {
+    actions.applyStudyPreset(id);
+    const geometries = await this.loader.load(id === 'sinuses' ? 'context.glb' : 'neurovascular.glb');
+    this.addGeometries(geometries);
+    if (getState().studyView !== id) return;
+    const box = new THREE.Box3();
+    for (const entry of this.entries.values()) {
+      const cats = this.registry.require(entry.owner).categories;
+      if (id === 'sinuses' ? cats.includes('sinus') : cats.some(c => c === 'arteries' || c === 'veins')) box.union(new THREE.Box3().setFromObject(entry.mesh));
+    }
+    if (!box.isEmpty()) { const sphere = box.getBoundingSphere(new THREE.Sphere()); this.rig.focusSphere(sphere.center, sphere.radius, { direction: PRESET_DIRS['three-quarter'], padding: 1.2 }); }
+    if (selected) await this.selectFromUI(selected, { focus: true });
+  }
+
+  async studyToothSurface(fdi: number, view: 'occlusal' | 'inner' | 'facial' | 'mesial' | 'distal') {
+    if (getState().dissectFdi !== fdi) actions.enterDissect(fdi);
+    actions.setClip({ enabled: false });
+    actions.setDissectLevel(0);
+    actions.setToothExplode(0);
+    await this.ensureTooth(fdi);
+    if (getState().dissectFdi !== fdi) return;
+    const tooth = this.registry.require(`tooth-${fdi}`).tooth!;
+    if (!tooth.frame) return;
+    const direction = new THREE.Vector3(...(view === 'occlusal' ? tooth.frame.axis : view === 'mesial' || view === 'distal' ? tooth.frame.mesial : tooth.frame.buccal));
+    if (view === 'inner' || view === 'distal') direction.negate();
+    // Study surfaces frame the crown; the ordinary tooth focus still shows roots.
+    // Respect the control tray and header so a phone does not crop the feature.
+    const sphere = this.boundsOf(`crown-${fdi}`, false).getBoundingSphere(new THREE.Sphere());
+    const height = this.container.clientHeight, width = this.container.clientWidth;
+    const tanH = Math.tan(THREE.MathUtils.degToRad(this.rig.camera.fov) / 2);
+    const usableH = tanH * Math.max(.25, (height - this.insetTarget.bottom - 100) / height);
+    const usableW = tanH * this.rig.camera.aspect * Math.max(.3, (width - this.insetTarget.right - this.insetTarget.left - 40) / width);
+    const distance = sphere.radius / Math.sin(Math.atan(Math.min(usableH, usableW))) * 1.12;
+    this.rig.focusSphere(sphere.center, sphere.radius, { direction, distance });
+  }
+
+  /** Enter on the tooth's assembled pose, even while the mouth/board is moving back. */
+  async exploreTooth(fdi: number) {
+    actions.enterDissect(fdi);
+    await this.ensureTooth(fdi);
+    // Let the new control tray render and its viewport insets be measured first.
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    if (this.disposed || getState().dissectFdi !== fdi) return;
+    this.focus(`tooth-${fdi}`, { restPose: true });
+  }
+
+  focus(id: string, opts: { restPose?: boolean } = {}) {
     this.cancelArchPreparation?.();
     const s = this.registry.get(id);
     if (!s) return;
@@ -977,16 +1038,31 @@ export class Engine {
       const f = this.registry.get(`tooth-${fdi}`)?.tooth?.frame;
       if (f) dir = new THREE.Vector3(...f.buccal).add(new THREE.Vector3(...f.axis).multiplyScalar(0.25));
     }
+    if (s.surfaceFeature && fdi !== undefined) {
+      const t = this.registry.get(`tooth-${fdi}`)?.tooth;
+      if (t?.frame) {
+        const facial = s.surfaceFeature === 'labial-ridge' || s.surfaceFeature === 'buccal-ridge';
+        dir = new THREE.Vector3(...(!facial && t.type.includes('molar') ? t.frame.axis : t.frame.buccal)).multiplyScalar(facial || t.type.includes('molar') ? 1 : -1);
+      }
+    }
     const landmark = s.kind === 'landmark' ? this.landmarkPosition(s) : null;
     if (landmark) {
       this.rig.focusSphere(landmark, 0.6, { direction: dir });
       return;
     }
-    const box = this.boundsOf(id, true);
+    const box = this.boundsOf(id, true, opts.restPose);
     if (box.isEmpty()) return;
     const sphere = box.getBoundingSphere(new THREE.Sphere());
     const padding = s.kind === 'group' && sphere.radius > 2 ? 1.1 : 1.45;
-    this.rig.focusSphere(sphere.center, sphere.radius, { direction: dir, padding });
+    let distance: number | undefined;
+    if (opts.restPose) {
+      const height = this.container.clientHeight, width = this.container.clientWidth;
+      const tanH = Math.tan(THREE.MathUtils.degToRad(this.rig.camera.fov) / 2);
+      const usableH = tanH * Math.max(.25, (height - this.insetTarget.bottom - 100) / height);
+      const usableW = tanH * this.rig.camera.aspect * Math.max(.3, (width - this.insetTarget.right - this.insetTarget.left - 40) / width);
+      distance = sphere.radius / Math.sin(Math.atan(Math.min(usableH, usableW))) * 1.12;
+    }
+    this.rig.focusSphere(sphere.center, sphere.radius, { direction: dir, padding, distance, movePivot: opts.restPose });
   }
 
   async showPassage(id: string) {
@@ -1068,14 +1144,15 @@ export class Engine {
   /** World position of a landmark: its anchor, moved with its parent mesh (explode offsets). */
   private landmarkPosition(s: Structure): THREE.Vector3 | null {
     if (!s.anchor) return null;
-    const parentKey = landmarkHost(this.registry, s.id);
+    const parentKey = s.surfaceFeature && s.toothFdi !== undefined ?
+      (this.entries.get(`enamel-${s.toothFdi}`)?.visual === 'on' ? `enamel-${s.toothFdi}` : `tooth-${s.toothFdi}`) : landmarkHost(this.registry, s.id);
     const pos = new THREE.Vector3(...s.anchor);
     const parent = parentKey ? this.entries.get(parentKey) : undefined;
     return parent ? parent.mesh.localToWorld(pos) : pos;
   }
 
-  /** World bounds of a structure's meshes (current exploded positions). */
-  boundsOf(id: string, visibleOnly: boolean): THREE.Box3 {
+  /** Structure bounds in the current world pose, or the assembled geometry for entry framing. */
+  boundsOf(id: string, visibleOnly: boolean, restPose = false): THREE.Box3 {
     const box = new THREE.Box3();
     const keys = this.registry.meshesOf(id);
     const tmp = new THREE.Box3();
@@ -1084,7 +1161,8 @@ export class Engine {
       if (e) {
         if (visibleOnly && e.visual === 'off' && keys.some((kk) => this.entries.get(kk)?.visual !== 'off')) continue;
         e.mesh.updateMatrixWorld(true);
-        tmp.copy(e.mesh.geometry.boundingBox!).applyMatrix4(e.mesh.matrixWorld);
+        tmp.copy(e.mesh.geometry.boundingBox!);
+        if (!restPose) tmp.applyMatrix4(e.mesh.matrixWorld);
         box.union(tmp);
       } else {
         const m = this.registry.manifest.meshes[k];
@@ -1092,7 +1170,7 @@ export class Engine {
       }
     }
     const s = this.registry.get(id);
-    if (box.isEmpty() && s?.toothFdi !== undefined) return this.boundsOf(`tooth-${s.toothFdi}`, false);
+    if (box.isEmpty() && s?.toothFdi !== undefined) return this.boundsOf(`tooth-${s.toothFdi}`, false, restPose);
     return box;
   }
 
@@ -1231,11 +1309,11 @@ export class Engine {
    * Shift the optical centre away from UI that covers the canvas (detail panel,
    * mobile bottom sheet) so the focused anatomy stays visible. Animated.
    */
-  setInsets(right: number, bottom: number) {
+  setInsets(right: number, bottom: number, left = 0) {
     const from = { ...this.insets };
     const t = this.insetTarget;
-    if (t.right === right && t.bottom === bottom) return;
-    this.insetTarget = { right, bottom };
+    if (t.right === right && t.bottom === bottom && t.left === left) return;
+    this.insetTarget = { right, bottom, left };
     // still on the untouched start view (e.g. the panels just measured on load): refit it
     const s = getState();
     const first = !this.insetsKnown;
@@ -1248,6 +1326,7 @@ export class Engine {
     this.animator.run('insets', first ? 0 : 0.35, (k) => {
       this.insets.right = from.right + (right - from.right) * k;
       this.insets.bottom = from.bottom + (bottom - from.bottom) * k;
+      this.insets.left = from.left + (left - from.left) * k;
       this.applyViewOffset();
     });
   }
@@ -1257,7 +1336,7 @@ export class Engine {
     const w = this.container.clientWidth;
     const h = this.container.clientHeight;
     const cam = this.rig.camera;
-    if (this.insets.right || this.insets.bottom) cam.setViewOffset(w, h, this.insets.right / 2, this.insets.bottom / 2, w, h);
+    if (this.insets.right || this.insets.bottom || this.insets.left) cam.setViewOffset(w, h, (this.insets.right - this.insets.left) / 2, this.insets.bottom / 2, w, h);
     else cam.clearViewOffset();
     cam.updateProjectionMatrix();
     this.invalidate();
@@ -1312,6 +1391,15 @@ export class Engine {
 
     if (!(this.needsRender || controlsChanged || animating || fx || growthChanged)) return;
     this.needsRender = false;
+    this.toothLight.visible = getState().dissectFdi !== null;
+    this.overviewLights.visible = !this.toothLight.visible;
+    this.scene.environmentIntensity = this.toothLight.visible ? .23 : THEME_LIGHTING[getState().theme].environment;
+    // An oblique camera-relative key keeps the maxillary occlusal table lit,
+    // while its slopes still receive different light in every study view.
+    const studyDistance = this.rig.camera.position.distanceTo(this.rig.controls.target);
+    this.studyLightOffset.set(-.65, .55, 0).applyQuaternion(this.rig.camera.quaternion).multiplyScalar(studyDistance);
+    this.toothLight.position.copy(this.rig.camera.position).add(this.studyLightOffset);
+    this.toothLight.target.position.copy(this.rig.controls.target);
     this.renderer.render(this.scene, this.rig.camera);
     const r = this.renderer.domElement;
     this.labels?.update(this.rig.camera, r.clientWidth, r.clientHeight, now, !(controlsChanged || animating || fx));
@@ -1378,7 +1466,7 @@ export class Engine {
       let target = visualOpacity(e.visual, s.ghostOpacity);
       if (e.nv) {
         const dissecting = s.explodePhase === 1 && s.dissectFdi === null ? Math.min(1, this.explodeCur * 2.5) : 0;
-        const quietTarget = s.passageIds.includes(e.owner) ? 0 : quietLevel(e, dissecting);
+        const quietTarget = s.passageIds.includes(e.owner) || s.studyView === 'vessels' && this.registry.require(e.owner).categories.some(c => c === 'arteries' || c === 'veins') ? 0 : quietLevel(e, dissecting);
         if (Math.abs(e.quiet! - quietTarget) > 1e-3) {
           e.quiet = stepToward(e.quiet!, quietTarget, rate, 0.01);
           const mat = e.mesh.material;
@@ -1439,10 +1527,16 @@ export class Engine {
       e.mesh.matrixWorldNeedsUpdate = true;
       e.mesh.updateMatrixWorld(true);
     }
+    const host = s.dissectFdi !== null ? this.entries.get(`enamel-${s.dissectFdi}`) : undefined;
+    this.surfaceLayer.update(s.dissectFdi, s.surfaceFeatures && s.dissectLevel <= 1 && !s.clip.enabled && !this.developmentScene.active, host?.mesh, s.selectedId);
     if (layoutChanged) this.labels?.markSceneChanged();
 
-    const st = this.marker.visible && s.selectedId ? this.registry.get(s.selectedId) : undefined;
-    const markerAt = st ? this.landmarkPosition(st) : null;
+    const st = s.selectedId ? this.registry.get(s.selectedId) : undefined;
+    this.marker.visible = !!st && st.kind === 'landmark' && !!st.anchor &&
+      (!st.surfaceFeature || s.surfaceFeatures && s.dissectLevel <= 1 && !s.clip.enabled && !!host?.mesh.visible);
+    (this.marker.material as THREE.MeshBasicMaterial).depthTest = !!st?.surfaceFeature;
+    (this.marker.material as THREE.MeshBasicMaterial).depthWrite = false;
+    const markerAt = this.marker.visible && st ? this.landmarkPosition(st) : null;
     if (markerAt) {
       this.marker.position.copy(markerAt);
       const d = this.rig.camera.position.distanceTo(this.marker.position);

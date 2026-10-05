@@ -27,7 +27,7 @@ export function Dock() {
     <div className={`ds-dock${mobileOpen ? ' is-mobile-open' : ''}${collapsed ? ' is-collapsed' : ''}`}>
       <PanelHandle panel="dock" />
       <div className="ds-compact-settings ds-panel"><span>{m.numberingGroup}</span><NumberingControls /></div>
-      <DevelopmentTimeline />
+      {dissectFdi === null && <DevelopmentTimeline />}
       <div className="ds-panel ds-toolbar" role="toolbar" aria-label={dissectFdi !== null ? m.toolbarDissect : m.toolbarScene}>
         <CameraControls />
         {development ? <DevelopmentTools /> : dissectFdi !== null ? <DissectControls fdi={dissectFdi} /> : jawControls ? <JawMotionControls /> : <ArchControls />}

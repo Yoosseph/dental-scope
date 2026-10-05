@@ -26,7 +26,7 @@ export const CATEGORIES: CategoryDef[] = [
   { id: 'maxilla', label: 'Maxilla', color: '#e6dfcd', group: 'Bone', initial: 'on' },
   { id: 'mandible', label: 'Mandible', color: '#e6dfcd', group: 'Bone', initial: 'on' },
   { id: 'tmj', label: 'Temporomandibular joint', color: '#7fa9bd', group: 'Bone', initial: 'on' },
-  { id: 'sinus', label: 'Maxillary sinuses', color: '#8ec3d6', group: 'Bone', initial: 'on' },
+  { id: 'sinus', label: 'Paranasal sinuses', color: '#8ec3d6', group: 'Bone', initial: 'on' },
   { id: 'nerves', label: 'Nerves', color: '#d9b347', group: 'Neurovascular', initial: 'on' },
   { id: 'arteries', label: 'Arteries', color: '#c3362c', group: 'Neurovascular', initial: 'on' },
   { id: 'veins', label: 'Veins', color: '#3163c4', group: 'Neurovascular', initial: 'on' },
@@ -61,6 +61,8 @@ export const INITIAL_CATEGORY_STATE: Record<CategoryId, CategoryState> = Object.
 ) as Record<CategoryId, CategoryState>;
 
 export const PRESETS: LayerPreset[] = [
+  { id: 'sinuses', label: 'Sinuses', state: { ...all('off'), sinus: 'on', skull: 'ghost', maxilla: 'ghost', mandible: 'ghost', 'alveolar-bone': 'ghost', 'permanent-teeth': 'ghost', enamel: 'ghost', dentin: 'ghost', cementum: 'ghost' } },
+  { id: 'vessels', label: 'Vessels', state: { ...all('off'), arteries: 'on', veins: 'on', nerves: 'ghost', muscles: 'ghost', skull: 'ghost', maxilla: 'ghost', mandible: 'ghost', 'alveolar-bone': 'ghost', 'permanent-teeth': 'ghost', enamel: 'ghost', dentin: 'ghost', cementum: 'ghost' } },
   { id: 'nerve-muscles', label: 'Nerves & muscles', state: { ...all('off'), nerves: 'on', muscles: 'ghost', maxilla: 'ghost', mandible: 'ghost', 'alveolar-bone': 'ghost', skull: 'ghost', tmj: 'ghost', 'permanent-teeth': 'on', enamel: 'on', dentin: 'on', cementum: 'on', 'dental-pulp': 'on', 'root-canals': 'on' } },
   { id: 'overview', label: 'Overview', state: INITIAL_CATEGORY_STATE },
   {

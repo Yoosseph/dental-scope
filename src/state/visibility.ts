@@ -26,9 +26,10 @@ const NEUROVASCULAR = ['nerves', 'arteries', 'veins'] as const;
  */
 function boneSeeThrough(cats: readonly string[], state: AppState, registry: Registry): boolean {
   // not while sectioning (the cut shows solid bone) or on the laid-out board (nothing runs inside it there)
+  const selected = state.selectedId ? registry.get(state.selectedId) : undefined;
+  if (!state.clip.enabled && state.explodePhase !== 2 && selected?.categories.includes('sinus') && cats.includes('skull')) return true;
   if (state.clip.enabled || state.explodePhase === 2 || !cats.some((c) => BONE.has(c))) return false;
   if (NEUROVASCULAR.some((c) => state.categories[c] === 'on')) return true;
-  const selected = state.selectedId ? registry.get(state.selectedId) : undefined;
   return !!selected?.categories.includes('sinus') && cats.includes('maxilla');
 }
 const minVis = (a: MeshVisual, b: MeshVisual): MeshVisual => (RANK[a] <= RANK[b] ? a : b);
@@ -92,6 +93,11 @@ export function resolveMesh(meshKey: string, ctx: VisibilityContext): MeshVisual
   }
   if (state.passageIds.length && owner.categories.includes('nerves') && !state.passageIds.some((id) => registry.isDescendant(ownerId, id))) return 'off';
   if (!state.passageIds.length && owner.categories.includes('nerves') && !nerveInView(registry, ownerId, state.nerveView, state.nerveSide)) return 'off';
+
+  if (state.studyView === 'vessels' && owner.categories.some(c => c === 'arteries' || c === 'veins')) {
+    if (state.vesselSide !== 'both' && !ownerId.endsWith(`-${state.vesselSide}`)) return 'off';
+    if (state.vesselMode !== 'both' && !owner.categories.includes(state.vesselMode)) return 'off';
+  }
 
   let v: MeshVisual = 'on';
 
@@ -173,6 +179,12 @@ export function revealPatch(registry: Registry, id: string, state: AppState): Pa
   for (const m of meshes) for (const c of registry.categoriesOfMesh(m)) cats.add(c);
   for (const c of cats) if (categories[c] === 'off') categories[c] = 'on';
   const patch: Partial<AppState> = { hidden, categories };
+  if (state.studyView === 'vessels' && s?.categories.some(c => c === 'arteries' || c === 'veins')) {
+    const side = /-(right|left)$/.exec(id)?.[1] as AppState['vesselSide'] | undefined;
+    if (side && state.vesselSide !== 'both' && state.vesselSide !== side) patch.vesselSide = side;
+    if (!side) patch.vesselSide = 'both';
+    if (state.vesselMode !== 'both' && !s.categories.includes(state.vesselMode)) patch.vesselMode = 'both';
+  }
   if (s?.categories.includes('nerves')) {
     if (!nerveInView(registry, id, state.nerveView, 'both') || /^trigeminal-nerve-(right|left)$/.test(id)) patch.nerveView = nerveViewFor(registry, id);
     const side = /-(right|left)$/.exec(id)?.[1] as 'right' | 'left' | undefined;

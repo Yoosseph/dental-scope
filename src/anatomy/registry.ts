@@ -3,6 +3,7 @@
  * Built once from the asset manifest + declarative tables.
  */
 import { STRUCTURE_DEFS } from './structures.ts';
+import { featureNames } from './surfaceFeatures.ts';
 import { DEVELOPMENT_TEETH, developmentId } from './development.ts';
 import { DEVELOPMENT_TEXT } from '../i18n/development.ts';
 import { LANGS } from '../i18n/lang.ts';
@@ -174,6 +175,10 @@ export class Registry {
         this.add({ id, name: part.names.en, names: part.names, kind: 'region', parent: tId, children: [], categories: ['permanent-teeth'], meshes: meshKeys.filter((k) => layers.includes(k.replace(`-${fdi}`, ''))), aliases: [...aliases, ...part.extra, ...ctx], labelPriority: 3, ...base });
       region(`crown-${fdi}`, p('crown'), [key('enamel'), key('dentin-coronal')], ['anatomical crown', 'crown']);
       region(`root-${fdi}`, p(roots.length > 1 ? 'roots' : 'root', 'root'), [key('dentin-radicular'), key('cementum')], ['root', 'roots', 'radicular']);
+      for (const feature of mt.surfaceFeatures ?? []) {
+        const names = featureNames(feature.key);
+        this.add({ id: `surface-${feature.key}-${fdi}`, name: names.en, names, kind: 'landmark', parent: `crown-${fdi}`, children: [], categories: ['permanent-teeth', 'enamel'], meshes: [], aliases: [feature.key.replaceAll('-', ' '), ...Object.values(names), ...ctx], provenance: 'schematic', stage: 4, toothFdi: fdi, anchor: feature.anchor, surfaceFeature: feature.key, labelPriority: 4 });
+      }
 
       const mesh = (layer: string, part: Part, parent: string, c: CategoryId[], aliases: string[], prio: number, shortNames?: Names) => {
         if (!has(layer)) return;

@@ -44,8 +44,7 @@ export function useKeyboard(engine: Engine) {
         case 'd': {
           const fdi = sel ? engine.registry.get(sel)?.toothFdi : undefined;
           if (fdi !== undefined) {
-            actions.enterDissect(fdi);
-            void engine.ensureTooth(fdi).then(() => engine.focus(`tooth-${fdi}`));
+            void engine.exploreTooth(fdi);
           }
           break;
         }

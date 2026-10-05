@@ -13,6 +13,7 @@
  */
 import type { Arch, Side, ToothType } from '../anatomy/types.ts';
 import type { Lang } from './lang.ts';
+import { PARANASAL_NAMES } from '../anatomy/paranasal.ts';
 import { FEEDBACK_NAMES } from './feedbackNames.ts';
 
 export type Names = Record<Lang, string>;
@@ -414,6 +415,7 @@ export function canalNames(root: string, n: number, i: number, arch: Arch): { na
 
 /** Names by exact structure id. */
 const EXACT: Record<string, Tr> = {
+  ...PARANASAL_NAMES,
   'trigeminal-nerves': { sv: 'Trigeminusnerver (V)', de: 'Trigeminusnerven (V)', es: 'Nervios trigéminos (V)', la: 'Nervi trigemini (V)' },
   'facial-nerves': { sv: 'Facialisnerver (VII)', de: 'Gesichtsnerven (VII)', es: 'Nervios faciales (VII)', la: 'Nervi faciales (VII)' },
   'lower-cranial-nerves': { sv: 'Kranialnerver IX, X och XII', de: 'Hirnnerven IX, X und XII', es: 'Nervios craneales IX, X y XII', la: 'Nervi craniales IX, X et XII' },
@@ -456,6 +458,7 @@ const EXACT: Record<string, Tr> = {
 /** Names of paired structures by base id (the id without -right / -left); the side follows in brackets. */
 const SIDED: Record<string, Tr> = {
   ...FEEDBACK_NAMES,
+  ...PARANASAL_NAMES,
   maxilla: { sv: 'Maxilla', de: 'Maxilla' , es: 'Maxilar', la: 'Maxilla' },
   'maxillary-alveolar-process': { sv: 'Överkäkens alveolarutskott', de: 'Alveolarfortsatz des Oberkiefers' , es: 'Apófisis alveolar del maxilar', la: 'Processus alveolaris maxillae' },
   'maxillary-sinus': { sv: 'Bihåla i överkäken (sinus maxillaris)', de: 'Kieferhöhle', es: 'Seno maxilar', la: 'Sinus maxillaris' },

@@ -115,7 +115,7 @@ export const es: Messages = {
   panelTabs: 'Panel',
   structures: 'Estructuras',
   layerPresets: 'Preajustes de capas',
-  preset: { 'nerve-muscles': 'Nervios y músculos', overview: 'General', dentition: 'Dientes', bone: 'Hueso', nerves: 'Nervios' },
+  preset: { sinuses: 'Senos', vessels: 'Vasos', 'nerve-muscles': 'Nervios y músculos', overview: 'General', dentition: 'Dientes', bone: 'Hueso', nerves: 'Nervios' },
   group: {
     Dentition: 'Dentición',
     'Tooth tissues': 'Tejidos dentales',
@@ -138,7 +138,7 @@ export const es: Messages = {
     maxilla: 'Maxilar',
     mandible: 'Mandíbula',
     tmj: 'Articulación temporomandibular',
-    sinus: 'Senos maxilares',
+    sinus: 'Senos paranasales',
     nerves: 'Nervios',
     arteries: 'Arterias',
     veins: 'Venas',

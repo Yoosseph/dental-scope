@@ -1,0 +1,226 @@
+[
+  {
+    "fdi": 11,
+    "root_max_displacement_mm": 8.881784197001252e-16,
+    "max_annotation_enamel_distance_mm": 0.10020075894090057,
+    "closed_meshes": 8,
+    "triangles": 114084
+  },
+  {
+    "fdi": 12,
+    "root_max_displacement_mm": 1.7763568394002505e-15,
+    "max_annotation_enamel_distance_mm": 0.08900820129563382,
+    "closed_meshes": 8,
+    "triangles": 116206
+  },
+  {
+    "fdi": 13,
+    "root_max_displacement_mm": 0.0,
+    "max_annotation_enamel_distance_mm": 0.100758339470692,
+    "closed_meshes": 8,
+    "triangles": 359676
+  },
+  {
+    "fdi": 14,
+    "root_max_displacement_mm": 0.0,
+    "max_annotation_enamel_distance_mm": 0.11402882727634893,
+    "closed_meshes": 9,
+    "triangles": 424892
+  },
+  {
+    "fdi": 15,
+    "root_max_displacement_mm": 0.0,
+    "max_annotation_enamel_distance_mm": 0.10080568186778109,
+    "closed_meshes": 8,
+    "triangles": 206152
+  },
+  {
+    "fdi": 16,
+    "root_max_displacement_mm": 0.0,
+    "max_annotation_enamel_distance_mm": 0.10719870401752869,
+    "closed_meshes": 11,
+    "triangles": 600564
+  },
+  {
+    "fdi": 17,
+    "root_max_displacement_mm": 3.552713678800501e-15,
+    "max_annotation_enamel_distance_mm": 0.11467242192227314,
+    "closed_meshes": 10,
+    "triangles": 269952
+  },
+  {
+    "fdi": 18,
+    "root_max_displacement_mm": 0.0,
+    "max_annotation_enamel_distance_mm": 0.11032351483124525,
+    "closed_meshes": 10,
+    "triangles": 434380
+  },
+  {
+    "fdi": 21,
+    "root_max_displacement_mm": 1.7763568394002505e-15,
+    "max_annotation_enamel_distance_mm": 0.08916344606387869,
+    "closed_meshes": 8,
+    "triangles": 250356
+  },
+  {
+    "fdi": 22,
+    "root_max_displacement_mm": 8.881784197001252e-16,
+    "max_annotation_enamel_distance_mm": 0.08688400510011872,
+    "closed_meshes": 8,
+    "triangles": 126430
+  },
+  {
+    "fdi": 23,
+    "root_max_displacement_mm": 1.7763568394002505e-15,
+    "max_annotation_enamel_distance_mm": 0.10241985927881815,
+    "closed_meshes": 8,
+    "triangles": 116164
+  },
+  {
+    "fdi": 24,
+    "root_max_displacement_mm": 1.7763568394002505e-15,
+    "max_annotation_enamel_distance_mm": 0.09716233877933053,
+    "closed_meshes": 9,
+    "triangles": 426930
+  },
+  {
+    "fdi": 25,
+    "root_max_displacement_mm": 0.0,
+    "max_annotation_enamel_distance_mm": 0.09029550716583061,
+    "closed_meshes": 8,
+    "triangles": 206552
+  },
+  {
+    "fdi": 26,
+    "root_max_displacement_mm": 0.0,
+    "max_annotation_enamel_distance_mm": 0.12213828616188947,
+    "closed_meshes": 11,
+    "triangles": 602176
+  },
+  {
+    "fdi": 27,
+    "root_max_displacement_mm": 3.552713678800501e-15,
+    "max_annotation_enamel_distance_mm": 0.09259340474187627,
+    "closed_meshes": 10,
+    "triangles": 269820
+  },
+  {
+    "fdi": 28,
+    "root_max_displacement_mm": 3.552713678800501e-15,
+    "max_annotation_enamel_distance_mm": 0.08544117679588506,
+    "closed_meshes": 10,
+    "triangles": 237076
+  },
+  {
+    "fdi": 31,
+    "root_max_displacement_mm": 8.881784197001252e-16,
+    "max_annotation_enamel_distance_mm": 0.08118626129647134,
+    "closed_meshes": 8,
+    "triangles": 156220
+  },
+  {
+    "fdi": 32,
+    "root_max_displacement_mm": 8.881784197001252e-16,
+    "max_annotation_enamel_distance_mm": 0.08051148116725096,
+    "closed_meshes": 8,
+    "triangles": 156124
+  },
+  {
+    "fdi": 33,
+    "root_max_displacement_mm": 1.7763568394002505e-15,
+    "max_annotation_enamel_distance_mm": 0.09316926201423698,
+    "closed_meshes": 8,
+    "triangles": 241496
+  },
+  {
+    "fdi": 34,
+    "root_max_displacement_mm": 1.7763568394002505e-15,
+    "max_annotation_enamel_distance_mm": 0.09746891510118383,
+    "closed_meshes": 8,
+    "triangles": 111844
+  },
+  {
+    "fdi": 35,
+    "root_max_displacement_mm": 0.0,
+    "max_annotation_enamel_distance_mm": 0.09475297654868903,
+    "closed_meshes": 8,
+    "triangles": 110780
+  },
+  {
+    "fdi": 36,
+    "root_max_displacement_mm": 0.0,
+    "max_annotation_enamel_distance_mm": 0.16773429714244556,
+    "closed_meshes": 10,
+    "triangles": 374864
+  },
+  {
+    "fdi": 37,
+    "root_max_displacement_mm": 0.0,
+    "max_annotation_enamel_distance_mm": 0.08711677311514,
+    "closed_meshes": 10,
+    "triangles": 547128
+  },
+  {
+    "fdi": 38,
+    "root_max_displacement_mm": 3.552713678800501e-15,
+    "max_annotation_enamel_distance_mm": 0.09039289319014764,
+    "closed_meshes": 9,
+    "triangles": 221832
+  },
+  {
+    "fdi": 41,
+    "root_max_displacement_mm": 8.881784197001252e-16,
+    "max_annotation_enamel_distance_mm": 0.07818331879497752,
+    "closed_meshes": 8,
+    "triangles": 156368
+  },
+  {
+    "fdi": 42,
+    "root_max_displacement_mm": 8.881784197001252e-16,
+    "max_annotation_enamel_distance_mm": 0.08406594849656439,
+    "closed_meshes": 8,
+    "triangles": 159876
+  },
+  {
+    "fdi": 43,
+    "root_max_displacement_mm": 1.7763568394002505e-15,
+    "max_annotation_enamel_distance_mm": 0.08911438511487887,
+    "closed_meshes": 8,
+    "triangles": 111876
+  },
+  {
+    "fdi": 44,
+    "root_max_displacement_mm": 0.0,
+    "max_annotation_enamel_distance_mm": 0.09170090410094504,
+    "closed_meshes": 8,
+    "triangles": 187788
+  },
+  {
+    "fdi": 45,
+    "root_max_displacement_mm": 0.0,
+    "max_annotation_enamel_distance_mm": 0.09674218347571291,
+    "closed_meshes": 8,
+    "triangles": 161032
+  },
+  {
+    "fdi": 46,
+    "root_max_displacement_mm": 0.0,
+    "max_annotation_enamel_distance_mm": 0.12451737966665022,
+    "closed_meshes": 10,
+    "triangles": 610740
+  },
+  {
+    "fdi": 47,
+    "root_max_displacement_mm": 0.0,
+    "max_annotation_enamel_distance_mm": 0.11191300317287071,
+    "closed_meshes": 10,
+    "triangles": 319828
+  },
+  {
+    "fdi": 48,
+    "root_max_displacement_mm": 0.0,
+    "max_annotation_enamel_distance_mm": 0.10240098571934535,
+    "closed_meshes": 9,
+    "triangles": 276796
+  }
+]

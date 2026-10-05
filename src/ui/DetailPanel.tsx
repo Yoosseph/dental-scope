@@ -1,3 +1,5 @@
+import { STUDY_TEXT } from '../i18n/study';
+import { SurfaceFeatureControls } from './SurfaceFeatureControls';
 import { useMemo } from 'react';
 import { CATEGORY_BY_ID, primaryCategory } from '../anatomy/categories';
 import { formatTooth, NUMBERING_SHORT, NUMBERING_SYSTEMS } from '../anatomy/notation';
@@ -88,7 +90,9 @@ export function DetailPanel() {
         {content.location && <Section title={FEEDBACK_TEXT[lang].location}>{content.location}</Section>}
         {content.function && <Section title={m.function}>{content.function}</Section>}
         {content.clinical && <Section title={m.clinical}>{content.clinical}</Section>}
-        {s.id === 'hyoid-bone' && <HyoidConnections />}
+        {s.categories.includes('sinus') && <button type="button" className="ds-chip ds-chip--button" onClick={() => void engine.showStudyView('sinuses', s.id)}>{STUDY_TEXT[lang].sinusView}</button>}
+        {s.categories.some(c => c === 'arteries' || c === 'veins') && <button type="button" className="ds-chip ds-chip--button" onClick={() => void engine.showStudyView('vessels', s.id)}>{STUDY_TEXT[lang].vesselView}</button>}
+        {s.id === 'hyoid-bone'  && <HyoidConnections />}
 
         {(content.facts.length > 0 || tooth?.tooth) && (
           <dl className="ds-facts">
@@ -110,6 +114,7 @@ export function DetailPanel() {
           </dl>
         )}
 
+        {tooth?.tooth && fdi !== undefined && <SurfaceFeatureControls fdi={fdi} />}
         {s.tooth && <CanalFrequency fdi={s.tooth.fdi} />}
         {content.sources.length > 0 && <p className="ds-evidence">{FEEDBACK_TEXT[lang].source}: {content.sources.map((ref, i) => <span key={ref.url}>{i > 0 && ' · '}<a href={ref.url} target="_blank" rel="noopener noreferrer">{ref.title}</a></span>)}</p>}
         {children.length > 0 && (
@@ -187,9 +192,7 @@ export function DetailPanel() {
   }
 
   async function enterDissect(f: number) {
-    actions.enterDissect(f);
-    await engine.ensureTooth(f);
-    engine.focus(`tooth-${f}`);
+    await engine.exploreTooth(f);
     pushCurrentPath(registry);
   }
 }

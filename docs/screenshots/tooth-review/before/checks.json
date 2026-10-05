@@ -1,0 +1,1087 @@
+{
+  "errors": [],
+  "checks": [
+    {
+      "id": "11-occlusal",
+      "overlays": false,
+      "labels": [],
+      "geometries": 149
+    },
+    {
+      "id": "11-occlusal",
+      "overlays": true,
+      "labels": [
+        "Lingual fossa",
+        "Distal marginal ridge",
+        "Mesial marginal ridge",
+        "Cingulum"
+      ],
+      "geometries": 152
+    },
+    {
+      "id": "11-facial",
+      "overlays": false,
+      "labels": [],
+      "geometries": 152
+    },
+    {
+      "id": "11-facial",
+      "overlays": true,
+      "labels": [],
+      "geometries": 152
+    },
+    {
+      "id": "11-inner",
+      "overlays": false,
+      "labels": [],
+      "geometries": 152
+    },
+    {
+      "id": "11-inner",
+      "overlays": true,
+      "labels": [
+        "Lingual fossa",
+        "Incisal edge",
+        "Cingulum"
+      ],
+      "geometries": 152
+    },
+    {
+      "id": "11-mesial",
+      "overlays": false,
+      "labels": [],
+      "geometries": 152
+    },
+    {
+      "id": "11-mesial",
+      "overlays": true,
+      "labels": [
+        "Lingual fossa",
+        "Incisal edge",
+        "Cingulum"
+      ],
+      "geometries": 152
+    },
+    {
+      "id": "11-distal",
+      "overlays": false,
+      "labels": [],
+      "geometries": 152
+    },
+    {
+      "id": "11-distal",
+      "overlays": true,
+      "labels": [
+        "Distal marginal ridge",
+        "Cingulum"
+      ],
+      "geometries": 152
+    },
+    {
+      "id": "12-occlusal",
+      "overlays": false,
+      "labels": [],
+      "geometries": 158
+    },
+    {
+      "id": "12-occlusal",
+      "overlays": true,
+      "labels": [
+        "Lingual fossa",
+        "Incisal edge",
+        "Distal marginal ridge",
+        "Mesial marginal ridge"
+      ],
+      "geometries": 158
+    },
+    {
+      "id": "12-facial",
+      "overlays": false,
+      "labels": [],
+      "geometries": 158
+    },
+    {
+      "id": "12-facial",
+      "overlays": true,
+      "labels": [],
+      "geometries": 158
+    },
+    {
+      "id": "12-inner",
+      "overlays": false,
+      "labels": [],
+      "geometries": 158
+    },
+    {
+      "id": "12-inner",
+      "overlays": true,
+      "labels": [
+        "Lingual fossa",
+        "Incisal edge",
+        "Cingulum"
+      ],
+      "geometries": 158
+    },
+    {
+      "id": "12-mesial",
+      "overlays": false,
+      "labels": [],
+      "geometries": 158
+    },
+    {
+      "id": "12-mesial",
+      "overlays": true,
+      "labels": [
+        "Lingual fossa",
+        "Incisal edge",
+        "Cingulum"
+      ],
+      "geometries": 158
+    },
+    {
+      "id": "12-distal",
+      "overlays": false,
+      "labels": [],
+      "geometries": 158
+    },
+    {
+      "id": "12-distal",
+      "overlays": true,
+      "labels": [
+        "Distal marginal ridge",
+        "Cingulum"
+      ],
+      "geometries": 158
+    },
+    {
+      "id": "13-occlusal",
+      "overlays": false,
+      "labels": [],
+      "geometries": 165
+    },
+    {
+      "id": "13-occlusal",
+      "overlays": true,
+      "labels": [
+        "Labial ridge",
+        "Distolingual fossa",
+        "Mesiolingual fossa",
+        "Cusp tip"
+      ],
+      "geometries": 165
+    },
+    {
+      "id": "13-facial",
+      "overlays": false,
+      "labels": [],
+      "geometries": 165
+    },
+    {
+      "id": "13-facial",
+      "overlays": true,
+      "labels": [
+        "Labial ridge"
+      ],
+      "geometries": 165
+    },
+    {
+      "id": "13-inner",
+      "overlays": false,
+      "labels": [],
+      "geometries": 165
+    },
+    {
+      "id": "13-inner",
+      "overlays": true,
+      "labels": [
+        "Distolingual fossa",
+        "Cusp tip",
+        "Cingulum"
+      ],
+      "geometries": 165
+    },
+    {
+      "id": "13-mesial",
+      "overlays": false,
+      "labels": [],
+      "geometries": 165
+    },
+    {
+      "id": "13-mesial",
+      "overlays": true,
+      "labels": [
+        "Lingual ridge",
+        "Cusp tip",
+        "Cingulum"
+      ],
+      "geometries": 165
+    },
+    {
+      "id": "13-distal",
+      "overlays": false,
+      "labels": [],
+      "geometries": 165
+    },
+    {
+      "id": "13-distal",
+      "overlays": true,
+      "labels": [
+        "Labial ridge",
+        "Distal marginal ridge",
+        "Cingulum"
+      ],
+      "geometries": 165
+    },
+    {
+      "id": "14-occlusal",
+      "overlays": false,
+      "labels": [],
+      "geometries": 172
+    },
+    {
+      "id": "14-occlusal",
+      "overlays": true,
+      "labels": [
+        "Distal fossa",
+        "Mesial fossa",
+        "Buccal ridge",
+        "Lingual / palatal cusp",
+        "Buccal cusp"
+      ],
+      "geometries": 172
+    },
+    {
+      "id": "14-facial",
+      "overlays": false,
+      "labels": [],
+      "geometries": 172
+    },
+    {
+      "id": "14-facial",
+      "overlays": true,
+      "labels": [
+        "Buccal ridge",
+        "Buccal cusp"
+      ],
+      "geometries": 172
+    },
+    {
+      "id": "14-inner",
+      "overlays": false,
+      "labels": [],
+      "geometries": 172
+    },
+    {
+      "id": "14-inner",
+      "overlays": true,
+      "labels": [
+        "Mesial marginal ridge",
+        "Buccal cusp"
+      ],
+      "geometries": 172
+    },
+    {
+      "id": "14-mesial",
+      "overlays": false,
+      "labels": [],
+      "geometries": 172
+    },
+    {
+      "id": "14-mesial",
+      "overlays": true,
+      "labels": [
+        "Buccal ridge",
+        "Mesial marginal ridge",
+        "Buccal cusp"
+      ],
+      "geometries": 172
+    },
+    {
+      "id": "14-distal",
+      "overlays": false,
+      "labels": [],
+      "geometries": 172
+    },
+    {
+      "id": "14-distal",
+      "overlays": true,
+      "labels": [
+        "Distal fossa",
+        "Buccal ridge",
+        "Lingual / palatal cusp"
+      ],
+      "geometries": 172
+    },
+    {
+      "id": "15-occlusal",
+      "overlays": false,
+      "labels": [],
+      "geometries": 178
+    },
+    {
+      "id": "15-occlusal",
+      "overlays": true,
+      "labels": [
+        "Distal fossa",
+        "Mesial fossa",
+        "Central groove",
+        "Buccal ridge",
+        "Distal marginal ridge",
+        "Mesial marginal ridge",
+        "Lingual / palatal cusp",
+        "Buccal cusp"
+      ],
+      "geometries": 178
+    },
+    {
+      "id": "15-facial",
+      "overlays": false,
+      "labels": [],
+      "geometries": 178
+    },
+    {
+      "id": "15-facial",
+      "overlays": true,
+      "labels": [
+        "Buccal ridge",
+        "Buccal cusp"
+      ],
+      "geometries": 178
+    },
+    {
+      "id": "15-inner",
+      "overlays": false,
+      "labels": [],
+      "geometries": 178
+    },
+    {
+      "id": "15-inner",
+      "overlays": true,
+      "labels": [
+        "Distal marginal ridge",
+        "Lingual / palatal cusp"
+      ],
+      "geometries": 178
+    },
+    {
+      "id": "15-mesial",
+      "overlays": false,
+      "labels": [],
+      "geometries": 178
+    },
+    {
+      "id": "15-mesial",
+      "overlays": true,
+      "labels": [
+        "Buccal ridge",
+        "Mesial marginal ridge",
+        "Buccal cusp"
+      ],
+      "geometries": 178
+    },
+    {
+      "id": "15-distal",
+      "overlays": false,
+      "labels": [],
+      "geometries": 178
+    },
+    {
+      "id": "15-distal",
+      "overlays": true,
+      "labels": [
+        "Buccal ridge",
+        "Distal marginal ridge",
+        "Buccal cusp"
+      ],
+      "geometries": 178
+    },
+    {
+      "id": "16-occlusal",
+      "overlays": false,
+      "labels": [],
+      "geometries": 190
+    },
+    {
+      "id": "16-occlusal",
+      "overlays": true,
+      "labels": [
+        "Distal fossa",
+        "Central fossa",
+        "Oblique ridge",
+        "Lingual / palatal groove",
+        "Distal marginal ridge",
+        "Mesial marginal ridge",
+        "Mesiolingual / mesiopalatal cusp",
+        "Distobuccal cusp",
+        "Mesiobuccal cusp"
+      ],
+      "geometries": 190
+    },
+    {
+      "id": "16-facial",
+      "overlays": false,
+      "labels": [],
+      "geometries": 190
+    },
+    {
+      "id": "16-facial",
+      "overlays": true,
+      "labels": [],
+      "geometries": 190
+    },
+    {
+      "id": "16-inner",
+      "overlays": false,
+      "labels": [],
+      "geometries": 190
+    },
+    {
+      "id": "16-inner",
+      "overlays": true,
+      "labels": [
+        "Lingual / palatal groove"
+      ],
+      "geometries": 190
+    },
+    {
+      "id": "16-mesial",
+      "overlays": false,
+      "labels": [],
+      "geometries": 190
+    },
+    {
+      "id": "16-mesial",
+      "overlays": true,
+      "labels": [
+        "Mesial marginal ridge"
+      ],
+      "geometries": 190
+    },
+    {
+      "id": "16-distal",
+      "overlays": false,
+      "labels": [],
+      "geometries": 190
+    },
+    {
+      "id": "16-distal",
+      "overlays": true,
+      "labels": [
+        "Distal marginal ridge",
+        "Mesiolingual / mesiopalatal cusp"
+      ],
+      "geometries": 190
+    },
+    {
+      "id": "17-occlusal",
+      "overlays": false,
+      "labels": [],
+      "geometries": 198
+    },
+    {
+      "id": "17-occlusal",
+      "overlays": true,
+      "labels": [
+        "Distal fossa",
+        "Central fossa",
+        "Lingual / palatal groove",
+        "Buccal groove",
+        "Mesial marginal ridge",
+        "Distolingual / distopalatal cusp"
+      ],
+      "geometries": 198
+    },
+    {
+      "id": "17-facial",
+      "overlays": false,
+      "labels": [],
+      "geometries": 198
+    },
+    {
+      "id": "17-facial",
+      "overlays": true,
+      "labels": [
+        "Distolingual / distopalatal cusp",
+        "Mesiobuccal cusp"
+      ],
+      "geometries": 198
+    },
+    {
+      "id": "17-inner",
+      "overlays": false,
+      "labels": [],
+      "geometries": 198
+    },
+    {
+      "id": "17-inner",
+      "overlays": true,
+      "labels": [
+        "Lingual / palatal groove",
+        "Mesial marginal ridge"
+      ],
+      "geometries": 198
+    },
+    {
+      "id": "17-mesial",
+      "overlays": false,
+      "labels": [],
+      "geometries": 198
+    },
+    {
+      "id": "17-mesial",
+      "overlays": true,
+      "labels": [
+        "Mesial marginal ridge",
+        "Mesiobuccal cusp"
+      ],
+      "geometries": 198
+    },
+    {
+      "id": "17-distal",
+      "overlays": false,
+      "labels": [],
+      "geometries": 198
+    },
+    {
+      "id": "17-distal",
+      "overlays": true,
+      "labels": [
+        "Central fossa",
+        "Distolingual / distopalatal cusp"
+      ],
+      "geometries": 198
+    },
+    {
+      "id": "31-occlusal",
+      "overlays": false,
+      "labels": [],
+      "geometries": 200
+    },
+    {
+      "id": "31-occlusal",
+      "overlays": true,
+      "labels": [
+        "Lingual fossa",
+        "Incisal edge",
+        "Distal marginal ridge",
+        "Mesial marginal ridge",
+        "Cingulum"
+      ],
+      "geometries": 200
+    },
+    {
+      "id": "31-facial",
+      "overlays": false,
+      "labels": [],
+      "geometries": 200
+    },
+    {
+      "id": "31-facial",
+      "overlays": true,
+      "labels": [],
+      "geometries": 200
+    },
+    {
+      "id": "31-inner",
+      "overlays": false,
+      "labels": [],
+      "geometries": 200
+    },
+    {
+      "id": "31-inner",
+      "overlays": true,
+      "labels": [
+        "Lingual fossa",
+        "Incisal edge",
+        "Cingulum"
+      ],
+      "geometries": 200
+    },
+    {
+      "id": "31-mesial",
+      "overlays": false,
+      "labels": [],
+      "geometries": 200
+    },
+    {
+      "id": "31-mesial",
+      "overlays": true,
+      "labels": [
+        "Lingual fossa"
+      ],
+      "geometries": 200
+    },
+    {
+      "id": "31-distal",
+      "overlays": false,
+      "labels": [],
+      "geometries": 200
+    },
+    {
+      "id": "31-distal",
+      "overlays": true,
+      "labels": [
+        "Distal marginal ridge",
+        "Cingulum"
+      ],
+      "geometries": 200
+    },
+    {
+      "id": "32-occlusal",
+      "overlays": false,
+      "labels": [],
+      "geometries": 206
+    },
+    {
+      "id": "32-occlusal",
+      "overlays": true,
+      "labels": [
+        "Lingual fossa",
+        "Incisal edge",
+        "Distal marginal ridge",
+        "Mesial marginal ridge",
+        "Cingulum"
+      ],
+      "geometries": 206
+    },
+    {
+      "id": "32-facial",
+      "overlays": false,
+      "labels": [],
+      "geometries": 206
+    },
+    {
+      "id": "32-facial",
+      "overlays": true,
+      "labels": [],
+      "geometries": 206
+    },
+    {
+      "id": "32-inner",
+      "overlays": false,
+      "labels": [],
+      "geometries": 206
+    },
+    {
+      "id": "32-inner",
+      "overlays": true,
+      "labels": [
+        "Lingual fossa",
+        "Incisal edge",
+        "Cingulum"
+      ],
+      "geometries": 206
+    },
+    {
+      "id": "32-mesial",
+      "overlays": false,
+      "labels": [],
+      "geometries": 206
+    },
+    {
+      "id": "32-mesial",
+      "overlays": true,
+      "labels": [
+        "Lingual fossa"
+      ],
+      "geometries": 206
+    },
+    {
+      "id": "32-distal",
+      "overlays": false,
+      "labels": [],
+      "geometries": 206
+    },
+    {
+      "id": "32-distal",
+      "overlays": true,
+      "labels": [
+        "Lingual fossa",
+        "Cingulum"
+      ],
+      "geometries": 206
+    },
+    {
+      "id": "33-occlusal",
+      "overlays": false,
+      "labels": [],
+      "geometries": 213
+    },
+    {
+      "id": "33-occlusal",
+      "overlays": true,
+      "labels": [
+        "Distolingual fossa",
+        "Mesiolingual fossa",
+        "Cusp tip",
+        "Mesial marginal ridge"
+      ],
+      "geometries": 213
+    },
+    {
+      "id": "33-facial",
+      "overlays": false,
+      "labels": [],
+      "geometries": 213
+    },
+    {
+      "id": "33-facial",
+      "overlays": true,
+      "labels": [
+        "Labial ridge"
+      ],
+      "geometries": 213
+    },
+    {
+      "id": "33-inner",
+      "overlays": false,
+      "labels": [],
+      "geometries": 213
+    },
+    {
+      "id": "33-inner",
+      "overlays": true,
+      "labels": [
+        "Distolingual fossa",
+        "Cingulum"
+      ],
+      "geometries": 213
+    },
+    {
+      "id": "33-mesial",
+      "overlays": false,
+      "labels": [],
+      "geometries": 213
+    },
+    {
+      "id": "33-mesial",
+      "overlays": true,
+      "labels": [
+        "Labial ridge",
+        "Mesiolingual fossa",
+        "Cingulum"
+      ],
+      "geometries": 213
+    },
+    {
+      "id": "33-distal",
+      "overlays": false,
+      "labels": [],
+      "geometries": 213
+    },
+    {
+      "id": "33-distal",
+      "overlays": true,
+      "labels": [
+        "Labial ridge",
+        "Distolingual fossa"
+      ],
+      "geometries": 213
+    },
+    {
+      "id": "34-occlusal",
+      "overlays": false,
+      "labels": [],
+      "geometries": 220
+    },
+    {
+      "id": "34-occlusal",
+      "overlays": true,
+      "labels": [
+        "Distal fossa",
+        "Mesial fossa",
+        "Transverse ridge",
+        "Buccal ridge",
+        "Distal marginal ridge",
+        "Mesial marginal ridge",
+        "Lingual / palatal cusp",
+        "Buccal cusp"
+      ],
+      "geometries": 220
+    },
+    {
+      "id": "34-facial",
+      "overlays": false,
+      "labels": [],
+      "geometries": 220
+    },
+    {
+      "id": "34-facial",
+      "overlays": true,
+      "labels": [
+        "Buccal ridge",
+        "Buccal cusp"
+      ],
+      "geometries": 220
+    },
+    {
+      "id": "34-inner",
+      "overlays": false,
+      "labels": [],
+      "geometries": 220
+    },
+    {
+      "id": "34-inner",
+      "overlays": true,
+      "labels": [
+        "Mesial fossa"
+      ],
+      "geometries": 220
+    },
+    {
+      "id": "34-mesial",
+      "overlays": false,
+      "labels": [],
+      "geometries": 220
+    },
+    {
+      "id": "34-mesial",
+      "overlays": true,
+      "labels": [
+        "Buccal ridge"
+      ],
+      "geometries": 220
+    },
+    {
+      "id": "34-distal",
+      "overlays": false,
+      "labels": [],
+      "geometries": 220
+    },
+    {
+      "id": "34-distal",
+      "overlays": true,
+      "labels": [
+        "Buccal ridge"
+      ],
+      "geometries": 220
+    },
+    {
+      "id": "35-occlusal",
+      "overlays": false,
+      "labels": [],
+      "geometries": 225
+    },
+    {
+      "id": "35-occlusal",
+      "overlays": true,
+      "labels": [
+        "Distal fossa",
+        "Mesial fossa",
+        "Central groove",
+        "Buccal ridge",
+        "Distal marginal ridge",
+        "Mesial marginal ridge",
+        "Buccal cusp"
+      ],
+      "geometries": 225
+    },
+    {
+      "id": "35-facial",
+      "overlays": false,
+      "labels": [],
+      "geometries": 225
+    },
+    {
+      "id": "35-facial",
+      "overlays": true,
+      "labels": [
+        "Buccal ridge",
+        "Buccal cusp"
+      ],
+      "geometries": 225
+    },
+    {
+      "id": "35-inner",
+      "overlays": false,
+      "labels": [],
+      "geometries": 225
+    },
+    {
+      "id": "35-inner",
+      "overlays": true,
+      "labels": [],
+      "geometries": 225
+    },
+    {
+      "id": "35-mesial",
+      "overlays": false,
+      "labels": [],
+      "geometries": 225
+    },
+    {
+      "id": "35-mesial",
+      "overlays": true,
+      "labels": [
+        "Buccal ridge",
+        "Buccal cusp"
+      ],
+      "geometries": 225
+    },
+    {
+      "id": "35-distal",
+      "overlays": false,
+      "labels": [],
+      "geometries": 225
+    },
+    {
+      "id": "35-distal",
+      "overlays": true,
+      "labels": [
+        "Buccal ridge",
+        "Buccal cusp"
+      ],
+      "geometries": 225
+    },
+    {
+      "id": "36-occlusal",
+      "overlays": false,
+      "labels": [],
+      "geometries": 235
+    },
+    {
+      "id": "36-occlusal",
+      "overlays": true,
+      "labels": [
+        "Central fossa",
+        "Distobuccal groove",
+        "Buccal groove",
+        "Distal cusp",
+        "Mesial marginal ridge",
+        "Distolingual / distopalatal cusp",
+        "Mesiolingual / mesiopalatal cusp",
+        "Mesiobuccal cusp"
+      ],
+      "geometries": 235
+    },
+    {
+      "id": "36-facial",
+      "overlays": false,
+      "labels": [],
+      "geometries": 235
+    },
+    {
+      "id": "36-facial",
+      "overlays": true,
+      "labels": [
+        "Mesiobuccal cusp"
+      ],
+      "geometries": 235
+    },
+    {
+      "id": "36-inner",
+      "overlays": false,
+      "labels": [],
+      "geometries": 235
+    },
+    {
+      "id": "36-inner",
+      "overlays": true,
+      "labels": [],
+      "geometries": 235
+    },
+    {
+      "id": "36-mesial",
+      "overlays": false,
+      "labels": [],
+      "geometries": 235
+    },
+    {
+      "id": "36-mesial",
+      "overlays": true,
+      "labels": [],
+      "geometries": 235
+    },
+    {
+      "id": "36-distal",
+      "overlays": false,
+      "labels": [],
+      "geometries": 235
+    },
+    {
+      "id": "36-distal",
+      "overlays": true,
+      "labels": [
+        "Distal marginal ridge"
+      ],
+      "geometries": 235
+    },
+    {
+      "id": "37-occlusal",
+      "overlays": false,
+      "labels": [],
+      "geometries": 242
+    },
+    {
+      "id": "37-occlusal",
+      "overlays": true,
+      "labels": [
+        "Central fossa",
+        "Distal marginal ridge",
+        "Mesial marginal ridge",
+        "Distolingual / distopalatal cusp",
+        "Mesiolingual / mesiopalatal cusp",
+        "Distobuccal cusp",
+        "Mesiobuccal cusp"
+      ],
+      "geometries": 242
+    },
+    {
+      "id": "37-facial",
+      "overlays": false,
+      "labels": [],
+      "geometries": 242
+    },
+    {
+      "id": "37-facial",
+      "overlays": true,
+      "labels": [
+        "Buccal groove"
+      ],
+      "geometries": 242
+    },
+    {
+      "id": "37-inner",
+      "overlays": false,
+      "labels": [],
+      "geometries": 242
+    },
+    {
+      "id": "37-inner",
+      "overlays": true,
+      "labels": [
+        "Buccal groove",
+        "Distal marginal ridge"
+      ],
+      "geometries": 242
+    },
+    {
+      "id": "37-mesial",
+      "overlays": false,
+      "labels": [],
+      "geometries": 242
+    },
+    {
+      "id": "37-mesial",
+      "overlays": true,
+      "labels": [
+        "Mesial marginal ridge"
+      ],
+      "geometries": 242
+    },
+    {
+      "id": "37-distal",
+      "overlays": false,
+      "labels": [],
+      "geometries": 242
+    },
+    {
+      "id": "37-distal",
+      "overlays": true,
+      "labels": [
+        "Distal marginal ridge"
+      ],
+      "geometries": 242
+    }
+  ]
+}

@@ -1,3 +1,5 @@
+import { SinusControls } from './SinusControls';
+import { VesselControls } from './VesselControls';
 import { useMemo } from 'react';
 import { CATEGORIES, PRESETS, type CategoryState } from '../anatomy/categories';
 import type { CategoryId } from '../anatomy/types';
@@ -37,7 +39,8 @@ export function LayersPanel() {
 
 function Categories() {
   const lang = useLang();
-  const { registry } = useServices();
+  const { registry, engine } = useServices();
+  const studyView = useApp(s => s.studyView);
   const cats = useApp((s) => s.categories);
   const hiddenCount = useApp((s) => Object.keys(s.hidden).length + Object.keys(s.ghosted).length);
   const isolate = useApp((s) => s.isolateId);
@@ -55,13 +58,15 @@ function Categories() {
     <>
       <div className="ds-segmented ds-segmented--fill" role="radiogroup" aria-label={m.layerPresets}>
         {PRESETS.map((p) => (
-          <button key={p.id} type="button" role="radio" aria-checked={presetActive === p.id} className={presetActive === p.id ? 'is-active' : ''} onClick={() => actions.setCategories(p.state)}>
+          <button key={p.id} type="button" role="radio" aria-checked={presetActive === p.id} className={presetActive === p.id ? 'is-active' : ''} onClick={() => p.id === 'vessels' || p.id === 'sinuses' ? void engine.showStudyView(p.id) : actions.applyStudyPreset(p.id)}>
             {p.id === 'nerve-muscles' ? FEEDBACK_TEXT[lang].nervesMuscles : m.preset[p.id] ?? p.label}
           </button>
         ))}
       </div>
       <p className="ds-layer-hint">{FEEDBACK_TEXT[lang].transparencyHint}</p>
-      {cats.nerves !== 'off' && <NerveControls />}
+      <VesselControls />
+      <SinusControls />
+      {cats.nerves !== 'off' && studyView !== 'vessels' && <NerveControls />}
       <div className="ds-layer-list">
         {groups.map(([group, list]) => (
           <div key={group} className="ds-layer-group" role="list" aria-label={m.group[group] ?? group}>
