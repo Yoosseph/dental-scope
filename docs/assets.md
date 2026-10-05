@@ -223,3 +223,8 @@ The Z-Anatomy centrelines are committed, so the steps above do not need Blender.
 
 Plus 32 tooth assets in `teeth/tooth-XX.glb` (provenance `modeled`), each containing enamel, coronal and radicular dentin, cementum, periodontal ligament, pulp chamber and one mesh per root canal, derived from the corresponding tooth mesh above.
 <!-- generated:end -->
+
+
+## Student-feedback teaching refinements (2026-10-05)
+
+Permanent crown surfaces and their inner tissues now include schematic tooth-specific relief fitted to the existing BodyParts3D template. Source roots are preserved before simplification; third molars retain their derived second-molar origin. Frontal/sphenoidal volumes and bilateral clusters of separate ethmoidal air cells are original schematic regional examples, not segmented air cavities. No supplied screenshot or third-party artwork is a production asset. These additions retain draft review status. See [the implementation report](student-feedback-implementation.md) for medical sources, geometry/provenance limitations, generation commands and the review checklist. Existing source attribution/licensing remains in force; no contributor-credit feature has been added.

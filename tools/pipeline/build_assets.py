@@ -28,9 +28,10 @@ from scipy.spatial import cKDTree
 sys.path.insert(0, str(Path(__file__).parent))
 from geometry import catmull_rom, decimate, orient_outward, submesh, tube_polyline  # noqa: E402
 from tmj import articular_disc, disc_frame  # noqa: E402
-from sinus import build_sinus  # noqa: E402
+from sinus import build_sinus, build_paranasal_teaching_spaces  # noqa: E402
 from gingiva import expose_third_molar_crowns  # noqa: E402
 from tooth_layers import Frame, build_tooth_layers, make_frame  # noqa: E402
+from morphology import CrownRelief  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Source table
@@ -254,14 +255,26 @@ def main():
     print("Core: teeth, gingiva, bone…")
     for f, m in sorted(teeth.items()):
         prov = "source" if TEETH_FMA[f] else "derived"
-        add("core", f"tooth-{f}", decimate(m, 12000), prov, TEETH_FMA[f])
         arch, side, ttype = tooth_info(f)
+        features = []
+        if f in layers:
+            L = layers[f]
+            relief = CrownRelief(m, L.frame, arch, ttype, L.cej_height)
+            refined = relief.refine(m)
+            L.meshes['enamel'] = relief.enamel(L.meshes['enamel'], m)
+            for key, mesh in L.meshes.items():
+                if key != 'enamel': mesh.vertices = relief.deform(mesh.vertices)
+            L.landmarks = {key: relief.deform(np.array([point]))[0] for key, point in L.landmarks.items()}
+            features = relief.annotations(refined)
+            m, prov = refined, 'schematic'
+        add("core", f"tooth-{f}", decimate(m, 20000), prov, TEETH_FMA[f])
         fr = frames[f]
         info = dict(arch=arch, side=side, type=ttype, provenance=prov,
                     frame=dict(origin=S.p(fr.origin).round(4).tolist(), axis=S.d(fr.axis).round(4).tolist(),
                                mesial=S.d(fr.mesial).round(4).tolist(), buccal=S.d(fr.buccal).round(4).tolist()))
         if f in layers:
             L = layers[f]
+            info['surfaceFeatures'] = [dict(key=e['key'], anchor=S.p(e['anchor']).round(5).tolist(), path=S.p(e['path']).round(5).tolist() if e['path'] is not None else None) for e in features]
             info["roots"] = L.roots
             info["landmarks"] = {k: S.p(v).round(4).tolist() for k, v in L.landmarks.items()}
             info["layers"] = list(L.meshes)
@@ -326,6 +339,9 @@ def main():
             temporal[key.split("-")[-1]] = decimate(m, 15000)
             continue
         add("context", key, decimate(m, budget), "source", fma)
+
+    for key, mesh in build_paranasal_teaching_spaces().items():
+        add("context", key, mesh, "schematic")
 
     # TMJ: articular fossa region of the temporal bone + schematic disc
     for side, mask in (("right", cond_r), ("left", cond_l)):
@@ -605,7 +621,7 @@ def main():
             key = f"{name}-{f}"
             ma = S.mesh(m)
             sc.add_geometry(ma, node_name=key, geom_name=key)
-            register(key, ma, 4, f"teeth/tooth-{f}.glb", "modeled")
+            register(key, ma, 4, f"teeth/tooth-{f}.glb", "schematic")
         sc.export(out / "teeth" / f"tooth-{f}.glb")
 
     from cranial import extend_cranial

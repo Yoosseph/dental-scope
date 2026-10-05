@@ -115,7 +115,7 @@ export const la: Messages = {
   panelTabs: 'Tabula',
   structures: 'Structurae',
   layerPresets: 'Strata praeparata',
-  preset: { 'nerve-muscles': 'Nervi et musculi', overview: 'Conspectus', dentition: 'Dentes', bone: 'Os', nerves: 'Nervi' },
+  preset: { sinuses: 'Sinus', vessels: 'Vasa', 'nerve-muscles': 'Nervi et musculi', overview: 'Conspectus', dentition: 'Dentes', bone: 'Os', nerves: 'Nervi' },
   group: {
     Dentition: 'Dentitio',
     'Tooth tissues': 'Textus dentis',
@@ -138,7 +138,7 @@ export const la: Messages = {
     maxilla: 'Maxilla',
     mandible: 'Mandibula',
     tmj: 'Articulatio temporomandibularis',
-    sinus: 'Sinus maxillares',
+    sinus: 'Sinus paranasales',
     nerves: 'Nervi',
     arteries: 'Arteriae',
     veins: 'Venae',

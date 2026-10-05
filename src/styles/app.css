@@ -2510,3 +2510,12 @@ button.ds-layer-name:hover {
   .ds-layers.is-mobile-open { height: auto; }
   .ds-dock:not(.is-mobile-open) { display: none !important; }
 }
+
+/* Tooth feature and anatomy study controls share the atlas panel rhythm. */
+.ds-study-controls { margin: 14px 0; display: grid; gap: 9px; }
+.ds-study-controls .ds-chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.ds-study-controls .ds-chip--button, .ds-detail-body > .ds-chip--button { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 8px; padding: 7px 10px; min-height: 34px; font: inherit; font-size: 12px; cursor: pointer; }
+.ds-study-controls .ds-chip--button.is-active { background: var(--accent); color: white; }
+.ds-study-controls .ds-chip--button:focus-visible, .ds-study-select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ds-study-select { width: 100%; min-height: 38px; border: 1px solid var(--line); border-radius: 8px; padding: 7px; background: var(--panel); color: var(--ink); font: inherit; font-size: 12px; }
+@media (pointer: coarse) { .ds-study-controls .ds-chip--button { min-height: 44px; } }

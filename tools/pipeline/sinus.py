@@ -24,6 +24,30 @@ from skimage import measure
 from geometry import decimate, orient_outward
 
 
+def build_paranasal_teaching_spaces() -> dict[str, trimesh.Trimesh]:
+    """Representative spaces in BP3D coordinates, NOT segmented air cavities.
+
+    Regions checked against frontal/ethmoid/sphenoid source bounds and anatomical
+    relationships (StatPearls NBK499826). No ostia, drainage tubes or surgical
+    clearances are inferred. Ethmoid is a separated cluster, never one cavity.
+    """
+    def ellipsoid(center, radii):
+        mesh = trimesh.creation.icosphere(subdivisions=3)
+        mesh.vertices = mesh.vertices * np.array(radii) + np.array(center)
+        return mesh
+    spaces = {}
+    for side, sign in [('right', -1), ('left', 1)]:
+        spaces[f'frontal-sinus-{side}'] = ellipsoid((sign * 11, -176, 1553), (9, 2.8, 12))
+        spaces[f'sphenoidal-sinus-{side}'] = ellipsoid((sign * 4.8, -125, 1537), (4.2, 7, 6.5))
+        cells = []
+        # Deliberately representative counts; individual air cells are not named.
+        for row in range(2):
+            for col in range(4):
+                cells.append(ellipsoid((sign * (7.5 + row * .6), -140 - col * 6.5, 1523 + row * 7), (3.0, 2.7, 3.1)))
+        spaces[f'ethmoidal-air-cells-{side}'] = trimesh.util.concatenate(cells)
+    return spaces
+
+
 @dataclass
 class SinusResult:
     mesh: trimesh.Trimesh

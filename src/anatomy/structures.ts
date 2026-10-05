@@ -52,13 +52,19 @@ function bilateral(
 export const STRUCTURE_DEFS: StructureDef[] = [
   { id: 'dental-anatomy', name: 'Dental anatomy', parent: null, kind: 'group' },
 
+  { id: 'paranasal-sinuses', name: 'Paranasal sinuses', parent: 'dental-anatomy', kind: 'group', categories: ['sinus'], aliases: ['all sinuses', 'sinus paranasales'], labelPriority: 5 },
+  ...(['frontal-sinus', 'sphenoidal-sinus', 'ethmoidal-air-cells'] as const).flatMap((id) => {
+    const name = id === 'frontal-sinus' ? 'frontal sinus' : id === 'sphenoidal-sinus' ? 'sphenoidal sinus' : 'ethmoidal air cells';
+    return [{ id, name: cap(name), parent: 'paranasal-sinuses', kind: 'group' as const, categories: ['sinus' as const], aliases: [name, name.replace('sphenoidal', 'sphenoid'), 'paranasal'], labelPriority: 4 }, ...bilateral(id, name, () => id, { categories: ['sinus'], provenance: 'schematic', labelPriority: 4 })];
+  }),
+
   /* ---------------- maxilla ---------------- */
   { id: 'maxilla', name: 'Maxilla', parent: 'dental-anatomy', kind: 'group', categories: ['maxilla'], aliases: ['upper jaw', 'maxillae', 'maxillary bone'], labelPriority: 6 },
   ...bilateral('maxilla', 'maxilla', () => 'maxilla', { categories: ['maxilla'], provenance: 'source', labelPriority: 3, aliases: ['upper jaw bone'] }),
   { id: 'maxillary-alveolar-process', name: 'Maxillary alveolar process', parent: 'maxilla', kind: 'group', categories: ['maxilla', 'alveolar-bone'], aliases: ['upper alveolar bone', 'alveolar ridge', 'alveolar bone', 'tooth socket', 'socket'], labelPriority: 4 },
   ...bilateral('maxillary-alveolar-process', 'maxillary alveolar process', () => 'maxillary-alveolar-process', { categories: ['maxilla', 'alveolar-bone'], provenance: 'derived', labelPriority: 2 }),
   // Modelled from this skull's maxilla (neither source has it): see tools/pipeline/sinus.py.
-  { id: 'maxillary-sinus', name: 'Maxillary sinuses', parent: 'maxilla', kind: 'group', categories: ['sinus'], aliases: ['sinus', 'sinuses', 'antrum', 'maxillary antrum', 'antrum of highmore'], labelPriority: 4 },
+  { id: 'maxillary-sinus', name: 'Maxillary sinuses', parent: 'paranasal-sinuses', kind: 'group', categories: ['sinus'], aliases: ['sinus', 'sinuses', 'antrum', 'maxillary antrum', 'antrum of highmore'], labelPriority: 4 },
   ...bilateral('maxillary-sinus', 'maxillary sinus', () => 'maxillary-sinus', { categories: ['sinus'], provenance: 'modeled', labelPriority: 4, aliases: ['sinus', 'antrum', 'maxillary antrum', 'sinus floor'] }),
   { id: 'maxillary-dentition', name: 'Maxillary dentition', parent: 'maxilla', kind: 'group', categories: ['permanent-teeth'], aliases: ['upper teeth', 'upper arch', 'maxillary arch'], labelPriority: 5 },
   { id: 'upper-right-quadrant', name: 'Upper right quadrant', parent: 'maxillary-dentition', kind: 'group', aliases: ['quadrant 1', 'first quadrant', 'ur quadrant'] },

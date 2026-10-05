@@ -30,8 +30,8 @@ const STYLES: Record<string, TissueStyle> = {
   'development-unerupted': { color: '#70b4d0', roughness: 0.42 },
   'development-erupting': { color: '#a5c796', roughness: 0.42 },
   'development-permanent': { color: '#eee5d4', roughness: 0.42 },
-  shell: { color: '#e9e0d0', roughness: 0.34, clearcoat: 0.1, specularIntensity: 0.75, cap: '#d8c79c', mottle: 0.15, edge: 0.1 },
-  enamel: { color: '#ece5d8', roughness: 0.33, clearcoat: 0.12, specularIntensity: 0.8, cap: '#eae4d5', mottle: 0.13, edge: 0.08 },
+  shell: { color: '#e9e0d0', roughness: 0.38, clearcoat: 0.08, specularIntensity: 0.65, cap: '#d8c79c', mottle: 0.035, edge: 0.045 },
+  enamel: { color: '#ece5d8', roughness: 0.36, clearcoat: 0.1, specularIntensity: 0.7, cap: '#eae4d5', mottle: 0.025, edge: 0.035 },
   'dentin-coronal': { color: '#e3c285', roughness: 0.6, cap: '#d9b56f' },
   'dentin-radicular': { color: '#dcb978', roughness: 0.62, cap: '#d1ab63' },
   cementum: { color: '#c7a071', roughness: 0.75, cap: '#b58f61' },
@@ -136,6 +136,7 @@ export const HOVER_ON_BLUE = new THREE.Color('#b9c3ff');
 
 /** Selection and hover tint for a material. */
 export function highlightColor(mat: TissueMaterial, hover: boolean): THREE.Color {
+  if (mat.userData.styleKey === 'artery') return new THREE.Color(hover ? '#e97966' : '#ffb79c');
   const blue = mat.userData.styleKey === 'vein';
   return hover ? (blue ? HOVER_ON_BLUE : HOVER) : blue ? HIGHLIGHT_ON_BLUE : HIGHLIGHT;
 }

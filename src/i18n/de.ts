@@ -115,7 +115,7 @@ export const de: Messages = {
   panelTabs: 'Bereich',
   structures: 'Strukturen',
   layerPresets: 'Ebenen-Voreinstellungen',
-  preset: { 'nerve-muscles': 'Nerven & Muskeln', overview: 'Übersicht', dentition: 'Zähne', bone: 'Knochen', nerves: 'Nerven' },
+  preset: { sinuses: 'Nebenhöhlen', vessels: 'Gefäße', 'nerve-muscles': 'Nerven & Muskeln', overview: 'Übersicht', dentition: 'Zähne', bone: 'Knochen', nerves: 'Nerven' },
   group: {
     Dentition: 'Gebiss',
     'Tooth tissues': 'Zahngewebe',
@@ -138,7 +138,7 @@ export const de: Messages = {
     maxilla: 'Oberkiefer',
     mandible: 'Unterkiefer',
     tmj: 'Kiefergelenke',
-    sinus: 'Kieferhöhlen',
+    sinus: 'Nasennebenhöhlen',
     nerves: 'Nerven',
     arteries: 'Arterien',
     veins: 'Venen',

@@ -26,6 +26,7 @@ import { colorToothShell, shadeEnamelCrevices } from './toothShading';
 import { jawDeformation, jawMatrix, rigidJawPart } from './jawMotion';
 import { landmarkHost, passageFor } from '../anatomy/passages';
 import { PRESETS } from '../anatomy/categories';
+import { SurfaceFeatureLayer } from './SurfaceFeatureLayer';
 import { DevelopmentScene } from './DevelopmentScene';
 import { developmentNotation } from '../anatomy/development';
 import { isCompactLayout } from '../app/viewport';
@@ -127,8 +128,10 @@ export class Engine {
   private insetTarget = { right: 0, bottom: 0 };
   private insetsKnown = false;
   private marker: THREE.Mesh;
+  private toothLight = new THREE.DirectionalLight('#fff8ed', 1.6);
   private root = new THREE.Group();
   private developmentScene: DevelopmentScene;
+  private surfaceLayer: SurfaceFeatureLayer;
   private sceneBounds = new THREE.Box3();
   /** everything in the manifest (the whole skull), for the start framing */
   private skullBounds = new THREE.Box3();
@@ -145,6 +148,8 @@ export class Engine {
 
   constructor(registry: Registry) {
     this.registry = registry;
+    this.surfaceLayer = new SurfaceFeatureLayer(registry.manifest);
+    this.scene.add(this.surfaceLayer.root, this.toothLight, this.toothLight.target);
     this.developmentScene = new DevelopmentScene(registry);
     this.scene.add(this.developmentScene.root);
     this.marker = new THREE.Mesh(
@@ -250,6 +255,7 @@ export class Engine {
     this.resizeObs?.disconnect();
     this.labels?.dispose();
     this.developmentScene.dispose();
+    this.surfaceLayer.dispose();
     this.developmentProgressListeners.clear();
     this.rig?.controls.dispose();
     this.environmentTarget?.dispose();
@@ -445,6 +451,7 @@ export class Engine {
       developmentChanged || s.developmentShowUnerupted !== p.developmentShowUnerupted ||
       s.categories !== p.categories ||
       s.passageIds !== p.passageIds ||
+      s.studyView !== p.studyView || s.vesselSide !== p.vesselSide || s.vesselMode !== p.vesselMode ||
       s.nerveView !== p.nerveView || s.nerveSide !== p.nerveSide ||
       s.jawControls !== p.jawControls || s.jawSide !== p.jawSide ||
       s.hidden !== p.hidden ||
@@ -482,7 +489,7 @@ export class Engine {
       }
       else this.resetToStart();
     }
-    if (visChanged || s.labels !== p.labels || s.numbering !== p.numbering || s.selectedId !== p.selectedId || s.lang !== p.lang) this.refreshLabels();
+    if (visChanged || s.labels !== p.labels || s.surfaceFeatures !== p.surfaceFeatures || s.numbering !== p.numbering || s.selectedId !== p.selectedId || s.lang !== p.lang) this.refreshLabels();
     // a new phase or a changed set of visible structures re-packs the board and frames it
     if (s.explodePhase !== p.explodePhase || (s.explodePhase === 2 && visChanged)) this.layoutBoard(true);
     if (s.explodePhase === 1 && p.explodePhase === 2 && s.dissectFdi === null && !s.isolateId) {
@@ -714,9 +721,9 @@ export class Engine {
   private refreshLabels() {
     if (!this.labels) return;
     const s = getState();
-    this.labels.enabled = s.labels && !this.developmentScene.active;
+    this.labels.enabled = (s.labels || s.surfaceFeatures && s.dissectFdi !== null) && !this.developmentScene.active;
     this.labels.selectedId = s.selectedId;
-    if (!s.labels) {
+    if (!s.labels && !(s.surfaceFeatures && s.dissectFdi !== null)) {
       this.labels.setCandidates([]);
       this.invalidate();
       return;
@@ -744,13 +751,14 @@ export class Engine {
     if (s.dissectFdi !== null) {
       const fdi = s.dissectFdi;
       const tooth = this.registry.get(`tooth-${fdi}`)!;
-      for (const k of tooth.tooth?.layers ?? []) {
+      for (const k of s.labels ? tooth.tooth?.layers ?? [] : []) {
         const st = this.registry.get(k);
         if (st && this.entries.get(k)?.visual === 'on') addMeshLabel(k, shortOf(st, s.lang), 'structure', st.labelPriority + 3, [k]);
       }
       for (const d of this.registry.descendants(tooth.id)) {
+        if (d.surfaceFeature ? !s.surfaceFeatures || s.dissectLevel > 1 || s.clip.enabled : !s.labels) continue;
         if (d.kind !== 'landmark' || !d.anchor || d.id.startsWith('pulp-horn-') && !d.id.startsWith('pulp-horn-1-')) continue;
-        const parentKey = d.parent && this.registry.get(d.parent)?.meshes[0];
+        const parentKey = d.surfaceFeature ? (this.entries.get(`enamel-${fdi}`)?.visual === 'on' ? `enamel-${fdi}` : tooth.id) : d.parent && this.registry.get(d.parent)?.meshes[0];
         const parentEntry = parentKey ? this.entries.get(parentKey) : undefined;
         if (parentEntry && parentEntry.visual === 'off') continue;
         const anchor = new THREE.Vector3(...d.anchor);
@@ -760,13 +768,14 @@ export class Engine {
           kind: 'landmark',
           priority: d.labelPriority + 2,
           radius: 0.2,
-          owners: new Set([d.id, ...(parentKey ? [this.registry.meshOwner.get(parentKey)!] : [])]),
+          // Surface landmarks must be hidden by the far side of their own crown.
+          owners: new Set([d.id, ...(!d.surfaceFeature && parentKey ? [this.registry.meshOwner.get(parentKey)!] : [])]),
           anchor: () => (parentEntry ? anchor.clone().add(parentEntry.mesh.position) : anchor),
         });
       }
     } else {
       for (const t of this.registry.teeth()) {
-        if (s.jawControls) continue;
+        if (s.jawControls || s.studyView) continue;
         const fdi = t.toothFdi!;
         if (s.passageIds.length) {
           const lower = s.passageIds.some((id) => id.startsWith('mandibular-foramen-'));
@@ -778,14 +787,16 @@ export class Engine {
         addMeshLabel(t.id, formatTooth(fdi, s.numbering), 'tooth', 5, keys);
       }
       for (const st of this.registry.byId.values()) {
+        if (s.studyView && st.id !== s.selectedId && !(s.studyView === 'sinuses' ? st.categories.includes('sinus') : st.categories.some(c => c === 'arteries' || c === 'veins'))) continue;
         if (s.jawControls && (!st.id.endsWith(`-${s.jawSide}`) || !/^(mandibular-condyle|articular-|lateral-pterygoid|medial-pterygoid|temporalis|masseter)/.test(st.id))) continue;
         if (s.passageIds.length && st.kind === 'landmark' && !s.passageIds.includes(st.id)) continue;
         const passageLabel = s.passageIds.includes(st.id);
-        if (st.toothFdi !== undefined || !passageLabel && (st.labelPriority < 3 || st.regional)) continue;
+        const studyLabel = s.studyView === 'vessels' && st.categories.some(c => c === 'arteries' || c === 'veins');
+        if (st.toothFdi !== undefined || !passageLabel && !studyLabel && (st.labelPriority < 3 || st.regional)) continue;
         if (st.kind === 'mesh' || s.jawControls && st.kind === 'group') {
           const vis = this.registry.meshesOf(st.id).filter((k) => s.jawControls || s.passageIds.includes(st.id) ? visibleMesh(k) : isFullyShown(this.entries.get(k)?.visual ?? 'off'));
           const notation = st.development ? developmentNotation(st.development)[s.numbering] : null;
-          if (vis.length) addMeshLabel(st.id, notation ?? shortOf(st, s.lang), st.development ? 'tooth' : 'structure', passageLabel ? Math.max(3, st.labelPriority) : st.labelPriority, vis);
+          if (vis.length) addMeshLabel(st.id, notation ?? shortOf(st, s.lang), st.development ? 'tooth' : 'structure', passageLabel || studyLabel ? Math.max(3, st.labelPriority) : st.labelPriority, vis);
         } else if (st.kind === 'landmark' && st.anchor) {
           const ok = st.categories.every((c) => s.categories[c] !== 'off');
           if (!ok) continue;
@@ -964,6 +975,35 @@ export class Engine {
     if (focus) this.focus(id);
   }
 
+  async showStudyView(id: 'sinuses' | 'vessels', selected?: string) {
+    actions.applyStudyPreset(id);
+    const geometries = await this.loader.load(id === 'sinuses' ? 'context.glb' : 'neurovascular.glb');
+    this.addGeometries(geometries);
+    if (getState().studyView !== id) return;
+    const box = new THREE.Box3();
+    for (const entry of this.entries.values()) {
+      const cats = this.registry.require(entry.owner).categories;
+      if (id === 'sinuses' ? cats.includes('sinus') : cats.some(c => c === 'arteries' || c === 'veins')) box.union(new THREE.Box3().setFromObject(entry.mesh));
+    }
+    if (!box.isEmpty()) { const sphere = box.getBoundingSphere(new THREE.Sphere()); this.rig.focusSphere(sphere.center, sphere.radius, { direction: PRESET_DIRS['three-quarter'], padding: 1.2 }); }
+    if (selected) await this.selectFromUI(selected, { focus: true });
+  }
+
+  async studyToothSurface(fdi: number, view: 'occlusal' | 'inner' | 'facial' | 'mesial' | 'distal') {
+    if (getState().dissectFdi !== fdi) actions.enterDissect(fdi);
+    actions.setClip({ enabled: false });
+    actions.setDissectLevel(0);
+    actions.setToothExplode(0);
+    await this.ensureTooth(fdi);
+    if (getState().dissectFdi !== fdi) return;
+    const tooth = this.registry.require(`tooth-${fdi}`).tooth!;
+    if (!tooth.frame) return;
+    const direction = new THREE.Vector3(...(view === 'occlusal' ? tooth.frame.axis : view === 'mesial' || view === 'distal' ? tooth.frame.mesial : tooth.frame.buccal));
+    if (view === 'inner' || view === 'distal') direction.negate();
+    const sphere = this.boundsOf(view === 'occlusal' ? `crown-${fdi}` : `tooth-${fdi}`, false).getBoundingSphere(new THREE.Sphere());
+    this.rig.focusSphere(sphere.center, sphere.radius, { direction, padding: 1.35 });
+  }
+
   focus(id: string) {
     this.cancelArchPreparation?.();
     const s = this.registry.get(id);
@@ -976,6 +1016,13 @@ export class Engine {
     } else if (fdi !== undefined) {
       const f = this.registry.get(`tooth-${fdi}`)?.tooth?.frame;
       if (f) dir = new THREE.Vector3(...f.buccal).add(new THREE.Vector3(...f.axis).multiplyScalar(0.25));
+    }
+    if (s.surfaceFeature && fdi !== undefined) {
+      const t = this.registry.get(`tooth-${fdi}`)?.tooth;
+      if (t?.frame) {
+        const facial = s.surfaceFeature === 'labial-ridge' || s.surfaceFeature === 'buccal-ridge';
+        dir = new THREE.Vector3(...(!facial && t.type.includes('molar') ? t.frame.axis : t.frame.buccal)).multiplyScalar(facial || t.type.includes('molar') ? 1 : -1);
+      }
     }
     const landmark = s.kind === 'landmark' ? this.landmarkPosition(s) : null;
     if (landmark) {
@@ -1312,6 +1359,9 @@ export class Engine {
 
     if (!(this.needsRender || controlsChanged || animating || fx || growthChanged)) return;
     this.needsRender = false;
+    this.toothLight.visible = getState().dissectFdi !== null;
+    this.toothLight.position.copy(this.rig.camera.position);
+    this.toothLight.target.position.copy(this.rig.controls.target);
     this.renderer.render(this.scene, this.rig.camera);
     const r = this.renderer.domElement;
     this.labels?.update(this.rig.camera, r.clientWidth, r.clientHeight, now, !(controlsChanged || animating || fx));
@@ -1378,7 +1428,7 @@ export class Engine {
       let target = visualOpacity(e.visual, s.ghostOpacity);
       if (e.nv) {
         const dissecting = s.explodePhase === 1 && s.dissectFdi === null ? Math.min(1, this.explodeCur * 2.5) : 0;
-        const quietTarget = s.passageIds.includes(e.owner) ? 0 : quietLevel(e, dissecting);
+        const quietTarget = s.passageIds.includes(e.owner) || s.studyView === 'vessels' && this.registry.require(e.owner).categories.some(c => c === 'arteries' || c === 'veins') ? 0 : quietLevel(e, dissecting);
         if (Math.abs(e.quiet! - quietTarget) > 1e-3) {
           e.quiet = stepToward(e.quiet!, quietTarget, rate, 0.01);
           const mat = e.mesh.material;
@@ -1439,6 +1489,8 @@ export class Engine {
       e.mesh.matrixWorldNeedsUpdate = true;
       e.mesh.updateMatrixWorld(true);
     }
+    const host = s.dissectFdi !== null ? this.entries.get(`enamel-${s.dissectFdi}`) : undefined;
+    this.surfaceLayer.update(s.dissectFdi, s.surfaceFeatures && s.dissectLevel <= 1 && !s.clip.enabled && !this.developmentScene.active, host?.mesh, s.selectedId);
     if (layoutChanged) this.labels?.markSceneChanged();
 
     const st = this.marker.visible && s.selectedId ? this.registry.get(s.selectedId) : undefined;
