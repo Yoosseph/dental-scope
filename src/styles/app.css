@@ -1696,6 +1696,25 @@ button.ds-layer-name:hover {
 .ds-tip.is-visible {
   opacity: 0.94;
 }
+.ds-tip > strong { font-weight: 500; }
+.ds-tip--anatomy {
+  width: min(360px, calc(100vw - 24px));
+  padding: 12px 14px;
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  background: var(--panel-solid);
+  color: var(--ink);
+  white-space: normal;
+  box-shadow: var(--panel-shadow);
+  line-height: 1.5;
+  z-index: 4;
+}
+.ds-tip--anatomy.is-visible { opacity: 1; }
+.ds-tip--anatomy > strong { display: block; font-size: 14px; font-weight: 600; }
+.ds-tip--anatomy > p { margin: 6px 0 8px; color: var(--muted); }
+.ds-tip-note { display: block; padding-top: 8px; border-top: 1px solid var(--line); color: var(--faint); font-size: 10.5px; }
+.ds-sinus-swatch { width: 9px; height: 9px; flex: none; border-radius: 50%; }
+.ds-sinus-chip { display: inline-flex; align-items: center; gap: 6px; }
 
 /* ------------------------------------------------------------------ about */
 .ds-about {

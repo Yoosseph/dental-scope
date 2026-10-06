@@ -83,3 +83,35 @@ describe('entering tooth exploration', () => {
     expect(rig.controls.target.equals(target)).toBe(true);
   });
 });
+
+describe('sinus picking through anatomical context', () => {
+  afterEach(() => setState({ ...initialState }));
+  const pick = (hits: { owner: string; visual: 'on' | 'ghost'; sinus?: boolean }[]) => {
+    const engine = Object.assign(Object.create(Engine.prototype) as { pick: () => string | null }, {
+      developmentScene: { active: false }, rig: { camera: {} }, pointer: new THREE.Vector2(),
+      raycaster: { setFromCamera() {} },
+      *rayHits() { for (const entry of hits) yield { entry }; },
+    });
+    return engine.pick();
+  };
+  it.each(['maxillary', 'frontal', 'sphenoidal'])('reaches a ghosted %s sinus behind ghosted bone', (group) => {
+    setState({ studyView: 'sinuses' });
+    expect(pick([
+      { owner: 'frontal-bone', visual: 'ghost' },
+      { owner: `${group}-sinus-left`, visual: 'ghost', sinus: true },
+      { owner: 'tooth-11', visual: 'on' },
+    ])).toBe(`${group}-sinus-left`);
+  });
+  it('keeps solid bone in front of an obscured sinus selectable', () => {
+    setState({ studyView: 'sinuses' });
+    expect(pick([{ owner: 'frontal-bone', visual: 'on' }, { owner: 'frontal-sinus-left', visual: 'on', sinus: true }])).toBe('frontal-bone');
+  });
+  it('chooses the nearest of overlapping sinus volumes', () => {
+    setState({ studyView: 'sinuses' });
+    expect(pick([{ owner: 'sphenoidal-sinus-right', visual: 'ghost', sinus: true }, { owner: 'sphenoidal-sinus-left', visual: 'on', sinus: true }])).toBe('sphenoidal-sinus-right');
+  });
+  it('retains normal opaque-first picking outside sinus study', () => {
+    setState({ studyView: null });
+    expect(pick([{ owner: 'maxillary-sinus-left', visual: 'ghost', sinus: true }, { owner: 'tooth-11', visual: 'on' }])).toBe('tooth-11');
+  });
+});

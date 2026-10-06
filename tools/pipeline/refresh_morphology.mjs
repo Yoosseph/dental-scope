@@ -39,12 +39,13 @@ for (const file of readdirSync(source).filter(f => /^tooth-\d{2}\.json$/.test(f)
   replace(core, `tooth-${fdi}`, data[`tooth-${fdi}`]);
   const toothFile = `teeth/tooth-${fdi}.glb`;
   const tooth = await io.read(join(directory, toothFile));
-  for (const [key, mesh] of Object.entries(data)) if (key !== `tooth-${fdi}` && key !== 'features' && key !== 'landmarks') replace(tooth, key.endsWith(`-${fdi}`) ? key : `${key}-${fdi}`, mesh);
+  for (const [key, mesh] of Object.entries(data)) if (key !== `tooth-${fdi}` && key !== 'features' && key !== 'landmarks' && key !== 'roots') replace(tooth, key.endsWith(`-${fdi}`) ? key : `${key}-${fdi}`, mesh);
   await write(tooth, toothFile);
   manifest.teeth[fdi].surfaceFeatures = data.features;
   manifest.teeth[fdi].landmarks = data.landmarks;
+  if (data.roots) manifest.teeth[fdi].roots = data.roots;
   manifest.teeth[fdi].provenance = 'schematic';
-  console.log(`${fdi}: refined shell/enamel; crown tissues follow relief; root anatomy retained`);
+  console.log(`${fdi}: refreshed shell, tissues, landmarks and root metadata`);
 }
 await write(core, 'core.glb');
 writeFileSync(manifestPath, JSON.stringify(manifest));

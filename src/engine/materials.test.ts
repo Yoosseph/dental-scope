@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { CATEGORY_BY_ID } from '../anatomy/categories';
-import { fibreAxis, styleFor, themedColor, THEME_LIGHTING } from './materials';
+import { fibreAxis, styleFor, styleKeyFor, themedColor, THEME_LIGHTING } from './materials';
 
 describe('light-theme tuning', () => {
   it('keeps dark-theme colours exactly as styled', () => {
@@ -60,5 +60,22 @@ describe('surface detail for non-dental tissue', () => {
     const box = new THREE.Box3(new THREE.Vector3(0, 0, 0), new THREE.Vector3(1, 4, 2));
     expect(fibreAxis(box).toArray()).toEqual([0, 1, 0]);
     expect(fibreAxis(new THREE.Box3(new THREE.Vector3(0, 0, 0), new THREE.Vector3(5, 1, 1))).toArray()).toEqual([1, 0, 0]);
+  });
+});
+
+describe('sinus teaching materials', () => {
+  it('distinguishes all three groups with restrained highlights and no tissue grain', () => {
+    const colors = new Set<string>();
+    for (const group of ['maxillary', 'frontal', 'sphenoidal']) {
+      const right = styleKeyFor(`${group}-sinus-right`, ['sinus']);
+      expect(styleKeyFor(`${group}-sinus-left`, ['sinus'])).toBe(right);
+      const style = styleFor(right);
+      colors.add(style.color);
+      expect(style.roughness).toBeGreaterThan(.5);
+      expect(style.clearcoat ?? 0).toBeLessThan(.05);
+      expect(style.edge ?? 0).toBeGreaterThan(0);
+      expect(style.grain ?? 0).toBe(0);
+    }
+    expect(colors.size).toBe(3);
   });
 });

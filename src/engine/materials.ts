@@ -53,7 +53,10 @@ const STYLES: Record<string, TissueStyle> = {
   vein: { color: '#3163c4', roughness: 0.48, clearcoat: 0.12, cap: '#254f9f', edge: 0.2 },
   // an air space, not tissue: always translucent (see SINUS_OPACITY in Engine), a strong
   // silhouette so its outline reads through the bone, and a cool colour apart from bone and nerves
-  sinus: { color: '#8ec3d6', roughness: 0.3, clearcoat: 0.2, cap: '#6fa9bf', edge: 0.45 },
+  sinus: { color: '#8ec3d6', roughness: 0.58, clearcoat: 0.025, specularIntensity: 0.45, cap: '#6fa9bf', edge: 0.45 },
+  'sinus-maxillary': { color: '#429cac', roughness: 0.58, clearcoat: 0.025, specularIntensity: 0.45, cap: '#347b89', edge: 0.45 },
+  'sinus-frontal': { color: '#5c91ca', roughness: 0.58, clearcoat: 0.025, specularIntensity: 0.45, cap: '#4876aa', edge: 0.45 },
+  'sinus-sphenoidal': { color: '#9782c1', roughness: 0.58, clearcoat: 0.025, specularIntensity: 0.45, cap: '#76619e', edge: 0.45 },
 };
 
 export function styleKeyFor(meshKey: string, cats: CategoryId[]): string {
@@ -66,7 +69,10 @@ export function styleKeyFor(meshKey: string, cats: CategoryId[]): string {
   if (meshKey.includes('alveolar-process')) return 'alveolar';
   if (meshKey.includes('condyle')) return 'condyle';
   if (meshKey.startsWith('articular-disc')) return 'disc';
-  if (cats.includes('sinus')) return 'sinus';
+  if (cats.includes('sinus')) {
+    const group = /^(maxillary|frontal|sphenoidal)-sinus/.exec(meshKey)?.[1];
+    return group ? `sinus-${group}` : 'sinus';
+  }
   if (cats.includes('nerves')) return 'nerve';
   if (cats.includes('arteries')) return 'artery';
   if (cats.includes('veins')) return 'vein';
@@ -137,7 +143,7 @@ export const HOVER_ON_BLUE = new THREE.Color('#b9c3ff');
 /** Selection and hover tint for a material. */
 export function highlightColor(mat: TissueMaterial, hover: boolean): THREE.Color {
   if (mat.userData.styleKey === 'artery') return new THREE.Color(hover ? '#e97966' : '#ffb79c');
-  const blue = mat.userData.styleKey === 'vein';
+  const blue = mat.userData.styleKey === 'vein' || mat.userData.styleKey.startsWith('sinus');
   return hover ? (blue ? HOVER_ON_BLUE : HOVER) : blue ? HIGHLIGHT_ON_BLUE : HIGHLIGHT;
 }
 

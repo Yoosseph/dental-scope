@@ -31,6 +31,8 @@ import { DevelopmentScene } from './DevelopmentScene';
 import { developmentNotation } from '../anatomy/development';
 import { isCompactLayout } from '../app/viewport';
 import { renderPixelRatio } from './renderQuality';
+import { resolveContent } from '../content/content';
+import { SINUS_NOTE } from '../i18n/study';
 import { dentitionFrame, skullOverviewFrame } from './framing';
 
 interface MeshEntry {
@@ -101,6 +103,7 @@ export class Engine {
   private pointerPx = { x: 0, y: 0 };
   private pointerDirty = false;
   private pointerInside = false;
+  private tipKey = '';
   private down: { x: number; y: number; t: number } | null = null;
   private needsRender = true;
   private visualsMoving = true;
@@ -199,7 +202,10 @@ export class Engine {
     this.overlay.className = 'ds-overlay';
     container.appendChild(this.overlay);
     this.tip = document.createElement('div');
+    this.tipKey = '';
     this.tip.className = 'ds-tip';
+    this.tip.id = 'ds-hover-info';
+    this.tip.setAttribute('role', 'tooltip');
     this.tip.setAttribute('aria-hidden', 'true');
     this.overlay.appendChild(this.tip);
 
@@ -235,6 +241,13 @@ export class Engine {
 
     this.labels = new LabelLayer(this.overlay);
     this.labels.onClick = (id) => this.selectFromUI(id, { focus: false });
+    this.labels.onHover = (id, rect) => {
+      actions.hover(id);
+      if (id && rect) {
+        const canvas = this.renderer.domElement.getBoundingClientRect();
+        this.showHoverInfo(id, rect.right - canvas.left, rect.bottom - canvas.top);
+      } else this.hideHoverInfo();
+    };
     this.labels.raycastOwner = (from, to) => this.raycastOwner(from, to);
     this.labels.keeps = (p) => !getState().clip.enabled || this.section.keeps(p);
 
@@ -477,6 +490,7 @@ export class Engine {
     if (s.jawOpening !== p.jawOpening || s.jawPlaying !== p.jawPlaying) this.labels?.markSceneChanged();
     if (s.explode !== p.explode || s.explodePhase !== p.explodePhase) this.refreshRootCuts(s);
     if (s.selectedId !== p.selectedId || s.hoveredId !== p.hoveredId || s.dissectFdi !== p.dissectFdi) this.refreshHighlight();
+    if (visChanged || s.lang !== p.lang || s.numbering !== p.numbering) this.pointerDirty = true;
     if (s.clip !== p.clip || s.dissectFdi !== p.dissectFdi) this.refreshClip();
     if (s.clip.enabled && !p.clip.enabled && s.dissectFdi === null) void this.ensureAllTeeth();
     if (s.dissectFdi !== p.dissectFdi && s.dissectFdi !== null) void this.ensureTooth(s.dissectFdi);
@@ -852,15 +866,18 @@ export class Engine {
     dom.addEventListener('pointerleave', () => {
       this.pointerInside = false;
       actions.hover(null);
-      this.tip.classList.remove('is-visible');
+      this.hideHoverInfo();
     });
     dom.addEventListener('pointerdown', (ev) => {
+      actions.hover(null);
+      this.hideHoverInfo();
       this.down = ev.isPrimary ? { x: ev.clientX, y: ev.clientY, t: performance.now() } : null;
     });
-    dom.addEventListener('pointercancel', () => { this.down = null; });
+    dom.addEventListener('pointercancel', () => { this.down = null; this.pointerDirty = true; });
     dom.addEventListener('pointerup', (ev) => {
       const d = this.down;
       this.down = null;
+      this.pointerDirty = true;
       if (!d) return;
       const moved = Math.hypot(ev.clientX - d.x, ev.clientY - d.y);
       if (moved > 6 || performance.now() - d.t > 600) return;
@@ -901,12 +918,16 @@ export class Engine {
     }
   }
 
-  /** Structure id under the pointer: first opaque hit; ghosts only if nothing opaque is hit. */
+  /** First solid hit, or a sinus through faded context in sinus study; ghosts are the fallback. */
   private pick(): string | null {
     if (this.developmentScene.active) return null;
     this.raycaster.setFromCamera(this.pointer, this.rig.camera);
     let ghost: string | null = null;
+    const sinusStudy = getState().studyView === 'sinuses';
     for (const { entry } of this.rayHits()) {
+      // In sinus study the faded skull is context, including a sinus the user
+      // has ghosted. Prefer the first sinus actually reached through it.
+      if (sinusStudy && entry.sinus) return entry.owner;
       if (isSolid(entry)) return entry.owner;
       ghost ??= entry.owner;
     }
@@ -931,18 +952,50 @@ export class Engine {
     const id = this.pick();
     actions.hover(id);
     if (id) {
-      const s = this.registry.get(id)!;
-      const { numbering: n, lang } = getState();
-      const fdi = s.toothFdi;
-      const name = nameOf(s, lang);
-      this.tip.textContent = fdi ? `${name} · ${formatTooth(fdi, n)}` : name;
-      this.tip.style.transform = `translate3d(${this.pointerPx.x + 14}px, ${this.pointerPx.y + 16}px, 0)`;
-      this.tip.classList.add('is-visible');
+      this.showHoverInfo(id, this.pointerPx.x, this.pointerPx.y);
       this.renderer.domElement.style.cursor = 'pointer';
     } else {
-      this.tip.classList.remove('is-visible');
-      this.renderer.domElement.style.cursor = '';
+      this.hideHoverInfo();
     }
+  }
+
+  private hideHoverInfo() {
+    this.tip.classList.remove('is-visible');
+    this.tip.setAttribute('aria-hidden', 'true');
+    this.renderer.domElement.style.cursor = '';
+  }
+
+  /** The same localized anatomy appears when hovering the volume or its label. */
+  private showHoverInfo(id: string, x: number, y: number) {
+    const structure = this.registry.require(id);
+    const { numbering, lang } = getState();
+    const key = `${id}:${lang}:${numbering}`;
+    if (key !== this.tipKey) {
+      this.tipKey = key;
+      const name = nameOf(structure, lang);
+      const sinus = structure.categories.includes('sinus');
+      this.tip.classList.toggle('ds-tip--anatomy', sinus);
+      this.tip.replaceChildren();
+      const title = document.createElement('strong');
+      title.textContent = structure.toothFdi ? `${name} · ${formatTooth(structure.toothFdi, numbering)}` : name;
+      this.tip.appendChild(title);
+      if (sinus) {
+        const summary = document.createElement('p');
+        summary.textContent = resolveContent(this.registry, id, lang).summary!;
+        const note = document.createElement('span');
+        note.className = 'ds-tip-note';
+        note.textContent = SINUS_NOTE[lang];
+        this.tip.append(summary, note);
+      }
+    }
+    const width = this.container.clientWidth, height = this.container.clientHeight;
+    const bounds = this.tip.getBoundingClientRect();
+    // Flip beside the pointer near an edge, then clamp within the canvas.
+    const left = x + 14 + bounds.width <= width - 12 ? x + 14 : x - bounds.width - 14;
+    const top = y + 16 + bounds.height <= height - 12 ? y + 16 : y - bounds.height - 16;
+    this.tip.style.transform = `translate3d(${Math.max(12, Math.min(left, width - bounds.width - 12))}px, ${Math.max(12, Math.min(top, height - bounds.height - 12))}px, 0)`;
+    this.tip.classList.add('is-visible');
+    this.tip.setAttribute('aria-hidden', 'false');
   }
 
   /* ========================================================= commands */
@@ -1383,6 +1436,7 @@ export class Engine {
     // Once effects settle, avoid walking every mesh on each idle animation frame.
     const fx = this.needsRender || this.visualsMoving || animating || growthChanged ? this.tickVisuals(dt) : false;
     this.visualsMoving = fx;
+    if (controlsChanged || animating || fx || growthChanged) this.pointerDirty = true;
     this.updateHover();
     if (controlsChanged || animating) this.rig.updateClipping();
     const jawMoved = this.clipJaw !== this.jawCur;
@@ -1583,7 +1637,7 @@ const ROOT_CUT_REST = -0.12;
 const QUIET_MIX = 0.6;
 const QUIET_TINT = { light: new THREE.Color('#d8d2c6'), dark: new THREE.Color('#3a3833') };
 
-/** The maxillary sinus is air: at most this opaque, so the roots and nerves around it stay visible. */
+/** Sinus volumes stay translucent so the surrounding anatomy remains visible. */
 const SINUS_OPACITY = 0.55;
 
 /** Bone opacity while the nerve and vessel layers are on. */
