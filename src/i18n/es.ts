@@ -9,8 +9,9 @@ export const es: Messages = {
   fatalStart: 'Dental Scope no ha podido iniciarse. Vuelve a cargar la página.',
   loadError: 'No se ha podido cargar la anatomía 3D. Comprueba la conexión y vuelve a cargar la página.',
 
-  madeBy: 'Creado por Yoseph',
-  madeByAria: 'Creado por Yoseph – Dental Scope en GitHub (se abre en una pestaña nueva)',
+  credits: 'Créditos',
+  supportRepo: 'Apoyar proyecto',
+  supportRepoAria: 'Apoyar Dental Scope en GitHub (se abre en una pestaña nueva)',
   numberingGroup: 'Sistema de numeración dental',
   numberingTitle: (system: string) => `Numeración dental ${system}`,
   searchAnatomy: 'Buscar en la anatomía',

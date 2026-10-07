@@ -68,3 +68,21 @@ Dental review of the new paths, landmark coordinates, deformation and content is
 - Browser checks cover desktop and 390×844 layouts: canal tables, Swedish passage details, transparency, jaw scrubbing/playback, the production Swedish guide redirect, hyoid attachment tabs, skull descriptions and nerve group/side controls.
 - The current gingiva/core asset was preserved, as were context and per-tooth geometry. The cranial extension changes `neurovascular.glb` and the manifest.
 - The original feedback extension is organized in eight commits on `codex/dental-feedback`. The description, hyoid and nerve organization follow-up is organized in three further commits. Server review and merge approval remain pending.
+
+## Feedback recheck, 2026-10-07
+
+The repeated feedback was checked against the current registry, localized content, visibility controls, motion engine and shipped assets. The requested features are already present:
+
+| Request | Where to find it |
+|---|---|
+| Nerve openings, names and locations | Search for a foramen or nerve, then choose **Visa nervens passage**. The mental foramen panel includes premolar location and variation, and links to the mental/inferior alveolar nerves and mandibular canal. |
+| Canal-count percentages | Select any permanent tooth. **Kanalantal i en studie** shows counts, percentages, sample size, method and source; coverage includes wisdom teeth. |
+| Temporalis, buccinator, masseter and orbicularis oris | The existing context asset contains each requested muscle. Use **Nerver & muskler** and search or the structure tree. |
+| Swedish sinus terminology | The visible preset and category say **Bihålor**; maxillary sinus names identify the sinus in the upper jaw. Older search aliases and guide redirects remain usable. |
+| Individual bone/muscle transparency | Select a structure and choose **Genomskinlig**, or use the transparency control beside a layer. Individual masseter transparency was checked in the browser. |
+| Additional cranial nerves | **Nervgrupper** offers trigeminal V, facial VII, IX/X/XII and all nerves. The requested nerves are selectable on both sides. |
+| Joint motion and pterygoid relationships | **Käkrörelse** offers play/pause, manual opening, reset and joint-side views, with condyle, disc, eminence and muscle context. Playback and manual opening were checked in the browser. |
+
+The trigeminal root/ganglion and V1/V2/V3 are present, but this remains a representative teaching model rather than every small branch of a complete cranial-nerve atlas. The existing schematic and draft notices remain in place.
+
+Recheck validation: **211 tests in 30 files pass**, including all 32 permanent teeth, five-language description coverage, passage navigation and jaw motion. The shipped-asset validator passes for **411 meshes**, checking decompression, file sizes, node registration, finite coordinates, triangle counts and bounds. The production build passes. The first-visit guide now runs faster, focuses the representative tooth within the space left by its panels, keeps labels on, and uses the opposite light/dark palette with a prominent skip control.

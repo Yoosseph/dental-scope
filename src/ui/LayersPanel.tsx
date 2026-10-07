@@ -58,7 +58,7 @@ function Categories() {
     <>
       <div className="ds-segmented ds-segmented--fill" role="radiogroup" aria-label={m.layerPresets}>
         {PRESETS.map((p) => (
-          <button key={p.id} type="button" role="radio" aria-checked={presetActive === p.id} className={presetActive === p.id ? 'is-active' : ''} onClick={() => p.id === 'vessels' || p.id === 'sinuses' ? void engine.showStudyView(p.id) : actions.applyStudyPreset(p.id)}>
+          <button key={p.id} data-tour={`preset-${p.id}`} type="button" role="radio" aria-checked={presetActive === p.id} className={presetActive === p.id ? 'is-active' : ''} onClick={() => p.id === 'vessels' || p.id === 'sinuses' ? void engine.showStudyView(p.id) : actions.applyStudyPreset(p.id)}>
             {p.id === 'nerve-muscles' ? FEEDBACK_TEXT[lang].nervesMuscles : m.preset[p.id] ?? p.label}
           </button>
         ))}

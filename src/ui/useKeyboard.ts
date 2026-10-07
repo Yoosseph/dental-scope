@@ -11,6 +11,7 @@ export function useKeyboard(engine: Engine) {
       if (e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented) return;
       if (e.key.startsWith('Arrow') && t.closest('[role="tree"], [role="radiogroup"], [role="listbox"]')) return;
       const s = getState();
+      if (s.guideOpen) return;
       const sel = s.selectedId;
       const step = Math.PI / 18;
       // letter shortcuts work with or without Shift / Caps Lock

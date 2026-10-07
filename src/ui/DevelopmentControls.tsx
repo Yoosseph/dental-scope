@@ -43,8 +43,8 @@ export function DevelopmentTimeline() {
         actions.setDevelopmentStage(DEVELOPMENT_STAGES[next]?.id ?? null);
       }} />
       <div className="ds-development-stops">
-        {DEVELOPMENT_STAGES.map((s) => <button key={s.id} type="button" className={stage === s.id ? 'is-active' : ''} aria-pressed={stage === s.id} aria-label={`${text.stages[s.id].title}, ${s.years} ${text.years}`} title={text.stages[s.id].title} onClick={() => actions.setDevelopmentStage(s.id)}>{s.years}</button>)}
-        <button type="button" className={stage === null ? 'is-active' : ''} aria-pressed={stage === null} aria-label={text.atlas} onClick={() => actions.setDevelopmentStage(null)}>{text.adult}</button>
+        {DEVELOPMENT_STAGES.map((s) => <button key={s.id} data-tour={`development-${s.id}`} type="button" className={stage === s.id ? 'is-active' : ''} aria-pressed={stage === s.id} aria-label={`${text.stages[s.id].title}, ${s.years} ${text.years}`} title={text.stages[s.id].title} onClick={() => actions.setDevelopmentStage(s.id)}>{s.years}</button>)}
+        <button type="button" className={stage === null ? 'is-active' : ''} aria-pressed={stage === null} data-tour="development-adult" aria-label={text.atlas} onClick={() => actions.setDevelopmentStage(null)}>{text.adult}</button>
       </div>
     </div>
   );

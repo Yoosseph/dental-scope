@@ -30,12 +30,12 @@ function movingTooth() {
   }
   const engine = Object.assign(Object.create(Engine.prototype) as Engine, {
     registry, rig, entries, animator, disposed: false, insetsKnown: true,
-    insets: { right: 0, bottom: 0, left: 0 },
+    insets: { right: 0, bottom: 0, left: 0, top: 0 },
     container: { clientWidth: 1440, clientHeight: 900 },
-    insetTarget: { right: 0, bottom: 0, left: 0 },
+    insetTarget: { right: 0, bottom: 0, left: 0, top: 0 },
     ensureTooth: vi.fn().mockResolvedValue(undefined),
   });
-  return { engine, rig, animator };
+  return { engine, rig, animator, entries };
 }
 
 describe('entering tooth exploration', () => {
@@ -44,6 +44,29 @@ describe('entering tooth exploration', () => {
     vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => { callback(0); return 1; });
   });
   afterEach(() => { vi.unstubAllGlobals(); setState({ ...initialState }); });
+
+  it('frames a selected guide tooth from its dental direction in the space clear of captions and panels', async () => {
+    const { engine, rig, animator, entries } = movingTooth();
+    // The guide chooses the tooth from search before opening its dissection.
+    rig.setMode('fixed');
+    rig.pivot.set(0, 8, 0);
+    for (const entry of entries.values()) entry.mesh.position.set(0, 0, 0);
+    setState({ guideOpen: true, selectedId: 'tooth-36' });
+    engine.setInsets(0, 280, 0, 300);
+    engine.focus('tooth-36');
+    animator.tick(1);
+    const bounds = engine.boundsOf('tooth-36', true, true);
+    const center = bounds.getCenter(new THREE.Vector3());
+    expect(rig.controls.target.distanceTo(center)).toBeLessThan(1e-10);
+    expect(rig.pivot.distanceTo(center)).toBeLessThan(1e-10);
+    rig.camera.updateMatrixWorld();
+    for (const x of [bounds.min.x, bounds.max.x]) for (const y of [bounds.min.y, bounds.max.y]) for (const z of [bounds.min.z, bounds.max.z]) {
+      const point = new THREE.Vector3(x, y, z).project(rig.camera);
+      const py = (1 - point.y) * 900 / 2;
+      expect(py).toBeGreaterThan(300);
+      expect(py).toBeLessThan(900 - 280);
+    }
+  });
 
   it.each([1, 2] as const)('centres the settled tooth instead of its moving position from phase %i', async (explodePhase) => {
     const { engine, rig, animator } = movingTooth();

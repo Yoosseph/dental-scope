@@ -126,9 +126,9 @@ export class Engine {
   private cancelArchPreparation?: () => void;
   private explodePreset?: ViewPreset;
   /** canvas area covered by panels (px), animated; shifts the optical centre */
-  private insets = { right: 0, bottom: 0, left: 0 };
+  private insets = { right: 0, bottom: 0, left: 0, top: 0 };
   /** where the insets are animating to (the start framing fits into this) */
-  private insetTarget = { right: 0, bottom: 0, left: 0 };
+  private insetTarget = { right: 0, bottom: 0, left: 0, top: 0 };
   private insetsKnown = false;
   private marker: THREE.Mesh;
   private toothLight = new THREE.DirectionalLight('#ffffff', 2.4);
@@ -1062,7 +1062,7 @@ export class Engine {
     const sphere = this.boundsOf(`crown-${fdi}`, false).getBoundingSphere(new THREE.Sphere());
     const height = this.container.clientHeight, width = this.container.clientWidth;
     const tanH = Math.tan(THREE.MathUtils.degToRad(this.rig.camera.fov) / 2);
-    const usableH = tanH * Math.max(.25, (height - this.insetTarget.bottom - 100) / height);
+    const usableH = tanH * Math.max(this.insetTarget.top ? .15 : .25, (height - this.insetTarget.bottom - this.insetTarget.top - (this.insetTarget.top ? 60 : 100)) / height);
     const usableW = tanH * this.rig.camera.aspect * Math.max(.3, (width - this.insetTarget.right - this.insetTarget.left - 40) / width);
     const distance = sphere.radius / Math.sin(Math.atan(Math.min(usableH, usableW))) * 1.12;
     this.rig.focusSphere(sphere.center, sphere.radius, { direction, distance });
@@ -1082,6 +1082,8 @@ export class Engine {
     this.cancelArchPreparation?.();
     const s = this.registry.get(id);
     if (!s) return;
+    // Guided search frames the actual tooth, using the same clear viewport as dissection.
+    const restPose = opts.restPose || (getState().guideOpen && !!s.tooth);
     const fdi = s.toothFdi;
     let dir: THREE.Vector3 | undefined;
     if (fdi !== undefined && s.tooth?.frame) {
@@ -1103,19 +1105,19 @@ export class Engine {
       this.rig.focusSphere(landmark, 0.6, { direction: dir });
       return;
     }
-    const box = this.boundsOf(id, true, opts.restPose);
+    const box = this.boundsOf(id, true, restPose);
     if (box.isEmpty()) return;
     const sphere = box.getBoundingSphere(new THREE.Sphere());
     const padding = s.kind === 'group' && sphere.radius > 2 ? 1.1 : 1.45;
     let distance: number | undefined;
-    if (opts.restPose) {
+    if (restPose) {
       const height = this.container.clientHeight, width = this.container.clientWidth;
       const tanH = Math.tan(THREE.MathUtils.degToRad(this.rig.camera.fov) / 2);
-      const usableH = tanH * Math.max(.25, (height - this.insetTarget.bottom - 100) / height);
+      const usableH = tanH * Math.max(this.insetTarget.top ? .15 : .25, (height - this.insetTarget.bottom - this.insetTarget.top - (this.insetTarget.top ? 60 : 100)) / height);
       const usableW = tanH * this.rig.camera.aspect * Math.max(.3, (width - this.insetTarget.right - this.insetTarget.left - 40) / width);
       distance = sphere.radius / Math.sin(Math.atan(Math.min(usableH, usableW))) * 1.12;
     }
-    this.rig.focusSphere(sphere.center, sphere.radius, { direction: dir, padding, distance, movePivot: opts.restPose });
+    this.rig.focusSphere(sphere.center, sphere.radius, { direction: dir, padding, distance, movePivot: restPose });
   }
 
   async showPassage(id: string) {
@@ -1262,8 +1264,8 @@ export class Engine {
     const up = new THREE.Vector3().crossVectors(direction, right).normalize();
     const width = this.container.clientWidth, height = this.container.clientHeight;
     const tanH = Math.tan(THREE.MathUtils.degToRad(this.rig.camera.fov / 2));
-    const tanW = tanH * this.rig.camera.aspect * Math.max(0.3, (width - this.insetTarget.right) / width);
-    const usableH = tanH * Math.max(0.3, (height - this.insetTarget.bottom - 90) / height);
+    const tanW = tanH * this.rig.camera.aspect * Math.max(0.15, (width - this.insetTarget.right - this.insetTarget.left) / width);
+    const usableH = tanH * Math.max(0.15, (height - this.insetTarget.bottom - this.insetTarget.top - 90) / height);
     let distance = 0;
     const point = new THREE.Vector3();
     // Fit actual surfaces rather than empty corners of the overall skull box.
@@ -1362,16 +1364,20 @@ export class Engine {
    * Shift the optical centre away from UI that covers the canvas (detail panel,
    * mobile bottom sheet) so the focused anatomy stays visible. Animated.
    */
-  setInsets(right: number, bottom: number, left = 0) {
+  setInsets(right: number, bottom: number, left = 0, top = 0) {
     const from = { ...this.insets };
     const t = this.insetTarget;
-    if (t.right === right && t.bottom === bottom && t.left === left) return;
-    this.insetTarget = { right, bottom, left };
+    if (t.right === right && t.bottom === bottom && t.left === left && t.top === top) return;
+    this.insetTarget = { right, bottom, left, top };
     // still on the untouched start view (e.g. the panels just measured on load): refit it
     const s = getState();
     const first = !this.insetsKnown;
     this.insetsKnown = true;
     if (s.developmentStage) this.frameDevelopment(s.view ?? undefined);
+    else if (s.guideOpen && s.selectedId && this.registry.get(s.selectedId)?.tooth) {
+      // Search selection and its caption/tray render in separate frames; fit again once measured.
+      this.focus(s.selectedId, { restPose: true });
+    }
     else if (!this.preparingArch && s.view === 'front' && !s.selectedId && s.dissectFdi === null) {
       if (s.explode > 0 && s.explodePhase === 1) this.reframeForExplode(s);
       else if (s.explodePhase === 1) this.startView(first ? 0 : 0.35);
@@ -1380,6 +1386,7 @@ export class Engine {
       this.insets.right = from.right + (right - from.right) * k;
       this.insets.bottom = from.bottom + (bottom - from.bottom) * k;
       this.insets.left = from.left + (left - from.left) * k;
+      this.insets.top = from.top + (top - from.top) * k;
       this.applyViewOffset();
     });
   }
@@ -1389,7 +1396,7 @@ export class Engine {
     const w = this.container.clientWidth;
     const h = this.container.clientHeight;
     const cam = this.rig.camera;
-    if (this.insets.right || this.insets.bottom || this.insets.left) cam.setViewOffset(w, h, (this.insets.right - this.insets.left) / 2, this.insets.bottom / 2, w, h);
+    if (this.insets.right || this.insets.bottom || this.insets.left || this.insets.top) cam.setViewOffset(w, h, (this.insets.right - this.insets.left) / 2, (this.insets.bottom - this.insets.top) / 2, w, h);
     else cam.clearViewOffset();
     cam.updateProjectionMatrix();
     this.invalidate();
