@@ -91,6 +91,7 @@ export function CameraControls() {
   };
   const [peekLabel, endPeek] = useFirstVisitPeek();
   const shown = peekLabel ?? tipLabel;
+  // eslint-disable-next-line react-hooks/refs -- showTip only runs from pointer/focus handlers; the timer ref is never read while rendering.
   const tip = (label: string, shortcut?: string) => ({ label, shortcut, tipShown: shown === label, showTip });
 
   return (

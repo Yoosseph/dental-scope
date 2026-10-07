@@ -48,6 +48,7 @@ npm run dev        # http://localhost:5173
 ```bash
 npm test           # unit tests (Vitest)
 npm run typecheck
+npm run lint       # ESLint (type-aware rules on src/**)
 npm run build      # static site in dist/ (includes a 404.html SPA fallback)
 ```
 

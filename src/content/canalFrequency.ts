@@ -4,8 +4,7 @@ import { FEEDBACK_TEXT } from '../i18n/feedback.ts';
 import type { Lang } from '../i18n/lang.ts';
 
 export function canalFrequency(fdi: number) {
-  const key = `tooth:${typeOf(fdi)}:${archOf(fdi)}` as keyof typeof data.entries;
-  const entry = data.entries[key];
+  const entry = data.entries[`tooth:${typeOf(fdi)}:${archOf(fdi)}`];
   if (!entry) return undefined;
   const source = data.sources[entry.source as keyof typeof data.sources];
   return { ...entry, source, rows: entry.counts.flatMap((count, i) => count ? [{ canals: i + 1, count, percent: count / entry.n * 100 }] : []) };

@@ -12,7 +12,7 @@ const BASE = `${import.meta.env.BASE_URL}models/`;
 export async function loadManifest(): Promise<Manifest> {
   const res = await fetch(`${BASE}manifest.json`);
   if (!res.ok) throw new Error(`Could not load anatomy manifest (${res.status})`);
-  return res.json();
+  return (await res.json()) as Manifest;
 }
 
 /** Convert quantized/interleaved attributes to plain Float32 so transforms can be baked. */
@@ -61,7 +61,7 @@ export class AssetLoader {
           gltf.scene.traverse((o) => {
             const mesh = o as THREE.Mesh;
             if (!mesh.isMesh) return;
-            const geo = toFloatGeometry(mesh.geometry as THREE.BufferGeometry);
+            const geo = toFloatGeometry(mesh.geometry);
             // bake node transform (meshopt quantization stores a dequantizing scale/offset on the node)
             if (!mesh.matrixWorld.equals(new THREE.Matrix4())) geo.applyMatrix4(mesh.matrixWorld);
             // node name may be the mesh or its parent
@@ -79,7 +79,7 @@ export class AssetLoader {
         },
         (err) => {
           this.inflight.delete(file);
-          reject(err);
+          reject(err instanceof Error ? err : new Error(String(err)));
         },
       );
     });

@@ -6,6 +6,7 @@ import { ABOUT_PAGES, HOME, TOOTH_PAGES, headTags, normalizeSiteUrl, robotsTxt, 
 import { aboutHtml } from './src/app/about.ts';
 import { GUIDE_PAGES, GUIDE_REDIRECTS, guideHtml } from './src/app/guide.ts';
 import { Registry } from './src/anatomy/registry.ts';
+import type { Manifest } from './src/anatomy/types.ts';
 import { descriptionGaps } from './src/content/descriptionCoverage.ts';
 
 const base = process.env.DS_BASE ?? '/';
@@ -31,7 +32,7 @@ function seo(): Plugin {
   return {
     name: 'dental-scope-seo',
     buildStart() {
-      const registry = new Registry(JSON.parse(readFileSync('public/models/manifest.json', 'utf8')));
+      const registry = new Registry(JSON.parse(readFileSync('public/models/manifest.json', 'utf8')) as Manifest);
       const gaps = descriptionGaps(registry);
       if (gaps.length) throw new Error(`Missing anatomy descriptions:\n${gaps.join('\n')}`);
     },

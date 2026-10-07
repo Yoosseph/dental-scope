@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { DEVELOPMENT_STAGES, DEVELOPMENT_TEETH, developmentId, developmentNotation, developmentStatus } from '../anatomy/development';
 import { DEVELOPMENT_SOURCES } from '../content/developmentAnatomy';
 import { nameOf, useLang } from '../i18n';
@@ -14,7 +14,7 @@ export function DevelopmentTimeline() {
   const stage = useApp((s) => s.developmentStage);
   const playing = useApp((s) => s.developmentPlaying);
   const index = stage ? DEVELOPMENT_STAGES.findIndex((s) => s.id === stage) : DEVELOPMENT_STAGES.length;
-  const initialIndex = useRef(index);
+  const [initialIndex] = useState(index);
   const displayedIndex = useRef(index);
   const slider = useRef<HTMLInputElement>(null);
   useEffect(() => engine.subscribeDevelopmentProgress((position) => {
@@ -32,7 +32,7 @@ export function DevelopmentTimeline() {
     <div className="ds-panel ds-development-timeline">
       <div className="ds-development-heading"><span>{text.title}</span><strong aria-live="polite">{current}{age ? ` · ${age}` : ''}</strong></div>
       <button type="button" className={`ds-development-play${playing ? ' is-active' : ''}`} aria-label={playing ? text.pause : stage ? text.play : text.replay} onClick={() => playing ? actions.pauseDevelopment() : actions.playDevelopment()}><span aria-hidden="true">{playing ? 'Ⅱ' : '▶'}</span> {playing ? text.pause : stage ? text.play : text.replay}</button>
-      <input ref={slider} type="range" min={0} max={DEVELOPMENT_STAGES.length} step="any" defaultValue={initialIndex.current} aria-label={text.stage} aria-valuetext={`${current} ${age}`} onChange={(e) => {
+      <input ref={slider} type="range" min={0} max={DEVELOPMENT_STAGES.length} step="any" defaultValue={initialIndex} aria-label={text.stage} aria-valuetext={`${current} ${age}`} onChange={(e) => {
         actions.setDevelopmentStage(DEVELOPMENT_STAGES[Math.round(Number(e.currentTarget.value))]?.id ?? null);
         e.currentTarget.value = String(displayedIndex.current);
       }} onKeyDown={(e) => {

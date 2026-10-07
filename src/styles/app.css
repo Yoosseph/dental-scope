@@ -549,6 +549,14 @@ button.ds-layer-name:hover {
 .ds-tree-row.is-hidden .ds-tree-eye {
   opacity: 1;
 }
+/* Focus lives on the treeitem wrapper; draw its ring on the visible row. */
+.ds-tree [role="treeitem"]:focus-visible {
+  outline: none;
+}
+.ds-tree [role="treeitem"]:focus-visible > .ds-tree-row {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
 
 /* ------------------------------------------------------------------ chips */
 .ds-chip {
