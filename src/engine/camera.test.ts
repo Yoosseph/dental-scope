@@ -8,7 +8,7 @@ const V = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
 /** Exercise camera transitions without a browser or OrbitControls input events. */
 function cameraTransition() {
   const animator = new Animator();
-  const rig = Object.assign(Object.create(CameraRig.prototype) as CameraRig, {
+  const rig: CameraRig = Object.assign(Object.create(CameraRig.prototype) as CameraRig, {
     camera: new THREE.PerspectiveCamera(32, 1.6, 0.05, 200),
     controls: { target: V(0, 6, 0), minDistance: 0.9 },
     pivot: V(0, 6, 0), animator, mode_: 'fixed', interacting: false,

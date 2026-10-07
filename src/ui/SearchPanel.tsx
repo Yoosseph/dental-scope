@@ -22,16 +22,28 @@ export function SearchPanel() {
 
   const results = useMemo(() => (q.trim() ? search(searchIndex, registry, q, numbering, 30) : []), [q, numbering, searchIndex, registry]);
 
+  // Reset the highlight when the panel opens or the query changes, adjusting
+  // during render instead of in an effect (react.dev: "adjusting state when a
+  // prop changes").
+  const [wasOpen, setWasOpen] = useState(open);
+  const [prevQuery, setPrevQuery] = useState(q);
+  if (wasOpen !== open) {
+    setWasOpen(open);
+    if (open) setActive(0);
+  }
+  if (prevQuery !== q) {
+    setPrevQuery(q);
+    setActive(0);
+  }
+
   useEffect(() => {
     if (open) {
-      setActive(0);
       requestAnimationFrame(() => {
         input.current?.focus();
         input.current?.select();
       });
     }
   }, [open]);
-  useEffect(() => setActive(0), [q]);
   useEffect(() => {
     list.current?.querySelector(`[data-idx="${active}"]`)?.scrollIntoView({ block: 'nearest' });
   }, [active]);
@@ -69,7 +81,6 @@ export function SearchPanel() {
           <input
             data-tour="search-input"
             ref={input}
-            autoFocus
             value={q}
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={onKey}
@@ -96,6 +107,7 @@ export function SearchPanel() {
               const ctxS = fdi !== undefined && !s.tooth ? registry.get(`tooth-${fdi}`) : registry.get(s.parent ?? '');
               const context = ctxS ? nameOf(ctxS, lang) : undefined;
               return (
+                // eslint-disable-next-line jsx-a11y/click-events-have-key-events -- options are not focusable: the combobox input owns all keyboard interaction (aria-activedescendant pattern).
                 <li
                   key={r.id}
                   id={`ds-sr-${i}`}

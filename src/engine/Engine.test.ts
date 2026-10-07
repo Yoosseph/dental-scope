@@ -2,19 +2,20 @@ import { readFileSync } from 'node:fs';
 import * as THREE from 'three';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Registry } from '../anatomy/registry';
+import type { Manifest } from '../anatomy/types';
 import { actions, initialState, setState } from '../state/store';
 import { Animator } from './animator';
 import { CameraRig } from './camera';
 import { Engine } from './Engine';
 
-const registry = new Registry(JSON.parse(readFileSync('public/models/manifest.json', 'utf8')));
+const registry = new Registry(JSON.parse(readFileSync('public/models/manifest.json', 'utf8')) as Manifest);
 
 /** Reproduce an already-loaded tooth still moving home from arch/board dissection. */
 function movingTooth() {
   const animator = new Animator();
   const camera = new THREE.PerspectiveCamera(32, 1440 / 900, .05, 200);
   camera.position.set(8, 6, 30);
-  const rig = Object.assign(Object.create(CameraRig.prototype) as CameraRig, {
+  const rig: CameraRig = Object.assign(Object.create(CameraRig.prototype) as CameraRig, {
     camera, animator, controls: { target: new THREE.Vector3(8, 6, 0), minDistance: .9 },
     pivot: new THREE.Vector3(), mode_: 'free',
   });
@@ -28,7 +29,7 @@ function movingTooth() {
     mesh.position.set(5, 3, -2);
     entries.set(key, { mesh, visual: 'on' });
   }
-  const engine = Object.assign(Object.create(Engine.prototype) as Engine, {
+  const engine: Engine = Object.assign(Object.create(Engine.prototype) as Engine, {
     registry, rig, entries, animator, disposed: false, insetsKnown: true,
     insets: { right: 0, bottom: 0, left: 0, top: 0 },
     container: { clientWidth: 1440, clientHeight: 900 },

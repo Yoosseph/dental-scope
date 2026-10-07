@@ -354,7 +354,7 @@ export function guideHtml(page: GuidePage, head: string, base: string): string {
         .join('')}</dl>`,
     );
   }
-  const related = (((CONTENT.en as Record<string, Entry>)[s.contentKey]?.related ?? []) as string[]).map((k) => link(`structure:${k}`)).filter(Boolean);
+  const related = ((CONTENT.en as Record<string, Entry>)[s.contentKey]?.related ?? []).map((k) => link(`structure:${k}`)).filter(Boolean);
   if (related.length) sections.push(`<h2>${esc(T.related)}</h2><p class="links">${related.join(' · ')}</p>`);
 
   return `<!doctype html>

@@ -30,7 +30,7 @@ export const es: Messages = {
   resetAll: 'Restablecer todo',
   resetAllTitle: 'Restablecer todo: vista inicial y ajustes predeterminados',
 
-  stage: { core: 'Maxilares y dentición', context: 'Cráneo y músculos', neurovascular: 'Nervios y vasos' } as Record<string, string>,
+  stage: { core: 'Maxilares y dentición', context: 'Cráneo y músculos', neurovascular: 'Nervios y vasos' },
   somethingWrong: 'Algo ha salido mal',
   loadingStage: (stage: string) => `Cargando ${stage.toLowerCase()}…`,
   preparing: 'Preparando la anatomía dental',

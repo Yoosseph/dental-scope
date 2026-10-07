@@ -11,6 +11,7 @@ npm install
 npm run dev          # http://localhost:5173
 npm test             # unit tests (Vitest)
 npm run typecheck
+npm run lint            # ESLint (type-aware rules on src/**)
 ```
 
 The production models are committed in `public/models/`, so you don't need the asset pipeline to work on the app.

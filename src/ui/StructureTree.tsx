@@ -17,16 +17,18 @@ export function StructureTree() {
   const [open, setOpen] = useState<Set<string>>(() => new Set(['dental-anatomy', 'maxilla', 'mandible']));
   const ref = useRef<HTMLDivElement>(null);
 
-  // expand to reveal the selection
+  // Expand ancestors to reveal the selection while rendering, so the scroll
+  // effect below finds the row already mounted.
+  const [revealed, setRevealed] = useState<string | null | undefined>(undefined);
+  if (revealed !== selectedId) {
+    setRevealed(selectedId);
+    if (selectedId) {
+      const anc = registry.ancestors(selectedId).map((a) => a.id);
+      if (!anc.every((a) => open.has(a))) setOpen(new Set([...open, ...anc]));
+    }
+  }
   useEffect(() => {
     if (!selectedId) return;
-    const anc = registry.ancestors(selectedId).map((a) => a.id);
-    setOpen((o) => {
-      if (anc.every((a) => o.has(a))) return o;
-      const n = new Set(o);
-      anc.forEach((a) => n.add(a));
-      return n;
-    });
     requestAnimationFrame(() => ref.current?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' }));
   }, [selectedId, registry]);
 
@@ -35,7 +37,7 @@ export function StructureTree() {
   const root = registry.require(registry.rootId);
   const m = useT();
   const onKeyDown = (e: React.KeyboardEvent) => {
-    const items = [...(ref.current?.querySelectorAll<HTMLElement>('[role="treeitem"] > .ds-tree-row') ?? [])];
+    const items = [...(ref.current?.querySelectorAll<HTMLElement>('[role="treeitem"]') ?? [])];
     const i = items.indexOf(document.activeElement as HTMLElement);
     if (i < 0) return;
     const id = items[i].dataset.id!;
@@ -48,7 +50,7 @@ export function StructureTree() {
   };
 
   return (
-    <div className="ds-tree" role="tree" aria-label={m.treeAria} ref={ref} onKeyDown={onKeyDown}>
+    <div className="ds-tree" role="tree" tabIndex={-1} aria-label={m.treeAria} ref={ref} onKeyDown={onKeyDown}>
       {root.children.map((c) => (
         <TreeNode key={c} id={c} depth={0} open={open} toggle={toggle} />
       ))}
@@ -74,19 +76,28 @@ const TreeNode = memo(function TreeNode({ id, depth, open, toggle }: { id: strin
   };
 
   return (
-    <div role="treeitem" aria-expanded={expandable ? isOpen : undefined} aria-selected={selected} aria-level={depth + 1}>
+    <div
+      role="treeitem"
+      aria-expanded={expandable ? isOpen : undefined}
+      aria-selected={selected}
+      aria-level={depth + 1}
+      data-id={id}
+      tabIndex={0}
+      onClick={(e) => {
+        e.stopPropagation();
+        void select();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          e.stopPropagation();
+          void select();
+        }
+      }}
+    >
       <div
         className={`ds-tree-row${selected ? ' is-selected' : ''}${hidden ? ' is-hidden' : ''}`}
         style={{ paddingLeft: 6 + depth * 14 }}
-        data-id={id}
-        tabIndex={0}
-        onClick={select}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            void select();
-          }
-        }}
       >
         <button
           type="button"

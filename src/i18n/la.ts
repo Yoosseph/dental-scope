@@ -30,7 +30,7 @@ export const la: Messages = {
   resetAll: 'Omnia restitue',
   resetAllTitle: 'Omnia restitue: aspectus initialis et optiones praefinitae',
 
-  stage: { core: 'Maxillae et dentitio', context: 'Cranium et musculi', neurovascular: 'Nervi et vasa' } as Record<string, string>,
+  stage: { core: 'Maxillae et dentitio', context: 'Cranium et musculi', neurovascular: 'Nervi et vasa' },
   somethingWrong: 'Aliquid erravit',
   loadingStage: (stage: string) => `${stage} onerantur…`,
   preparing: 'Anatomia dentalis paratur',

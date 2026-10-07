@@ -240,7 +240,7 @@ export class Engine {
     this.startView(0);
 
     this.labels = new LabelLayer(this.overlay);
-    this.labels.onClick = (id) => this.selectFromUI(id, { focus: false });
+this.labels.onClick = (id) => { void this.selectFromUI(id, { focus: false }); };
     this.labels.onHover = (id, rect) => {
       actions.hover(id);
       if (id && rect) {
@@ -883,7 +883,7 @@ export class Engine {
       if (moved > 6 || performance.now() - d.t > 600) return;
       this.setPointer(ev);
       const hit = this.pick();
-      if (hit) this.selectFromUI(hit, { focus: false, reveal: false });
+      if (hit) void this.selectFromUI(hit, { focus: false, reveal: false });
       else actions.select(null);
     });
     dom.addEventListener('dblclick', (ev) => {

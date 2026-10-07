@@ -145,7 +145,7 @@ export function DetailPanel() {
       </div>
 
       <div className="ds-detail-actions">
-        {passageFor(registry, s.id).length > 0 && <button type="button" className="ds-secondary" onClick={() => engine.showPassage(s.id)}>{FEEDBACK_TEXT[lang].pathView}</button>}
+        {passageFor(registry, s.id).length > 0 && <button type="button" className="ds-secondary" onClick={() => void engine.showPassage(s.id)}>{FEEDBACK_TEXT[lang].pathView}</button>}
         {s.categories.includes('tmj') && <button type="button" className="ds-secondary" onClick={() => void engine.showJaw(s.id.endsWith('-left') ? 'left' : 'right')}>{FEEDBACK_TEXT[lang].jawMotion}</button>}
         {s.tooth && dissectFdi === s.tooth.fdi ? (
           <button type="button" className="ds-primary" onClick={leaveTooth}>

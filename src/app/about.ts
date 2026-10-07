@@ -103,7 +103,7 @@ export function aboutHtml(head: string, base: string, faviconHref: string, lang:
       <h3>${esc(T.glossaryGroups[i])}</h3>
       <dl class="terms">${keys
         .filter((k) => STRUCTURES[k]?.summary)
-        .map((k) => `<dt>${esc(termName(k))}</dt><dd>${esc(STRUCTURES[k].summary!)}${STRUCTURES[k].function ? ` ${esc(STRUCTURES[k].function!)}` : ''}</dd>`)
+        .map((k) => `<dt>${esc(termName(k))}</dt><dd>${esc(STRUCTURES[k].summary!)}${STRUCTURES[k].function ? ` ${esc(STRUCTURES[k].function)}` : ''}</dd>`)
         .join('')}</dl>`,
   ).join('');
   const faqLd = {
