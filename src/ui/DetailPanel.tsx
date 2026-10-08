@@ -83,7 +83,7 @@ export function DetailPanel() {
       </div>
 
       <div className="ds-detail-body">
-        {content.summary ? <p className="ds-detail-summary">{content.summary}</p> : <p className="ds-detail-summary is-muted">{m.noDescription}</p>}
+        {content.summary ? <p className="ds-detail-summary" data-tour="tooth-details">{content.summary}</p> : <p className="ds-detail-summary is-muted">{m.noDescription}</p>}
         {s.provenance === 'schematic' && <p className="ds-evidence">{FEEDBACK_TEXT[lang].schematicAnatomy}</p>}
         {s.id.startsWith('development-') && <p className="ds-development-draft">{DEVELOPMENT_TEXT[lang].draft}{s.development && developmentStage ? ` · ${DEVELOPMENT_TEXT[lang].status[developmentStatus(s.development, developmentStage)]}` : ''}</p>}
         {s.kind === 'landmark' && passageFor(registry, s.id).length > 0 && <p className="ds-evidence">{FEEDBACK_TEXT[lang].foramenNote}</p>}
@@ -152,7 +152,7 @@ export function DetailPanel() {
             <IconArrowLeft /> {m.backToMouth}
           </button>
         ) : s.tooth ? (
-          <button type="button" className="ds-primary" onClick={() => void enterDissect(s.tooth!.fdi)}>
+          <button type="button" className="ds-primary" data-tour="explore-inside" onClick={() => void enterDissect(s.tooth!.fdi)}>
             <IconTooth /> {m.exploreInside}
           </button>
         ) : (

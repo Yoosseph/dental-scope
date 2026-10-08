@@ -14,7 +14,8 @@ export function SearchPanel() {
   const lang = useApp((s) => s.lang);
   const m = useT();
   const { registry, engine, searchIndex } = useServices();
-  const [q, setQ] = useState('');
+  const q = useApp((s) => s.searchQuery);
+  const setQ = actions.setSearchQuery;
   const [active, setActive] = useState(0);
   const input = useRef<HTMLInputElement>(null);
   const list = useRef<HTMLUListElement>(null);
@@ -66,6 +67,7 @@ export function SearchPanel() {
         <div className="ds-search-field">
           <IconSearch size={18} />
           <input
+            data-tour="search-input"
             ref={input}
             autoFocus
             value={q}
@@ -98,6 +100,7 @@ export function SearchPanel() {
                   key={r.id}
                   id={`ds-sr-${i}`}
                   data-idx={i}
+                  data-tour={`result-${r.id}`}
                   role="option"
                   aria-selected={i === active}
                   className={`ds-search-result${i === active ? ' is-active' : ''}`}

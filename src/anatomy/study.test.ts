@@ -60,7 +60,12 @@ describe('sinus and vessel study views', () => {
       for (const side of ['right', 'left']) {
         const structure = registry.require(`${group}-${side}`);
         expect(structure.meshes.length).toBe(1);
-        for (const lang of LANGS) expect(resolveContent(registry, structure.id, lang).summary!.length).toBeGreaterThan(100);
+        for (const lang of LANGS) {
+          const content = resolveContent(registry, structure.id, lang);
+          expect(content.summary!.length).toBeGreaterThan(100);
+          expect(content.sources.length).toBeGreaterThan(0);
+          expect(content.status).toBe('draft');
+        }
       }
     }
   });

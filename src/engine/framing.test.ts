@@ -42,4 +42,20 @@ describe('skull overview and dental playback frames', () => {
     expect(overview.target.y - dental.target.y).toBeGreaterThan(5);
     expect(dental.distance).toBeLessThan(overview.distance);
   });
+
+  it('keeps the skull between the guide caption and the phone tool tray', () => {
+    const width = 390, height = 844, top = 290, bottom = 280;
+    const frame = skullOverviewFrame(skull, 32, { width, height, top, bottom, right: 0 });
+    const camera = new THREE.PerspectiveCamera(32, width / height, 0.05, 200);
+    camera.position.copy(frame.target).add(new THREE.Vector3(0, 0, frame.distance));
+    camera.lookAt(frame.target);
+    camera.setViewOffset(width, height, 0, (bottom - top) / 2, width, height);
+    camera.updateMatrixWorld();
+    for (const x of [skull.min.x, skull.max.x]) for (const y of [skull.min.y, skull.max.y]) for (const z of [skull.min.z, skull.max.z]) {
+      const point = new THREE.Vector3(x, y, z).project(camera);
+      const py = (1 - point.y) * height / 2;
+      expect(py).toBeGreaterThan(top);
+      expect(py).toBeLessThan(height - bottom);
+    }
+  });
 });

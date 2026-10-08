@@ -61,6 +61,7 @@ export class LabelLayer {
   enabled = false;
   selectedId: string | null = null;
   onClick?: (id: string) => void;
+  onHover?: (id: string | null, rect?: DOMRect) => void;
   /** returns the structure id at the first ray hit from the camera toward a point, or null */
   raycastOwner?: (from: THREE.Vector3, to: THREE.Vector3) => { id: string; distance: number } | null;
   /** false when a point has been cut away by the section plane */
@@ -101,11 +102,18 @@ export class LabelLayer {
         const el = document.createElement('button');
         el.type = 'button';
         el.className = `ds-label ds-label--${cand.kind}`;
+        el.setAttribute('aria-describedby', 'ds-hover-info');
         el.addEventListener('click', (e) => {
           e.stopPropagation();
           this.onClick?.(cand.id);
         });
         el.addEventListener('pointerdown', (e) => e.stopPropagation());
+        const showInfo = () => this.onHover?.(cand.id, el.getBoundingClientRect());
+        const hideInfo = () => this.onHover?.(null);
+        el.addEventListener('pointerenter', showInfo);
+        el.addEventListener('pointerleave', hideInfo);
+        el.addEventListener('focus', showInfo);
+        el.addEventListener('blur', hideInfo);
         this.root.appendChild(el);
         l = { el, visible: false, w: 0, h: 0, transform: '' };
         this.els.set(cand.id, l);
@@ -117,6 +125,7 @@ export class LabelLayer {
       // the language can change while the text stays the same (tooth numbers)
       const aria = t().selectX(cand.text);
       if (l.el.getAttribute('aria-label') !== aria) l.el.setAttribute('aria-label', aria);
+      if (l.visible && l.el.matches(':hover, :focus')) this.onHover?.(cand.id, l.el.getBoundingClientRect());
     }
   }
 

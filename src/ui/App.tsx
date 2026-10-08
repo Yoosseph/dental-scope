@@ -12,6 +12,7 @@ import { SearchPanel } from './SearchPanel';
 import { Identity, TopActions } from './TopBar';
 import { useKeyboard } from './useKeyboard';
 import { COMPACT_LAYOUT } from '../app/viewport';
+import { GuidedTour } from './GuidedTour';
 
 export function App() {
   const { engine, registry } = useServices();
@@ -27,6 +28,7 @@ export function App() {
   const jawControls = useApp((s) => s.jawControls);
   const developmentStage = useApp((s) => s.developmentStage);
   const lang = useApp((s) => s.lang);
+  const guideOpen = useApp((s) => s.guideOpen);
   const m = useT();
 
   useEffect(() => {
@@ -73,30 +75,47 @@ export function App() {
       const bottoms = [toolbar, bar, ...(!sideSheet && compact.matches ? [panel] : [])].filter((r): r is DOMRect => !!r);
       const bottom = Math.max(0, ...bottoms.map((r) => bounds.bottom - r.top + 12));
       const side = sideSheet ? panel ?? (sheet === 'tools' ? toolbar : null) : !compact.matches ? panel : null;
-      const right = side ? bounds.right - side.left + 12 : 0;
+      let right = side ? bounds.right - side.left + 12 : 0;
       const layers = !compact.matches && dissect ? visibleRect('.ds-layers') : null;
-      const left = layers ? layers.right - bounds.left + 12 : 0;
+      let left = layers ? layers.right - bounds.left + 12 : 0;
       // Landscape tool sheets occupy the side, not the lower half of the model.
       const clearance = sideSheet && sheet === 'tools' ? (bar ? bounds.bottom - bar.top + 12 : 0) : bottom;
       ui.style.setProperty('--dock-clearance', `${Math.max(64, bottom + 12)}px`);
-      engine.setInsets(Math.min(right, bounds.width - 100), Math.min(clearance, bounds.height - 100), Math.min(left, bounds.width - 100));
+      const tour = document.querySelector<HTMLElement>('.ds-tour-card');
+      const tourBounds = tour?.getBoundingClientRect();
+      let top = 0;
+      let tourBottom = clearance;
+      if (tour && tourBounds) {
+        if (!compact.matches) {
+          if (tour.dataset.position === 'left') left = Math.max(left, tourBounds.right + 12);
+          else right = Math.max(right, bounds.right - tourBounds.left + 12);
+        } else if (sideSheet) left = Math.max(left, tourBounds.right + 12);
+        else if (tour.dataset.position === 'bottom') tourBottom = Math.max(tourBottom, bounds.bottom - tourBounds.top + 12);
+        else top = tourBounds.bottom + 12;
+      }
+      engine.setInsets(Math.min(right, bounds.width - 100), Math.min(tourBottom, bounds.height - 100), Math.min(left, bounds.width - 100), Math.max(0, Math.min(top, bounds.height - tourBottom - 80)));
     };
     const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
     update();
     const observer = new ResizeObserver(schedule);
     if (ui) observer.observe(ui);
     for (const element of ui?.querySelectorAll('.ds-dock, .ds-layers, .ds-detail, .ds-mobile-bar') ?? []) observer.observe(element);
+    const tour = document.querySelector<HTMLElement>('.ds-tour-card');
+    if (tour) observer.observe(tour);
+    const tourPosition = new MutationObserver(schedule);
+    if (tour) tourPosition.observe(tour, { attributes: true, attributeFilter: ['data-position'] });
     compact.addEventListener('change', schedule);
     window.addEventListener('resize', schedule);
     window.visualViewport?.addEventListener('resize', schedule);
     return () => {
       cancelAnimationFrame(frame);
       observer.disconnect();
+      tourPosition.disconnect();
       compact.removeEventListener('change', schedule);
       window.removeEventListener('resize', schedule);
       window.visualViewport?.removeEventListener('resize', schedule);
     };
-  }, [engine, selected, dissect, laidOut, sheet, detailHidden, dockHidden, layersHidden, jawControls, developmentStage, lang]);
+  }, [engine, selected, dissect, laidOut, sheet, detailHidden, dockHidden, layersHidden, jawControls, developmentStage, lang, guideOpen]);
 
   return (
     <div className={`ds-app${selected ? ' has-selection' : ''}${dissect ? ' is-dissecting' : ''}`} data-sheet={sheet}>
@@ -114,7 +133,7 @@ export function App() {
           <button type="button" className={sheet === 'layers' ? 'is-active' : ''} onClick={() => actions.setMobileSheet(sheet === 'layers' ? 'none' : 'layers')} aria-pressed={sheet === 'layers'}>
             <IconLayers /> <span>{m.layers}</span>
           </button>
-          <button type="button" onClick={() => actions.openSearch(true)}>
+          <button type="button" data-tour="search" onClick={() => actions.openSearch(true)}>
             <IconSearch /> <span>{m.search}</span>
           </button>
           <button type="button" className={sheet === 'tools' ? 'is-active' : ''} onClick={() => actions.setMobileSheet(sheet === 'tools' ? 'none' : 'tools')} aria-pressed={sheet === 'tools'}>
@@ -128,6 +147,7 @@ export function App() {
       </div>
       <SearchPanel />
       <AboutDialog />
+      <GuidedTour />
     </div>
   );
 }
