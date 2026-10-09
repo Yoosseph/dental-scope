@@ -47,12 +47,17 @@ export default tseslint.config(
     },
   },
   {
-    files: ['**/*.tsx'],
-    plugins: { 'react-hooks': reactHooks, 'jsx-a11y': jsxA11y },
+    files: ['**/*.ts', '**/*.tsx'],
+    plugins: { 'react-hooks': reactHooks },
     rules: {
       ...reactHooks.configs.flat.recommended.rules,
-      ...jsxA11y.flatConfigs.recommended.rules,
+      'react-hooks/exhaustive-deps': 'error',
     },
+  },
+  {
+    files: ['**/*.tsx'],
+    plugins: { 'jsx-a11y': jsxA11y },
+    rules: jsxA11y.flatConfigs.recommended.rules,
   },
   {
     // Tests run in Node (vitest, `environment: 'node'`).

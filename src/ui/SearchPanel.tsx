@@ -15,7 +15,7 @@ export function SearchPanel() {
   const m = useT();
   const { registry, engine, searchIndex } = useServices();
   const q = useApp((s) => s.searchQuery);
-  const setQ = actions.setSearchQuery;
+  const setQ = (query: string) => actions.setSearchQuery(query);
   const [active, setActive] = useState(0);
   const input = useRef<HTMLInputElement>(null);
   const list = useRef<HTMLUListElement>(null);

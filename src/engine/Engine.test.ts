@@ -19,7 +19,7 @@ function movingTooth() {
     camera, animator, controls: { target: new THREE.Vector3(8, 6, 0), minDistance: .9 },
     pivot: new THREE.Vector3(), mode_: 'free',
   });
-  const entries = new Map();
+  const entries = new Map<string, { mesh: THREE.Mesh; visual: 'on' }>();
   for (const key of registry.meshesOf('tooth-36')) {
     const bounds = registry.manifest.meshes[key]?.bounds;
     if (!bounds) continue;
@@ -46,7 +46,7 @@ describe('entering tooth exploration', () => {
   });
   afterEach(() => { vi.unstubAllGlobals(); setState({ ...initialState }); });
 
-  it('frames a selected guide tooth from its dental direction in the space clear of captions and panels', async () => {
+  it('frames a selected guide tooth from its dental direction in the space clear of captions and panels', () => {
     const { engine, rig, animator, entries } = movingTooth();
     // The guide chooses the tooth from search before opening its dissection.
     rig.setMode('fixed');

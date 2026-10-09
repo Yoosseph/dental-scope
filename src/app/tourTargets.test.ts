@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs';
 import { createElement, Fragment } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, expect, it, vi } from 'vitest';
+import type { Manifest } from '../anatomy/types';
+import type * as StoreModule from '../state/store';
 import { Registry } from '../anatomy/registry';
 import { Engine } from '../engine/Engine';
 import { buildIndex } from '../search/search';
@@ -16,11 +18,11 @@ import { FIRST_VISIT_TOUR } from './tour';
 
 // Server rendering otherwise reads Zustand's initial snapshot; inspect each live UI state here.
 vi.mock('../state/store', async importOriginal => {
-  const actual = await importOriginal<typeof import('../state/store')>();
+  const actual = await importOriginal<typeof StoreModule>();
   return { ...actual, useApp: <T,>(selector: (state: AppState) => T) => selector(actual.getState()) };
 });
 
-const registry = new Registry(JSON.parse(readFileSync('public/models/manifest.json', 'utf8')));
+const registry = new Registry(JSON.parse(readFileSync('public/models/manifest.json', 'utf8')) as Manifest);
 const services = { registry, engine: Object.create(Engine.prototype) as Engine, searchIndex: buildIndex(registry) };
 const html = () => renderToStaticMarkup(createElement(ServicesContext.Provider, { value: services },
   createElement(Fragment, null, ...[TopActions, Dock, DetailPanel, LayersPanel, SearchPanel].map(component => createElement(component)))));

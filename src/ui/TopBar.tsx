@@ -47,7 +47,7 @@ export function TopActions() {
         <span>{m.searchAnatomy}</span>
         <kbd>/</kbd>
       </button>
-      <button type="button" data-tour="replay" className="ds-icon-btn" onClick={actions.startGuide} aria-label={TOUR_TEXT[lang].replay} title={TOUR_TEXT[lang].replay}><IconPlay /></button>
+      <button type="button" data-tour="replay" className="ds-icon-btn" onClick={() => actions.startGuide()} aria-label={TOUR_TEXT[lang].replay} title={TOUR_TEXT[lang].replay}><IconPlay /></button>
       <button type="button" className="ds-icon-btn" onClick={() => actions.setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label={theme === 'dark' ? m.toLight : m.toDark} title={m.theme}>
         {theme === 'dark' ? <IconSun /> : <IconMoon />}
       </button>

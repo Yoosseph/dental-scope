@@ -46,8 +46,8 @@ export interface TourPlayback {
 /** Abortable timers, including paused time, prevent a closed tour from clicking later. */
 export function tourDelay(ms: number, signal: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
-    if (signal.aborted) return reject(signal.reason);
-    const abort = () => { clearTimeout(timer); reject(signal.reason); };
+    if (signal.aborted) return reject(signal.reason instanceof Error ? signal.reason : new Error('Tour aborted', { cause: signal.reason }));
+    const abort = () => { clearTimeout(timer); reject(signal.reason instanceof Error ? signal.reason : new Error('Tour aborted', { cause: signal.reason })); };
     const timer = setTimeout(() => { signal.removeEventListener('abort', abort); resolve(); }, ms);
     signal.addEventListener('abort', abort, { once: true });
   });

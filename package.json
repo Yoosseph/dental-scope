@@ -10,6 +10,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
+    "typecheck:tests": "tsc6 -p tsconfig.eslint.json --noEmit",
     "test": "vitest run",
     "lint": "eslint .",
     "assets:build": "python3 tools/pipeline/build_assets.py --bp3d tools/pipeline/raw/stl --out tools/pipeline/.cache/build",
