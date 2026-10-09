@@ -13,6 +13,7 @@ import { Identity, TopActions } from './TopBar';
 import { useKeyboard } from './useKeyboard';
 import { COMPACT_LAYOUT } from '../app/viewport';
 import { GuidedTour } from './GuidedTour';
+import { CreditsDialog } from './CreditsDialog';
 
 export function App() {
   const { engine, registry } = useServices();
@@ -147,6 +148,7 @@ export function App() {
       </div>
       <SearchPanel />
       <AboutDialog />
+      <CreditsDialog />
       <GuidedTour />
     </div>
   );

@@ -1735,6 +1735,13 @@ button.ds-layer-name:hover {
   background: var(--scrim-strong);
 }
 .ds-credits { min-height: 180px; }
+.ds-credits .ds-credits-names { list-style: none; padding: 0; margin: 8px 0 22px; }
+.ds-credits-names li { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; margin: 8px 0; }
+.ds-credits-names li > span:first-child { color: var(--ink); font-weight: 600; }
+.ds-credits-links { display: inline-flex; gap: 4px; }
+.ds-credits-links a { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: var(--radius-sm); }
+.ds-credits-links a:hover { background: var(--hover); }
+.ds-credits .ds-credits-thanks { margin: 26px 0 0; font-size: 13px; }
 .ds-about h2 {
   margin: 0 0 8px;
   font-family: var(--font-display);

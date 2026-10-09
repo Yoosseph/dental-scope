@@ -24,6 +24,7 @@ export function GuidedTour() {
   const runId = useApp(s => s.guideRunId);
   const ready = useApp(s => s.ready);
   const error = useApp(s => s.error);
+  const creditsOpen = useApp(s => s.creditsOpen);
   const lang = useLang();
   const text = TOUR_TEXT[lang];
   const [index, setIndex] = useState(0);
@@ -44,11 +45,13 @@ export function GuidedTour() {
   useEffect(() => {
     if (!ready || error || autoChecked.current) return;
     autoChecked.current = true;
+    // A shared credits link should open quietly, without starting a tour behind it.
+    if (creditsOpen) return;
     // Access to localStorage itself may throw (privacy modes / blocked storage).
     let firstVisit = true;
     try { firstVisit = needsFirstVisitGuide(localStorage); } catch { /* Show once this session. */ }
     if (firstVisit) actions.startGuide();
-  }, [ready, error]);
+  }, [ready, error, creditsOpen]);
 
   const cleanScene = () => { actions.resetGuideScene(); engine.resetToStart(); };
   const close = () => {
