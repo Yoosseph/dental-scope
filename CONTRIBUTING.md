@@ -11,6 +11,7 @@ npm install
 npm run dev          # http://localhost:5173
 npm test             # unit tests (Vitest)
 npm run typecheck
+npm run typecheck:tests # TypeScript checks for tests and Vite config
 npm run lint            # ESLint (type-aware rules on src/**)
 ```
 
