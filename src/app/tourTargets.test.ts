@@ -6,6 +6,8 @@ import { Registry } from '../anatomy/registry';
 import { Engine } from '../engine/Engine';
 import { buildIndex } from '../search/search';
 import { actions, initialState, setState, type AppState } from '../state/store';
+import type * as storeModule from '../state/store';
+import type { Manifest } from '../anatomy/types';
 import { ServicesContext } from '../ui/context';
 import { DetailPanel } from '../ui/DetailPanel';
 import { Dock } from '../ui/Dock';
@@ -16,11 +18,11 @@ import { FIRST_VISIT_TOUR } from './tour';
 
 // Server rendering otherwise reads Zustand's initial snapshot; inspect each live UI state here.
 vi.mock('../state/store', async importOriginal => {
-  const actual = await importOriginal<typeof import('../state/store')>();
+  const actual = await importOriginal<typeof storeModule>();
   return { ...actual, useApp: <T,>(selector: (state: AppState) => T) => selector(actual.getState()) };
 });
 
-const registry = new Registry(JSON.parse(readFileSync('public/models/manifest.json', 'utf8')));
+const registry = new Registry(JSON.parse(readFileSync('public/models/manifest.json', 'utf8')) as Manifest);
 const services = { registry, engine: Object.create(Engine.prototype) as Engine, searchIndex: buildIndex(registry) };
 const html = () => renderToStaticMarkup(createElement(ServicesContext.Provider, { value: services },
   createElement(Fragment, null, ...[TopActions, Dock, DetailPanel, LayersPanel, SearchPanel].map(component => createElement(component)))));
