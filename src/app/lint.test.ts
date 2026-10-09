@@ -1,7 +1,13 @@
 import { ESLint } from 'eslint';
 import { describe, expect, it } from 'vitest';
 
-const eslint = new ESLint();
+// CI single-run inference reads immutable files from disk, but these tests lint
+// successive in-memory fixtures at the same paths. Use the parser's watch mode.
+const eslint = new ESLint({
+  overrideConfig: {
+    languageOptions: { parserOptions: { disallowAutomaticSingleRunInference: true } },
+  },
+});
 
 describe('CI hook enforcement', () => {
   for (const filePath of ['src/ui/useKeyboard.ts', 'src/ui/SearchPanel.tsx']) {
