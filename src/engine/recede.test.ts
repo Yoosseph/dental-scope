@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { QUIET_OPACITY, REGIONAL_OPACITY, isSolid, quietLevel, quietOpacity } from './recede';
+import { type RecedeEntry, QUIET_OPACITY, REGIONAL_OPACITY, isSolid, quietLevel, quietOpacity } from './recede';
 
 describe('nerve and vessel receding', () => {
-  const nerve = { hiTarget: 0, nerve: true };
-  const vessel = { hiTarget: 0 };
-  const trunk = { hiTarget: 0, regional: true };
+  const nerve: RecedeEntry = { hiTarget: 0, nerve: true };
+  const vessel: RecedeEntry = { hiTarget: 0 };
+  const trunk: RecedeEntry = { hiTarget: 0, regional: true };
 
   it('keeps dental nerves at full strength, also while the jaws are dissected', () => {
     expect(quietLevel(nerve, 0)).toBe(0);

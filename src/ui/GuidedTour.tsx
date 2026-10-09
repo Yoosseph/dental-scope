@@ -38,6 +38,19 @@ export function GuidedTour() {
   const cursor = useRef<HTMLDivElement>(null);
   const circle = useRef<SVGSVGElement>(null);
   const autoChecked = useRef(false);
+  // Reset the tour state when it opens or is replayed, adjusting during render
+  // instead of in an effect (react.dev: "adjusting state when a prop changes").
+  const [resetKey, setResetKey] = useState('');
+  if (resetKey !== `${open}:${runId}`) {
+    setResetKey(`${open}:${runId}`);
+    if (open) {
+      setPaused(false);
+      setIndex(0);
+      setMark(null);
+      setHighlight(false);
+      setStatus('loading');
+    }
+  }
   const step = FIRST_VISIT_TOUR[index];
   const caption = text.steps[step.id];
 
@@ -64,11 +77,6 @@ export function GuidedTour() {
     const signal = abort.signal;
     const focusBefore = document.activeElement;
     pauseRef.current = false;
-    setPaused(false);
-    setIndex(0);
-    setMark(null);
-    setHighlight(false);
-    setStatus('loading');
     actions.resetGuideScene(true);
     engine.resetToStart();
     try { rememberGuideVisit(localStorage); } catch { /* Storage is optional. */ }
@@ -79,9 +87,7 @@ export function GuidedTour() {
       // The abortable race also lets the overlay unmount promptly on a slow connection.
       await Promise.race([engine.ensureTooth(FIRST_VISIT_TOOTH), tourDelay(30000, signal).then(() => { throw new Error('Tooth loading timed out'); })]);
       signal.throwIfAborted();
-      if (!ready) {
-        while (!getState().ready && !getState().error) await tourDelay(100, signal);
-      }
+      while (!getState().ready && !getState().error) await tourDelay(100, signal);
       if (getState().error) throw new Error('Scene loading failed');
       setStatus('playing');
       await playTour(FIRST_VISIT_TOUR, {
@@ -96,8 +102,8 @@ export function GuidedTour() {
         locate: target => {
           const element = targetElement(target);
           if (!element) return false;
-          element!.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
-          const rect = element!.getBoundingClientRect();
+          element.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
+          const rect = element.getBoundingClientRect();
           return rect.top >= 0 && rect.bottom <= window.innerHeight;
         },
         point: (target, clicking) => {
@@ -230,7 +236,7 @@ export function GuidedTour() {
         <span className="ds-tour-count">{index + 1} / {FIRST_VISIT_TOUR.length}</span>
         {status === 'ready' ? <button type="button" className="ds-primary" onClick={close}>{text.explore}</button> : <>
           <button type="button" className="ds-secondary ds-tour-skip" onClick={close}>{text.skip}</button>
-          {status === 'error' ? <button type="button" className="ds-secondary" onClick={actions.startGuide}><IconReplay size={14} />{text.retry}</button> :
+          {status === 'error' ? <button type="button" className="ds-secondary" onClick={() => actions.startGuide()}><IconReplay size={14} />{text.retry}</button> :
             <button type="button" className="ds-secondary" onClick={togglePause}>{paused ? <IconPlay size={14} /> : <IconPause size={14} />}{paused ? text.resume : text.pause}</button>}
         </>}
       </div>

@@ -5,6 +5,7 @@ import { memo, useEffect, useRef, useState } from 'react';
 import { formatTooth } from '../anatomy/notation';
 import { typeLabel } from '../i18n/anatomy';
 import { nameOf, useT, type Lang } from '../i18n';
+import type { Registry } from '../anatomy/registry';
 import type { Structure } from '../anatomy/types';
 import { pushCurrentPath } from '../app/router';
 import { actions, useApp } from '../state/store';
@@ -16,47 +17,75 @@ export function StructureTree() {
   const selectedId = useApp((s) => s.selectedId);
   const [open, setOpen] = useState<Set<string>>(() => new Set(['dental-anatomy', 'maxilla', 'mandible']));
   const ref = useRef<HTMLDivElement>(null);
+  const [activeId, setActiveId] = useState(selectedId ?? registry.require(registry.rootId).children[0]);
 
-  // expand to reveal the selection
+  // Expand ancestors to reveal the selection while rendering, so the scroll
+  // effect below finds the row already mounted.
+  const [revealed, setRevealed] = useState<string | null | undefined>(undefined);
+  if (revealed !== selectedId) {
+    setRevealed(selectedId);
+    if (selectedId) {
+      setActiveId(selectedId);
+      const anc = registry.ancestors(selectedId).map((a) => a.id);
+      if (!anc.every((a) => open.has(a))) setOpen(new Set([...open, ...anc]));
+    }
+  }
   useEffect(() => {
     if (!selectedId) return;
-    const anc = registry.ancestors(selectedId).map((a) => a.id);
-    setOpen((o) => {
-      if (anc.every((a) => o.has(a))) return o;
-      const n = new Set(o);
-      anc.forEach((a) => n.add(a));
-      return n;
-    });
     requestAnimationFrame(() => ref.current?.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' }));
   }, [selectedId, registry]);
 
   const toggle = (id: string) => setOpen((o) => withOpen(o, id, !o.has(id)));
 
   const root = registry.require(registry.rootId);
+  const visible = new Set<string>();
+  const visit = (id: string, depth: number) => {
+    visible.add(id);
+    if (open.has(id)) treeChildren(registry, id, depth).forEach(child => visit(child, depth + 1));
+  };
+  root.children.forEach(id => visit(id, 0));
+  // A selected landmark may be omitted from the tree; retain an entry point on its visible ancestor.
+  const tabStopId = activeId && visible.has(activeId) ? activeId
+    : registry.ancestors(activeId ?? '').find(ancestor => visible.has(ancestor.id))?.id ?? root.children[0];
   const m = useT();
   const onKeyDown = (e: React.KeyboardEvent) => {
-    const items = [...(ref.current?.querySelectorAll<HTMLElement>('[role="treeitem"] > .ds-tree-row') ?? [])];
+    const items = [...(ref.current?.querySelectorAll<HTMLElement>('[role="treeitem"]') ?? [])];
     const i = items.indexOf(document.activeElement as HTMLElement);
     if (i < 0) return;
     const id = items[i].dataset.id!;
     if (e.key === 'ArrowDown') items[Math.min(items.length - 1, i + 1)]?.focus();
     else if (e.key === 'ArrowUp') items[Math.max(0, i - 1)]?.focus();
-    else if (e.key === 'ArrowRight') setOpen((o) => withOpen(o, id, true));
-    else if (e.key === 'ArrowLeft') setOpen((o) => withOpen(o, id, false));
-    else return;
+    else if (e.key === 'Home') items[0]?.focus();
+    else if (e.key === 'End') items.at(-1)?.focus();
+    else if (e.key === 'ArrowRight') {
+      if (items[i].getAttribute('aria-expanded') === 'false') setOpen((o) => withOpen(o, id, true));
+      else if (items[i].getAttribute('aria-expanded') === 'true') items[i + 1]?.focus();
+    } else if (e.key === 'ArrowLeft') {
+      if (items[i].getAttribute('aria-expanded') === 'true') setOpen((o) => withOpen(o, id, false));
+      else items[i].parentElement?.closest<HTMLElement>('[role="treeitem"]')?.focus();
+    } else return;
     e.preventDefault();
   };
 
   return (
-    <div className="ds-tree" role="tree" aria-label={m.treeAria} ref={ref} onKeyDown={onKeyDown}>
+    <div className="ds-tree" role="tree" tabIndex={-1} aria-label={m.treeAria} ref={ref} onKeyDown={onKeyDown}>
       {root.children.map((c) => (
-        <TreeNode key={c} id={c} depth={0} open={open} toggle={toggle} />
+        <TreeNode key={c} id={c} depth={0} open={open} toggle={toggle} activeId={tabStopId} onFocus={setActiveId} />
       ))}
     </div>
   );
 }
 
-const TreeNode = memo(function TreeNode({ id, depth, open, toggle }: { id: string; depth: number; open: Set<string>; toggle: (id: string) => void }) {
+type TreeNodeProps = {
+  id: string;
+  depth: number;
+  open: Set<string>;
+  toggle: (id: string) => void;
+  activeId: string | undefined;
+  onFocus: (id: string) => void;
+};
+
+const TreeNode = memo(function TreeNode({ id, depth, open, toggle, activeId, onFocus }: TreeNodeProps) {
   const { registry, engine } = useServices();
   const s = registry.require(id);
   const selected = useApp((st) => st.selectedId === id);
@@ -64,7 +93,7 @@ const TreeNode = memo(function TreeNode({ id, depth, open, toggle }: { id: strin
   const numbering = useApp((st) => st.numbering);
   const lang = useApp((st) => st.lang);
   const m = useT();
-  const children = s.children.filter((c) => registry.get(c)?.kind !== 'landmark' || depth > 1);
+  const children = treeChildren(registry, id, depth);
   const expandable = children.length > 0;
   const isOpen = open.has(id);
 
@@ -74,19 +103,34 @@ const TreeNode = memo(function TreeNode({ id, depth, open, toggle }: { id: strin
   };
 
   return (
-    <div role="treeitem" aria-expanded={expandable ? isOpen : undefined} aria-selected={selected} aria-level={depth + 1}>
+    <div
+      role="treeitem"
+      aria-expanded={expandable ? isOpen : undefined}
+      aria-selected={selected}
+      aria-level={depth + 1}
+      data-id={id}
+      tabIndex={activeId === id ? 0 : -1}
+      onFocus={(e) => {
+        e.stopPropagation();
+        onFocus(id);
+      }}
+      onClick={(e) => {
+        e.stopPropagation();
+        e.currentTarget.focus();
+        void select();
+      }}
+      onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          e.stopPropagation();
+          void select();
+        }
+      }}
+    >
       <div
         className={`ds-tree-row${selected ? ' is-selected' : ''}${hidden ? ' is-hidden' : ''}`}
         style={{ paddingLeft: 6 + depth * 14 }}
-        data-id={id}
-        tabIndex={0}
-        onClick={select}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            void select();
-          }
-        }}
       >
         <button
           type="button"
@@ -95,6 +139,7 @@ const TreeNode = memo(function TreeNode({ id, depth, open, toggle }: { id: strin
           style={{ visibility: expandable ? 'visible' : 'hidden' }}
           onClick={(e) => {
             e.stopPropagation();
+            e.currentTarget.closest<HTMLElement>('[role="treeitem"]')?.focus();
             toggle(id);
           }}
           aria-label={isOpen ? m.collapse : m.expand}
@@ -111,6 +156,7 @@ const TreeNode = memo(function TreeNode({ id, depth, open, toggle }: { id: strin
             aria-label={hidden ? m.showX(nameOf(s, lang)) : m.hideX(nameOf(s, lang))}
             onClick={(e) => {
               e.stopPropagation();
+              e.currentTarget.closest<HTMLElement>('[role="treeitem"]')?.focus();
               if (hidden) actions.unhide(id);
               else actions.hide(id);
             }}
@@ -122,7 +168,7 @@ const TreeNode = memo(function TreeNode({ id, depth, open, toggle }: { id: strin
       {expandable && isOpen && (
         <div role="group">
           {children.map((c) => (
-            <TreeNode key={c} id={c} depth={depth + 1} open={open} toggle={toggle} />
+            <TreeNode key={c} id={c} depth={depth + 1} open={open} toggle={toggle} activeId={activeId} onFocus={onFocus} />
           ))}
         </div>
       )}
@@ -142,4 +188,9 @@ function withOpen(open: Set<string>, id: string, isOpen: boolean): Set<string> {
 function label(s: Structure, lang: Lang): string {
   if (s.tooth) return typeLabel(s.tooth.type, lang);
   return nameOf(s, lang);
+}
+
+/** Match the rendered hierarchy when computing its keyboard entry point. */
+function treeChildren(registry: Registry, id: string, depth: number): string[] {
+  return registry.require(id).children.filter(child => registry.get(child)?.kind !== 'landmark' || depth > 1);
 }

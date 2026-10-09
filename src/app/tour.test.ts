@@ -35,7 +35,7 @@ describe('scripted tour playback', () => {
     const playback = port();
     playback.locate = () => false;
     const abort = new AbortController();
-    const playing = playTour([step], playback, abort.signal).catch(error => error);
+    const playing = playTour([step], playback, abort.signal).catch((error: unknown) => error);
     await vi.advanceTimersByTimeAsync(400);
     abort.abort();
     await playing;
@@ -62,7 +62,7 @@ describe('scripted tour playback', () => {
   it('reports a missing control so the UI can offer retry or exploration', async () => {
     const playback = port();
     playback.locate = () => false;
-    const playing = playTour([step], playback, new AbortController().signal).catch(error => error);
+    const playing = playTour([step], playback, new AbortController().signal).catch((error: unknown) => error);
     await vi.runAllTimersAsync();
     expect(await playing).toEqual(new Error('Tour target unavailable'));
     expect(playback.activate).not.toHaveBeenCalled();

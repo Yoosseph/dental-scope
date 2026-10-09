@@ -79,10 +79,12 @@ function ArchControls() {
     preparation.current?.();
     preparation.current = null;
     cancelAnimationFrame(raf.current);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- playback state must clear only after the frame above is cancelled; a render-phase reset could let a queued frame write stale state first.
     setPlaying(false);
     setLocal(null);
   }, [resetId]);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- same ordering as the reset effect: cancel queued frames, then clear playback state.
     if (jawControls) { preparation.current?.(); preparation.current = null; cancelAnimationFrame(raf.current); setPlaying(false); setLocal(null); }
   }, [jawControls]);
 
@@ -102,7 +104,7 @@ function ArchControls() {
     if (from < 1) {
       const separate = () => {
         preparation.current = null;
-        tween(from, 1, (1 - from) * PLAY_SECONDS_TO_CHECKPOINT, actions.setExplode, () => {
+        tween(from, 1, (1 - from) * PLAY_SECONDS_TO_CHECKPOINT, (v) => actions.setExplode(v), () => {
           actions.setExplode(1);
           setPlaying(false); // pause at the checkpoint
         });
@@ -275,7 +277,7 @@ function DissectControls({ fdi }: { fdi: number }) {
   const playLayers = () => {
     if (layers.playing) return layers.stop();
     const from = getState().toothExplode >= 1 ? 0 : getState().toothExplode;
-    layers.run(from, 1, (1 - from) * SECONDS_TO_APART, actions.setToothExplode);
+    layers.run(from, 1, (1 - from) * SECONDS_TO_APART, (v) => actions.setToothExplode(v));
   };
 
   return (
