@@ -16,7 +16,7 @@ export async function loadManifest(): Promise<Manifest> {
 }
 
 /** Convert quantized/interleaved attributes to plain Float32 so transforms can be baked. */
-function toFloatGeometry(src: THREE.BufferGeometry): THREE.BufferGeometry {
+export function toFloatGeometry(src: THREE.BufferGeometry): THREE.BufferGeometry {
   const geo = new THREE.BufferGeometry();
   for (const name of ['position', 'normal'] as const) {
     const a = src.getAttribute(name) as THREE.BufferAttribute | THREE.InterleavedBufferAttribute | undefined;
@@ -36,7 +36,9 @@ function toFloatGeometry(src: THREE.BufferGeometry): THREE.BufferGeometry {
     for (let i = 0; i < jaw.count; i++) w[i] = jaw.getX(i);
     geo.setAttribute('jaw', new THREE.BufferAttribute(w, 1));
   }
-  if (src.index) geo.setIndex(src.index);
+  // GLTF primitives can share an index buffer. BVH construction reorders it,
+  // so each loaded mesh must own its indices to keep earlier BVHs valid.
+  if (src.index) geo.setIndex(src.index.clone());
   return geo;
 }
 

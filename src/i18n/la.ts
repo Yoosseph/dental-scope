@@ -9,8 +9,9 @@ export const la: Messages = {
   fatalStart: 'Dental Scope incipere non potuit. Quaeso, paginam renova.',
   loadError: 'Anatomia tridimensionalis onerari non potuit. Conexionem inspice et paginam renova.',
 
-  madeBy: 'Fecit Yoseph',
-  madeByAria: 'Fecit Yoseph – Dental Scope in GitHub (in nova tabula aperitur)',
+  credits: 'Collaboratores',
+  supportRepo: 'Adiuva proiectum',
+  supportRepoAria: 'Adiuva Dental Scope in GitHub (in nova tabula aperitur)',
   numberingGroup: 'Ratio numerandi dentes',
   numberingTitle: (system: string) => `Numeratio dentium ${system}`,
   searchAnatomy: 'Anatomiam quaere',

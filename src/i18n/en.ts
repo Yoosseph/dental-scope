@@ -14,8 +14,9 @@ export const en = {
   loadError: 'The 3D anatomy could not be loaded. Check your connection and reload.',
 
   /* top bar */
-  madeBy: 'Made by Yoseph',
-  madeByAria: 'Made by Yoseph – Dental Scope on GitHub (opens in a new tab)',
+  credits: 'Credits',
+  supportRepo: 'Support repo',
+  supportRepoAria: 'Support Dental Scope on GitHub (opens in a new tab)',
   numberingGroup: 'Tooth numbering system',
   numberingTitle: (system: string) => `${system} tooth numbering`,
   searchAnatomy: 'Search anatomy',

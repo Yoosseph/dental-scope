@@ -45,7 +45,7 @@ describe('maxillary sinus (issue #25)', () => {
       expect(s?.provenance).toBe('modeled');
       expect(s?.categories).toEqual(['sinus']);
       expect(s?.meshes).toEqual([`maxillary-sinus-${side}`]);
-      expect(styleKeyFor(`maxillary-sinus-${side}`, s!.categories)).toBe('sinus');
+      expect(styleKeyFor(`maxillary-sinus-${side}`, s!.categories)).toBe('sinus-maxillary');
     }
   });
 

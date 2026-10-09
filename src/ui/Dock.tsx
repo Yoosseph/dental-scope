@@ -284,7 +284,7 @@ function DissectControls({ fdi }: { fdi: number }) {
     <div className="ds-dock-main ds-dissect">
       <div className="ds-dissect-bar">
         <div className="ds-dissect-head">
-          <button type="button" className="ds-icon-btn ds-icon-btn--ghost" onClick={exit} aria-label={m.backToFullMouth} title={m.backToFullMouthEsc}>
+          <button type="button" className="ds-icon-btn ds-icon-btn--ghost" data-tour="back-mouth" onClick={exit} aria-label={m.backToFullMouth} title={m.backToFullMouthEsc}>
             <IconArrowLeft />
           </button>
           <div>
@@ -314,6 +314,7 @@ function DissectControls({ fdi }: { fdi: number }) {
             {DISSECT_LEVELS.map((l) => (
               <button
                 key={l.id}
+                data-tour={`dissect-${l.id}`}
                 type="button"
                 role="radio"
                 aria-checked={level === l.id}
@@ -334,7 +335,7 @@ function DissectControls({ fdi }: { fdi: number }) {
       </div>
 
       <div className="ds-play-row">
-        <PlayButton playing={layers.playing} atEnd={tex >= 1} onClick={playLayers} labels={m.playLayers} />
+        <span data-tour="separate-layers"><PlayButton playing={layers.playing} atEnd={tex >= 1} onClick={playLayers} labels={m.playLayers} /></span>
         <div className="ds-play-body">
           <Slider
             label={m.separateLayers}

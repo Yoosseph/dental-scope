@@ -172,11 +172,16 @@ kbd {
   line-height: 1.05;
 }
 .ds-credit {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
   margin: 4px 0 0;
   font-size: 11.5px;
   color: var(--muted);
 }
-.ds-credit a {
+.ds-credit a,
+.ds-credit button {
   pointer-events: auto;
   display: inline-flex;
   align-items: center;
@@ -186,7 +191,8 @@ kbd {
   text-decoration-color: var(--line);
   text-underline-offset: 2px;
 }
-.ds-credit a:hover {
+.ds-credit a:hover,
+.ds-credit button:hover {
   color: var(--accent);
   text-decoration-color: currentColor;
 }
@@ -1704,6 +1710,25 @@ button.ds-layer-name:hover {
 .ds-tip.is-visible {
   opacity: 0.94;
 }
+.ds-tip > strong { font-weight: 500; }
+.ds-tip--anatomy {
+  width: min(360px, calc(100vw - 24px));
+  padding: 12px 14px;
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  background: var(--panel-solid);
+  color: var(--ink);
+  white-space: normal;
+  box-shadow: var(--panel-shadow);
+  line-height: 1.5;
+  z-index: 4;
+}
+.ds-tip--anatomy.is-visible { opacity: 1; }
+.ds-tip--anatomy > strong { display: block; font-size: 14px; font-weight: 600; }
+.ds-tip--anatomy > p { margin: 6px 0 8px; color: var(--muted); }
+.ds-tip-note { display: block; padding-top: 8px; border-top: 1px solid var(--line); color: var(--faint); font-size: 10.5px; }
+.ds-sinus-swatch { width: 9px; height: 9px; flex: none; border-radius: 50%; }
+.ds-sinus-chip { display: inline-flex; align-items: center; gap: 6px; }
 
 /* ------------------------------------------------------------------ about */
 .ds-about {
@@ -1717,6 +1742,7 @@ button.ds-layer-name:hover {
 .ds-about::backdrop {
   background: var(--scrim-strong);
 }
+.ds-credits { min-height: 180px; }
 .ds-about h2 {
   margin: 0 0 8px;
   font-family: var(--font-display);
@@ -2463,7 +2489,7 @@ button.ds-layer-name:hover {
 @media (max-width: 600px), (max-width: 1023px) and (orientation: landscape) and (max-height: 600px) {
   .ds-identity { top: calc(16px + var(--safe-top)); left: calc(10px + var(--safe-left)); }
   .ds-title { font-size: 18px; }
-  .ds-credit, .ds-footer { display: none; }
+  .ds-footer { display: none; }
   .ds-top-actions { top: calc(8px + var(--safe-top)); right: calc(8px + var(--safe-right)); gap: 4px; }
   .ds-top-actions .ds-lang { display: none; }
   .ds-lang-select {
@@ -2473,7 +2499,7 @@ button.ds-layer-name:hover {
   }
   .ds-icon-btn { width: 32px; height: 32px; min-width: 32px; min-height: 32px; border-radius: 6px; }
   .ds-icon-btn svg { width: 16px; height: 16px; }
-  .ds-reset-all { top: calc(50px + var(--safe-top)); left: calc(10px + var(--safe-left)); width: 30px; height: 30px; min-width: 30px; min-height: 30px; }
+  .ds-reset-all { top: calc(74px + var(--safe-top)); left: calc(10px + var(--safe-left)); width: 30px; height: 30px; min-width: 30px; min-height: 30px; }
   .ds-mobile-bar { width: min(320px, calc(100% - 20px - var(--safe-left) - var(--safe-right))); padding: 3px; border-radius: 10px; }
   .ds-mobile-bar button { min-height: 34px; padding: 3px 4px; font-size: 10px; gap: 2px; border-radius: 7px; }
   .ds-mobile-bar svg { width: 14px; height: 14px; }
@@ -2547,3 +2573,84 @@ button.ds-layer-name:hover {
 .ds-study-controls .ds-chip--button:focus-visible, .ds-study-select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .ds-study-select { width: 100%; min-height: 38px; border: 1px solid var(--line); border-radius: 8px; padding: 7px; background: var(--panel); color: var(--ink); font: inherit; font-size: 12px; }
 @media (pointer: coarse) { .ds-study-controls .ds-chip--button { min-height: 44px; } }
+
+/* Scripted first-visit guide: the anatomy and actual controls stay visible. */
+.ds-tour { position: fixed; inset: 0; z-index: 40; }
+.ds-tour-shield { position: absolute; inset: 0; background: transparent; }
+.ds-tour-card {
+  --panel-solid: #1c1b18;
+  --panel: #1c1b18;
+  --panel-border: rgba(240, 234, 222, .3);
+  --ink: #eeeae1;
+  --muted: #c6bfb1;
+  --faint: #aca597;
+  --line: rgba(240, 234, 222, .24);
+  --hover: rgba(240, 234, 222, .09);
+  --press: rgba(240, 234, 222, .15);
+  --accent: #97a2ff;
+  --accent-ink: #0d0f2a;
+  --accent-soft: rgba(151, 162, 255, .14);
+  --focus: #97a2ff;
+  color: var(--ink);
+  color-scheme: dark;
+}
+:root[data-theme='dark'] .ds-tour-card {
+  --panel-solid: #faf8f4;
+  --panel: #faf8f4;
+  --panel-border: rgba(28, 24, 18, .3);
+  --ink: #17150f;
+  --muted: #58534a;
+  --faint: #6f695d;
+  --line: rgba(28, 24, 18, .2);
+  --hover: rgba(28, 24, 18, .06);
+  --press: rgba(28, 24, 18, .12);
+  --accent: #2a3bd1;
+  --accent-ink: #ffffff;
+  --accent-soft: rgba(42, 59, 209, .1);
+  --focus: #2a3bd1;
+  color-scheme: light;
+}
+.ds-tour-card { position: fixed; z-index: 3; top: calc(90px + var(--safe-top, 0px)); right: 24px; width: min(390px, calc(100vw - 24px)); padding: 16px 18px; background: var(--panel-solid); box-shadow: 0 12px 42px var(--scrim-strong); max-height: calc(100dvh - 120px); display: flex; flex-direction: column; }
+.ds-tour-card[data-position='left'] { right: auto; left: 24px; }
+.ds-tour-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ds-tour-heading .ds-icon-btn { width: 28px; height: 28px; min-width: 28px; min-height: 28px; }
+.ds-tour-copy { overflow-y: auto; min-height: 0; }
+.ds-tour-card h2 { margin: 8px 0; font: 500 25px/1.15 var(--font-display); }
+.ds-tour-card p { font-size: 14px; line-height: 1.5; margin: 10px 0; color: var(--muted); }
+.ds-tour-card .ds-tour-evidence { font-size: 11px; line-height: 1.4; }
+.ds-tour-evidence a { color: var(--accent); }
+.ds-tour-evidence summary { cursor: pointer; color: var(--accent); }
+.ds-tour-actions { display: flex; align-items: center; justify-content: flex-end; gap: 14px; padding-top: 12px; flex-shrink: 0; }
+.ds-tour-count { font: 11px var(--font-mono); color: var(--faint); margin-right: auto; }
+.ds-tour-actions .ds-secondary, .ds-tour-actions .ds-primary { gap: 6px; min-height: 36px; }
+.ds-tour-actions .ds-tour-skip { color: var(--ink); font-weight: 600; border-color: var(--muted); }
+.ds-tour-progress { height: 2px; background: var(--line); margin-top: 12px; flex-shrink: 0; }
+.ds-tour-progress span { display: block; height: 100%; background: var(--accent); transition: width 400ms var(--ease); }
+.ds-tour-circle { position: fixed; pointer-events: none; z-index: 1; overflow: visible; }
+.ds-tour-circle path { fill: none; stroke: #e13930; stroke-width: 3; vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-dasharray: 1; animation: ds-tour-pen 1.5s linear forwards; }
+@keyframes ds-tour-pen { 0% { stroke-dashoffset: 1; opacity: 1; } 30%, 75% { stroke-dashoffset: 0; opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+.ds-tour-cursor { position: fixed; pointer-events: none; z-index: 2; transition: left 350ms var(--ease), top 350ms var(--ease); filter: drop-shadow(0 2px 3px var(--scrim-strong)); }
+.ds-tour-cursor svg { transform-origin: 3px 2px; }
+.ds-tour-cursor.is-clicking svg { animation: ds-tour-click 400ms ease-out; }
+@keyframes ds-tour-click { 0%, 100% { transform: scale(1); } 40% { transform: scale(.72); } }
+.ds-tour-click { position: absolute; left: -15px; top: -15px; width: 30px; height: 30px; border: 2px solid var(--accent); border-radius: 50%; opacity: 0; }
+.is-clicking .ds-tour-click { animation: ds-tour-ripple 600ms ease-out; }
+@keyframes ds-tour-ripple { 0% { transform: scale(.3); opacity: 1; } 100% { transform: scale(1.7); opacity: 0; } }
+.ds-tour.is-paused * { animation-play-state: paused; }
+@media (max-width: 1023px), (pointer: coarse) and (max-width: 1366px) {
+  .ds-tour-card, .ds-tour-card[data-position='left'] { left: 50%; right: auto; transform: translateX(-50%); top: calc(76px + var(--safe-top, 0px)); max-height: min(280px, calc(var(--visual-height, 100dvh) * .35)); padding: 10px 14px; }
+  .ds-tour-card[data-position='bottom'] { top: auto; bottom: calc(76px + var(--safe-bottom, 0px)); }
+  .ds-tour-card h2 { font-size: 22px; }
+  .ds-tour-card p { font-size: 13px; }
+  .ds-tour-heading .ds-label-sm { font-size: 10px; }
+  .ds-tour-actions { gap: 10px; }
+}
+@media (orientation: landscape) and (max-height: 600px) {
+  .ds-tour-card { top: 70px; left: 12px; transform: none; width: min(340px, calc(100vw * .48)); max-height: calc(100dvh - 88px); }
+  .ds-tour-card[data-position='bottom'] { top: 70px; bottom: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ds-tour-cursor, .ds-tour-progress span { transition: none; }
+  .ds-tour-circle path { animation: none !important; stroke-dashoffset: 0; }
+  .ds-tour-cursor.is-clicking svg, .is-clicking .ds-tour-click { animation: none !important; }
+}

@@ -9,8 +9,9 @@ export const de: Messages = {
   fatalStart: 'Dental Scope konnte nicht gestartet werden. Bitte lade die Seite neu.',
   loadError: 'Die 3D-Anatomie konnte nicht geladen werden. Prüfe deine Verbindung und lade die Seite neu.',
 
-  madeBy: 'Erstellt von Yoseph',
-  madeByAria: 'Erstellt von Yoseph – Dental Scope auf GitHub (öffnet in einem neuen Tab)',
+  credits: 'Mitwirkende',
+  supportRepo: 'Projekt unterstützen',
+  supportRepoAria: 'Dental Scope auf GitHub unterstützen (öffnet in einem neuen Tab)',
   numberingGroup: 'Zahnschema',
   numberingTitle: (system) => `Zahnschema ${system}`,
   searchAnatomy: 'Anatomie durchsuchen',

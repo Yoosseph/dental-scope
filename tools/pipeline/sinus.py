@@ -31,14 +31,30 @@ def build_paranasal_teaching_spaces() -> dict[str, trimesh.Trimesh]:
     relationships (StatPearls NBK499826). No ostia, drainage tubes or surgical
     clearances are inferred.
     """
-    def ellipsoid(center, radii):
-        mesh = trimesh.creation.icosphere(subdivisions=3)
-        mesh.vertices = mesh.vertices * np.array(radii) + np.array(center)
-        return mesh
+    def teaching_space(center, radii, frontal):
+        # These bounded shape coefficients are illustrative, not CT measurements.
+        # Frontal spaces taper superiorly; the sphenoid body has broader, flatter
+        # walls than an egg. Keep both within the previously checked regional box.
+        mesh = trimesh.creation.icosphere(subdivisions=4)
+        unit = mesh.vertices.copy()
+        if frontal:
+            unit[:, 0] *= .95 - .28 * unit[:, 2]
+            angle = np.arctan2(unit[:, 0], unit[:, 2])
+            unit[:, 2] += .055 * np.cos(3 * angle) * unit[:, 0] ** 2
+            unit[:, 1] *= .88 - .1 * unit[:, 2]
+        else:
+            unit = np.sign(unit) * np.abs(unit) ** .76
+            # A restrained roof impression; no sellar, optic or carotid channel
+            # is modeled, and no clinical clearance may be inferred from it.
+            unit[:, 2] -= .09 * np.exp(-((unit[:, 0] - .25) ** 2 + unit[:, 1] ** 2) / .35) * np.maximum(unit[:, 2], 0) ** 2
+        lo, hi = unit.min(0), unit.max(0)
+        unit = (unit - (lo + hi) / 2) / ((hi - lo) / 2)
+        mesh.vertices = unit * np.array(radii) + np.array(center)
+        return orient_outward(mesh)
     spaces = {}
     for side, sign in [('right', -1), ('left', 1)]:
-        spaces[f'frontal-sinus-{side}'] = ellipsoid((sign * 11, -176, 1553), (9, 2.8, 12))
-        spaces[f'sphenoidal-sinus-{side}'] = ellipsoid((sign * 4.8, -125, 1537), (4.2, 7, 6.5))
+        spaces[f'frontal-sinus-{side}'] = teaching_space((sign * 11, -176, 1553), (9, 2.8, 12), frontal=True)
+        spaces[f'sphenoidal-sinus-{side}'] = teaching_space((sign * 4.8, -125, 1537), (4.2, 7, 6.5), frontal=False)
     return spaces
 
 

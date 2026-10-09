@@ -6,6 +6,13 @@ export const PARANASAL_NAMES: Record<string, Omit<Names, 'en'>> = {
   'sphenoidal-sinus': { sv: 'Kilbensbihåla', de: 'Keilbeinhöhle', es: 'Seno esfenoidal', la: 'Sinus sphenoidalis' },
 };
 const summaries: Record<string, Record<Lang, string>> = {
+  'maxillary-sinus': {
+    en: 'An air-filled cavity in the body of the maxilla, below the orbit and lateral to the nasal cavity. Its floor lies near the roots of the upper premolars and molars. Mucus passes toward an opening high on its medial wall and then into the middle nasal meatus. The displayed space is derived from the atlas maxilla with approximate clearances; its ostium and drainage pathway are not modeled.',
+    sv: 'Ett luftfyllt hålrum i överkäksbenets kropp, under ögonhålan och lateralt om näshålan. Golvet ligger nära de övre premolarernas och molarernas rötter. Slem förs mot en öppning högt på den mediala väggen och vidare till mellersta näsgången. Det visade rummet är härlett från atlasens överkäksben med ungefärliga avstånd; ostium och dränageväg är inte modellerade.',
+    de: 'Eine luftgefüllte Höhle im Oberkieferkörper unter der Augenhöhle und seitlich der Nasenhöhle. Ihr Boden liegt nahe den Wurzeln der oberen Prämolaren und Molaren. Schleim gelangt zu einer hoch gelegenen Öffnung der medialen Wand und weiter in den mittleren Nasengang. Der Raum ist mit ungefähren Abständen aus dem Atlasoberkiefer abgeleitet; Ostium und Abflussweg sind nicht modelliert.',
+    es: 'Cavidad aérea del cuerpo del maxilar, bajo la órbita y lateral a la cavidad nasal. Su suelo está próximo a las raíces de los premolares y molares superiores. El moco pasa hacia una abertura alta de la pared medial y luego al meato nasal medio. El espacio mostrado deriva del maxilar del atlas con separaciones aproximadas; el ostium y la vía de drenaje no están modelados.',
+    la: 'Cavitas aeria in corpore maxillae, infra orbitam et lateraliter cavitati nasi. Fundus radicibus praemolarium et molarium superiorum proximus est. Mucus ad ostium alte in pariete mediali situm et deinde ad meatum nasi medium fertur. Spatium ex maxilla atlantis cum intervallis approximatis derivatum est; ostium et via effluxus non finguntur.',
+  },
   'paranasal-sinuses': {
     en: 'The maxillary, frontal and sphenoidal sinuses and ethmoidal air cells are air spaces surrounding the nasal cavity. Their mucosal lining participates in mucus clearance; their broader functions remain debated. The displayed groups are maxillary, frontal and sphenoidal sinuses. Explore each displayed group in relation to the jaws, orbit and skull base. These teaching volumes do not show drainage pathways or individual variation.',
     sv: 'Käkbihålor, pannbihålor, kilbensbihålor och silbensceller är luftrum runt näshålan. Slemhinnan deltar i slemtransport; deras övriga funktioner är omdiskuterade. Här visas käkbihålor, pannbihålor och kilbensbihålor. Utforska de visade gruppernas relation till käkar, ögonhålor och skallbas. Undervisningsvolymerna visar inte dränagevägar eller individuell variation.',
@@ -29,5 +36,5 @@ const summaries: Record<string, Record<Lang, string>> = {
   },
 };
 export function paranasalContent(lang: Lang) {
-  return Object.fromEntries(Object.entries(summaries).map(([key, summary]) => [key, { summary: summary[lang], sources: [{ title: 'StatPearls: Nose Paranasal Sinuses', url: 'https://www.ncbi.nlm.nih.gov/sites/books/NBK499826/' }], related: key === 'paranasal-sinuses' ? ['maxillary-sinus', 'frontal-sinus', 'sphenoidal-sinus'] : ['paranasal-sinuses', key === 'frontal-sinus' ? 'frontal-bone' : 'sphenoid-bone'] }]));
+  return Object.fromEntries(Object.entries(summaries).map(([key, summary]) => [key, { summary: summary[lang], sources: [{ title: 'StatPearls: Nose Paranasal Sinuses', url: 'https://www.ncbi.nlm.nih.gov/sites/books/NBK499826/' }], related: key === 'paranasal-sinuses' ? ['maxillary-sinus', 'frontal-sinus', 'sphenoidal-sinus'] : key === 'maxillary-sinus' ? ['paranasal-sinuses', 'maxilla', 'maxillary-alveolar-process', 'infraorbital-nerve'] : ['paranasal-sinuses', key === 'frontal-sinus' ? 'frontal-bone' : 'sphenoid-bone'] }]));
 }

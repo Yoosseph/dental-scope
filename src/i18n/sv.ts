@@ -9,8 +9,9 @@ export const sv: Messages = {
   fatalStart: 'Dental Scope kunde inte starta. Ladda om sidan.',
   loadError: '3D-anatomin kunde inte laddas. Kontrollera din anslutning och ladda om sidan.',
 
-  madeBy: 'Skapad av Yoseph',
-  madeByAria: 'Skapad av Yoseph – Dental Scope på GitHub (öppnas i en ny flik)',
+  credits: 'Medverkande',
+  supportRepo: 'Stöd projektet',
+  supportRepoAria: 'Stöd Dental Scope på GitHub (öppnas i en ny flik)',
   numberingGroup: 'Tandnumreringssystem',
   numberingTitle: (system) => `Tandnumrering enligt ${system}`,
   searchAnatomy: 'Sök i anatomin',

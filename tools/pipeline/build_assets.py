@@ -32,6 +32,7 @@ from sinus import build_sinus, build_paranasal_teaching_spaces  # noqa: E402
 from gingiva import expose_third_molar_crowns  # noqa: E402
 from tooth_layers import Frame, build_tooth_layers, make_frame  # noqa: E402
 from morphology import CrownRelief, finalize  # noqa: E402
+from premolar_roots import prepare_root  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Source table
@@ -218,6 +219,10 @@ def main():
         buccal[2] = 0
         frames[f] = make_frame(m, crown_dir, mesial / np.linalg.norm(mesial), buccal / np.linalg.norm(buccal))
 
+    for f in (15, 25):
+        arch, _, kind = tooth_info(f)
+        teeth[f] = prepare_root(teeth[f], frames[f], arch, kind)
+
     # ---- tooth layers (slow; cached) -----------------------------------
     only = {int(x) for x in args.only.split(",") if x}
     jobs = []
@@ -228,7 +233,7 @@ def main():
         fr = frames[f]
         jobs.append((f, teeth[f].vertices, teeth[f].faces, arch, ttype,
                      dict(origin=fr.origin, axis=fr.axis, mesial=fr.mesial, buccal=fr.buccal),
-                     str(cache / f"layers-v9-{f}.pkl")))
+                     str(cache / f"layers-{'v10' if f in (15, 25) else 'v9'}-{f}.pkl")))
     print(f"Modelling internal anatomy for {len(jobs)} teeth…")
     with Pool(args.jobs) as pool:
         layers = dict(pool.map(_layers_job, jobs))

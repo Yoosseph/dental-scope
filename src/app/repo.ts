@@ -10,7 +10,7 @@ export function parseRepoUrl(raw: string | undefined): string | null {
   return url && /^https:\/\/\S+$/.test(url) ? url : null;
 }
 
-/** The public repository, linked from the "Made by Yoseph" credit unless VITE_DS_REPO_URL overrides it. */
+/** The public repository, linked from Support repo unless VITE_DS_REPO_URL overrides it. */
 export const DEFAULT_REPO_URL = 'https://github.com/Yoosseph/dental-scope';
 
 export const REPO_URL = parseRepoUrl(import.meta.env.VITE_DS_REPO_URL) ?? DEFAULT_REPO_URL;

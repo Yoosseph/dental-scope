@@ -54,7 +54,8 @@ const db = (t: unknown, s: unknown, lang: Lang): Record<string, RawEntry> => {
   for (const [key, entry] of Object.entries(feedbackAnatomy(lang))) base[key] = { ...base[key], ...entry };
   for (const [key, entry] of Object.entries(supportingAnatomy(lang))) base[key] = { ...base[key], ...entry };
   Object.assign(base, developmentAnatomy(lang, base));
-  Object.assign(base, surfaceFeatureContent(lang), paranasalContent(lang));
+  Object.assign(base, surfaceFeatureContent(lang));
+  for (const [key, entry] of Object.entries(paranasalContent(lang))) base[key] = { ...base[key], ...entry };
   for (const [key, source] of Object.entries(VESSEL_REFERENCES)) {
     const entry = base[key];
     if (entry && !entry.sources?.some(ref => ref.url === source.url)) entry.sources = [...entry.sources ?? [], source];

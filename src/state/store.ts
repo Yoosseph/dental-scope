@@ -84,6 +84,9 @@ export interface AppState {
 
   mode: ModeId;
   searchOpen: boolean;
+  searchQuery: string;
+  guideOpen: boolean;
+  guideRunId: number;
   aboutOpen: boolean;
   panel: 'layers' | 'tree';
   mobileSheet: 'none' | 'layers' | 'detail' | 'tools';
@@ -127,6 +130,9 @@ export const initialState: AppState = {
   toothExplode: 0,
   mode: 'explore',
   searchOpen: false,
+  searchQuery: '',
+  guideOpen: false,
+  guideRunId: 0,
   aboutOpen: false,
   panel: 'layers',
   mobileSheet: 'none',
@@ -231,7 +237,7 @@ export const actions = {
   resetAll() {
     orbitBeforeTooth = null;
     adultSceneBeforeDevelopment = null;
-    setState((s) => ({ ...initialState, ready: s.ready, loading: s.loading, error: s.error, theme: s.theme, lang: s.lang, resetId: s.resetId + 1 }));
+    setState((s) => ({ ...initialState, ready: s.ready, loading: s.loading, error: s.error, theme: s.theme, lang: s.lang, guideOpen: s.guideOpen, guideRunId: s.guideRunId, resetId: s.resetId + 1 }));
     persist(PREF.numbering, initialState.numbering);
     persist(PREF.orbit, initialState.orbitMode);
   },
@@ -351,6 +357,17 @@ export const actions = {
   },
   openSearch(open: boolean) {
     setState({ searchOpen: open });
+  },
+  setSearchQuery(searchQuery: string) { setState({ searchQuery }); },
+  startGuide() { setState(s => ({ guideOpen: true, guideRunId: s.guideRunId + 1, labels: true, aboutOpen: false, searchOpen: false })); },
+  closeGuide() { setState({ guideOpen: false }); },
+  /** A demonstration starts/ends in the adult scene without rewriting viewer preferences. */
+  resetGuideScene(labels = false) {
+    const orbitMode = orbitBeforeTooth ?? getState().orbitMode;
+    orbitBeforeTooth = null;
+    adultSceneBeforeDevelopment = null;
+    setState(s => ({ ...initialState, ready: s.ready, loading: s.loading, error: s.error, theme: s.theme, lang: s.lang,
+      numbering: s.numbering, orbitMode, labels, guideOpen: s.guideOpen, guideRunId: s.guideRunId, resetId: s.resetId + 1 }));
   },
   openAbout(open: boolean) {
     setState({ aboutOpen: open });

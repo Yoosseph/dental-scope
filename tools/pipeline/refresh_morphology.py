@@ -10,6 +10,7 @@ from pathlib import Path
 import numpy as np
 from build_assets import TEETH_FMA, load_stl, derive_third_molar, Space
 from morphology import CrownRelief, finalize
+from premolar_roots import prepare_root
 
 
 def main():
@@ -39,11 +40,20 @@ def main():
         with cache.open('rb') as handle:
             layers = pickle.load(handle)
         arch, _, kind = tooth_info(f)
+        if f in (15, 25):
+            from tooth_layers import build_tooth_layers
+            source = prepare_root(source, layers.frame, arch, kind)
+            corrected_cache = cache_root / f'layers-v10-{f}.pkl'
+            if corrected_cache.exists():
+                with corrected_cache.open('rb') as handle:
+                    layers = pickle.load(handle)
+            else:
+                layers = build_tooth_layers(source, arch, kind, layers.frame)
         if any(not m.is_watertight for m in layers.meshes.values()):
             from tooth_layers import build_tooth_layers
             print(f'{f}: rebuilding cached tissue pinches', flush=True)
             layers = build_tooth_layers(source, arch, kind, layers.frame)
-        with (cache_root / f'layers-v9-{f}.pkl').open('wb') as handle:
+        with (cache_root / f'layers-{"v10" if f in (15, 25) else "v9"}-{f}.pkl').open('wb') as handle:
             pickle.dump(layers, handle)
         relief = CrownRelief(source, layers.frame, arch, kind, layers.cej_height)
         shell = relief.refine(source)
@@ -76,8 +86,10 @@ def main():
                 entry['path'] = space.p(entry['path']).round(5).tolist()
         data['features'] = features
         data['landmarks'] = {key: space.p(relief.deform(np.array([point]))[0]).round(5).tolist() for key, point in layers.landmarks.items()}
+        data['roots'] = layers.roots
         (args.out / f'tooth-{f}.json').write_text(json.dumps(data))
-        print(f'{f}: {len(features)} surface features; source roots preserved', flush=True)
+        root_note = 'schematic single root' if f in (15, 25) else 'source roots preserved'
+        print(f'{f}: {len(features)} surface features; {root_note}', flush=True)
     (args.out / 'validation.json').write_text(json.dumps(report, indent=2))
 
 
