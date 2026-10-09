@@ -88,6 +88,7 @@ export interface AppState {
   guideOpen: boolean;
   guideRunId: number;
   aboutOpen: boolean;
+  creditsOpen: boolean;
   panel: 'layers' | 'tree';
   mobileSheet: 'none' | 'layers' | 'detail' | 'tools';
   theme: 'light' | 'dark';
@@ -134,6 +135,7 @@ export const initialState: AppState = {
   guideOpen: false,
   guideRunId: 0,
   aboutOpen: false,
+  creditsOpen: false,
   panel: 'layers',
   mobileSheet: 'none',
   theme: 'light', // light by default; users can switch to dark (choice is remembered)
@@ -371,6 +373,9 @@ export const actions = {
   },
   openAbout(open: boolean) {
     setState({ aboutOpen: open });
+  },
+  openCredits(open: boolean) {
+    setState(open ? { creditsOpen: true, aboutOpen: false, searchOpen: false, guideOpen: false } : { creditsOpen: false });
   },
   setPanel(p: AppState['panel']) {
     setState({ panel: p });

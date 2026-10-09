@@ -4,6 +4,7 @@ import { defineConfig, type Plugin } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { ABOUT_PAGES, HOME, TOOTH_PAGES, headTags, normalizeSiteUrl, robotsTxt, sitemapXml } from './src/app/seo.ts';
 import { aboutHtml } from './src/app/about.ts';
+import { CREDITS_PAGES } from './src/app/credits.ts';
 import { GUIDE_PAGES, GUIDE_REDIRECTS, guideHtml } from './src/app/guide.ts';
 import { Registry } from './src/anatomy/registry.ts';
 import type { Manifest } from './src/anatomy/types.ts';
@@ -77,6 +78,12 @@ function seo(): Plugin {
         writeFileSync(`${outDir}/${page.path}index.html`, aboutHtml(headTags(page, siteUrl, seoOpts), absBase, `${absBase}favicon.svg`, page.lang));
       }
       const today = new Date().toISOString().slice(0, 10);
+      // Credits deep links load the same explorer shell and open its popup.
+      const credits = base.startsWith('.') ? [] : CREDITS_PAGES;
+      for (const page of credits) {
+        mkdirSync(`${outDir}/${page.path}`, { recursive: true });
+        writeFileSync(`${outDir}/${page.path}index.html`, withTags(headTags(page, siteUrl, seoOpts)));
+      }
       if (siteUrl && !preview)
         writeFileSync(
           `${outDir}/sitemap.xml`,
@@ -85,6 +92,7 @@ function seo(): Plugin {
             [
               HOME.path,
               ...ABOUT_PAGES.map((p) => ({ path: p.path, alternates: p.alternates })),
+              ...credits.map((p) => ({ path: p.path, alternates: p.alternates })),
               ...pages.filter((p) => !guided.has(p.path)).map((p) => p.path),
               ...guides.filter((g) => g.indexable).map((g) => ({ path: g.path, alternates: g.alternates })),
             ],

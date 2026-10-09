@@ -3,6 +3,7 @@
  *   /tooth/36            select & focus tooth 36 (FDI)
  *   /tooth/36/dissect    open the dissection of tooth 36
  *   /structure/<id>      select & focus any structure
+ *   /credits/            open the credits popup over the explorer
  */
 import type { Registry } from '../anatomy/registry';
 import type { Structure } from '../anatomy/types';
@@ -10,6 +11,7 @@ import type { Engine } from '../engine/Engine';
 import { actions, getState, store } from '../state/store';
 import { documentTitle } from './seo';
 import type { Lang } from '../i18n';
+import { creditsPath } from './credits';
 
 /** Tool name stays the same in every interface language. */
 export function localTitle(sel: (Pick<Structure, 'name' | 'tooth'> & { names?: Partial<Record<Lang, string>> }) | undefined, _lang: Lang): string {
@@ -41,10 +43,14 @@ function writeUrl(path: string, push: boolean) {
 export interface Route {
   id: string | null;
   dissect: boolean;
+  credits?: boolean;
+  lang?: Lang;
 }
 
 export function parsePath(path: string, registry: Registry): Route {
   const p = !HASH && path.startsWith(BASE) ? path.slice(BASE.length) : path;
+  const credits = /^\/credits(?:\/(sv|de|es|la))?\/?$/.exec(p);
+  if (credits) return { id: null, dissect: false, credits: true, lang: credits[1] as Lang | undefined };
   let m = /^\/tooth\/(\d{2})(\/dissect)?\/?$/.exec(p);
   if (m && registry.get(`tooth-${m[1]}`)) return { id: `tooth-${m[1]}`, dissect: !!m[2] };
   m = /^\/structure\/([a-z0-9-]+)\/?$/.exec(p);
@@ -69,6 +75,12 @@ export function startRouter(engine: Engine, registry: Registry): () => void {
     const r = parsePath(path, registry);
     applying = true;
     try {
+      if (r.credits) {
+        if (r.lang) actions.setLang(r.lang);
+        actions.openCredits(true);
+        return;
+      }
+      actions.openCredits(false);
       if (!r.id) {
         if (getState().dissectFdi !== null) actions.exitDissect();
         actions.select(null);
@@ -91,6 +103,14 @@ export function startRouter(engine: Engine, registry: Registry): () => void {
   const unsub = store.subscribe((s, p) => {
     if (s.selectedId !== p.selectedId || s.lang !== p.lang) syncTitle(s.selectedId);
     if (applying) return;
+    if (s.creditsOpen) {
+      if (!p.creditsOpen || s.lang !== p.lang) writeUrl(`${HASH ? '' : BASE}/${creditsPath(s.lang)}`, !p.creditsOpen);
+      return;
+    }
+    if (p.creditsOpen) {
+      writeUrl(pathFor(s.selectedId, s.dissectFdi, registry), false);
+      return;
+    }
     if (s.selectedId === p.selectedId && s.dissectFdi === p.dissectFdi) return;
     const next = pathFor(s.selectedId, s.dissectFdi, registry);
     if (next !== currentPath()) writeUrl(next, false);
