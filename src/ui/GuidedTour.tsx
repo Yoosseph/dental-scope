@@ -10,6 +10,10 @@ import { useServices } from './context';
 import { IconClose, IconPlay, IconPause, IconReplay } from './icons';
 
 type Mark = { target: string; rect: DOMRect; clicking: boolean };
+type Placement = 'top' | 'left' | 'bottom';
+const cardPlacement = (rect: DOMRect): Placement => isCompactLayout()
+  ? rect.bottom < window.innerHeight / 2 ? 'bottom' : 'top'
+  : rect.left > window.innerWidth * .65 && rect.top > 80 ? 'left' : 'top';
 const targetElement = (target: string) => [...document.querySelectorAll<HTMLElement>(`[data-tour="${target}"]`)].find(element => element.checkVisibility() && element.getBoundingClientRect().width > 0) ?? null;
 const visible = (element: HTMLElement | null) => {
   if (!element || !element.checkVisibility()) return false;
@@ -29,11 +33,11 @@ export function GuidedTour() {
   const text = TOUR_TEXT[lang];
   const [index, setIndex] = useState(0);
   const [mark, setMark] = useState<Mark | null>(null);
+  const [placement, setPlacement] = useState<Placement>('top');
   const [highlight, setHighlight] = useState(false);
   const [status, setStatus] = useState<'loading' | 'playing' | 'ready' | 'error'>('loading');
   const [paused, setPaused] = useState(false);
   const pauseRef = useRef(false);
-  const hiddenRef = useRef(document.hidden);
   const controller = useRef<AbortController | null>(null);
   const card = useRef<HTMLDivElement>(null);
   const cursor = useRef<HTMLDivElement>(null);
@@ -48,6 +52,7 @@ export function GuidedTour() {
       setPaused(false);
       setIndex(0);
       setMark(null);
+      setPlacement('top');
       setHighlight(false);
       setStatus('loading');
     }
@@ -94,7 +99,7 @@ export function GuidedTour() {
       if (getState().error) throw new Error('Scene loading failed');
       setStatus('playing');
       await playTour(FIRST_VISIT_TOUR, {
-        paused: () => pauseRef.current || hiddenRef.current,
+        paused: () => pauseRef.current || document.hidden,
         showStep: (_step, next) => setIndex(next),
         prepare: next => {
           if (next.panel) {
@@ -111,7 +116,10 @@ export function GuidedTour() {
         },
         point: (target, clicking) => {
           const element = targetElement(target)!;
-          setMark({ target, rect: element.getBoundingClientRect(), clicking });
+          const rect = element.getBoundingClientRect();
+          setMark({ target, rect, clicking });
+          // Pick a side once for this step, before the click changes the layout.
+          if (!clicking) setPlacement(cardPlacement(rect));
           setHighlight(true);
         },
         activate: next => {
@@ -147,7 +155,6 @@ export function GuidedTour() {
       engine.resetToStart();
     });
 
-    const onVisibility = () => { hiddenRef.current = document.hidden; };
     const onFocus = (event: FocusEvent) => {
       if (!card.current?.contains(event.target as Node)) card.current?.querySelector<HTMLButtonElement>('button')?.focus();
     };
@@ -166,12 +173,10 @@ export function GuidedTour() {
         buttons[(current + (event.shiftKey ? -1 : 1) + buttons.length) % buttons.length]?.focus();
       }
     };
-    document.addEventListener('visibilitychange', onVisibility);
     document.addEventListener('focusin', onFocus);
     window.addEventListener('keydown', onKey, true);
     return () => {
       abort.abort();
-      document.removeEventListener('visibilitychange', onVisibility);
       document.removeEventListener('focusin', onFocus);
       window.removeEventListener('keydown', onKey, true);
       if (focusBefore instanceof HTMLElement && focusBefore.isConnected) focusBefore.focus();
@@ -192,15 +197,16 @@ export function GuidedTour() {
           circle.current.style.left = `${rect.x - 10}px`; circle.current.style.top = `${rect.y - 8}px`;
           circle.current.style.width = `${rect.width + 20}px`; circle.current.style.height = `${rect.height + 16}px`;
         }
-        const position = isCompactLayout()
-          ? rect.bottom < window.innerHeight / 2 ? 'bottom' : 'top'
-          : rect.left > window.innerWidth * .65 && rect.top > 80 ? 'left' : 'top';
-        if (card.current && card.current.dataset.position !== position) card.current.dataset.position = position;
       }
       frame = requestAnimationFrame(track);
     };
+    const onResize = () => {
+      const element = targetElement(mark.target);
+      if (visible(element)) setPlacement(cardPlacement(element!.getBoundingClientRect()));
+    };
+    window.addEventListener('resize', onResize);
     frame = requestAnimationFrame(track);
-    return () => cancelAnimationFrame(frame);
+    return () => { cancelAnimationFrame(frame); window.removeEventListener('resize', onResize); };
   }, [mark]);
 
   if (!open) return null;
@@ -220,7 +226,7 @@ export function GuidedTour() {
         <svg width="34" height="42" viewBox="0 0 34 42"><path d="M3 2 L3 31 L11 24 L17 38 L24 35 L18 21 L29 21 Z" fill="var(--accent)" stroke="var(--panel-solid)" strokeWidth="3" strokeLinejoin="round" /></svg>
       </div>
     </>}
-    <div ref={card} className="ds-tour-card ds-panel" role="dialog" aria-modal="true" aria-labelledby="ds-tour-title" aria-describedby="ds-tour-body" data-position="top">
+    <div ref={card} className="ds-tour-card ds-panel" role="dialog" aria-modal="true" aria-labelledby="ds-tour-title" aria-describedby="ds-tour-body" data-position={placement}>
       <div className="ds-tour-heading">
         <span className="ds-label-sm">{text.label}</span>
         <button type="button" className="ds-icon-btn ds-icon-btn--ghost" onClick={close} aria-label={text.close}><IconClose size={17} /></button>
