@@ -5,6 +5,8 @@ dist/
 *.log
 .vite/
 coverage/
+playwright-report/
+test-results/
 tools/pipeline/raw/
 tools/pipeline/.cache/
 __pycache__/

@@ -15,7 +15,7 @@ import jsxA11y from 'eslint-plugin-jsx-a11y';
 
 export default tseslint.config(
   {
-    ignores: ['dist/**', 'public/**', 'tools/pipeline/.cache/**', 'docs/**'],
+    ignores: ['dist/**', 'public/**', 'tools/pipeline/.cache/**', 'docs/**', '.vite/**', 'playwright-report/**', 'test-results/**'],
   },
   js.configs.recommended,
   {
@@ -61,7 +61,7 @@ export default tseslint.config(
   },
   {
     // Tests run in Node (vitest, `environment: 'node'`).
-    files: ['**/*.test.ts', 'tools/**'],
+    files: ['**/*.test.ts', 'tools/**', 'e2e/**', 'playwright.config.ts'],
     languageOptions: { globals: { ...globals.node } },
   },
   {

@@ -1,3 +1,4 @@
+import { navigate } from '../app/router';
 import { actions, useApp } from '../state/store';
 import { STUDY_TEXT } from '../i18n/study';
 import { nameOf } from '../i18n';
@@ -16,7 +17,7 @@ export function SurfaceFeatureControls({ fdi }: { fdi: number }) {
     <div className="ds-label-sm">{text.features}</div>
     <div className="ds-chip-row">{(['occlusal', 'inner', 'facial', 'mesial', 'distal'] as const).map(view => <button type="button" className="ds-chip ds-chip--button" key={view} onClick={() => void engine.studyToothSurface(fdi, view)}>{text[view]}</button>)}</div>
     <button type="button" className={`ds-chip ds-chip--button${enabled ? ' is-active' : ''}`} aria-pressed={enabled} onClick={() => void show()}>{enabled ? text.hide : text.show}</button>
-    {enabled && <div className="ds-chip-row">{features.map(feature => <button type="button" className={`ds-chip ds-chip--button${selected === feature.id ? ' is-active' : ''}`} key={feature.id} onClick={() => void engine.selectFromUI(feature.id, { focus: true })}>{nameOf(feature, lang)}</button>)}</div>}
+    {enabled && <div className="ds-chip-row">{features.map(feature => <button type="button" className={`ds-chip ds-chip--button${selected === feature.id ? ' is-active' : ''}`} key={feature.id} onClick={() => void navigate(() => engine.selectFromUI(feature.id, { focus: true }))}>{nameOf(feature, lang)}</button>)}</div>}
     <p className="ds-evidence">{text.note}</p>
   </section>;
 }

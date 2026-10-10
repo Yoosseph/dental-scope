@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { pushCurrentPath, startRouter } from '../app/router';
+import { navigate, startRouter } from '../app/router';
 import { useT } from '../i18n';
 import { actions, useApp } from '../state/store';
 import { useServices } from './context';
@@ -11,7 +11,7 @@ import { AboutDialog, Footer, LoadingCard } from './Overlays';
 import { SearchPanel } from './SearchPanel';
 import { Identity, TopActions } from './TopBar';
 import { useKeyboard } from './useKeyboard';
-import { COMPACT_LAYOUT } from '../app/viewport';
+import { useViewportInsets } from './useViewportInsets';
 import { GuidedTour } from './GuidedTour';
 import { CreditsDialog } from './CreditsDialog';
 
@@ -22,14 +22,7 @@ export function App() {
   const selected = useApp((s) => !!s.selectedId);
   const dissect = useApp((s) => s.dissectFdi !== null);
   const sheet = useApp((s) => s.mobileSheet);
-  const laidOut = useApp((s) => s.explodePhase === 2);
-  const detailHidden = useApp((s) => s.collapsed.detail);
-  const dockHidden = useApp((s) => s.collapsed.dock);
-  const layersHidden = useApp((s) => s.collapsed.layers);
-  const jawControls = useApp((s) => s.jawControls);
-  const developmentStage = useApp((s) => s.developmentStage);
   const lang = useApp((s) => s.lang);
-  const guideOpen = useApp((s) => s.guideOpen);
   const m = useT();
 
   useEffect(() => {
@@ -52,71 +45,7 @@ export function App() {
 
   useKeyboard(engine);
 
-  // keep the focused anatomy clear of the panels that cover the canvas
-  useEffect(() => {
-    const ui = document.querySelector<HTMLElement>('.ds-ui');
-    const compact = window.matchMedia(COMPACT_LAYOUT);
-    let frame = 0;
-    const visibleRect = (selector: string) => {
-      const element = ui?.querySelector<HTMLElement>(selector);
-      if (!element || (!compact.matches && element.classList.contains('is-collapsed'))) return null;
-      const rect = element.getBoundingClientRect();
-      return rect.width && rect.height ? rect : null;
-    };
-    const update = () => {
-      frame = 0;
-      if (!ui) return;
-      const bounds = ui.getBoundingClientRect();
-      document.documentElement.style.setProperty('--visual-height', `${window.visualViewport?.height ?? bounds.height}px`);
-      document.documentElement.style.setProperty('--visual-top', `${window.visualViewport?.offsetTop ?? 0}px`);
-      const toolbar = visibleRect('.ds-dock');
-      const bar = visibleRect('.ds-mobile-bar');
-      const panel = compact.matches ? visibleRect('.ds-layers.is-mobile-open, .ds-detail.is-mobile-open') : visibleRect('.ds-detail');
-      const sideSheet = compact.matches && window.matchMedia('(orientation: landscape) and (max-height: 600px)').matches;
-      const bottoms = [toolbar, bar, ...(!sideSheet && compact.matches ? [panel] : [])].filter((r): r is DOMRect => !!r);
-      const bottom = Math.max(0, ...bottoms.map((r) => bounds.bottom - r.top + 12));
-      const side = sideSheet ? panel ?? (sheet === 'tools' ? toolbar : null) : !compact.matches ? panel : null;
-      let right = side ? bounds.right - side.left + 12 : 0;
-      const layers = !compact.matches && dissect ? visibleRect('.ds-layers') : null;
-      let left = layers ? layers.right - bounds.left + 12 : 0;
-      // Landscape tool sheets occupy the side, not the lower half of the model.
-      const clearance = sideSheet && sheet === 'tools' ? (bar ? bounds.bottom - bar.top + 12 : 0) : bottom;
-      ui.style.setProperty('--dock-clearance', `${Math.max(64, bottom + 12)}px`);
-      const tour = document.querySelector<HTMLElement>('.ds-tour-card');
-      const tourBounds = tour?.getBoundingClientRect();
-      let top = 0;
-      let tourBottom = clearance;
-      if (tour && tourBounds) {
-        if (!compact.matches) {
-          if (tour.dataset.position === 'left') left = Math.max(left, tourBounds.right + 12);
-          else right = Math.max(right, bounds.right - tourBounds.left + 12);
-        } else if (sideSheet) left = Math.max(left, tourBounds.right + 12);
-        else if (tour.dataset.position === 'bottom') tourBottom = Math.max(tourBottom, bounds.bottom - tourBounds.top + 12);
-        else top = tourBounds.bottom + 12;
-      }
-      engine.setInsets(Math.min(right, bounds.width - 100), Math.min(tourBottom, bounds.height - 100), Math.min(left, bounds.width - 100), Math.max(0, Math.min(top, bounds.height - tourBottom - 80)));
-    };
-    const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
-    update();
-    const observer = new ResizeObserver(schedule);
-    if (ui) observer.observe(ui);
-    for (const element of ui?.querySelectorAll('.ds-dock, .ds-layers, .ds-detail, .ds-mobile-bar') ?? []) observer.observe(element);
-    const tour = document.querySelector<HTMLElement>('.ds-tour-card');
-    if (tour) observer.observe(tour);
-    const tourPosition = new MutationObserver(schedule);
-    if (tour) tourPosition.observe(tour, { attributes: true, attributeFilter: ['data-position'] });
-    compact.addEventListener('change', schedule);
-    window.addEventListener('resize', schedule);
-    window.visualViewport?.addEventListener('resize', schedule);
-    return () => {
-      cancelAnimationFrame(frame);
-      observer.disconnect();
-      tourPosition.disconnect();
-      compact.removeEventListener('change', schedule);
-      window.removeEventListener('resize', schedule);
-      window.visualViewport?.removeEventListener('resize', schedule);
-    };
-  }, [engine, selected, dissect, laidOut, sheet, detailHidden, dockHidden, layersHidden, jawControls, developmentStage, lang, guideOpen]);
+  useViewportInsets(engine);
 
   return (
     <div className={`ds-app${selected ? ' has-selection' : ''}${dissect ? ' is-dissecting' : ''}`} data-sheet={sheet}>
@@ -156,12 +85,10 @@ export function App() {
 
 /** Bottom-left: back to the start view with every setting at its default. */
 function ResetButton() {
-  const { engine, registry } = useServices();
+  const { engine } = useServices();
   const m = useT();
   const reset = () => {
-    actions.resetAll();
-    engine.resetToStart();
-    pushCurrentPath(registry);
+    void navigate(() => { actions.resetAll(); engine.resetToStart(); });
   };
   return (
     <button type="button" className="ds-reset-all" onClick={reset} title={m.resetAllTitle} aria-label={m.resetAllTitle}>

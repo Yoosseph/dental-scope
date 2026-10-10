@@ -3,6 +3,10 @@ import { REPO_URL } from '../app/repo';
 import { useT } from '../i18n';
 import { actions, useApp } from '../state/store';
 import { IconClose } from './icons';
+import { interfaceText } from '../i18n/interface';
+import { nameOf } from '../i18n';
+import { useServices } from './context';
+import { navigate } from '../app/router';
 
 /** Loading stages, in order (their names are in the messages, `stage`). */
 const STAGES = ['core', 'context', 'neurovascular'];
@@ -11,15 +15,27 @@ export function LoadingCard() {
   const ready = useApp((s) => s.ready);
   const loading = useApp((s) => s.loading);
   const error = useApp((s) => s.error);
+  const request = useApp((s) => s.selectionRequest);
+  const lang = useApp((s) => s.lang);
+  const text = interfaceText(lang);
+  const { engine, registry } = useServices();
   const m = useT();
   if (error) {
     return (
       <div className="ds-loading ds-panel" role="alert">
         <strong>{m.somethingWrong}</strong>
         <p>{error === 'load' ? m.loadError : error}</p>
+        <button type="button" className="ds-secondary" onClick={() => void engine.retryAssets()}>{text.retry}</button>
       </div>
     );
   }
+  if (request) return (
+    <div className="ds-loading ds-panel is-compact" role={request.status === 'error' ? 'alert' : 'status'} aria-live="polite">
+      <strong>{request.status === 'error' ? text.selectionError : text.loadingSelection}</strong>
+      <p>{nameOf(registry.require(request.id), lang)}</p>
+      {request.status === 'error' && <button type="button" className="ds-secondary" onClick={() => void navigate(() => engine.retrySelection())}>{text.retry}</button>}
+    </div>
+  );
   const pending = STAGES.filter((s) => (loading[s] ?? 0) < 1);
   if (ready && pending.length === 0) return null;
   const done = STAGES.reduce((a, s) => a + (loading[s] ?? 0), 0) / STAGES.length;

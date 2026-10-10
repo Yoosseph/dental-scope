@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { CATEGORY_BY_ID, primaryCategory } from '../anatomy/categories';
 import { formatTooth, NUMBERING_LABEL } from '../anatomy/notation';
-import { pushCurrentPath } from '../app/router';
+import { navigate } from '../app/router';
 import { nameOf, useT } from '../i18n';
 import { search } from '../search/search';
 import { actions, useApp } from '../state/store';
@@ -10,6 +10,7 @@ import { IconClose, IconSearch } from './icons';
 
 export function SearchPanel() {
   const open = useApp((s) => s.searchOpen);
+  const guided = useApp((s) => s.guideOpen);
   const numbering = useApp((s) => s.numbering);
   const lang = useApp((s) => s.lang);
   const m = useT();
@@ -19,6 +20,7 @@ export function SearchPanel() {
   const [active, setActive] = useState(0);
   const input = useRef<HTMLInputElement>(null);
   const list = useRef<HTMLUListElement>(null);
+  const dialog = useRef<HTMLDialogElement>(null);
 
   const results = useMemo(() => (q.trim() ? search(searchIndex, registry, q, numbering, 30) : []), [q, numbering, searchIndex, registry]);
 
@@ -37,24 +39,41 @@ export function SearchPanel() {
   }
 
   useEffect(() => {
+    const element = dialog.current!;
     if (open) {
-      requestAnimationFrame(() => {
+      const previousFocus = document.activeElement;
+      // The guided demonstration owns focus and its controls stay above search.
+      if (!element.open) { if (guided) element.show(); else element.showModal(); }
+      const onTab = (event: KeyboardEvent) => {
+        if (guided || event.key !== 'Tab') return;
+        const controls = [...element.querySelectorAll<HTMLElement>('input, button:not(:disabled), a[href]')].filter(control => control.checkVisibility());
+        const first = controls[0], last = controls.at(-1);
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+      };
+      element.addEventListener('keydown', onTab);
+      const focusFrame = requestAnimationFrame(() => {
         input.current?.focus();
         input.current?.select();
       });
+      return () => {
+        cancelAnimationFrame(focusFrame);
+        element.removeEventListener('keydown', onTab);
+        if (element.open) element.close();
+        if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
+      };
     }
-  }, [open]);
+    if (element.open) element.close();
+  }, [open, guided]);
   useEffect(() => {
     list.current?.querySelector(`[data-idx="${active}"]`)?.scrollIntoView({ block: 'nearest' });
   }, [active]);
 
-  if (!open) return null;
   const tip = m.searchTip(NUMBERING_LABEL[numbering]);
 
   const choose = async (id: string) => {
     actions.openSearch(false);
-    await engine.selectFromUI(id, { focus: true });
-    pushCurrentPath(registry);
+    await navigate(() => engine.selectFromUI(id, { focus: true }));
   };
 
   const onKey = (e: React.KeyboardEvent) => {
@@ -74,8 +93,10 @@ export function SearchPanel() {
   };
 
   return (
-    <div className="ds-search-layer" onPointerDown={(e) => e.target === e.currentTarget && actions.openSearch(false)}>
-      <div className="ds-search ds-panel" role="dialog" aria-modal="true" aria-label={m.searchAnatomy}>
+    <dialog ref={dialog} className="ds-search-layer" aria-label={m.searchAnatomy}
+      onCancel={(e) => { e.preventDefault(); actions.openSearch(false); }}
+      onPointerDown={(e) => { if (e.target === e.currentTarget) actions.openSearch(false); }}>
+      <div className="ds-search ds-panel">
         <div className="ds-search-field">
           <IconSearch size={18} />
           <input
@@ -148,6 +169,6 @@ export function SearchPanel() {
           </div>
         )}
       </div>
-    </div>
+    </dialog>
   );
 }

@@ -4,16 +4,17 @@ import { Registry } from '../anatomy/registry';
 import type { Manifest } from '../anatomy/types';
 import type { Engine } from '../engine/Engine';
 import { actions, getState, initialState, setState } from '../state/store';
-import { parsePath, startRouter } from './router';
+import { navigate, parsePath, startRouter } from './router';
 
 const registry = new Registry(JSON.parse(readFileSync('public/models/manifest.json', 'utf8')) as Manifest);
 let stop: (() => void) | undefined;
 let url: URL;
 let events: EventTarget;
-const navigate = (_data: unknown, _title: string, path: string) => { url = new URL(path, url); };
-const pushState = vi.fn(navigate);
-const replaceState = vi.fn(navigate);
+const updateUrl = (_data: unknown, _title: string, path: string) => { url = new URL(path, url); };
+const pushState = vi.fn(updateUrl);
+const replaceState = vi.fn(updateUrl);
 const engine = {
+  cancelSelection: vi.fn(),
   selectFromUI: vi.fn((id: string) => { actions.select(id); return Promise.resolve(); }),
   exploreTooth: vi.fn((fdi: number) => { actions.enterDissect(fdi); return Promise.resolve(); }),
 } as unknown as Engine;
@@ -30,6 +31,31 @@ beforeEach(() => {
   vi.stubGlobal('history', { pushState, replaceState });
   vi.stubGlobal('window', events);
   vi.stubGlobal('document', { title: '' });
+});
+
+describe('explicit selection navigation', () => {
+  it('pushes one entry per search selection instead of replacing the previous tooth', async () => {
+    stop = startRouter(engine, registry);
+    await navigate(() => engine.selectFromUI('tooth-36'));
+    await navigate(() => engine.selectFromUI('tooth-11'));
+    expect(pushState.mock.calls.map(call => call[2])).toEqual(['/tooth/36/', '/tooth/11/']);
+    expect(replaceState).not.toHaveBeenCalled();
+    url = new URL('https://example.org/tooth/36/');
+    events.dispatchEvent(new Event('popstate'));
+    await Promise.resolve();
+    expect(getState().selectedId).toBe('tooth-36');
+    expect(pushState).toHaveBeenCalledTimes(2);
+  });
+
+  it('commits selection and dissection as one navigation and ignores an obsolete completion', async () => {
+    stop = startRouter(engine, registry);
+    let finish!: () => void;
+    const previous = navigate(() => new Promise<void>(resolve => { finish = resolve; }));
+    await navigate(() => { actions.select('tooth-11'); actions.enterDissect(11); });
+    finish();
+    await previous;
+    expect(pushState.mock.calls.map(call => call[2])).toEqual(['/tooth/11/dissect']);
+  });
 });
 
 afterEach(() => {

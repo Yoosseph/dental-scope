@@ -52,7 +52,11 @@ npm run typecheck
 npm run typecheck:tests # TypeScript checks for tests and Vite config
 npm run lint       # ESLint (type-aware rules on src/**)
 npm run build      # static site in dist/ (includes a 404.html SPA fallback)
+npx playwright install chromium # once, for browser tests
+npm run test:e2e   # desktop and phone flows against the production build
 ```
+
+Browser regressions cover selection/dissection Back and Forward, search focus and dismissal, layer scrolling, primary dentition, mobile reading trays, failed-download retry and credits links. CI installs Chromium and runs these after the production build; failed runs retain traces and screenshots in `test-results/`.
 
 The built site is fully static. For a sub-path deployment set `DS_BASE`, e.g. `DS_BASE=/dental-scope/ npm run build`; with a relative base (`DS_BASE=./`) deep links switch to hash URLs (`#/tooth/36`) so the build works from any folder. Set `VITE_DS_REPO_URL` to link the “Made by Yoseph” credit and the About dialog to the repository; when it is unset the credit is plain text, so a build never advertises a private repository. The live site is deployed by Vercel from `main`; set `VITE_DS_REPO_URL` and `DS_SITE_URL` in the Vercel project's environment variables.
 

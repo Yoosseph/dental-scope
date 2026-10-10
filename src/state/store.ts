@@ -10,6 +10,7 @@ import type { CategoryId, NumberingSystem } from '../anatomy/types';
 import { DEFAULT_LANG, isLang, type Lang } from '../i18n/lang';
 import type { NerveSide, NerveView } from '../anatomy/nerveViews';
 import { DEVELOPMENT_STAGES, type DevelopmentStageId } from '../anatomy/development';
+import { adultSceneSnapshot, clearSceneTools } from './sceneTransitions';
 
 export type ClipAxis = 'sagittal' | 'coronal' | 'axial' | 'view';
 export type ModeId = 'explore' | 'learn' | 'quiz' | 'compare';
@@ -57,6 +58,7 @@ export interface AppState {
   ready: boolean;
   loading: Record<string, number>; // stage → 0…1
   error?: string;
+  selectionRequest: { id: string; kind: 'select' | 'explore'; status: 'loading' | 'error' } | null;
 
   selectedId: string | null;
   hoveredId: string | null;
@@ -109,6 +111,7 @@ export const initialState: AppState = {
   nerveView: 'dental', nerveSide: 'both',
   passageIds: [], jawControls: false, jawSide: 'right', jawOpening: 0, jawPlaying: false,
   ready: false,
+  selectionRequest: null,
   loading: {},
   selectedId: null,
   hoveredId: null,
@@ -179,10 +182,8 @@ export const actions = {
     if (getState().developmentStage) actions.setDevelopmentStage(null);
     const preset = PRESETS.find(p => p.id === id);
     if (!preset) return;
-    setState({ categories: { ...getState().categories, ...preset.state }, studyView: id === 'vessels' || id === 'sinuses' ? id : null,
-      vesselSide: 'both', vesselMode: 'both', selectedId: null, hoveredId: null, isolateId: null, isolateContext: false,
-      hidden: {}, ghosted: {}, passageIds: [], labels: id === 'vessels' || id === 'sinuses' ? true : getState().labels,
-      jawControls: false, jawPlaying: false, jawOpening: 0, explode: 0, explodePhase: 1, toothExplode: 0, clip: { ...getState().clip, enabled: false } });
+    setState(s => ({ ...clearSceneTools(s), categories: { ...s.categories, ...preset.state }, studyView: id === 'vessels' || id === 'sinuses' ? id : null,
+      vesselSide: 'both', vesselMode: 'both', labels: id === 'vessels' || id === 'sinuses' ? true : s.labels }));
   },
   setVesselSide(vesselSide: AppState['vesselSide']) { setState({ vesselSide, selectedId: null, hoveredId: null, isolateId: null, isolateContext: false }); },
   setVesselMode(vesselMode: AppState['vesselMode']) { setState({ vesselMode, selectedId: null, hoveredId: null, isolateId: null, isolateContext: false }); },
@@ -196,11 +197,11 @@ export const actions = {
     if (getState().dissectFdi !== null) actions.exitDissect();
     if (developmentStage && !previous.developmentStage) {
       const s = getState();
-      adultSceneBeforeDevelopment = { categories: s.categories, hidden: s.hidden, ghosted: s.ghosted, isolateId: s.isolateId, isolateContext: s.isolateContext, explode: s.explode, explodePhase: s.explodePhase, clip: s.clip, jawControls: s.jawControls, jawOpening: s.jawOpening, labels: s.labels };
+      adultSceneBeforeDevelopment = adultSceneSnapshot(s);
     }
     const restore = developmentStage ? {} : adultSceneBeforeDevelopment ?? {};
     if (!developmentStage) adultSceneBeforeDevelopment = null;
-    setState((s) => ({ developmentStage, developmentPlaying: playing && developmentStage !== null, selectedId: null, hoveredId: null, hidden: {}, ghosted: {}, isolateId: null, isolateContext: false, passageIds: [], jawControls: false, jawOpening: 0, jawPlaying: false, explode: 0, explodePhase: 1, clip: { ...s.clip, enabled: false }, categories: { ...s.categories, 'primary-teeth': 'on', 'permanent-teeth': 'on', 'alveolar-bone': 'on' }, ...restore }));
+    setState((s) => ({ ...clearSceneTools(s), studyView: null, developmentStage, developmentPlaying: playing && developmentStage !== null, categories: { ...s.categories, 'primary-teeth': 'on', 'permanent-teeth': 'on', 'alveolar-bone': 'on' }, ...restore }));
   },
   playDevelopment() {
     actions.setDevelopmentStage(getState().developmentStage ?? DEVELOPMENT_STAGES[0].id, true);
@@ -244,7 +245,7 @@ export const actions = {
     persist(PREF.orbit, initialState.orbitMode);
   },
   select(id: string | null) {
-    setState((s) => ({ selectedId: id, mobileSheet: id ? 'detail' : 'none', passageIds: id && s.passageIds.includes(id) ? s.passageIds : [] }));
+    setState((s) => ({ selectedId: id, selectionRequest: null, mobileSheet: id ? 'detail' : 'none', passageIds: id && s.passageIds.includes(id) ? s.passageIds : [] }));
   },
   hover(id: string | null) {
     if (getState().hoveredId !== id) setState({ hoveredId: id });
@@ -334,6 +335,7 @@ export const actions = {
     persist(PREF.orbit, m);
   },
   enterDissect(fdi: number) {
+    setState({ selectionRequest: null });
     if (getState().developmentStage) actions.setDevelopmentStage(null);
     setState(s => ({ developmentStage: null, studyView: null, jawOpening: 0, jawPlaying: false, jawControls: false, passageIds: [], categories: { ...s.categories, 'permanent-teeth': 'on', enamel: 'on', dentin: 'on', cementum: 'on', 'dental-pulp': 'on', 'root-canals': 'on', 'periodontal-ligament': 'on' } }));
     // Inside a tooth the free orbit is the useful one (pan and focus on a canal or a root);
@@ -342,6 +344,7 @@ export const actions = {
     setState({ dissectFdi: fdi, dissectLevel: 0, toothExplode: 0, isolateId: `tooth-${fdi}`, isolateContext: true, explode: 0, explodePhase: 1, orbitMode: 'free' });
   },
   exitDissect() {
+    setState({ selectionRequest: null });
     const restore = orbitBeforeTooth;
     orbitBeforeTooth = null;
     if (restore) setState({ orbitMode: restore });

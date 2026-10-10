@@ -13,6 +13,7 @@ import { StructureTree } from './StructureTree';
 import { NerveControls } from './NerveControls';
 import { DevelopmentPanel } from './DevelopmentControls';
 import { DEVELOPMENT_TEXT } from '../i18n/development';
+import { interfaceText } from '../i18n/interface';
 
 export function LayersPanel() {
   const panel = useApp((s) => s.panel);
@@ -56,26 +57,28 @@ function Categories() {
 
   return (
     <>
-      <div className="ds-segmented ds-segmented--fill" role="radiogroup" aria-label={m.layerPresets}>
-        {PRESETS.map((p) => (
-          <button key={p.id} data-tour={`preset-${p.id}`} type="button" role="radio" aria-checked={presetActive === p.id} className={presetActive === p.id ? 'is-active' : ''} onClick={() => p.id === 'vessels' || p.id === 'sinuses' ? void engine.showStudyView(p.id) : actions.applyStudyPreset(p.id)}>
-            {p.id === 'nerve-muscles' ? FEEDBACK_TEXT[lang].nervesMuscles : m.preset[p.id] ?? p.label}
-          </button>
-        ))}
-      </div>
-      <p className="ds-layer-hint">{FEEDBACK_TEXT[lang].transparencyHint}</p>
-      <VesselControls />
-      <SinusControls />
-      {cats.nerves !== 'off' && studyView !== 'vessels' && <NerveControls />}
-      <div className="ds-layer-list">
-        {groups.map(([group, list]) => (
-          <div key={group} className="ds-layer-group" role="list" aria-label={m.group[group] ?? group}>
-            <div className="ds-layer-group-title">{m.group[group] ?? group}</div>
-            {list.map((c) => (
-              <CategoryRow key={c.id} id={c.id} label={m.category[c.id] ?? c.label} color={c.color} planned={!!c.planned} count={counts[c.id] ?? 0} state={cats[c.id]} />
-            ))}
-          </div>
-        ))}
+      <div className="ds-layer-scroll">
+        <div className="ds-segmented ds-segmented--fill" role="radiogroup" aria-label={m.layerPresets}>
+          {PRESETS.map((p) => (
+            <button key={p.id} data-tour={`preset-${p.id}`} type="button" role="radio" aria-checked={presetActive === p.id} className={presetActive === p.id ? 'is-active' : ''} onClick={() => p.id === 'vessels' || p.id === 'sinuses' ? void engine.showStudyView(p.id) : actions.applyStudyPreset(p.id)}>
+              {p.id === 'nerve-muscles' ? FEEDBACK_TEXT[lang].nervesMuscles : m.preset[p.id] ?? p.label}
+            </button>
+          ))}
+        </div>
+        <p className="ds-layer-hint">{FEEDBACK_TEXT[lang].transparencyHint}</p>
+        <VesselControls />
+        <SinusControls />
+        {cats.nerves !== 'off' && studyView !== 'vessels' && <NerveControls />}
+        <div className="ds-layer-list">
+          {groups.map(([group, list]) => (
+            <div key={group} className="ds-layer-group" role="list" aria-label={m.group[group] ?? group}>
+              <div className="ds-layer-group-title">{m.group[group] ?? group}</div>
+              {list.map((c) => (
+                <CategoryRow key={c.id} id={c.id} label={m.category[c.id] ?? c.label} color={c.color} planned={!!c.planned} count={c.id === 'permanent-teeth' ? registry.teeth().length : counts[c.id] ?? 0} state={cats[c.id]} />
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
       <div className="ds-panel-footer">
         <span>{visibilityNote}</span>
@@ -89,6 +92,7 @@ function Categories() {
 
 function CategoryRow({ id, label, color, count, state, planned }: { id: CategoryId; label: string; color: string; count: number; state: CategoryState; planned: boolean }) {
   const m = useT();
+  const text = interfaceText(useLang());
   if (planned) {
     return (
       <div className="ds-layer-row is-planned" role="listitem" title={m.notModeled}>
@@ -101,7 +105,13 @@ function CategoryRow({ id, label, color, count, state, planned }: { id: Category
     );
   }
   const on = state !== 'off';
-  const showPrimary = () => actions.setDevelopmentStage('primary');
+  if (id === 'primary-teeth') return (
+    <div className="ds-layer-row" role="listitem">
+      <button type="button" className="ds-primary-dentition ds-layer-name" onClick={() => actions.setDevelopmentStage('primary')}>{text.primaryDentition}</button>
+      <span className="ds-count" title={`${count} ${text.toothCount}`}>{count}</span>
+    </div>
+  );
+  const countLabel = `${count} ${id === 'permanent-teeth' ? text.toothCount : text.meshCount}`;
   return (
     <div className={`ds-layer-row${on ? '' : ' is-off'}`} role="listitem">
       {/* the layer's own colour is the visibility toggle: filled with a check when shown, outlined when hidden */}
@@ -109,7 +119,7 @@ function CategoryRow({ id, label, color, count, state, planned }: { id: Category
         type="button"
         className={`ds-dot-toggle${on ? ' is-on' : ''}${state === 'ghost' ? ' is-ghost' : ''}`}
         style={{ '--dot': color, '--dot-ink': inkOn(color) } as React.CSSProperties}
-        onClick={() => id === 'primary-teeth' ? showPrimary() : actions.setCategory(id, on ? 'off' : 'on')}
+        onClick={() => actions.setCategory(id, on ? 'off' : 'on')}
         aria-pressed={on}
         aria-label={m.showX(label)}
         title={on ? m.hideX(label) : m.showX(label)}
@@ -118,14 +128,14 @@ function CategoryRow({ id, label, color, count, state, planned }: { id: Category
           <IconCheck size={11} strokeWidth={2.6} />
         </span>
       </button>
-      <button type="button" className="ds-layer-name" onClick={() => id === 'primary-teeth' ? showPrimary() : actions.showOnlyCategory(id)} title={m.showOnlyX(label)} aria-label={m.showOnlyX(label)}>
+      <button type="button" className="ds-layer-name" onClick={() => actions.showOnlyCategory(id)} title={m.showOnlyX(label)} aria-label={m.showOnlyX(label)}>
         {label}
       </button>
-      <span className="ds-count">{count}</span>
+      <span className="ds-count" title={countLabel} aria-label={countLabel}>{count}</span>
       <button
         type="button"
         className={`ds-ghost-btn${state === 'ghost' ? ' is-active' : ''}`}
-        onClick={() => id === 'primary-teeth' ? showPrimary() : actions.setCategory(id, state === 'ghost' ? 'on' : 'ghost')}
+        onClick={() => actions.setCategory(id, state === 'ghost' ? 'on' : 'ghost')}
         aria-pressed={state === 'ghost'}
         aria-label={m.translucentX(label)}
         title={m.translucent}

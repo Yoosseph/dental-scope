@@ -1,10 +1,10 @@
 import { STUDY_TEXT } from '../i18n/study';
 import { SurfaceFeatureControls } from './SurfaceFeatureControls';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { CATEGORY_BY_ID, primaryCategory } from '../anatomy/categories';
 import { formatTooth, NUMBERING_SHORT, NUMBERING_SYSTEMS } from '../anatomy/notation';
 import type { Structure } from '../anatomy/types';
-import { pushCurrentPath } from '../app/router';
+import { navigate } from '../app/router';
 import { resolveContent } from '../content/content';
 import { nameOf, useT, type Lang, type Messages } from '../i18n';
 import { typeLabel } from '../i18n/anatomy';
@@ -18,6 +18,7 @@ import { passageFor } from '../anatomy/passages';
 import { HyoidConnections } from './HyoidConnections';
 import { developmentNotation, developmentStatus } from '../anatomy/development';
 import { DEVELOPMENT_TEXT } from '../i18n/development';
+import { interfaceText } from '../i18n/interface';
 
 export function DetailPanel() {
   const { registry, engine } = useServices();
@@ -31,6 +32,10 @@ export function DetailPanel() {
   const lang = useApp((s) => s.lang);
   const developmentStage = useApp((s) => s.developmentStage);
   const m = useT();
+  const text = interfaceText(lang);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [allChildrenId, setAllChildrenId] = useState<string | null>(null);
+  const expanded = expandedId === selectedId;
   const s = selectedId ? registry.get(selectedId) : undefined;
   const content = useMemo(() => (s ? resolveContent(registry, s.id, lang) : null), [registry, s, lang]);
   if (!s || !content) return null;
@@ -44,17 +49,17 @@ export function DetailPanel() {
   const children = s.children.map((c) => registry.get(c)!).filter(Boolean);
 
   const go = async (id: string) => {
-    await engine.selectFromUI(id, { focus: true });
-    pushCurrentPath(registry);
+    await navigate(() => engine.selectFromUI(id, { focus: true }));
   };
 
   return (
-    <aside className={`ds-panel ds-detail${mobileOpen ? ' is-mobile-open' : ''}${collapsed ? ' is-collapsed' : ''}`} aria-label={m.detailsAria(nameOf(s, lang))} aria-live="polite">
+    <aside className={`ds-panel ds-detail${mobileOpen ? ' is-mobile-open' : ''}${collapsed ? ' is-collapsed' : ''}${expanded ? ' is-expanded' : ''}`} aria-label={m.detailsAria(nameOf(s, lang))} aria-live="polite">
       <PanelHandle panel="detail" />
+      <button type="button" className="ds-detail-expand" aria-expanded={expanded} aria-label={expanded ? text.collapseDetails : text.expandDetails} onClick={() => setExpandedId(expanded ? null : selectedId)}>{expanded ? text.collapseDetails : text.expandDetails}</button>
       <div className="ds-detail-head">
         <span className="ds-detail-bar" style={{ background: catDef?.color ?? 'var(--accent)' }} aria-hidden="true" />
         <div className="ds-eyebrow">{catDef ? m.category[catDef.id] : kindLabel(s, m)}</div>
-        <button type="button" className="ds-icon-btn ds-icon-btn--ghost ds-detail-close" onClick={() => actions.select(null)} aria-label={m.closeDetails}>
+        <button type="button" className="ds-icon-btn ds-icon-btn--ghost ds-detail-close" onClick={() => void navigate(() => actions.select(null))} aria-label={m.closeDetails}>
           <IconClose />
         </button>
         <h2 className="ds-detail-title">{nameOf(s, lang)}</h2>
@@ -121,12 +126,12 @@ export function DetailPanel() {
           <div className="ds-detail-block">
             <div className="ds-label-sm">{m.contains}</div>
             <div className="ds-chip-row">
-              {children.slice(0, 18).map((c) => (
+              {(allChildrenId === selectedId ? children : children.slice(0, 18)).map((c) => (
                 <button key={c.id} type="button" className="ds-chip ds-chip--button" onClick={() => void go(c.id)}>
                   {c.tooth ? `${formatTooth(c.tooth.fdi, numbering)} · ${shortTooth(c, lang)}` : nameOf(c, lang)}
                 </button>
               ))}
-              {children.length > 18 && <span className="ds-chip">+{children.length - 18}</span>}
+              {children.length > 18 && <button type="button" className="ds-chip ds-chip--button" aria-expanded={allChildrenId === selectedId} onClick={() => setAllChildrenId(allChildrenId === selectedId ? null : selectedId)}>{allChildrenId === selectedId ? text.showLess : `${text.showAll} (+${children.length - 18})`}</button>}
             </div>
           </div>
         )}
@@ -186,14 +191,11 @@ export function DetailPanel() {
 
   function leaveTooth() {
     const f = dissectFdi!;
-    actions.exitDissect();
-    engine.focus(`tooth-${f}`);
-    pushCurrentPath(registry);
+    void navigate(() => { actions.exitDissect(); engine.focus(`tooth-${f}`); });
   }
 
   async function enterDissect(f: number) {
-    await engine.exploreTooth(f);
-    pushCurrentPath(registry);
+    await navigate(() => engine.exploreTooth(f));
   }
 }
 

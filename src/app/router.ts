@@ -70,8 +70,30 @@ export function pathFor(id: string | null, dissectFdi: number | null, registry: 
 
 export function startRouter(engine: Engine, registry: Registry): () => void {
   let applying = false;
+  let navigating = false;
+  let revision = 0;
+
+  const runNavigation = async (command: NavigationCommand) => {
+    const push = !getState().guideOpen;
+    const request = ++revision;
+    applying = false;
+    navigating = true;
+    try { await command(); }
+    finally {
+      if (request === revision) {
+        navigating = false;
+        const s = getState();
+        const next = s.creditsOpen ? `${HASH ? '' : BASE}/${creditsPath(s.lang)}` : pathFor(s.selectedId, s.dissectFdi, registry);
+        if (next !== currentPath()) writeUrl(next, push);
+      }
+    }
+  };
+  navigationHandler = runNavigation;
 
   const apply = async (path: string) => {
+    const request = ++revision;
+    navigating = false;
+    engine.cancelSelection();
     const r = parsePath(path, registry);
     applying = true;
     try {
@@ -92,7 +114,7 @@ export function startRouter(engine: Engine, registry: Registry): () => void {
         await engine.exploreTooth(s.tooth.fdi);
       } else await engine.selectFromUI(r.id, { focus: true });
     } finally {
-      applying = false;
+      if (request === revision) applying = false;
     }
   };
 
@@ -102,7 +124,7 @@ export function startRouter(engine: Engine, registry: Registry): () => void {
   syncTitle(getState().selectedId);
   const unsub = store.subscribe((s, p) => {
     if (s.selectedId !== p.selectedId || s.lang !== p.lang) syncTitle(s.selectedId);
-    if (applying) return;
+    if (applying || navigating) return;
     if (s.creditsOpen) {
       if (!p.creditsOpen || s.lang !== p.lang) writeUrl(`${HASH ? '' : BASE}/${creditsPath(s.lang)}`, !p.creditsOpen);
       return;
@@ -120,19 +142,19 @@ export function startRouter(engine: Engine, registry: Registry): () => void {
   if (HASH) window.addEventListener('hashchange', onPop);
   void apply(currentPath());
   return () => {
+    ++revision;
+    if (navigationHandler === runNavigation) navigationHandler = undefined;
     unsub();
     window.removeEventListener('popstate', onPop);
     window.removeEventListener('hashchange', onPop);
   };
 }
 
-/** Explicit navigation (search, tree): pushes a history entry. */
-export function pushPath(path: string) {
-  if (path !== currentPath()) writeUrl(path, true);
-}
+type NavigationCommand = () => void | Promise<void>;
+let navigationHandler: ((command: NavigationCommand) => Promise<void>) | undefined;
 
-/** Push a history entry for the current selection / dissection. */
-export function pushCurrentPath(registry: Registry) {
-  const { selectedId, dissectFdi } = getState();
-  pushPath(pathFor(selectedId, dissectFdi, registry));
+/** One explicit user action creates one history entry, after the scene commits. */
+export async function navigate(command: NavigationCommand) {
+  if (navigationHandler) await navigationHandler(command);
+  else await command();
 }

@@ -8,9 +8,9 @@ export function NerveControls() {
   const side = useApp((s) => s.nerveSide);
   const passage = useApp((s) => s.passageIds.length > 0);
   const t = explorationText(useLang());
-  return <div className="ds-nerve-controls">
-    <label htmlFor="ds-nerve-view" className="ds-label-sm">{t.nerveGroups}</label>
-    <select id="ds-nerve-view" value={passage ? 'passage' : view} onChange={(e) => actions.setNerveView(e.target.value as typeof view)}>
+  return <details className="ds-nerve-controls">
+    <summary className="ds-label-sm">{t.nerveGroups}</summary>
+    <select id="ds-nerve-view" aria-label={t.nerveGroups} value={passage ? 'passage' : view} onChange={(e) => actions.setNerveView(e.target.value as typeof view)}>
       {passage && <option value="passage" disabled>{t.passageActive}</option>}
       {NERVE_VIEWS.map((v) => <option key={v} value={v}>{t[v]}</option>)}
     </select>
@@ -18,5 +18,5 @@ export function NerveControls() {
       {(['both', 'right', 'left'] as const).map((s) => <button key={s} type="button" role="radio" aria-checked={!passage && side === s} className={!passage && side === s ? 'is-active' : ''} onClick={() => actions.setNerveSide(s)}>{t[s]}</button>)}
     </div>
     <p className="ds-evidence">{passage ? t.passageActive : t.nerveHint}</p>
-  </div>;
+  </details>;
 }

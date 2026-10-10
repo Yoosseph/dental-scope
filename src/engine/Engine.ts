@@ -34,6 +34,7 @@ import { renderPixelRatio } from './renderQuality';
 import { resolveContent } from '../content/content';
 import { SINUS_NOTE } from '../i18n/study';
 import { dentitionFrame, skullOverviewFrame } from './framing';
+import { navigate } from '../app/router';
 
 interface MeshEntry {
   key: string;
@@ -240,7 +241,7 @@ export class Engine {
     this.startView(0);
 
     this.labels = new LabelLayer(this.overlay);
-this.labels.onClick = (id) => { void this.selectFromUI(id, { focus: false }); };
+    this.labels.onClick = (id) => { void navigate(() => this.selectFromUI(id, { focus: false })); };
     this.labels.onHover = (id, rect) => {
       actions.hover(id);
       if (id && rect) {
@@ -285,6 +286,7 @@ this.labels.onClick = (id) => { void this.selectFromUI(id, { focus: false }); };
   /* ============================================================== loading */
 
   async loadAll() {
+    setState({ error: undefined });
     try {
       for (const st of STAGES) {
         actions.setLoading(st.id, 0);
@@ -297,7 +299,7 @@ this.labels.onClick = (id) => { void this.selectFromUI(id, { focus: false }); };
       }
       // idle prefetch of the detailed exemplar tooth
       const idle = (window as unknown as { requestIdleCallback?: (cb: () => void) => void }).requestIdleCallback ?? ((cb: () => void) => setTimeout(cb, 600));
-      idle(() => void this.ensureTooth(EXEMPLAR_TOOTH));
+      idle(() => { if (!this.disposed) void this.ensureTooth(EXEMPLAR_TOOTH).catch(() => {}); });
     } catch (e) {
       console.error(e);
       setState({ error: 'load' }); // shown translated by the loading card
@@ -311,9 +313,13 @@ this.labels.onClick = (id) => { void this.selectFromUI(id, { focus: false }); };
     const asset = this.registry.get(`tooth-${fdi}`)?.tooth?.asset;
     if (!asset) return Promise.resolve();
     const p = this.loader.load(asset).then((geos) => {
+      if (this.disposed) return;
       this.addGeometries(geos);
       this.loadedTeeth.add(fdi);
       this.refreshAll();
+    }).catch((error: unknown) => {
+      this.toothLoads.delete(fdi);
+      throw error;
     });
     this.toothLoads.set(fdi, p);
     return p;
@@ -492,8 +498,8 @@ this.labels.onClick = (id) => { void this.selectFromUI(id, { focus: false }); };
     if (s.selectedId !== p.selectedId || s.hoveredId !== p.hoveredId || s.dissectFdi !== p.dissectFdi) this.refreshHighlight();
     if (visChanged || s.lang !== p.lang || s.numbering !== p.numbering) this.pointerDirty = true;
     if (s.clip !== p.clip || s.dissectFdi !== p.dissectFdi) this.refreshClip();
-    if (s.clip.enabled && !p.clip.enabled && s.dissectFdi === null) void this.ensureAllTeeth();
-    if (s.dissectFdi !== p.dissectFdi && s.dissectFdi !== null) void this.ensureTooth(s.dissectFdi);
+    if (s.clip.enabled && !p.clip.enabled && s.dissectFdi === null) void this.ensureAllTeeth().catch(() => setState({ error: 'load' }));
+    if (s.dissectFdi !== p.dissectFdi && s.dissectFdi !== null) void this.ensureTooth(s.dissectFdi).catch(() => {});
     if (s.autoRotate !== p.autoRotate) this.rig.controls.autoRotate = s.autoRotate;
     if (s.theme !== p.theme) this.applyTheme(s.theme);
     if (s.orbitMode !== p.orbitMode) this.rig.setMode(s.orbitMode);
@@ -883,8 +889,8 @@ this.labels.onClick = (id) => { void this.selectFromUI(id, { focus: false }); };
       if (moved > 6 || performance.now() - d.t > 600) return;
       this.setPointer(ev);
       const hit = this.pick();
-      if (hit) void this.selectFromUI(hit, { focus: false, reveal: false });
-      else actions.select(null);
+      if (hit) void navigate(() => this.selectFromUI(hit, { focus: false, reveal: false }));
+      else void navigate(() => actions.select(null));
     });
     dom.addEventListener('dblclick', (ev) => {
       this.setPointer(ev);
@@ -1007,15 +1013,18 @@ this.labels.onClick = (id) => { void this.selectFromUI(id, { focus: false }); };
   async selectFromUI(id: string, opts: { focus?: boolean; reveal?: boolean } = {}) {
     const s = this.registry.get(id);
     if (!s) return;
+    if (!await this.prepareSelection(id, 'select', s.toothFdi)) return;
     if (!getState().developmentStage && this.developmentScene.active) { this.developmentScene.finishTransition(); this.refreshVisibility(); }
     if (id.startsWith('development-')) {
       actions.setDevelopmentStage(getState().developmentStage ?? 'incisor-transition');
+      this.cancelSelection();
       this.setView('three-quarter');
       return;
     } else if (getState().developmentStage) actions.setDevelopmentStage(null);
     const { focus = true, reveal = true } = opts;
     const fdi = s.toothFdi;
     const isToothPart = fdi !== undefined && s.id !== `tooth-${fdi}`;
+    if (!isToothPart && getState().dissectFdi !== null) actions.exitDissect();
     if (reveal) setState(revealPatch(this.registry, id, getState()));
     if (isToothPart) {
       const st = getState();
@@ -1027,7 +1036,6 @@ this.labels.onClick = (id) => { void this.selectFromUI(id, { focus: false }); };
         actions.setDissectLevel(levelShowing(id));
       } else if (inTooth && !levelShows(st.dissectLevel, id)) actions.setDissectLevel(levelShowing(id));
     }
-    if (fdi !== undefined) await this.ensureTooth(fdi);
     actions.select(id);
     if (focus) this.focus(id);
   }
@@ -1070,12 +1078,42 @@ this.labels.onClick = (id) => { void this.selectFromUI(id, { focus: false }); };
 
   /** Enter on the tooth's assembled pose, even while the mouth/board is moving back. */
   async exploreTooth(fdi: number) {
+    if (!await this.prepareSelection(`tooth-${fdi}`, 'explore', fdi)) return;
     actions.enterDissect(fdi);
-    await this.ensureTooth(fdi);
     // Let the new control tray render and its viewport insets be measured first.
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
     if (this.disposed || getState().dissectFdi !== fdi) return;
     this.focus(`tooth-${fdi}`, { restPose: true });
+  }
+
+  /** A newer choice, route, reset or scene transition invalidates this request. */
+  private async prepareSelection(id: string, kind: 'select' | 'explore', fdi?: number) {
+    const request = { id, kind, status: 'loading' as const };
+    setState({ selectionRequest: request });
+    try {
+      if (fdi !== undefined) await this.ensureTooth(fdi);
+      return !this.disposed && getState().selectionRequest === request;
+    } catch {
+      if (!this.disposed && getState().selectionRequest === request) setState({ selectionRequest: { ...request, status: 'error' } });
+      return false;
+    }
+  }
+
+  cancelSelection() { setState({ selectionRequest: null }); }
+
+  async retrySelection() {
+    const request = getState().selectionRequest;
+    if (!request || request.status !== 'error') return;
+    if (request.kind === 'explore') await this.exploreTooth(this.registry.require(request.id).toothFdi!);
+    else await this.selectFromUI(request.id);
+  }
+
+  async retryAssets() {
+    await this.loadAll();
+    if (getState().clip.enabled && getState().dissectFdi === null) {
+      try { await this.ensureAllTeeth(); }
+      catch { setState({ error: 'load' }); }
+    }
   }
 
   focus(id: string, opts: { restPose?: boolean } = {}) {

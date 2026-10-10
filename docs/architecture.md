@@ -15,6 +15,7 @@ Checked against the code on 2026-09-26.
 | Install | `npm install` | Node 22 (as in CI). Nothing else is needed for the app. |
 | Run | `npm run dev` | Vite dev server on <http://localhost:5173>. In dev, `window.ds = { registry, engine }` is exposed for debugging. |
 | Unit tests | `npm test` | Vitest, `src/**/*.test.ts`, Node environment (no WebGL) |
+| Browser tests | `npm run test:e2e` | Playwright, `e2e/`, desktop and phone Chromium against the production build |
 | Type check | `npm run typecheck` | `tsc -b --noEmit`, strict |
 | Build | `npm run build` | Type check, then `vite build` into `dist/`. The SEO plugin also writes `404.html`, the tooth entry pages, `robots.txt` and `sitemap.xml` (§9). |
 | Preview a build | `npm run preview` | |
@@ -29,7 +30,7 @@ Build-time environment variables:
 | `VITE_DS_REPO_URL` | Links the "Made by Yoseph" credit and the About dialog to the repository. When unset these show as plain text, so a build never advertises a private repository. |
 | `VITE_DS_URL=off` | Stop the app from writing to the address bar (for embedding). |
 
-CI (`.github/workflows/ci.yml`) runs typecheck, test and build on pushes and PRs. Vercel deploys `main` to production and every other branch to a preview. `DS_SITE_URL` and `VITE_DS_REPO_URL` come from the Vercel project's environment variables; unknown deep links fall back to the generated `404.html` app shell.
+CI (`.github/workflows/ci.yml`) runs app/test typechecking, lint, unit tests, production build and browser tests on pushes to main and PRs. Browser failures retain screenshots and traces. Vercel deploys `main` to production and every other branch to a preview. `DS_SITE_URL` and `VITE_DS_REPO_URL` come from the Vercel project's environment variables; unknown deep links fall back to the generated `404.html` app shell.
 
 ## 2. Principles
 
@@ -66,6 +67,7 @@ src/
   search/search.ts      Index builder and scorer
   state/
     store.ts            Zustand store: AppState, initial state, actions, persisted preferences
+    sceneTransitions.ts Shared scene reset and adult-scene snapshot for development transitions
     visibility.ts       Pure per-mesh visibility resolver + pluggable filters
   engine/
     Engine.ts           Owns renderer, scene, loop, loading, visibility/highlight/explode/section/labels, picking
@@ -80,7 +82,7 @@ src/
   ui/                   React components: App, TopBar, LayersPanel, StructureTree, DetailPanel, Dock
                         (bottom toolbar), CameraControls (orbit, view pictograms / View picker, zoom),
                         SearchPanel, Overlays (About, footer, loading, start hint), icons,
-                        useKeyboard, context (ServicesContext)
+                        useKeyboard, useViewportInsets (panel occlusion), context (ServicesContext)
   modes/modes.ts        🧩 Mode interface, lesson format, quiz picker (not wired to the UI)
   styles/               tokens.css (design tokens: paper and ink, one ultramarine accent, light/dark), app.css
 public/
@@ -97,7 +99,7 @@ docs/                   This file, assets, content, sources, research and compar
 1. `main.tsx` calls `restorePreferences()` (numbering, theme, orbit mode from `localStorage`), checks WebGL, then `loadManifest()`.
 2. It builds the `Registry` (pure, from the manifest), the `Engine` and the search index, and renders `<App>` with all three in `ServicesContext`.
 3. `App` mounts the engine on the stage `<div>`, starts `engine.loadAll()` (staged loading, §7) and `startRouter()`. It sets `data-theme` on `<html>`, installs the keyboard shortcuts (`useKeyboard`) and tells the engine which parts of the canvas are covered by panels (`engine.setInsets`).
-4. `startRouter` applies the current URL (select, focus, maybe enter dissection) and then keeps the URL in sync with `selectedId` / `dissectFdi` through `replaceState`. Explicit navigation (search, tree, detail links) calls `pushPath`. `popstate` / `hashchange` re-apply. It also keeps `document.title` in sync.
+4. `startRouter` applies the current URL (select, focus, maybe enter dissection) and then keeps the URL in sync with `selectedId` / `dissectFdi` through `replaceState`. Explicit navigation (search, tree, detail links) uses `navigate(command)` to push an entry after the scene commits. `popstate` / `hashchange` re-apply. It also keeps `document.title` in sync.
 
 | URL | Effect |
 |---|---|
@@ -105,6 +107,9 @@ docs/                   This file, assets, content, sources, research and compar
 | `/tooth/36/` | Select and focus tooth 36 (FDI). The build writes a static entry page here, with its own title. |
 | `/tooth/36/dissect` | Open the dissection of tooth 36 |
 | `/structure/<id>` | Select and focus any structure (served through the `noindex` 404.html shell on static hosts) |
+| `/credits/` | Open the native credits dialog over the explorer; translated links use `/credits/<lang>/`. |
+
+Explicit UI and canvas selections use `navigate(command)`: URL synchronization is suspended while the command loads and commits the scene, then one history entry is pushed. Route replay cancels pending selection and suppresses history writes. The guided demonstration replaces its route instead of adding history entries.
 
 ## 5. State (`src/state/store.ts`)
 
@@ -113,13 +118,15 @@ One vanilla Zustand store. React reads it with `useApp(selector)`, and the engin
 | Group | Fields |
 |---|---|
 | loading | `ready`, `loading` (stage → 0…1), `error` |
-| selection | `selectedId`, `hoveredId` |
+| selection | `selectedId`, `hoveredId`, `selectionRequest` (target, command and loading/error status) |
 | visibility | `categories` (id → `on`/`ghost`/`off`), `hidden`, `ghosted` (id → true), `isolateId`, `isolateContext`, `ghostOpacity` |
 | arch view | `explode` (0…1), `explodePhase` (1 in position / 2 laid out), `labels`, `clip` {enabled, axis, offset, flip}, `view` (preset or null), `autoRotate`, `orbitMode` (`fixed`/`free`) |
 | tooth dissection | `dissectFdi`, `dissectLevel` (0 whole → 4 canals), `toothExplode` |
 | UI | `numbering`, `theme`, `searchOpen`, `aboutOpen`, `panel` (layers/tree), `mobileSheet`, `mode` 🧩 |
 
 `numbering`, `theme` and `orbitMode` are saved per viewer in `localStorage`.
+
+`state/sceneTransitions.ts` owns the shared study/development reset and the adult scene snapshot restored on leaving development. Pending selection is plain state: only the current request may commit after a download, and failed tooth requests are removed from the engine cache so Retry can load them again. `ui/useViewportInsets.ts` measures the panels, mobile controls and tour; the engine receives only the resulting insets.
 
 **Visibility** (`state/visibility.ts`). `resolveMesh(meshKey, ctx)` is the only function that decides whether a mesh is `on`, `ghost`, `faint` (a quieter ghost used for context around a dissected tooth) or `off`. It combines categories, hide/ghost on the structure and its ancestors, tooth shell vs internal layers (`layersActive`), dissection-level rules (`dissectRule`), isolation, and any filters added with `registerVisibilityFilter` (the hook for modes and a future timeline). `revealPatch` makes a structure reachable, and `Engine.selectFromUI` uses it for search, tree, label and deep-link navigation.
 

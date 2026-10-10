@@ -7,7 +7,7 @@ import { typeLabel } from '../i18n/anatomy';
 import { nameOf, useT, type Lang } from '../i18n';
 import type { Registry } from '../anatomy/registry';
 import type { Structure } from '../anatomy/types';
-import { pushCurrentPath } from '../app/router';
+import { navigate } from '../app/router';
 import { actions, useApp } from '../state/store';
 import { useServices } from './context';
 import { IconChevron, IconEye, IconEyeOff } from './icons';
@@ -98,8 +98,7 @@ const TreeNode = memo(function TreeNode({ id, depth, open, toggle, activeId, onF
   const isOpen = open.has(id);
 
   const select = async () => {
-    await engine.selectFromUI(id, { focus: true });
-    pushCurrentPath(registry);
+    await navigate(() => engine.selectFromUI(id, { focus: true }));
   };
 
   return (

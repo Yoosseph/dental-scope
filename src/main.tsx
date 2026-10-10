@@ -29,6 +29,7 @@ async function boot() {
     root.render(<p className="ds-fatal">{t().fatalWebgl}</p>);
     return;
   }
+  root.render(<div className="ds-loading ds-panel" role="status">{t().preparing}</div>);
   const manifest = await loadManifest();
   const registry = new Registry(manifest);
   const engine = new Engine(registry);

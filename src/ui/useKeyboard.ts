@@ -1,3 +1,4 @@
+import { navigate } from '../app/router';
 import { useEffect } from 'react';
 import type { Engine } from '../engine/Engine';
 import { actions, getState } from '../state/store';
@@ -23,8 +24,8 @@ export function useKeyboard(engine: Engine) {
           break;
         case 'Escape':
           if (s.searchOpen) actions.openSearch(false);
-          else if (sel) actions.select(null);
-          else if (s.dissectFdi !== null) actions.exitDissect();
+          else if (sel) void navigate(() => actions.select(null));
+          else if (s.dissectFdi !== null) void navigate(() => actions.exitDissect());
           else if (s.isolateId) actions.isolate(null);
           break;
         case 'f':
@@ -45,7 +46,7 @@ export function useKeyboard(engine: Engine) {
         case 'd': {
           const fdi = sel ? engine.registry.get(sel)?.toothFdi : undefined;
           if (fdi !== undefined) {
-            void engine.exploreTooth(fdi);
+            void navigate(() => engine.exploreTooth(fdi));
           }
           break;
         }

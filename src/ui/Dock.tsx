@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState, type RefObject } from 'react';
 import { formatTooth } from '../anatomy/notation';
-import { pushCurrentPath } from '../app/router';
+import { navigate } from '../app/router';
 import { nameOf, useT, type Messages } from '../i18n';
 import { actions, DISSECT_LEVELS, getState, useApp, type ClipAxis } from '../state/store';
 import { CameraControls } from './CameraControls';
@@ -258,10 +258,7 @@ function DissectControls({ fdi }: { fdi: number }) {
   const levels = useTween();
   const layers = useTween();
   const exit = () => {
-    actions.exitDissect();
-    actions.select(`tooth-${fdi}`);
-    engine.focus(`tooth-${fdi}`);
-    pushCurrentPath(registry);
+    void navigate(() => { actions.exitDissect(); actions.select(`tooth-${fdi}`); engine.focus(`tooth-${fdi}`); });
   };
 
   // steps through every level to Root canals, holding briefly on each one
