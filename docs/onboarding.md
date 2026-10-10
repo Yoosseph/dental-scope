@@ -35,6 +35,13 @@ later. Asset failures or missing controls offer retry and exploration. Playback
 pauses when the page is hidden, supports a manual pause, and respects reduced
 motion. Keyboard focus stays in the guide and returns to the replay control.
 
+The guide offers 1×, 1.5× and 2× playback. The adapter supplies the current rate,
+so changing speed adjusts the current hold without restarting a step. Loading
+and layout readiness keep their real-time timeout. Previous/Next and the named
+step picker cancel the current run and reconstruct preceding actions through
+the same controls, skipping their pointers and reading holds. The requested
+step plays normally; manual pause is preserved after its scene is prepared.
+
 The caption avoids the demonstrated control. The app measures it along with
 other panels and passes its clearance to the camera, including a top inset on
 phones. Resize and position observers keep the anatomy clear as trays change.

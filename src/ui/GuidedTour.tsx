@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { FIRST_VISIT_TOOTH, FIRST_VISIT_TOUR, needsFirstVisitGuide, playTour, rememberGuideVisit, tourDelay } from '../app/tour';
 import { navigate } from '../app/router';
 import { isCompactLayout } from '../app/viewport';
@@ -48,7 +48,11 @@ export function GuidedTour() {
   const [highlight, setHighlight] = useState(false);
   const [status, setStatus] = useState<'loading' | 'playing' | 'error'>('loading');
   const [paused, setPaused] = useState(false);
+  const [speed, setSpeed] = useState(1);
+  const speedRef = useRef(1);
+  const [seek, setSeek] = useState<{ index?: number; revision: number }>({ revision: 0 });
   const pauseRef = useRef(false);
+  const lastRun = useRef<number | null>(null);
   const controller = useRef<AbortController | null>(null);
   const card = useRef<HTMLDivElement>(null);
   const cursor = useRef<HTMLDivElement>(null);
@@ -61,6 +65,7 @@ export function GuidedTour() {
     setResetKey(`${open}:${runId}`);
     if (open) {
       setPaused(false);
+      setSeek({ revision: 0 });
       setIndex(0);
       setMark(null);
       setPlacement('top');
@@ -95,7 +100,10 @@ export function GuidedTour() {
     controller.current = abort;
     const signal = abort.signal;
     const focusBefore = document.activeElement;
-    pauseRef.current = false;
+    if (lastRun.current !== runId) {
+      pauseRef.current = false;
+      lastRun.current = runId;
+    }
     actions.resetGuideScene(true);
     engine.resetToStart();
     try { rememberGuideVisit(localStorage); } catch { /* Storage is optional. */ }
@@ -108,11 +116,11 @@ export function GuidedTour() {
       signal.throwIfAborted();
       while (!getState().ready && !getState().error) await tourDelay(100, signal);
       if (getState().error) throw new Error('Scene loading failed');
-      setStatus('playing');
       let expandedDetail = false;
       await playTour(FIRST_VISIT_TOUR, {
         paused: () => pauseRef.current || document.hidden,
-        showStep: (_step, next) => setIndex(next),
+        speed: () => speedRef.current,
+        showStep: (_step, next) => { setIndex(next); setStatus('playing'); },
         prepare: next => {
           expandedDetail = isCompactLayout() && next.detailExpanded === true;
           if (next.panel) {
@@ -171,7 +179,7 @@ export function GuidedTour() {
             && (!expected?.asset || s.loading[expected.asset] === 1);
         },
         clearPointer: () => setHighlight(false),
-      }, signal, window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+      }, signal, window.matchMedia('(prefers-reduced-motion: reduce)').matches, seek.index);
     };
     void demonstrate().catch(() => {
       if (signal.aborted) return;
@@ -193,7 +201,7 @@ export function GuidedTour() {
         engine.resetToStart();
         actions.closeGuide();
       } else if (event.key === 'Tab') {
-        const buttons = [...card.current!.querySelectorAll<HTMLElement>('button:not(:disabled), summary, details[open] a[href]')];
+        const buttons = [...card.current!.querySelectorAll<HTMLElement>('button:not(:disabled), select:not(:disabled), summary, details[open] a[href]')];
         const current = buttons.indexOf(document.activeElement as HTMLElement);
         event.preventDefault();
         buttons[(current + (event.shiftKey ? -1 : 1) + buttons.length) % buttons.length]?.focus();
@@ -208,7 +216,7 @@ export function GuidedTour() {
       if (focusBefore instanceof HTMLElement && focusBefore.isConnected) focusBefore.focus();
       else document.querySelector<HTMLButtonElement>('[data-tour="replay"]')?.focus();
     };
-  }, [open, runId, engine]);
+  }, [open, runId, engine, seek]);
 
   // Follow responsive tray motion imperatively; React does not render per animation frame.
   useEffect(() => {
@@ -239,8 +247,17 @@ export function GuidedTour() {
 
   if (!open) return null;
   const togglePause = () => { pauseRef.current = !pauseRef.current; setPaused(pauseRef.current); };
+  const changeSpeed = (next: number) => { speedRef.current = next; setSpeed(next); };
+  const jump = (next: number) => {
+    controller.current?.abort();
+    setIndex(next);
+    setMark(null);
+    setHighlight(false);
+    setStatus('loading');
+    setSeek(previous => ({ index: next, revision: previous.revision + 1 }));
+  };
   const development = step.development && DEVELOPMENT_TEXT[lang];
-  return <div className={`ds-tour${paused ? ' is-paused' : ''}`}>
+  return <div className={`ds-tour${paused ? ' is-paused' : ''}`} style={{ '--tour-speed': speed } as CSSProperties}>
     <div className="ds-tour-shield" aria-hidden="true" />
     {mark && status === 'playing' && <>
       {highlight &&
@@ -269,6 +286,17 @@ export function GuidedTour() {
         </>}
       </div>
       <div className="ds-tour-progress" aria-hidden="true"><span style={{ width: `${(index + 1) / FIRST_VISIT_TOUR.length * 100}%` }} /></div>
+      <div className="ds-tour-navigation">
+        <button type="button" className="ds-secondary" aria-label={text.previous} disabled={index === 0} onClick={() => jump(index - 1)}>←</button>
+        <select aria-label={text.step} value={index} onChange={event => jump(Number(event.target.value))}>
+          {FIRST_VISIT_TOUR.map((item, next) => <option key={item.id} value={next}>{next + 1}. {text.steps[item.id][0]}</option>)}
+        </select>
+        <button type="button" className="ds-secondary" aria-label={text.next} disabled={index === FIRST_VISIT_TOUR.length - 1} onClick={() => jump(index + 1)}>→</button>
+      </div>
+      <div className="ds-tour-speed" role="group" aria-label={text.speed}>
+        <span>{text.speed}</span>
+        {[1, 1.5, 2].map(rate => <button key={rate} type="button" className="ds-secondary" aria-pressed={speed === rate} onClick={() => changeSpeed(rate)}>{rate}×</button>)}
+      </div>
       <div className="ds-tour-actions">
         <span className="ds-tour-count">{index + 1} / {FIRST_VISIT_TOUR.length}</span>
         <button type="button" className="ds-secondary ds-tour-skip" onClick={close}>{text.skip}</button>

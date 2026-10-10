@@ -75,6 +75,79 @@ describe('scripted tour playback', () => {
     await playing;
     expect(playback.activate).toHaveBeenCalledTimes(1);
   });
+
+  it.each([1, 1.5, 2])('scales narration and pointer timing at %sx', async speed => {
+    const playback = port();
+    playback.speed = () => speed;
+    let finished = false;
+    const playing = playTour([step], playback, new AbortController().signal).then(() => { finished = true; });
+    // 450ms pointer, 150ms click, 400ms narration.
+    await vi.advanceTimersByTimeAsync(1000 / speed - 20);
+    expect(finished).toBe(false);
+    await vi.advanceTimersByTimeAsync(40);
+    await playing;
+    expect(finished).toBe(true);
+    expect(playback.activate).toHaveBeenCalledExactlyOnceWith(step);
+  });
+
+  it('applies a speed change to the current reading hold without replaying its click', async () => {
+    const playback = port();
+    let speed = 1;
+    playback.speed = () => speed;
+    let finished = false;
+    const playing = playTour([{ ...step, hold: 4000 }], playback, new AbortController().signal).then(() => { finished = true; });
+    await vi.advanceTimersByTimeAsync(1600);
+    speed = 2;
+    await vi.advanceTimersByTimeAsync(1700);
+    await playing;
+    expect(finished).toBe(true);
+    expect(playback.activate).toHaveBeenCalledTimes(1);
+  });
+
+  it('rebuilds earlier actions without narration, lands on the requested step and keeps it paused', async () => {
+    const playback = port();
+    let paused = true;
+    playback.paused = () => paused;
+    const destination = { ...step, id: 'destination', target: 'other-button' };
+    const playing = playTour([step, destination], playback, new AbortController().signal, false, 1);
+    await vi.advanceTimersByTimeAsync(800);
+    expect(playback.activate).toHaveBeenNthCalledWith(1, step);
+    expect(playback.activate).toHaveBeenNthCalledWith(2, destination);
+    expect(playback.showStep).toHaveBeenCalledExactlyOnceWith(destination, 1);
+    expect(playback.point).toHaveBeenCalledTimes(2);
+    expect(playback.point).toHaveBeenNthCalledWith(1, 'other-button', false);
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(playback.clearPointer).toHaveBeenCalledTimes(2);
+    paused = false;
+    await vi.runAllTimersAsync();
+    await playing;
+    expect(playback.activate).toHaveBeenCalledTimes(2);
+  });
+
+  it('allows jumping to the welcome step while paused', async () => {
+    const playback = port();
+    playback.paused = () => true;
+    const abort = new AbortController();
+    const welcome = { id: 'welcome', hold: 1800 };
+    const playing = playTour([welcome], playback, abort.signal, false, 0).catch(() => {});
+    await vi.advanceTimersByTimeAsync(100);
+    expect(playback.showStep).toHaveBeenCalledExactlyOnceWith(welcome, 0);
+    abort.abort();
+    await playing;
+  });
+
+  it('keeps the loading timeout independent of playback speed', async () => {
+    const playback = port();
+    playback.speed = () => 2;
+    playback.locate = () => false;
+    let finished = false;
+    const playing = playTour([step], playback, new AbortController().signal).catch(() => { finished = true; });
+    await vi.advanceTimersByTimeAsync(14_000);
+    expect(finished).toBe(false);
+    await vi.advanceTimersByTimeAsync(1100);
+    await playing;
+    expect(finished).toBe(true);
+  });
 });
 
 describe('first visit and replay', () => {

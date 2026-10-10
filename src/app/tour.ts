@@ -45,6 +45,7 @@ export const FIRST_VISIT_TOUR: readonly TourStep[] = [
 
 export interface TourPlayback {
   paused: () => boolean;
+  speed?: () => number;
   showStep: (step: TourStep, index: number) => void;
   prepare: (step: TourStep) => void;
   locate: (target: string) => boolean;
@@ -64,47 +65,54 @@ export function tourDelay(ms: number, signal: AbortSignal): Promise<void> {
   });
 }
 
-export async function playTour(steps: readonly TourStep[], port: TourPlayback, signal: AbortSignal, reducedMotion = false) {
-  const wait = async (ms: number) => {
+export async function playTour(steps: readonly TourStep[], port: TourPlayback, signal: AbortSignal, reducedMotion = false, startIndex?: number) {
+  const wait = async (ms: number, scaled = true, ignorePause = false) => {
     let remaining = ms;
     // Always pass through the gate, even for a zero-duration action.
     do {
-      while (port.paused()) await tourDelay(80, signal);
-      const slice = Math.min(80, remaining);
+      while (!ignorePause && port.paused()) await tourDelay(80, signal);
+      const rate = scaled ? (port.speed?.() ?? 1) : 1;
+      const slice = Math.min(80, remaining / rate);
       await tourDelay(slice, signal);
-      if (!port.paused()) remaining -= slice;
-    } while (remaining > 0 || port.paused());
+      if (ignorePause || !port.paused()) remaining -= slice * rate;
+    } while (remaining > 0 || (!ignorePause && port.paused()));
     signal.throwIfAborted();
   };
-  const until = async (check: () => boolean) => {
+  const until = async (check: () => boolean, ignorePause: boolean) => {
     let elapsed = 0;
     while (!check()) {
       if (elapsed >= 15000) throw new Error('Tour target unavailable');
-      await wait(80);
+      // Loading and layout get the same real-time budget at every playback speed.
+      await wait(80, false, ignorePause);
       elapsed += 80;
     }
-    await wait(0);
+    await wait(0, false, ignorePause);
   };
   for (const [index, step] of steps.entries()) {
-    await wait(0);
+    const rebuilding = index < (startIndex ?? 0);
+    // A jump works while paused, then preserves the pause at the requested step.
+    const seeking = startIndex !== undefined && index <= startIndex;
+    await wait(0, false, seeking);
     port.clearPointer();
-    port.showStep(step, index);
+    if (!rebuilding) port.showStep(step, index);
     port.prepare(step);
     if (step.target) {
-      await until(() => port.locate(step.target!));
-      port.point(step.target, false);
-      await wait(reducedMotion ? 100 : 450);
-      if (step.action) {
+      await until(() => port.locate(step.target!), seeking);
+      if (!rebuilding) {
+        port.point(step.target, false);
+        await wait(reducedMotion ? 100 : 450, true, seeking);
+      }
+      if (step.action && !rebuilding) {
         // Re-measure after layout/viewport changes; never click a stale target.
-        await until(() => port.locate(step.target!));
+        await until(() => port.locate(step.target!), seeking);
         port.point(step.target, true);
-        await wait(reducedMotion ? 100 : 150);
+        await wait(reducedMotion ? 100 : 150, true, seeking);
       }
     }
     if (step.action) port.activate(step);
-    await until(() => port.settled(step));
-    // The circle's CSS animation lasts 1.5s; the narration holds independently.
-    await wait(step.hold);
+    await until(() => port.settled(step), seeking);
+    // Rebuild through the same controls, without narrating the preceding steps.
+    if (!rebuilding) await wait(step.hold);
   }
   port.clearPointer();
 }

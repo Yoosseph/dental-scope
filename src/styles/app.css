@@ -2650,19 +2650,26 @@ button.ds-layer-name:hover {
 .ds-tour-actions .ds-tour-skip { color: var(--ink); font-weight: 600; border-color: var(--muted); }
 .ds-tour-progress { height: 2px; background: var(--line); margin-top: 12px; flex-shrink: 0; }
 .ds-tour-progress span { display: block; height: 100%; background: var(--accent); transition: width 400ms var(--ease); }
+.ds-tour-navigation { display: flex; gap: 6px; padding-top: 10px; flex-shrink: 0; }
+.ds-tour-navigation .ds-secondary { width: 36px; min-height: 36px; padding: 0; flex: 0 0 36px; }
+.ds-tour-navigation select { flex: 1; min-width: 0; min-height: 36px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel-solid); color: var(--ink); padding: 0 6px; font: 12px var(--font-ui); }
+.ds-tour-speed { display: flex; align-items: center; gap: 6px; padding-top: 8px; flex-shrink: 0; }
+.ds-tour-speed > span { font-size: 12px; color: var(--muted); margin-right: auto; }
+.ds-tour-speed .ds-secondary { min-height: 32px; padding: 4px 10px; flex: 0 0 auto; }
+.ds-tour-speed [aria-pressed='true'] { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
 .ds-tour-circle { position: fixed; pointer-events: none; z-index: 1; overflow: visible; }
-.ds-tour-circle path { fill: none; stroke: #e13930; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; animation: ds-tour-pen 1.5s linear forwards; }
+.ds-tour-circle path { fill: none; stroke: #e13930; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; animation: ds-tour-pen calc(1.5s / var(--tour-speed, 1)) linear forwards; }
 @keyframes ds-tour-pen { 0% { stroke-dashoffset: 1; opacity: 1; } 30%, 75% { stroke-dashoffset: 0; opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 0; } }
-.ds-tour-cursor { position: fixed; pointer-events: none; z-index: 2; transition: left 350ms var(--ease), top 350ms var(--ease); filter: drop-shadow(0 2px 3px var(--scrim-strong)); }
+.ds-tour-cursor { position: fixed; pointer-events: none; z-index: 2; transition: left calc(350ms / var(--tour-speed, 1)) var(--ease), top calc(350ms / var(--tour-speed, 1)) var(--ease); filter: drop-shadow(0 2px 3px var(--scrim-strong)); }
 .ds-tour-cursor svg { transform-origin: 3px 2px; }
-.ds-tour-cursor.is-clicking svg { animation: ds-tour-click 400ms ease-out; }
+.ds-tour-cursor.is-clicking svg { animation: ds-tour-click calc(400ms / var(--tour-speed, 1)) ease-out; }
 @keyframes ds-tour-click { 0%, 100% { transform: scale(1); } 40% { transform: scale(.72); } }
 .ds-tour-click { position: absolute; left: -15px; top: -15px; width: 30px; height: 30px; border: 2px solid var(--accent); border-radius: 50%; opacity: 0; }
-.is-clicking .ds-tour-click { animation: ds-tour-ripple 600ms ease-out; }
+.is-clicking .ds-tour-click { animation: ds-tour-ripple calc(600ms / var(--tour-speed, 1)) ease-out; }
 @keyframes ds-tour-ripple { 0% { transform: scale(.3); opacity: 1; } 100% { transform: scale(1.7); opacity: 0; } }
 .ds-tour.is-paused * { animation-play-state: paused; }
 @media (max-width: 1023px), (pointer: coarse) and (max-width: 1366px) {
-  .ds-tour-card, .ds-tour-card[data-position='left'] { left: 50%; right: auto; transform: translateX(-50%); top: calc(76px + var(--safe-top, 0px)); max-height: min(280px, calc(var(--visual-height, 100dvh) * .35)); padding: 10px 14px; }
+  .ds-tour-card, .ds-tour-card[data-position='left'] { left: 50%; right: auto; transform: translateX(-50%); top: calc(76px + var(--safe-top, 0px)); max-height: min(360px, calc(var(--visual-height, 100dvh) * .43)); padding: 10px 14px; }
   .ds-tour-card[data-position='bottom'] { top: auto; bottom: calc(76px + var(--safe-bottom, 0px)); }
   .ds-tour-card h2 { font-size: 22px; }
   .ds-tour-card p { font-size: 13px; }

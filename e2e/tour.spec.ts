@@ -109,6 +109,67 @@ test('the nerve step shows a focused view with a clear explanation', async ({ pa
   await page.getByRole('button', { name: 'Close guide', exact: true }).click();
 });
 
+test('guide speed controls and stage jumps preserve the scene and manual pause', async ({ page }, testInfo) => {
+  await page.addInitScript(() => localStorage.setItem('ds.guide.seen.v1', 'seen'));
+  await page.goto('/');
+  await expect(page.getByRole('status')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Replay guide', exact: true }).click();
+  const card = page.locator('.ds-tour-card');
+  await expect(page.locator('#ds-tour-body')).toContainText('Watch a short demonstration');
+  await card.getByRole('button', { name: 'Pause', exact: true }).click();
+  await expect(card.getByRole('button', { name: '1×', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await card.getByRole('button', { name: '1.5×', exact: true }).click();
+  await expect(card.getByRole('button', { name: '1.5×', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await card.getByRole('button', { name: '2×', exact: true }).click();
+  await expect(card.getByRole('button', { name: '2×', exact: true })).toHaveAttribute('aria-pressed', 'true');
+
+  await card.getByRole('combobox', { name: 'Guide step', exact: true }).selectOption('13');
+  await expect(page.locator('#ds-tour-body')).toContainText('detail panel now describes');
+  await expect(page.locator('.ds-tour-circle')).toHaveAttribute('data-target', 'tooth-details');
+  await expect(page.locator('.ds-detail-title')).toHaveText('Central groove');
+  await expect(page.locator('[data-tour="surface-features-toggle"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(card.getByRole('button', { name: 'Resume', exact: true })).toBeVisible();
+  await expect(card.getByRole('button', { name: '2×', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(card.getByRole('combobox', { name: 'Guide step' })).toBeInViewport();
+  expect(await card.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
+  await page.evaluate(async () => {
+    window.restoreGuideRendering();
+    for (let frame = 0; frame < 3; frame++) await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+  });
+  await page.screenshot({ path: testInfo.outputPath('guide-playback-controls.png') });
+  await page.evaluate(() => {
+    WebGL2RenderingContext.prototype.drawElements = () => {};
+    WebGL2RenderingContext.prototype.drawArrays = () => {};
+  });
+
+  await card.getByRole('button', { name: 'Next step', exact: true }).click();
+  await expect(page.locator('.ds-tour-circle')).toHaveAttribute('data-target', 'surface-view-facial');
+  await expect(card.getByRole('button', { name: 'Resume', exact: true })).toBeVisible();
+  await card.getByRole('button', { name: 'Previous step', exact: true }).click();
+  await expect(page.locator('.ds-tour-circle')).toHaveAttribute('data-target', 'tooth-details');
+  await expect(page.locator('.ds-detail-title')).toHaveText('Central groove');
+
+  // A second jump cancels reconstruction without letting the first run click later.
+  await card.getByRole('combobox', { name: 'Guide step' }).selectOption('24');
+  await card.getByRole('combobox', { name: 'Guide step' }).selectOption('3');
+  await expect(page.locator('#ds-tour-body')).toContainText('The primary teeth occupy both arches');
+  await expect(page.locator('[data-tour="development-primary"]')).toHaveAttribute('aria-pressed', 'true');
+  await card.getByRole('combobox', { name: 'Guide step' }).selectOption('0');
+  await expect(page.locator('#ds-tour-body')).toContainText('Watch a short demonstration');
+  await expect(card.getByRole('button', { name: 'Previous step', exact: true })).toBeDisabled();
+  await expect(card.getByRole('button', { name: 'Resume', exact: true })).toBeVisible();
+  await card.getByRole('button', { name: 'Resume', exact: true }).click();
+  await expect(card).toHaveAttribute('data-step', 'open-skull');
+  await card.getByRole('button', { name: 'Pause', exact: true }).click();
+  await card.getByRole('combobox', { name: 'Guide step' }).selectOption('24');
+  await expect(page.locator('#ds-tour-body')).toContainText('camera now frames the gold nerve paths');
+  await expect(page.locator('[data-tour="preset-nerves"]')).toHaveAttribute('aria-checked', 'true');
+  await card.getByRole('button', { name: 'Resume', exact: true }).click();
+  await expect(card).toHaveCount(0);
+  await expect(page.locator('.ds-tour-cursor, .ds-tour-circle')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Replay guide', exact: true })).toBeFocused();
+});
+
 async function captureGuide(page: Page, path: string, paused = false) {
   if (!paused) await page.locator('.ds-tour-card').getByRole('button', { name: 'Pause', exact: true }).click();
   await page.evaluate(async () => {
@@ -197,6 +258,7 @@ test('the complete guide resets all, closes automatically and can be replayed', 
   await expect(page.getByRole('status')).toHaveCount(0);
   await page.getByRole('button', { name: 'Replay guide', exact: true }).click();
   await expect(page.locator('.ds-tour-card')).toBeVisible();
+  await page.locator('.ds-tour-card').getByRole('button', { name: '2×', exact: true }).click();
   await expect(page.locator('.ds-tour-card')).toHaveCount(0, { timeout: process.env.CI ? 180_000 : 110_000 });
   expect(await page.evaluate(() => [localStorage.getItem('ds.numbering'), localStorage.getItem('ds.orbit')])).toEqual(['fdi', 'fixed']);
   await expect(page.locator('.ds-tour-cursor, .ds-tour-circle')).toHaveCount(0);
