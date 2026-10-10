@@ -17,6 +17,6 @@ export function NerveControls() {
     <div className="ds-segmented ds-segmented--fill" role="radiogroup" aria-label={t.nerveSide}>
       {(['both', 'right', 'left'] as const).map((s) => <button key={s} type="button" role="radio" aria-checked={!passage && side === s} className={!passage && side === s ? 'is-active' : ''} onClick={() => actions.setNerveSide(s)}>{t[s]}</button>)}
     </div>
-    <p className="ds-evidence">{passage ? t.passageActive : t.nerveHint}</p>
+    {passage && <p className="ds-evidence">{t.passageActive}</p>}
   </details>;
 }

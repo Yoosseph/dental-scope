@@ -15,6 +15,7 @@ export function useViewportInsets(engine: Engine) {
   const layersHidden = useApp((s) => s.collapsed.layers);
   const jawControls = useApp((s) => s.jawControls);
   const developmentStage = useApp((s) => s.developmentStage);
+  const studyView = useApp((s) => s.studyView);
   const guideOpen = useApp((s) => s.guideOpen);
   // keep the focused anatomy clear of the panels that cover the canvas
   useEffect(() => {
@@ -41,7 +42,7 @@ export function useViewportInsets(engine: Engine) {
       const bottom = Math.max(0, ...bottoms.map((r) => bounds.bottom - r.top + 12));
       const side = sideSheet ? panel ?? (sheet === 'tools' ? toolbar : null) : !compact.matches ? panel : null;
       let right = side ? bounds.right - side.left + 12 : 0;
-      const layers = !compact.matches && dissect ? visibleRect('.ds-layers') : null;
+      const layers = !compact.matches && (dissect || studyView === 'nerves') ? visibleRect('.ds-layers') : null;
       let left = layers ? layers.right - bounds.left + 12 : 0;
       // Landscape tool sheets occupy the side, not the lower half of the model.
       const clearance = sideSheet && sheet === 'tools' ? (bar ? bounds.bottom - bar.top + 12 : 0) : bottom;
@@ -80,6 +81,6 @@ export function useViewportInsets(engine: Engine) {
       window.removeEventListener('resize', schedule);
       window.visualViewport?.removeEventListener('resize', schedule);
     };
-  }, [engine, selected, dissect, laidOut, sheet, detailHidden, dockHidden, layersHidden, jawControls, developmentStage, lang, guideOpen]);
+  }, [engine, selected, dissect, laidOut, sheet, detailHidden, dockHidden, layersHidden, jawControls, developmentStage, studyView, lang, guideOpen]);
 
 }

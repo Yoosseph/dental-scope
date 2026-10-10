@@ -139,3 +139,68 @@ describe('sinus picking through anatomical context', () => {
     expect(pick([{ owner: 'maxillary-sinus-left', visual: 'ghost', sinus: true }, { owner: 'tooth-11', visual: 'on' }])).toBe('tooth-11');
   });
 });
+
+describe('nerve preset framing', () => {
+  beforeEach(() => {
+    setState({ ...initialState });
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => { callback(0); return 1; });
+  });
+  afterEach(() => { vi.unstubAllGlobals(); setState({ ...initialState }); });
+
+  it.each([
+    { width: 1280, height: 720, right: 414, left: 304, bottom: 160, top: 0 },
+    { width: 390, height: 844, right: 0, left: 0, bottom: 360, top: 280 },
+  ])('frames the visible nerves clear of the guide at $width × $height', async ({ width, height, right, left, bottom, top }) => {
+    const { engine, rig, animator } = movingTooth();
+    const entries = new Map();
+    const nerves = new THREE.Box3();
+    for (const [owner, x, visual] of [
+      ['inferior-alveolar-nerve-left', -1, 'on'],
+      ['inferior-alveolar-nerve-right', 1, 'on'],
+      ['facial-nerve-right', 20, 'off'],
+      ['frontal-bone', 30, 'ghost'],
+    ] as const) {
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(.5, 3, .5));
+      mesh.position.set(x, 2, 0);
+      entries.set(owner, { owner, mesh, visual });
+      if (visual === 'on') nerves.union(new THREE.Box3().setFromObject(mesh));
+    }
+    Object.assign(engine, {
+      entries, container: { clientWidth: width, clientHeight: height },
+      loader: { load: vi.fn().mockResolvedValue(new Map()) }, addGeometries: vi.fn(),
+      insetTarget: { right, bottom, left, top },
+    });
+    rig.camera.aspect = width / height;
+    rig.camera.setViewOffset(width, height, (right - left) / 2, (bottom - top) / 2, width, height);
+    await engine.showStudyView('nerves');
+    animator.tick(1);
+    // Caption and tray measurements can arrive after the preset's first camera fit.
+    setState({ guideOpen: true });
+    engine.setInsets(right + 2, bottom + 2, left, top);
+    animator.tick(1);
+    expect(rig.controls.target.distanceTo(nerves.getCenter(new THREE.Vector3()))).toBeLessThan(1e-10);
+    rig.camera.updateMatrixWorld();
+    for (const x of [nerves.min.x, nerves.max.x]) for (const y of [nerves.min.y, nerves.max.y]) for (const z of [nerves.min.z, nerves.max.z]) {
+      const point = new THREE.Vector3(x, y, z).project(rig.camera);
+      const px = (point.x + 1) * width / 2, py = (1 - point.y) * height / 2;
+      expect(px).toBeGreaterThan(left);
+      expect(px).toBeLessThan(width - right);
+      expect(py).toBeGreaterThan(top);
+      expect(py).toBeLessThan(height - bottom);
+    }
+  });
+
+  it('does not refocus a late nerve download after leaving the preset', async () => {
+    const { engine, rig } = movingTooth();
+    let loaded!: () => void;
+    Object.assign(engine, {
+      loader: { load: () => new Promise<void>(resolve => { loaded = resolve; }) }, addGeometries: vi.fn(),
+    });
+    const focus = vi.spyOn(rig, 'focusSphere');
+    const showing = engine.showStudyView('nerves');
+    actions.resetGuideScene();
+    loaded();
+    await showing;
+    expect(focus).not.toHaveBeenCalled();
+  });
+});

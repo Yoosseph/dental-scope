@@ -28,7 +28,7 @@ export const FIRST_VISIT_TOUR: readonly TourStep[] = [
   { id: 'assembled', target: 'dissect-0', action: 'click', panel: 'tools', hold: 1000 },
   { id: 'layers', target: 'separate-layers', action: 'click', panel: 'tools', hold: 2400 },
   { id: 'mouth', target: 'back-mouth', action: 'click', panel: 'tools', hold: 1000 },
-  { id: 'nerves', target: 'preset-nerves', action: 'click', waitFor: { asset: 'neurovascular' }, panel: 'layers', hold: 2800 },
+  { id: 'nerves', target: 'preset-nerves', action: 'click', waitFor: { asset: 'neurovascular' }, panel: 'layers', hold: 5500 },
   { id: 'ready', action: 'finish', hold: 0 },
 ];
 

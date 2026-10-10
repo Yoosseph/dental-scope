@@ -1476,6 +1476,7 @@ button.ds-layer-name:hover {
 /* ------------------------------------------------------------------ loading */
 .ds-loading {
   position: absolute;
+  z-index: 8;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
@@ -1485,6 +1486,11 @@ button.ds-layer-name:hover {
 }
 .ds-loading[role='alert'] {
   pointer-events: auto;
+  background: var(--panel-solid);
+}
+.ds-loading .ds-secondary {
+  min-width: 44px;
+  padding-inline: 12px;
 }
 .ds-loading.is-compact {
   top: auto;
@@ -2645,7 +2651,7 @@ button.ds-layer-name:hover {
 .ds-tour-progress { height: 2px; background: var(--line); margin-top: 12px; flex-shrink: 0; }
 .ds-tour-progress span { display: block; height: 100%; background: var(--accent); transition: width 400ms var(--ease); }
 .ds-tour-circle { position: fixed; pointer-events: none; z-index: 1; overflow: visible; }
-.ds-tour-circle path { fill: none; stroke: #e13930; stroke-width: 3; vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-dasharray: 1; animation: ds-tour-pen 1.5s linear forwards; }
+.ds-tour-circle path { fill: none; stroke: #e13930; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; animation: ds-tour-pen 1.5s linear forwards; }
 @keyframes ds-tour-pen { 0% { stroke-dashoffset: 1; opacity: 1; } 30%, 75% { stroke-dashoffset: 0; opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 0; } }
 .ds-tour-cursor { position: fixed; pointer-events: none; z-index: 2; transition: left 350ms var(--ease), top 350ms var(--ease); filter: drop-shadow(0 2px 3px var(--scrim-strong)); }
 .ds-tour-cursor svg { transform-origin: 3px 2px; }

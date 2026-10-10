@@ -811,11 +811,11 @@ export class Engine {
         addMeshLabel(t.id, formatTooth(fdi, s.numbering), 'tooth', 5, keys);
       }
       for (const st of this.registry.byId.values()) {
-        if (s.studyView && st.id !== s.selectedId && !(s.studyView === 'sinuses' ? st.categories.includes('sinus') : st.categories.some(c => c === 'arteries' || c === 'veins'))) continue;
+        if (s.studyView && st.id !== s.selectedId && !(s.studyView === 'sinuses' ? st.categories.includes('sinus') : s.studyView === 'nerves' ? st.categories.includes('nerves') : st.categories.some(c => c === 'arteries' || c === 'veins'))) continue;
         if (s.jawControls && (!st.id.endsWith(`-${s.jawSide}`) || !/^(mandibular-condyle|articular-|lateral-pterygoid|medial-pterygoid|temporalis|masseter)/.test(st.id))) continue;
         if (s.passageIds.length && st.kind === 'landmark' && !s.passageIds.includes(st.id)) continue;
         const passageLabel = s.passageIds.includes(st.id);
-        const studyLabel = s.studyView === 'vessels' && st.categories.some(c => c === 'arteries' || c === 'veins');
+        const studyLabel = s.studyView === 'nerves' ? st.categories.includes('nerves') : s.studyView === 'vessels' && st.categories.some(c => c === 'arteries' || c === 'veins');
         if (st.toothFdi !== undefined || !passageLabel && !studyLabel && (st.labelPriority < 3 || st.regional)) continue;
         if (st.kind === 'mesh' || s.jawControls && st.kind === 'group') {
           const vis = this.registry.meshesOf(st.id).filter((k) => s.jawControls || s.passageIds.includes(st.id) ? visibleMesh(k) : isFullyShown(this.entries.get(k)?.visual ?? 'off'));
@@ -1040,11 +1040,19 @@ export class Engine {
     if (focus) this.focus(id);
   }
 
-  async showStudyView(id: 'sinuses' | 'vessels', selected?: string) {
+  async showStudyView(id: 'sinuses' | 'vessels' | 'nerves', selected?: string) {
     actions.applyStudyPreset(id);
     const geometries = await this.loader.load(id === 'sinuses' ? 'context.glb' : 'neurovascular.glb');
     this.addGeometries(geometries);
-    if (getState().studyView !== id) return;
+    // Wait for the new controls/caption to render and their clearances to be measured.
+    if (id === 'nerves') await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+    if (this.disposed || getState().studyView !== id) return;
+    if (id === 'nerves') {
+      setState({ view: 'three-quarter' });
+      this.frameNerves();
+      if (selected) await this.selectFromUI(selected, { focus: true });
+      return;
+    }
     const box = new THREE.Box3();
     for (const entry of this.entries.values()) {
       const cats = this.registry.require(entry.owner).categories;
@@ -1052,6 +1060,22 @@ export class Engine {
     }
     if (!box.isEmpty()) { const sphere = box.getBoundingSphere(new THREE.Sphere()); this.rig.focusSphere(sphere.center, sphere.radius, { direction: PRESET_DIRS['three-quarter'], padding: 1.2 }); }
     if (selected) await this.selectFromUI(selected, { focus: true });
+  }
+
+  /** Fit the displayed nerve paths, excluding the translucent skull and vessels. */
+  private frameNerves() {
+    const box = new THREE.Box3();
+    for (const entry of this.entries.values()) {
+      if (entry.visual === 'on' && this.registry.require(entry.owner).categories.includes('nerves')) box.union(new THREE.Box3().setFromObject(entry.mesh));
+    }
+    if (box.isEmpty()) return;
+    const sphere = box.getBoundingSphere(new THREE.Sphere());
+    const width = this.container.clientWidth, height = this.container.clientHeight;
+    const tanH = Math.tan(THREE.MathUtils.degToRad(this.rig.camera.fov) / 2);
+    const usableH = tanH * Math.max(.15, (height - this.insetTarget.bottom - this.insetTarget.top - 80) / height);
+    const usableW = tanH * this.rig.camera.aspect * Math.max(.15, (width - this.insetTarget.right - this.insetTarget.left - 40) / width);
+    const distance = sphere.radius / Math.sin(Math.atan(Math.min(usableH, usableW))) * 1.12;
+    this.rig.focusSphere(sphere.center, sphere.radius, { direction: PRESET_DIRS['three-quarter'], distance, movePivot: true });
   }
 
   async studyToothSurface(fdi: number, view: 'occlusal' | 'inner' | 'facial' | 'mesial' | 'distal') {
@@ -1412,6 +1436,7 @@ export class Engine {
     const first = !this.insetsKnown;
     this.insetsKnown = true;
     if (s.developmentStage) this.frameDevelopment(s.view ?? undefined);
+    else if (s.guideOpen && s.studyView === 'nerves' && !s.selectedId) this.frameNerves();
     else if (s.guideOpen && s.selectedId && this.registry.get(s.selectedId)?.tooth) {
       // Search selection and its caption/tray render in separate frames; fit again once measured.
       this.focus(s.selectedId, { restPose: true });

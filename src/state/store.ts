@@ -40,7 +40,7 @@ export interface ClipState {
 export const DISSECT_LEVELS = [{ id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }] as const;
 
 export interface AppState {
-  studyView: 'vessels' | 'sinuses' | null;
+  studyView: 'vessels' | 'sinuses' | 'nerves' | null;
   vesselSide: 'both' | 'right' | 'left';
   vesselMode: 'both' | 'arteries' | 'veins';
   surfaceFeatures: boolean;
@@ -182,11 +182,12 @@ export const actions = {
     if (getState().developmentStage) actions.setDevelopmentStage(null);
     const preset = PRESETS.find(p => p.id === id);
     if (!preset) return;
-    setState(s => ({ ...clearSceneTools(s), categories: { ...s.categories, ...preset.state }, studyView: id === 'vessels' || id === 'sinuses' ? id : null,
-      vesselSide: 'both', vesselMode: 'both', labels: id === 'vessels' || id === 'sinuses' ? true : s.labels }));
+    setState(s => ({ ...clearSceneTools(s), categories: { ...s.categories, ...preset.state }, studyView: id === 'vessels' || id === 'sinuses' || id === 'nerves' ? id : null,
+      ...(id === 'nerves' ? { nerveView: 'dental', nerveSide: 'both' } : {}),
+      vesselSide: 'both', vesselMode: 'both', labels: id === 'vessels' || id === 'sinuses' || id === 'nerves' ? true : s.labels }));
   },
-  setVesselSide(vesselSide: AppState['vesselSide']) { setState({ vesselSide, selectedId: null, hoveredId: null, isolateId: null, isolateContext: false }); },
-  setVesselMode(vesselMode: AppState['vesselMode']) { setState({ vesselMode, selectedId: null, hoveredId: null, isolateId: null, isolateContext: false }); },
+  setVesselSide(vesselSide: AppState['vesselSide']) { setState({ vesselSide, selectedId: null, selectionRequest: null, hoveredId: null, isolateId: null, isolateContext: false }); },
+  setVesselMode(vesselMode: AppState['vesselMode']) { setState({ vesselMode, selectedId: null, selectionRequest: null, hoveredId: null, isolateId: null, isolateContext: false }); },
   setSurfaceFeatures(surfaceFeatures: boolean) { setState({ surfaceFeatures }); },
   setDevelopmentStage(developmentStage: DevelopmentStageId | null, playing = false) {
     const previous = getState();
@@ -215,15 +216,15 @@ export const actions = {
   },
   setDevelopmentSoftTissue(developmentSoftTissue: boolean) { setState({ developmentSoftTissue }); },
   setDevelopmentShowUnerupted(developmentShowUnerupted: boolean) {
-    setState({ developmentShowUnerupted, selectedId: null, hoveredId: null, isolateId: null, isolateContext: false });
+    setState({ developmentShowUnerupted, selectedId: null, selectionRequest: null, hoveredId: null, isolateId: null, isolateContext: false });
   },
   setNerveView(nerveView: NerveView) {
     if (getState().dissectFdi !== null) actions.exitDissect();
-    setState({ nerveView, passageIds: [], selectedId: null, hoveredId: null, isolateId: null, isolateContext: false });
+    setState({ nerveView, passageIds: [], selectedId: null, selectionRequest: null, hoveredId: null, isolateId: null, isolateContext: false });
   },
   setNerveSide(nerveSide: NerveSide) {
     if (getState().dissectFdi !== null) actions.exitDissect();
-    setState({ nerveSide, passageIds: [], selectedId: null, hoveredId: null, isolateId: null, isolateContext: false });
+    setState({ nerveSide, passageIds: [], selectedId: null, selectionRequest: null, hoveredId: null, isolateId: null, isolateContext: false });
   },
   openJawControls(on: boolean) {
     if (on && getState().dissectFdi !== null) actions.exitDissect();

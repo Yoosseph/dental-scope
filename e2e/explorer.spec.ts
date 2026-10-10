@@ -84,13 +84,15 @@ test('phone detail actions stay visible and the reading tray expands', async ({ 
   await expect(page).toHaveURL(/\/tooth\/11\/dissect$/);
 });
 
-test('a failed tooth download can be retried without reloading', async ({ page }) => {
+test('a failed tooth download can be retried without reloading', async ({ page }, testInfo) => {
   await page.route('**/models/teeth/tooth-11.glb', route => route.abort());
-  await page.goto('/');
+  await page.goto('/tooth/36/');
+  await expect(page.getByRole('heading', { name: 'Mandibular left first molar' })).toBeVisible();
   await searchTooth(page, 11);
   await expect(page.getByRole('alert')).toContainText('This anatomy could not be loaded');
   await page.unroute('**/models/teeth/tooth-11.glb');
-  await page.getByRole('button', { name: 'Retry', exact: true }).click();
+  if (testInfo.project.name === 'phone') await page.screenshot({ path: testInfo.outputPath('retry-visible.png') });
+  await page.getByRole('button', { name: 'Retry', exact: true }).click({ timeout: 10_000 });
   await expect(page).toHaveURL(/\/tooth\/11\/$/);
   await expect(page.getByRole('alert')).toHaveCount(0);
 });

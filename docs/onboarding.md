@@ -2,7 +2,7 @@
 
 The first-visit demonstration starts when the core scene is ready. It uses the
 existing development timeline, search, detail panel, tooth dissection and nerve
-preset. It takes about 39 seconds, excluding asset loading, and keeps labels on.
+preset. It takes about 42 seconds, excluding asset loading, and keeps labels on.
 The Teeth preset clears surrounding anatomy before focusing the representative
 tooth; the camera refits it after the caption and panel positions are measured.
 The caption uses the inverse of the app's color theme and provides a prominent
@@ -32,7 +32,14 @@ The caption avoids the demonstrated control. The app measures it along with
 other panels and passes its clearance to the camera, including a top inset on
 phones. Resize and position observers keep the anatomy clear as trays change.
 Closing the guide removes its clearance. The cursor follows moving controls
-imperatively rather than rendering React on every frame.
+imperatively rather than rendering React on every frame. The caption switches
+sides only when the control overlaps its bounds; bottom timeline controls do
+not move it away from the right. Red outlines use closed paths in pixel
+coordinates so their strokes stay complete when a control changes size.
+
+The Nerves preset frames the displayed dental nerve paths in the space clear
+of panels and captions. Step 16 holds that view longer and explains the gold
+paths and translucent context. It uses the same preset handler as exploration.
 
 Captions are in `src/i18n/tour.ts` for all five interface languages. Development
 steps reuse the existing draft educational descriptions, identify the scene as

@@ -11,9 +11,19 @@ import { IconClose, IconPlay, IconPause, IconReplay } from './icons';
 
 type Mark = { target: string; rect: DOMRect; clicking: boolean };
 type Placement = 'top' | 'left' | 'bottom';
-const cardPlacement = (rect: DOMRect): Placement => isCompactLayout()
+const cardPlacement = (rect: DOMRect, card: HTMLElement | null): Placement => isCompactLayout()
   ? rect.bottom < window.innerHeight / 2 ? 'bottom' : 'top'
-  : rect.left > window.innerWidth * .65 && rect.top > 80 ? 'left' : 'top';
+  : card && rect.right + 10 > window.innerWidth - 24 - card.offsetWidth
+    && rect.left - 10 < window.innerWidth - 24
+    && rect.bottom + 8 > card.offsetTop
+    && rect.top - 8 < card.offsetTop + card.offsetHeight ? 'left' : 'top';
+
+/** Pixel coordinates keep the stroke and dash animation consistent on wide controls. */
+const circlePath = (width: number, height: number) => {
+  const x = (fraction: number) => width * fraction;
+  const y = (fraction: number) => height * fraction;
+  return `M ${x(.5)},3 C ${x(.16)},1 3,${y(.12)} 3,${y(.5)} C 1,${y(.86)} ${x(.22)},${height - 2} ${x(.5)},${height - 3} C ${x(.84)},${height - 1} ${width - 3},${y(.84)} ${width - 3},${y(.5)} C ${width - 1},${y(.14)} ${x(.8)},1 ${x(.5)},3 Z`;
+};
 const targetElement = (target: string) => [...document.querySelectorAll<HTMLElement>(`[data-tour="${target}"]`)].find(element => element.checkVisibility() && element.getBoundingClientRect().width > 0) ?? null;
 const visible = (element: HTMLElement | null) => {
   if (!element || !element.checkVisibility()) return false;
@@ -119,7 +129,7 @@ export function GuidedTour() {
           const rect = element.getBoundingClientRect();
           setMark({ target, rect, clicking });
           // Pick a side once for this step, before the click changes the layout.
-          if (!clicking) setPlacement(cardPlacement(rect));
+          if (!clicking) setPlacement(cardPlacement(rect, card.current));
           setHighlight(true);
         },
         activate: next => {
@@ -196,13 +206,15 @@ export function GuidedTour() {
         if (circle.current) {
           circle.current.style.left = `${rect.x - 10}px`; circle.current.style.top = `${rect.y - 8}px`;
           circle.current.style.width = `${rect.width + 20}px`; circle.current.style.height = `${rect.height + 16}px`;
+          circle.current.setAttribute('viewBox', `0 0 ${rect.width + 20} ${rect.height + 16}`);
+          circle.current.querySelector('path')?.setAttribute('d', circlePath(rect.width + 20, rect.height + 16));
         }
       }
       frame = requestAnimationFrame(track);
     };
     const onResize = () => {
       const element = targetElement(mark.target);
-      if (visible(element)) setPlacement(cardPlacement(element!.getBoundingClientRect()));
+      if (visible(element)) setPlacement(cardPlacement(element!.getBoundingClientRect(), card.current));
     };
     window.addEventListener('resize', onResize);
     frame = requestAnimationFrame(track);
@@ -216,9 +228,9 @@ export function GuidedTour() {
     <div className="ds-tour-shield" aria-hidden="true" />
     {mark && status === 'playing' && <>
       {highlight &&
-      <svg ref={circle} key={mark.target} className="ds-tour-circle" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"
+      <svg ref={circle} key={mark.target} className="ds-tour-circle" viewBox={`0 0 ${mark.rect.width + 20} ${mark.rect.height + 16}`} aria-hidden="true"
         style={{ left: mark.rect.x - 10, top: mark.rect.y - 8, width: mark.rect.width + 20, height: mark.rect.height + 16 }}>
-        <path d="M 48,5 C 16,0 2,18 4,49 C 2,82 25,98 55,95 C 86,96 99,77 96,45 C 95,17 76,3 44,7" pathLength="1" />
+        <path d={circlePath(mark.rect.width + 20, mark.rect.height + 16)} pathLength="1" />
       </svg>}
       <div ref={cursor} className={`ds-tour-cursor${mark.clicking ? ' is-clicking' : ''}`} aria-hidden="true"
         style={{ left: mark.rect.x + mark.rect.width / 2, top: mark.rect.y + mark.rect.height / 2 }}>

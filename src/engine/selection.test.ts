@@ -71,4 +71,22 @@ describe('selection loading', () => {
     expect(getState()).toMatchObject({ dissectFdi: 11, selectionRequest: null });
     expect(focus).toHaveBeenCalledWith('tooth-11', { restPose: true });
   });
+
+  it.each([
+    ['nerve side', () => actions.setNerveSide('left')],
+    ['nerve view', () => actions.setNerveView('all')],
+    ['vessel side', () => actions.setVesselSide('left')],
+    ['vessel mode', () => actions.setVesselMode('veins')],
+    ['unerupted teeth', () => actions.setDevelopmentShowUnerupted(false)],
+  ] as const)('does not revive a pending tooth selection after changing %s', async (_choice, changeView) => {
+    const { engine, load, focus } = viewer();
+    let finish!: () => void;
+    load.mockImplementationOnce(() => new Promise(resolve => { finish = () => resolve(new Map()); }));
+    const selecting = engine.selectFromUI('tooth-11');
+    changeView();
+    finish();
+    await selecting;
+    expect(getState()).toMatchObject({ selectedId: null, selectionRequest: null });
+    expect(focus).not.toHaveBeenCalled();
+  });
 });
