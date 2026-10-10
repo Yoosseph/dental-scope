@@ -124,10 +124,7 @@ export function GuidedTour() {
         paused: () => pauseRef.current || document.hidden,
         speed: () => speedRef.current,
         showStep: (nextStep, next) => { setIndex(next); setStatus('playing'); if (!nextStep.target) setMark(null); },
-        frameOrbit: () => engine.frameGuideAnatomy(),
-        orbit: azimuth => engine.orbit(azimuth, 0),
         prepare: next => {
-          if (next.action === 'rotate' && isCompactLayout()) actions.setMobileSheet('none');
           expandedDetail = isCompactLayout() && next.detailExpanded === true;
           if (next.panel) {
             actions.setCollapsed(next.panel === 'tools' ? 'dock' : next.panel, false);

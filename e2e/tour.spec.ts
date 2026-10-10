@@ -109,47 +109,30 @@ test('the nerve step shows a focused view with a clear explanation', async ({ pa
   await page.getByRole('button', { name: 'Close guide', exact: true }).click();
 });
 
-test('the opening turns the labelled anatomy, pauses and continues to the teeth', async ({ page }, testInfo) => {
+test('the opening proceeds directly from dissection to the labelled teeth', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.addInitScript(() => localStorage.setItem('ds.guide.seen.v1', 'seen'));
   await page.goto('/');
   await expect(page.getByRole('status')).toHaveCount(0);
   await page.getByRole('button', { name: 'Replay guide', exact: true }).click();
   const card = page.locator('.ds-tour-card');
-  await card.getByRole('button', { name: 'Pause', exact: true }).click();
-  await card.getByRole('combobox', { name: 'Guide step' }).selectOption('anatomy-rotation');
-  await expect(page.getByRole('slider', { name: 'Dissect anatomy', exact: true, includeHidden: true })).toHaveValue('1');
-  await expect(page.getByRole('button', { name: 'Labels', exact: true, includeHidden: true })).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('#ds-tour-body')).toContainText('360°');
-  await expect(page.locator('.ds-tour-cursor')).toHaveCount(0);
-  const positions = () => page.locator('.ds-label').evaluateAll(elements => elements.map(element => (element as HTMLElement).style.transform));
-  await card.getByRole('button', { name: 'Resume', exact: true }).click();
-  await page.waitForTimeout(800);
-  const initial = await positions();
-  await page.waitForTimeout(1000);
-  expect(await positions(), 'labels follow the turning model').not.toEqual(initial);
-  await card.getByRole('button', { name: 'Pause', exact: true }).click();
-  await page.waitForTimeout(150);
-  const paused = await positions();
-  await page.waitForTimeout(700);
-  expect(await positions(), 'pause stops the camera turn').toEqual(paused);
-  await card.getByRole('button', { name: '2×', exact: true }).click();
-  await card.getByRole('button', { name: 'Resume', exact: true }).click();
-  await expect(card).toHaveAttribute('data-step', 'opening-teeth');
+  await expect(card).toHaveAttribute('data-step', 'open-skull');
+  await expect(page.getByRole('slider', { name: 'Dissect anatomy', exact: true })).toHaveValue('1');
+  const steps = await page.evaluate(async () => {
+    const seen = new Set<string>();
+    const deadline = performance.now() + 15_000;
+    while (performance.now() < deadline) {
+      const step = document.querySelector<HTMLElement>('.ds-tour-card')!.dataset.step!;
+      seen.add(step);
+      if (step === 'opening-teeth') break;
+      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+    }
+    return [...seen];
+  });
+  expect(steps).toEqual(['open-skull', 'opening-teeth']);
+  await expect(page.locator('[data-tour="preset-dentition"]')).toHaveAttribute('aria-checked', 'true');
   await page.locator('.ds-reset-all').click();
-  // Reset during a second turn must stop it before the next stage can run.
-  await page.getByRole('button', { name: 'Replay guide', exact: true }).click();
-  await card.getByRole('button', { name: 'Pause', exact: true }).click();
-  await card.getByRole('combobox', { name: 'Guide step' }).selectOption('anatomy-rotation');
-  await expect(page.getByRole('slider', { name: 'Dissect anatomy', exact: true, includeHidden: true })).toHaveValue('1');
-  await card.getByRole('button', { name: 'Resume', exact: true }).click();
-  await page.waitForTimeout(800);
-  await captureGuide(page, testInfo.outputPath('guide-anatomy-rotation.png'));
-  await page.locator('.ds-reset-all').click();
-  await page.waitForTimeout(3500);
   await expect(card).toHaveCount(0);
-  await expect(page.locator('.ds-detail-title')).toHaveCount(0);
-  await expect(page).toHaveURL(/\/$/);
 });
 
 test('Reset all is available throughout the guide and cancels every active run', async ({ page }, testInfo) => {

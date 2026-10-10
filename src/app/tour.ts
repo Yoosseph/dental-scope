@@ -2,7 +2,7 @@
 export interface TourStep {
   id: string;
   target?: string;
-  action?: 'click' | 'search' | 'rotate' | 'finish';
+  action?: 'click' | 'search' | 'finish';
   value?: string;
   panel?: 'tools' | 'detail' | 'layers';
   /** Use the existing detail-sheet size control when demonstrating text on phones. */
@@ -17,7 +17,6 @@ export const FIRST_VISIT_TOOTH = 36;
 export const FIRST_VISIT_TOUR: readonly TourStep[] = [
   { id: 'welcome', hold: 1800 },
   { id: 'open-skull', target: 'dissect-anatomy-play', action: 'click', panel: 'tools', waitFor: { explode: 1 }, hold: 3500 },
-  { id: 'anatomy-rotation', action: 'rotate', waitFor: { explode: 1 }, hold: 6000 },
   { id: 'opening-teeth', target: 'preset-dentition', action: 'click', panel: 'layers', hold: 2400 },
   { id: 'primary', target: 'development-primary', action: 'click', panel: 'tools', development: 'primary', hold: 3200 },
   { id: 'mixed', target: 'development-early-mixed', action: 'click', panel: 'tools', development: 'early-mixed', hold: 3200 },
@@ -52,8 +51,6 @@ export interface TourPlayback {
   locate: (target: string) => boolean;
   point: (target: string, clicking: boolean) => void;
   activate: (step: TourStep) => void;
-  frameOrbit: () => void;
-  orbit: (azimuth: number) => void;
   settled: (step: TourStep) => boolean;
   clearPointer: () => void;
 }
@@ -69,20 +66,16 @@ export function tourDelay(ms: number, signal: AbortSignal): Promise<void> {
 }
 
 export async function playTour(steps: readonly TourStep[], port: TourPlayback, signal: AbortSignal, reducedMotion = false, startIndex?: number) {
-  const wait = async (ms: number, scaled = true, ignorePause = false, advance?: (elapsed: number) => void) => {
+  const wait = async (ms: number, scaled = true, ignorePause = false) => {
     let remaining = ms;
     // Always pass through the gate, even for a zero-duration action.
     do {
       while (!ignorePause && port.paused()) await tourDelay(80, signal);
       const rate = scaled ? (port.speed?.() ?? 1) : 1;
-      const slice = Math.min(advance ? 16 : 80, remaining / rate);
+      const slice = Math.min(80, remaining / rate);
       await tourDelay(slice, signal);
       signal.throwIfAborted();
-      if (ignorePause || !port.paused()) {
-        const elapsed = slice * rate;
-        remaining -= elapsed;
-        advance?.(elapsed);
-      }
+      if (ignorePause || !port.paused()) remaining -= slice * rate;
     } while (remaining > 0 || (!ignorePause && port.paused()));
     signal.throwIfAborted();
   };
@@ -117,18 +110,10 @@ export async function playTour(steps: readonly TourStep[], port: TourPlayback, s
         await wait(reducedMotion ? 100 : 150, true, seeking);
       }
     }
-    if (step.action && step.action !== 'rotate') port.activate(step);
+    if (step.action) port.activate(step);
     await until(() => port.settled(step), seeking);
     // Rebuild through the same controls, without narrating the preceding steps.
-    if (!rebuilding) {
-      if (step.action === 'rotate') {
-        // Allow caption clearance to settle before turning the framed anatomy.
-        await wait(450, false, seeking);
-        port.frameOrbit();
-        if (!reducedMotion) await wait(step.hold, true, false, elapsed => port.orbit(elapsed / step.hold * Math.PI * 2));
-        else await wait(800);
-      } else await wait(step.hold);
-    }
+    if (!rebuilding) await wait(step.hold);
   }
   port.clearPointer();
 }
