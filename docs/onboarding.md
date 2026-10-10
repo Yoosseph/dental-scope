@@ -2,10 +2,10 @@
 
 The first-visit demonstration starts when the core scene is ready. It uses the
 existing anatomy dissection, development timeline, search, detail panel, surface
-feature controls, tooth dissection and nerve preset. It takes about 75 seconds,
+feature controls, tooth dissection and nerve preset. It takes about 85 seconds,
 excluding asset loading, and keeps labels on. It first plays the skull/jaw
-separation to the In position checkpoint and shows the labelled teeth before
-introducing bite development.
+separation to the In position checkpoint, turns the labelled anatomy once,
+and shows the labelled teeth before introducing bite development.
 The Teeth preset clears surrounding anatomy before focusing the representative
 tooth; the camera refits it after the caption and panel positions are measured.
 The caption uses the inverse of the app's color theme and provides a prominent
@@ -40,6 +40,20 @@ while the demonstration keeps playing. Restoring it preserves the step, speed
 and pause state. The hidden panel contributes no camera clearance. Keyboard
 focus moves between the panel and its top-bar control, and Escape still exits
 the demonstration while collapsed. New runs start with the panel expanded.
+
+Reset all remains above the guide shield and is included in its keyboard focus
+loop. It closes the guide and restores the start scene in one state transition;
+the player immediately aborts when the guide closes, including during loading
+or step preparation. The phone reset control stays visible in tooth dissection.
+
+After the opening dissection reaches In position, a six-second full turn shows
+the separated anatomy with labels on before the teeth preset. The rotation
+frames translucent surrounding anatomy too, fitting every horizontal angle
+above the controls and clear of the guide caption. The rotation
+temporarily closes the tool sheet on phones to make room for the model and labels. It
+respects playback speed, pauses and cancellation; reduced motion keeps a brief
+stationary view instead. Seeking past it skips the turn. Step picker values use
+stable script IDs so adding a stage does not change navigation destinations.
 
 The guide offers 1×, 1.5× and 2× playback. The adapter supplies the current rate,
 so changing speed adjusts the current hold without restarting a step. Loading

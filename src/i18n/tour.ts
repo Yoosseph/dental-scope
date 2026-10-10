@@ -18,6 +18,7 @@ export const TOUR_TEXT: Record<Lang, TourText> = {
     steps: {
       welcome: ['Explore a mouth, then one tooth', 'Watch a short demonstration of the labelled skull, bite development, tooth surfaces, internal tissues and nerves. Pause or leave whenever you like.'],
       'open-skull': ['Open the anatomy first', 'Play pulls the model apart and stops at In position. Watch the skull, jaws and teeth separate with labels on. You can also move the Dissect anatomy slider yourself.'],
+      'anatomy-rotation': ['See the anatomy from every side', 'A quick 360° turn shows the separated model with labels on. Follow the labels around the anatomy before we focus on the teeth.'],
       'opening-teeth': ['See the labelled teeth', 'The Teeth preset clears the surrounding anatomy and brings the teeth together. Labels help you identify them before we compare bite development.'],
       primary: ['Compare bite development', 'The timeline changes the educational scene. Here is the primary dentition stage.'],
       mixed: ['Follow the changing bite', 'Choose another age to compare the stages. These are schematic teaching examples, with individual development varying.'],
@@ -52,6 +53,7 @@ export const TOUR_TEXT: Record<Lang, TourText> = {
     steps: {
       welcome: ['Utforska munnen och sedan en tand', 'Se en kort demonstration av den märkta skallen, bettets utveckling, tandytor, inre vävnader och nerver. Pausa eller avsluta när du vill.'],
       'open-skull': ['Öppna anatomin först', 'Spela drar isär modellen och stannar vid På plats. Se skalle, käkar och tänder separeras med etiketterna på. Du kan också flytta reglaget Dissekera anatomin själv.'],
+      'anatomy-rotation': ['Se anatomin från alla sidor', 'En snabb rotation på 360° visar den separerade modellen med etiketterna på. Följ etiketterna runt anatomin innan vi fokuserar på tänderna.'],
       'opening-teeth': ['Se de märkta tänderna', 'Förvalet Tänder döljer omgivande anatomi och för samman tänderna. Etiketterna hjälper dig att identifiera dem innan vi jämför bettets utveckling.'],
       primary: ['Jämför bettets utveckling', 'Tidslinjen ändrar undervisningsmodellen. Här visas mjölktandsbettet.'],
       mixed: ['Följ hur bettet förändras', 'Välj en annan ålder för att jämföra stadier. Detta är schematiska undervisningsexempel; utvecklingen varierar mellan individer.'],
@@ -86,6 +88,7 @@ export const TOUR_TEXT: Record<Lang, TourText> = {
     steps: {
       welcome: ['Erst den Mund, dann einen Zahn erkunden', 'Sehen Sie eine kurze Demonstration des beschrifteten Schädels, der Gebissentwicklung, Zahnoberflächen, inneren Gewebe und Nerven. Sie können jederzeit pausieren oder beenden.'],
       'open-skull': ['Zuerst die Anatomie öffnen', 'Die Wiedergabe zieht das Modell auseinander und hält bei In Position an. Schädel, Kiefer und Zähne trennen sich mit aktiven Beschriftungen. Sie können auch den Anatomie-Schieberegler bewegen.'],
+      'anatomy-rotation': ['Die Anatomie von allen Seiten sehen', 'Eine kurze Drehung um 360° zeigt das getrennte Modell mit Beschriftungen. Folgen Sie den Beschriftungen rund um die Anatomie, bevor wir uns auf die Zähne konzentrieren.'],
       'opening-teeth': ['Die beschrifteten Zähne sehen', 'Die Zahnvoreinstellung blendet die Umgebung aus und führt die Zähne zusammen. Beschriftungen helfen bei der Orientierung, bevor wir die Gebissentwicklung vergleichen.'],
       primary: ['Die Gebissentwicklung vergleichen', 'Die Zeitleiste verändert das Lehrmodell. Hier sehen Sie das Milchgebiss.'],
       mixed: ['Das sich wandelnde Gebiss verfolgen', 'Wählen Sie ein anderes Alter zum Vergleich. Dies sind schematische Lehrbeispiele; die individuelle Entwicklung variiert.'],
@@ -120,6 +123,7 @@ export const TOUR_TEXT: Record<Lang, TourText> = {
     steps: {
       welcome: ['Explore la boca y luego un diente', 'Vea una breve demostración del cráneo etiquetado, el desarrollo dental, las superficies del diente, los tejidos internos y los nervios. Pause o cierre cuando quiera.'],
       'open-skull': ['Abra primero la anatomía', 'La reproducción separa el modelo y se detiene en En posición. Observe cómo se separan cráneo, maxilares y dientes con etiquetas activadas. También puede mover el deslizador de disección.'],
+      'anatomy-rotation': ['Vea la anatomía desde todos los lados', 'Un giro rápido de 360° muestra el modelo separado con las etiquetas activadas. Siga las etiquetas alrededor de la anatomía antes de centrarnos en los dientes.'],
       'opening-teeth': ['Vea los dientes etiquetados', 'El ajuste Dientes oculta la anatomía circundante y reúne los dientes. Las etiquetas ayudan a identificarlos antes de comparar el desarrollo de la dentición.'],
       primary: ['Compare el desarrollo de la dentición', 'La línea de tiempo cambia la escena educativa. Aquí se muestra la dentición temporal.'],
       mixed: ['Siga los cambios de la dentición', 'Elija otra edad para comparar etapas. Son ejemplos didácticos esquemáticos; el desarrollo individual varía.'],
@@ -154,6 +158,7 @@ export const TOUR_TEXT: Record<Lang, TourText> = {
     steps: {
       welcome: ['Os, deinde dentem explora', 'Brevis demonstratio cranium cum titulis, evolutionem dentitionis, superficies dentis, textus internos et nervos ostendit. Quando vis intermitte aut claude.'],
       'open-skull': ['Anatomiam primum aperi', 'Demonstratio exemplar separat et in situ sistit. Vide cranium, mandibulam et dentes cum titulis separari. Etiam cursorem dissectionis ipse movere potes.'],
+      'anatomy-rotation': ['Anatomiam ex omnibus lateribus vide', 'Conversio brevis per 360° exemplar separatum cum titulis ostendit. Titulos circa anatomiam sequere antequam dentes propius inspicimus.'],
       'opening-teeth': ['Dentes cum titulis vide', 'Optio dentium anatomiam circumiectam celat et dentes componit. Tituli eos cognoscere adiuvant antequam evolutionem dentitionis comparamus.'],
       primary: ['Evolutionem dentitionis compara', 'Linea temporis exemplar didacticum mutat. Hic dentitio decidua ostenditur.'],
       mixed: ['Mutationes dentitionis sequere', 'Aliam aetatem elige ad gradus comparandos. Exempla didactica schematica sunt; evolutio singulorum variat.'],

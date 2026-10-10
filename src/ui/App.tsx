@@ -87,11 +87,12 @@ export function App() {
 function ResetButton() {
   const { engine } = useServices();
   const m = useT();
+  const guideOpen = useApp(s => s.guideOpen);
   const reset = () => {
     void navigate(() => { actions.resetAll(); engine.resetToStart(); });
   };
   return (
-    <button type="button" className="ds-reset-all" onClick={reset} title={m.resetAllTitle} aria-label={m.resetAllTitle}>
+    <button type="button" className={`ds-reset-all${guideOpen ? ' is-guide-reset' : ''}`} onClick={reset} title={m.resetAllTitle} aria-label={m.resetAllTitle}>
       <IconReset size={15} />
       <span>{m.resetAll}</span>
     </button>

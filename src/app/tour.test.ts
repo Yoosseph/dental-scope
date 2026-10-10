@@ -7,7 +7,7 @@ import { FIRST_VISIT_TOUR, GUIDE_VISIT_KEY, needsFirstVisitGuide, playTour, reme
 const step: TourStep = { id: 'example', target: 'button', action: 'click', hold: 400 };
 const port = (): TourPlayback => ({
   paused: () => false, showStep: vi.fn(), prepare: vi.fn(), locate: () => true,
-  point: vi.fn(), activate: vi.fn(), settled: () => true, clearPointer: vi.fn(),
+  point: vi.fn(), activate: vi.fn(), frameOrbit: vi.fn(), orbit: vi.fn(), settled: () => true, clearPointer: vi.fn(),
 });
 
 describe('scripted tour playback', () => {
@@ -136,6 +136,60 @@ describe('scripted tour playback', () => {
     await playing;
   });
 
+  it.each([1, 1.5, 2])('turns the opening anatomy exactly once at %sx before continuing', async speed => {
+    const playback = port();
+    playback.speed = () => speed;
+    const rotation = FIRST_VISIT_TOUR.find(item => item.id === 'anatomy-rotation')!;
+    let finished = false;
+    const playing = playTour([rotation, { id: 'teeth', hold: 0 }], playback, new AbortController().signal).then(() => { finished = true; });
+    await vi.advanceTimersByTimeAsync(450 + 6000 / speed - 30);
+    expect(finished).toBe(false);
+    await vi.advanceTimersByTimeAsync(50);
+    await playing;
+    const turned = vi.mocked(playback.orbit).mock.calls.reduce((angle, [delta]) => angle + delta, 0);
+    expect(turned).toBeCloseTo(Math.PI * 2, 8);
+    expect(playback.frameOrbit).toHaveBeenCalledTimes(1);
+    expect(playback.activate).not.toHaveBeenCalled();
+    expect(playback.showStep).toHaveBeenLastCalledWith({ id: 'teeth', hold: 0 }, 1);
+  });
+
+  it('pauses a turn and aborts without moving the camera or advancing later', async () => {
+    const playback = port();
+    let paused = false;
+    playback.paused = () => paused;
+    const abort = new AbortController();
+    const playing = playTour([{ id: 'rotate', action: 'rotate', hold: 6000 }, step], playback, abort.signal).catch(() => {});
+    await vi.advanceTimersByTimeAsync(1200);
+    paused = true;
+    const calls = vi.mocked(playback.orbit).mock.calls.length;
+    expect(calls).toBeGreaterThan(0);
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(playback.orbit).toHaveBeenCalledTimes(calls);
+    paused = false;
+    await vi.advanceTimersByTimeAsync(200);
+    expect(vi.mocked(playback.orbit).mock.calls.length).toBeGreaterThan(calls);
+    abort.abort();
+    await playing;
+    const stopped = vi.mocked(playback.orbit).mock.calls.length;
+    await vi.runAllTimersAsync();
+    expect(playback.orbit).toHaveBeenCalledTimes(stopped);
+    expect(playback.showStep).toHaveBeenCalledTimes(1);
+    expect(playback.activate).not.toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('skips rotation for reduced motion and when rebuilding past the opening', async () => {
+    const rotation: TourStep = { id: 'rotate', action: 'rotate', hold: 6000 };
+    for (const [reduced, destination] of [[true, undefined], [false, 1]] as const) {
+      const playback = port();
+      const playing = playTour([rotation, step], playback, new AbortController().signal, reduced, destination);
+      await vi.runAllTimersAsync();
+      await playing;
+      expect(playback.orbit).not.toHaveBeenCalled();
+      expect(playback.activate).toHaveBeenCalledExactlyOnceWith(step);
+    }
+  });
+
   it('keeps the loading timeout independent of playback speed', async () => {
     const playback = port();
     playback.speed = () => 2;
@@ -151,6 +205,23 @@ describe('scripted tour playback', () => {
 });
 
 describe('first visit and replay', () => {
+  it('Reset all closes an active hidden guide and restores the complete starting scene', () => {
+    setState({ ...initialState, ready: true, lang: 'sv', theme: 'dark', numbering: 'universal', orbitMode: 'free' });
+    actions.startGuide();
+    actions.setGuideCollapsed(true);
+    actions.enterDissect(36);
+    actions.setDissectLevel(4);
+    actions.setToothExplode(1);
+    actions.setSurfaceFeatures(true);
+    actions.openSearch(true);
+    const run = getState().guideRunId;
+    actions.resetAll();
+    expect(getState()).toMatchObject({ guideOpen: false, guideCollapsed: false, guideRunId: run,
+      ready: true, theme: 'dark', lang: 'sv', numbering: 'fdi', orbitMode: 'fixed',
+      selectedId: null, selectionRequest: null, dissectFdi: null, dissectLevel: 0, toothExplode: 0,
+      surfaceFeatures: false, developmentStage: null, explode: 0, labels: false, searchOpen: false, mobileSheet: 'none' });
+    setState({ ...initialState });
+  });
   it('collapses the guide without restarting it and preserves collapse during step preparation', () => {
     setState({ ...initialState });
     actions.startGuide();
@@ -222,6 +293,7 @@ describe('first visit and replay', () => {
 
 describe('tour content', () => {
   it('has meaningful captions in every language for each step, including the final state', () => {
+    expect(FIRST_VISIT_TOUR.slice(1, 4).map(item => item.id)).toEqual(['open-skull', 'anatomy-rotation', 'opening-teeth']);
     expect(new Set(FIRST_VISIT_TOUR.map(s => s.id)).size).toBe(FIRST_VISIT_TOUR.length);
     for (const lang of LANGS) for (const s of FIRST_VISIT_TOUR) {
       expect(TOUR_TEXT[lang].steps[s.id]?.[0].length, `${lang}/${s.id} title`).toBeGreaterThan(5);

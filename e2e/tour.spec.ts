@@ -109,6 +109,92 @@ test('the nerve step shows a focused view with a clear explanation', async ({ pa
   await page.getByRole('button', { name: 'Close guide', exact: true }).click();
 });
 
+test('the opening turns the labelled anatomy, pauses and continues to the teeth', async ({ page }, testInfo) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await page.addInitScript(() => localStorage.setItem('ds.guide.seen.v1', 'seen'));
+  await page.goto('/');
+  await expect(page.getByRole('status')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Replay guide', exact: true }).click();
+  const card = page.locator('.ds-tour-card');
+  await card.getByRole('button', { name: 'Pause', exact: true }).click();
+  await card.getByRole('combobox', { name: 'Guide step' }).selectOption('anatomy-rotation');
+  await expect(page.getByRole('slider', { name: 'Dissect anatomy', exact: true, includeHidden: true })).toHaveValue('1');
+  await expect(page.getByRole('button', { name: 'Labels', exact: true, includeHidden: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#ds-tour-body')).toContainText('360°');
+  await expect(page.locator('.ds-tour-cursor')).toHaveCount(0);
+  const positions = () => page.locator('.ds-label').evaluateAll(elements => elements.map(element => (element as HTMLElement).style.transform));
+  await card.getByRole('button', { name: 'Resume', exact: true }).click();
+  await page.waitForTimeout(800);
+  const initial = await positions();
+  await page.waitForTimeout(1000);
+  expect(await positions(), 'labels follow the turning model').not.toEqual(initial);
+  await card.getByRole('button', { name: 'Pause', exact: true }).click();
+  await page.waitForTimeout(150);
+  const paused = await positions();
+  await page.waitForTimeout(700);
+  expect(await positions(), 'pause stops the camera turn').toEqual(paused);
+  await card.getByRole('button', { name: '2×', exact: true }).click();
+  await card.getByRole('button', { name: 'Resume', exact: true }).click();
+  await expect(card).toHaveAttribute('data-step', 'opening-teeth');
+  await page.locator('.ds-reset-all').click();
+  // Reset during a second turn must stop it before the next stage can run.
+  await page.getByRole('button', { name: 'Replay guide', exact: true }).click();
+  await card.getByRole('button', { name: 'Pause', exact: true }).click();
+  await card.getByRole('combobox', { name: 'Guide step' }).selectOption('anatomy-rotation');
+  await expect(page.getByRole('slider', { name: 'Dissect anatomy', exact: true, includeHidden: true })).toHaveValue('1');
+  await card.getByRole('button', { name: 'Resume', exact: true }).click();
+  await page.waitForTimeout(800);
+  await captureGuide(page, testInfo.outputPath('guide-anatomy-rotation.png'));
+  await page.locator('.ds-reset-all').click();
+  await page.waitForTimeout(3500);
+  await expect(card).toHaveCount(0);
+  await expect(page.locator('.ds-detail-title')).toHaveCount(0);
+  await expect(page).toHaveURL(/\/$/);
+});
+
+test('Reset all is available throughout the guide and cancels every active run', async ({ page }, testInfo) => {
+  await page.addInitScript(() => localStorage.setItem('ds.guide.seen.v1', 'seen'));
+  await page.goto('/');
+  await expect(page.getByRole('status')).toHaveCount(0);
+  const card = page.locator('.ds-tour-card');
+  const reset = page.locator('.ds-reset-all');
+  // Reproduce the blocked panic button first, before any step navigation.
+  await page.getByRole('button', { name: 'Replay guide', exact: true }).click();
+  await reset.click({ timeout: 3000 });
+  await expect(card).toHaveCount(0);
+
+  for (const mode of ['playing', 'paused', 'hidden', 'preparing'] as const) {
+    await page.getByRole('button', { name: 'Replay guide', exact: true }).click();
+    await card.getByRole('button', { name: 'Pause', exact: true }).click();
+    await card.getByRole('combobox', { name: 'Guide step' }).selectOption('dentin');
+    if (mode !== 'preparing') {
+      await expect(page.locator('[data-tour="dissect-2"]')).toHaveAttribute('aria-checked', 'true');
+      if (mode === 'playing') await card.getByRole('button', { name: 'Resume', exact: true }).click();
+      if (mode === 'hidden') await card.getByRole('button', { name: 'Hide guide', exact: true }).click();
+    }
+    if (mode === 'paused') {
+      // Reset also belongs to the guide's keyboard focus loop.
+      await card.getByRole('button', { name: 'Resume', exact: true }).focus();
+      await page.keyboard.press('Tab');
+      await expect(reset).toBeFocused();
+      await page.screenshot({ path: testInfo.outputPath('guide-panic-reset.png') });
+      await page.keyboard.press('Enter');
+    } else await reset.click({ timeout: 3000 });
+    await expect(card).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Show guide', exact: true })).toHaveCount(0);
+    await expect(page.locator('.ds-tour-cursor, .ds-tour-circle')).toHaveCount(0);
+    await expect(page.locator('.ds-detail-title')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Back to the full mouth', exact: true })).toHaveCount(0);
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.getByRole('button', { name: 'Labels', exact: true, includeHidden: true })).toHaveAttribute('aria-pressed', 'false');
+  }
+  // Give cancelled holds a chance to fire: the guide must not select anything again.
+  await page.waitForTimeout(2500);
+  await expect(card).toHaveCount(0);
+  await expect(page.locator('.ds-detail-title')).toHaveCount(0);
+  await expect(page).toHaveURL(/\/$/);
+});
+
 test('the guide can hide in the top bar while playback continues and restores the same run', async ({ page }, testInfo) => {
   await page.addInitScript(() => localStorage.setItem('ds.guide.seen.v1', 'seen'));
   await page.goto('/');
@@ -123,6 +209,8 @@ test('the guide can hide in the top bar while playback continues and restores th
   await expect(show).toBeVisible();
   await expect(show).toBeFocused();
   await page.keyboard.press('Tab');
+  await expect(page.locator('.ds-reset-all')).toBeFocused();
+  await page.keyboard.press('Tab');
   await expect(show).toBeFocused();
   await expect(card).toHaveAttribute('data-step', 'open-skull');
   const initial = await show.boundingBox();
@@ -135,7 +223,7 @@ test('the guide can hide in the top bar while playback continues and restores th
   await expect(card).toHaveAttribute('data-step', 'primary');
   await card.getByRole('button', { name: 'Pause', exact: true }).click();
   await expect(card.getByRole('button', { name: '2×', exact: true })).toHaveAttribute('aria-pressed', 'true');
-  await card.getByRole('combobox', { name: 'Guide step' }).selectOption('13');
+  await card.getByRole('combobox', { name: 'Guide step' }).selectOption('surface-description');
   await expect(page.locator('.ds-tour-circle')).toHaveAttribute('data-target', 'tooth-details');
   await card.getByRole('button', { name: 'Hide guide', exact: true }).click();
   await expect(card).toBeHidden();
@@ -152,7 +240,7 @@ test('the guide can hide in the top bar while playback continues and restores th
   await page.getByRole('button', { name: 'Replay guide', exact: true }).click();
   await expect(card).toBeVisible();
   await card.getByRole('button', { name: 'Pause', exact: true }).click();
-  await card.getByRole('combobox', { name: 'Guide step' }).selectOption('24');
+  await card.getByRole('combobox', { name: 'Guide step' }).selectOption('nerves');
   await expect(page.locator('#ds-tour-body')).toContainText('camera now frames the gold nerve paths');
   await card.getByRole('button', { name: 'Resume', exact: true }).click();
   await card.getByRole('button', { name: 'Hide guide', exact: true }).click();
@@ -175,7 +263,7 @@ test('guide speed controls and stage jumps preserve the scene and manual pause',
   await card.getByRole('button', { name: '2×', exact: true }).click();
   await expect(card.getByRole('button', { name: '2×', exact: true })).toHaveAttribute('aria-pressed', 'true');
 
-  await card.getByRole('combobox', { name: 'Guide step', exact: true }).selectOption('13');
+  await card.getByRole('combobox', { name: 'Guide step', exact: true }).selectOption('surface-description');
   await expect(page.locator('#ds-tour-body')).toContainText('detail panel now describes');
   await expect(page.locator('.ds-tour-circle')).toHaveAttribute('data-target', 'tooth-details');
   await expect(page.locator('.ds-detail-title')).toHaveText('Central groove');
@@ -202,18 +290,18 @@ test('guide speed controls and stage jumps preserve the scene and manual pause',
   await expect(page.locator('.ds-detail-title')).toHaveText('Central groove');
 
   // A second jump cancels reconstruction without letting the first run click later.
-  await card.getByRole('combobox', { name: 'Guide step' }).selectOption('24');
-  await card.getByRole('combobox', { name: 'Guide step' }).selectOption('3');
+  await card.getByRole('combobox', { name: 'Guide step' }).selectOption('nerves');
+  await card.getByRole('combobox', { name: 'Guide step' }).selectOption('primary');
   await expect(page.locator('#ds-tour-body')).toContainText('The primary teeth occupy both arches');
   await expect(page.locator('[data-tour="development-primary"]')).toHaveAttribute('aria-pressed', 'true');
-  await card.getByRole('combobox', { name: 'Guide step' }).selectOption('0');
+  await card.getByRole('combobox', { name: 'Guide step' }).selectOption('welcome');
   await expect(page.locator('#ds-tour-body')).toContainText('Watch a short demonstration');
   await expect(card.getByRole('button', { name: 'Previous step', exact: true })).toBeDisabled();
   await expect(card.getByRole('button', { name: 'Resume', exact: true })).toBeVisible();
   await card.getByRole('button', { name: 'Resume', exact: true }).click();
   await expect(card).toHaveAttribute('data-step', 'open-skull');
   await card.getByRole('button', { name: 'Pause', exact: true }).click();
-  await card.getByRole('combobox', { name: 'Guide step' }).selectOption('24');
+  await card.getByRole('combobox', { name: 'Guide step' }).selectOption('nerves');
   await expect(page.locator('#ds-tour-body')).toContainText('camera now frames the gold nerve paths');
   await expect(page.locator('[data-tour="preset-nerves"]')).toHaveAttribute('aria-checked', 'true');
   await card.getByRole('button', { name: 'Resume', exact: true }).click();

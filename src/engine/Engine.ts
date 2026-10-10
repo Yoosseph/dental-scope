@@ -625,12 +625,12 @@ export class Engine {
   }
 
   /** Bounds of the shown (non-context) anatomy at a given arch explode. */
-  private explodedBounds(ex: number): THREE.Box3 {
+  private explodedBounds(ex: number, includeContext = false): THREE.Box3 {
     const box = new THREE.Box3();
     const b = new THREE.Box3();
     const stretch = neurovascularStretch(this.registry).multiplyScalar(ex);
     for (const e of this.entries.values()) {
-      if (!isFullyShown(e.visual) || this.isContextMesh(e.key)) continue;
+      if (includeContext ? !e.mesh.visible : !isFullyShown(e.visual) || this.isContextMesh(e.key)) continue;
       const geo = e.mesh.geometry;
       if (!geo.boundingBox) geo.computeBoundingBox();
       b.copy(geo.boundingBox!).translate(e.archOffset.clone().multiplyScalar(ex));
@@ -1350,6 +1350,30 @@ export class Engine {
     if (getState().explode === 0 && getState().explodePhase === 1) return this.resetToStart();
     setState({ view: 'three-quarter' });
     this.rig.home_();
+  }
+
+  /** Fit the separated anatomy, including translucent context, for a full guide turn. */
+  frameGuideAnatomy() {
+    const s = getState();
+    if (s.explodePhase !== 1 || s.explode === 0) return;
+    this.cancelArchPreparation?.();
+    clearTimeout(this.explodeTimer);
+    this.explodeTimer = 0;
+    this.explodePreset = undefined;
+    const box = this.explodedBounds(s.explode, true);
+    if (box.isEmpty()) return;
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    // Every azimuth fits the horizontal diagonal, rather than just the front width.
+    const span = Math.hypot(size.x, size.z);
+    box.min.x = center.x - span / 2; box.max.x = center.x + span / 2;
+    box.min.z = center.z - span / 2; box.max.z = center.z + span / 2;
+    const frame = skullOverviewFrame(box, this.rig.camera.fov, {
+      width: this.container.clientWidth, height: this.container.clientHeight, ...this.insetTarget,
+    });
+    setState({ view: null });
+    this.rig.focusSphere(frame.target, frame.radius, { direction: PRESET_DIRS.front, distance: frame.distance, duration: 0, movePivot: true });
+    this.invalidate();
   }
 
   /** Fresh start: the assembled skull centred in a straight-on front view. */

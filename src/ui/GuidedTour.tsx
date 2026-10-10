@@ -6,7 +6,7 @@ import { DEVELOPMENT_SOURCES } from '../content/developmentAnatomy';
 import { useLang } from '../i18n';
 import { DEVELOPMENT_TEXT } from '../i18n/development';
 import { TOUR_TEXT } from '../i18n/tour';
-import { actions, getState, useApp } from '../state/store';
+import { actions, getState, store, useApp } from '../state/store';
 import { useServices } from './context';
 import { IconClose, IconPlay, IconPause, IconReplay, IconChevron } from './icons';
 
@@ -100,6 +100,8 @@ export function GuidedTour() {
     const abort = new AbortController();
     controller.current = abort;
     const signal = abort.signal;
+    // Reset all cancels pending clicks immediately, before React removes the guide.
+    const stopOnClose = store.subscribe(state => { if (!state.guideOpen) abort.abort(); });
     const focusBefore = document.activeElement;
     if (lastRun.current !== runId) {
       pauseRef.current = false;
@@ -121,8 +123,11 @@ export function GuidedTour() {
       await playTour(FIRST_VISIT_TOUR, {
         paused: () => pauseRef.current || document.hidden,
         speed: () => speedRef.current,
-        showStep: (_step, next) => { setIndex(next); setStatus('playing'); },
+        showStep: (nextStep, next) => { setIndex(next); setStatus('playing'); if (!nextStep.target) setMark(null); },
+        frameOrbit: () => engine.frameGuideAnatomy(),
+        orbit: azimuth => engine.orbit(azimuth, 0),
         prepare: next => {
+          if (next.action === 'rotate' && isCompactLayout()) actions.setMobileSheet('none');
           expandedDetail = isCompactLayout() && next.detailExpanded === true;
           if (next.panel) {
             actions.setCollapsed(next.panel === 'tools' ? 'dock' : next.panel, false);
@@ -159,7 +164,6 @@ export function GuidedTour() {
             void navigate(() => {
               actions.resetAll();
               engine.resetToStart();
-              actions.closeGuide();
             });
           } else if (next.action === 'search') actions.setSearchQuery(next.value ?? '');
           else if (next.target) {
@@ -197,6 +201,7 @@ export function GuidedTour() {
       else container?.querySelector<HTMLButtonElement>('button')?.focus();
     };
     const onFocus = (event: FocusEvent) => {
+      if (event.target instanceof HTMLElement && event.target.closest('.ds-reset-all')) return;
       if (!focusContainer()?.contains(event.target as Node)) focusFirst();
     };
     const onKey = (event: KeyboardEvent) => {
@@ -209,7 +214,9 @@ export function GuidedTour() {
         actions.closeGuide();
       } else if (event.key === 'Tab') {
         const container = focusContainer();
-        const buttons = container instanceof HTMLButtonElement ? [container] : [...container?.querySelectorAll<HTMLElement>('button:not(:disabled), select:not(:disabled), summary, details[open] a[href]') ?? []];
+        const buttons: HTMLElement[] = container instanceof HTMLButtonElement ? [container] : [...container?.querySelectorAll<HTMLElement>('button:not(:disabled), select:not(:disabled), summary, details[open] a[href]') ?? []];
+        const reset = document.querySelector<HTMLButtonElement>('.ds-reset-all');
+        if (reset) buttons.push(reset);
         const current = buttons.indexOf(document.activeElement as HTMLElement);
         event.preventDefault();
         buttons[(current + (event.shiftKey ? -1 : 1) + buttons.length) % buttons.length]?.focus();
@@ -219,6 +226,7 @@ export function GuidedTour() {
     window.addEventListener('keydown', onKey, true);
     return () => {
       abort.abort();
+      stopOnClose();
       document.removeEventListener('focusin', onFocus);
       window.removeEventListener('keydown', onKey, true);
       if (focusBefore instanceof HTMLElement && focusBefore.isConnected) focusBefore.focus();
@@ -312,8 +320,8 @@ export function GuidedTour() {
       <div className="ds-tour-progress" aria-hidden="true"><span style={{ width: `${(index + 1) / FIRST_VISIT_TOUR.length * 100}%` }} /></div>
       <div className="ds-tour-navigation">
         <button type="button" className="ds-secondary" aria-label={text.previous} disabled={index === 0} onClick={() => jump(index - 1)}>←</button>
-        <select aria-label={text.step} value={index} onChange={event => jump(Number(event.target.value))}>
-          {FIRST_VISIT_TOUR.map((item, next) => <option key={item.id} value={next}>{next + 1}. {text.steps[item.id][0]}</option>)}
+        <select aria-label={text.step} value={step.id} onChange={event => jump(FIRST_VISIT_TOUR.findIndex(item => item.id === event.target.value))}>
+          {FIRST_VISIT_TOUR.map((item, next) => <option key={item.id} value={item.id}>{next + 1}. {text.steps[item.id][0]}</option>)}
         </select>
         <button type="button" className="ds-secondary" aria-label={text.next} disabled={index === FIRST_VISIT_TOUR.length - 1} onClick={() => jump(index + 1)}>→</button>
       </div>

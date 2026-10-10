@@ -245,7 +245,7 @@ export const actions = {
   resetAll() {
     orbitBeforeTooth = null;
     adultSceneBeforeDevelopment = null;
-    setState((s) => ({ ...initialState, ready: s.ready, loading: s.loading, error: s.error, theme: s.theme, lang: s.lang, guideOpen: s.guideOpen, guideRunId: s.guideRunId, resetId: s.resetId + 1 }));
+    setState((s) => ({ ...initialState, ready: s.ready, loading: s.loading, error: s.error, theme: s.theme, lang: s.lang, guideRunId: s.guideRunId, resetId: s.resetId + 1 }));
     persist(PREF.numbering, initialState.numbering);
     persist(PREF.orbit, initialState.orbitMode);
   },

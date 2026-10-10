@@ -1360,11 +1360,12 @@ button.ds-layer-name:hover {
 .ds-reset-all:hover {
   opacity: 0.88;
 }
+.ds-reset-all.is-guide-reset { z-index: 41; }
 .ds-reset-all:active {
   transform: scale(0.97);
 }
 @media (max-width: 1023px), (pointer: coarse) and (max-width: 1366px) {
-  /* icon only, above the mobile bar; hidden while the tooth dissection tools take the bottom */
+  /* Icon only; always reachable, including during tooth dissection. */
   .ds-reset-all {
     left: 12px;
     bottom: calc(66px + env(safe-area-inset-bottom));
@@ -1374,9 +1375,6 @@ button.ds-layer-name:hover {
     justify-content: center;
   }
   .ds-reset-all span {
-    display: none;
-  }
-  .ds-app.is-dissecting .ds-reset-all {
     display: none;
   }
 }
@@ -2683,11 +2681,13 @@ button.ds-layer-name:hover {
   .ds-tour-card h2 { font-size: 22px; }
   .ds-tour-card p { font-size: 13px; }
   .ds-tour-heading .ds-label-sm { font-size: 10px; }
+  .ds-tour-card[data-position='top'] .ds-tour-heading { padding-left: 40px; }
   .ds-tour-actions { gap: 10px; }
 }
 @media (orientation: landscape) and (max-height: 600px) {
   .ds-tour-card { top: 70px; left: 12px; transform: none; width: min(340px, calc(100vw * .48)); max-height: calc(100dvh - 88px); }
   .ds-tour-card[data-position='bottom'] { top: 70px; bottom: auto; }
+  .ds-tour-heading { padding-left: 40px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .ds-tour-cursor, .ds-tour-progress span { transition: none; }
