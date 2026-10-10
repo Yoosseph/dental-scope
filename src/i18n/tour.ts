@@ -5,11 +5,13 @@ interface TourText {
   explore: string; loading: string; error: string; retry: string;
   example: string;
   speed: string; step: string; previous: string; next: string;
+  hide: string; show: string;
   steps: Record<string, readonly [string, string]>;
 }
 
 export const TOUR_TEXT: Record<Lang, TourText> = {
   en: {
+    hide: 'Hide guide', show: 'Show guide',
     speed: 'Speed', step: 'Guide step', previous: 'Previous step', next: 'Next step',
     example: 'Schematic teaching example; development varies.',
     replay: 'Replay guide', label: 'A first look at Dental Scope', skip: 'Skip guide', close: 'Close guide', pause: 'Pause', resume: 'Resume', explore: 'Start exploring', loading: 'Preparing the demonstration…', error: 'The demonstration could not reach a control. You can retry or start exploring.', retry: 'Try again',
@@ -43,6 +45,7 @@ export const TOUR_TEXT: Record<Lang, TourText> = {
     },
   },
   sv: {
+    hide: 'Dölj guiden', show: 'Visa guiden',
     speed: 'Hastighet', step: 'Guidesteg', previous: 'Föregående steg', next: 'Nästa steg',
     example: 'Schematiskt undervisningsexempel; utvecklingen varierar.',
     replay: 'Visa guiden igen', label: 'En första titt på Dental Scope', skip: 'Hoppa över guiden', close: 'Stäng guiden', pause: 'Pausa', resume: 'Fortsätt', explore: 'Börja utforska', loading: 'Förbereder demonstrationen…', error: 'Demonstrationen kunde inte nå en kontroll. Försök igen eller börja utforska.', retry: 'Försök igen',
@@ -76,6 +79,7 @@ export const TOUR_TEXT: Record<Lang, TourText> = {
     },
   },
   de: {
+    hide: 'Anleitung ausblenden', show: 'Anleitung anzeigen',
     speed: 'Tempo', step: 'Anleitungsschritt', previous: 'Vorheriger Schritt', next: 'Nächster Schritt',
     example: 'Schematisches Lehrbeispiel; die Entwicklung variiert.',
     replay: 'Anleitung wiederholen', label: 'Ein erster Blick auf Dental Scope', skip: 'Anleitung überspringen', close: 'Anleitung schließen', pause: 'Pause', resume: 'Fortsetzen', explore: 'Erkundung starten', loading: 'Demonstration wird vorbereitet…', error: 'Ein Steuerelement konnte nicht erreicht werden. Wiederholen Sie die Anleitung oder starten Sie die Erkundung.', retry: 'Erneut versuchen',
@@ -109,6 +113,7 @@ export const TOUR_TEXT: Record<Lang, TourText> = {
     },
   },
   es: {
+    hide: 'Ocultar guía', show: 'Mostrar guía',
     speed: 'Velocidad', step: 'Paso de la guía', previous: 'Paso anterior', next: 'Paso siguiente',
     example: 'Ejemplo didáctico esquemático; el desarrollo varía.',
     replay: 'Repetir guía', label: 'Un primer vistazo a Dental Scope', skip: 'Omitir guía', close: 'Cerrar guía', pause: 'Pausar', resume: 'Continuar', explore: 'Empezar a explorar', loading: 'Preparando la demostración…', error: 'La demostración no pudo acceder a un control. Puede reintentar o empezar a explorar.', retry: 'Reintentar',
@@ -142,6 +147,7 @@ export const TOUR_TEXT: Record<Lang, TourText> = {
     },
   },
   la: {
+    hide: 'Ductum cela', show: 'Ductum ostende',
     speed: 'Celeritas', step: 'Gradus ductus', previous: 'Gradus prior', next: 'Gradus sequens',
     example: 'Exemplar didacticum schematicum; evolutio variat.',
     replay: 'Ductum repete', label: 'Prima inspectio Dental Scope', skip: 'Ductum omitte', close: 'Ductum claude', pause: 'Intermitte', resume: 'Perge', explore: 'Explorationem incipe', loading: 'Demonstratio paratur…', error: 'Demonstratio imperium invenire non potuit. Iterum tenta aut explorationem incipe.', retry: 'Iterum tenta',

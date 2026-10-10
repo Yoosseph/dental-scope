@@ -151,6 +151,24 @@ describe('scripted tour playback', () => {
 });
 
 describe('first visit and replay', () => {
+  it('collapses the guide without restarting it and preserves collapse during step preparation', () => {
+    setState({ ...initialState });
+    actions.startGuide();
+    const run = getState().guideRunId;
+    actions.setGuideCollapsed(true);
+    expect(getState()).toMatchObject({ guideOpen: true, guideCollapsed: true, guideRunId: run });
+    actions.resetGuideScene(true);
+    expect(getState()).toMatchObject({ guideOpen: true, guideCollapsed: true, guideRunId: run });
+    actions.setGuideCollapsed(false);
+    expect(getState().guideRunId).toBe(run);
+    actions.setGuideCollapsed(true);
+    actions.closeGuide();
+    expect(getState()).toMatchObject({ guideOpen: false, guideCollapsed: false });
+    actions.setGuideCollapsed(true);
+    actions.startGuide();
+    expect(getState()).toMatchObject({ guideOpen: true, guideCollapsed: false });
+    setState({ ...initialState });
+  });
   it('keeps labels on through development, tooth exploration and nerves, then resets on completion', () => {
     setState({ ...initialState });
     actions.startGuide();

@@ -17,6 +17,7 @@ export function useViewportInsets(engine: Engine) {
   const developmentStage = useApp((s) => s.developmentStage);
   const studyView = useApp((s) => s.studyView);
   const guideOpen = useApp((s) => s.guideOpen);
+  const guideCollapsed = useApp(s => s.guideCollapsed);
   // keep the focused anatomy clear of the panels that cover the canvas
   useEffect(() => {
     const ui = document.querySelector<HTMLElement>('.ds-ui');
@@ -51,7 +52,7 @@ export function useViewportInsets(engine: Engine) {
       const tourBounds = tour?.getBoundingClientRect();
       let top = 0;
       let tourBottom = clearance;
-      if (tour && tourBounds) {
+      if (tour && tourBounds?.width && tourBounds.height) {
         if (!compact.matches) {
           if (tour.dataset.position === 'left') left = Math.max(left, tourBounds.right + 12);
           else right = Math.max(right, bounds.right - tourBounds.left + 12);
@@ -81,6 +82,6 @@ export function useViewportInsets(engine: Engine) {
       window.removeEventListener('resize', schedule);
       window.visualViewport?.removeEventListener('resize', schedule);
     };
-  }, [engine, selected, dissect, laidOut, sheet, detailHidden, dockHidden, layersHidden, jawControls, developmentStage, studyView, lang, guideOpen]);
+  }, [engine, selected, dissect, laidOut, sheet, detailHidden, dockHidden, layersHidden, jawControls, developmentStage, studyView, lang, guideOpen, guideCollapsed]);
 
 }

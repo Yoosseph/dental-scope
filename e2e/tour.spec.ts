@@ -109,6 +109,58 @@ test('the nerve step shows a focused view with a clear explanation', async ({ pa
   await page.getByRole('button', { name: 'Close guide', exact: true }).click();
 });
 
+test('the guide can hide in the top bar while playback continues and restores the same run', async ({ page }, testInfo) => {
+  await page.addInitScript(() => localStorage.setItem('ds.guide.seen.v1', 'seen'));
+  await page.goto('/');
+  await expect(page.getByRole('status')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Replay guide', exact: true }).click();
+  const card = page.locator('.ds-tour-card');
+  await expect(page.locator('#ds-tour-body')).toContainText('Watch a short demonstration');
+  await card.getByRole('button', { name: '2×', exact: true }).click();
+  await card.getByRole('button', { name: 'Hide guide', exact: true }).click();
+  const show = page.getByRole('button', { name: 'Show guide', exact: true });
+  await expect(card).toBeHidden();
+  await expect(show).toBeVisible();
+  await expect(show).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(show).toBeFocused();
+  await expect(card).toHaveAttribute('data-step', 'open-skull');
+  const initial = await show.boundingBox();
+  await expect(card).toHaveAttribute('data-step', 'primary');
+  const current = await show.boundingBox();
+  expect(initial).toEqual(current);
+  await page.screenshot({ path: testInfo.outputPath('guide-hidden-top-bar.png') });
+  await show.click();
+  await expect(card).toBeVisible();
+  await expect(card).toHaveAttribute('data-step', 'primary');
+  await card.getByRole('button', { name: 'Pause', exact: true }).click();
+  await expect(card.getByRole('button', { name: '2×', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await card.getByRole('combobox', { name: 'Guide step' }).selectOption('13');
+  await expect(page.locator('.ds-tour-circle')).toHaveAttribute('data-target', 'tooth-details');
+  await card.getByRole('button', { name: 'Hide guide', exact: true }).click();
+  await expect(card).toBeHidden();
+  await show.click();
+  await expect(card).toHaveAttribute('data-step', 'surface-description');
+  await expect(card.getByRole('button', { name: 'Resume', exact: true })).toBeVisible();
+  expect(await card.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('guide-restored-panel.png') });
+  await card.getByRole('button', { name: 'Hide guide', exact: true }).click();
+  await page.keyboard.press('Escape');
+  await expect(card).toHaveCount(0);
+  await expect(show).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Replay guide', exact: true }).click();
+  await expect(card).toBeVisible();
+  await card.getByRole('button', { name: 'Pause', exact: true }).click();
+  await card.getByRole('combobox', { name: 'Guide step' }).selectOption('24');
+  await expect(page.locator('#ds-tour-body')).toContainText('camera now frames the gold nerve paths');
+  await card.getByRole('button', { name: 'Resume', exact: true }).click();
+  await card.getByRole('button', { name: 'Hide guide', exact: true }).click();
+  await expect(card).toHaveCount(0);
+  await expect(show).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Replay guide', exact: true })).toBeFocused();
+});
+
 test('guide speed controls and stage jumps preserve the scene and manual pause', async ({ page }, testInfo) => {
   await page.addInitScript(() => localStorage.setItem('ds.guide.seen.v1', 'seen'));
   await page.goto('/');

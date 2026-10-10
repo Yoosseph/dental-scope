@@ -8,7 +8,7 @@ import { DEVELOPMENT_TEXT } from '../i18n/development';
 import { TOUR_TEXT } from '../i18n/tour';
 import { actions, getState, useApp } from '../state/store';
 import { useServices } from './context';
-import { IconClose, IconPlay, IconPause, IconReplay } from './icons';
+import { IconClose, IconPlay, IconPause, IconReplay, IconChevron } from './icons';
 
 type Mark = { target: string; rect: DOMRect; clicking: boolean };
 type Placement = 'top' | 'left' | 'bottom';
@@ -36,6 +36,7 @@ const visible = (element: HTMLElement | null) => {
 export function GuidedTour() {
   const { engine } = useServices();
   const open = useApp(s => s.guideOpen);
+  const collapsed = useApp(s => s.guideCollapsed);
   const runId = useApp(s => s.guideRunId);
   const ready = useApp(s => s.ready);
   const error = useApp(s => s.error);
@@ -189,8 +190,14 @@ export function GuidedTour() {
       engine.resetToStart();
     });
 
+    const focusContainer = () => getState().guideCollapsed ? targetElement('show-guide') : card.current;
+    const focusFirst = () => {
+      const container = focusContainer();
+      if (container instanceof HTMLButtonElement) container.focus();
+      else container?.querySelector<HTMLButtonElement>('button')?.focus();
+    };
     const onFocus = (event: FocusEvent) => {
-      if (!card.current?.contains(event.target as Node)) card.current?.querySelector<HTMLButtonElement>('button')?.focus();
+      if (!focusContainer()?.contains(event.target as Node)) focusFirst();
     };
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -201,7 +208,8 @@ export function GuidedTour() {
         engine.resetToStart();
         actions.closeGuide();
       } else if (event.key === 'Tab') {
-        const buttons = [...card.current!.querySelectorAll<HTMLElement>('button:not(:disabled), select:not(:disabled), summary, details[open] a[href]')];
+        const container = focusContainer();
+        const buttons = container instanceof HTMLButtonElement ? [container] : [...container?.querySelectorAll<HTMLElement>('button:not(:disabled), select:not(:disabled), summary, details[open] a[href]') ?? []];
         const current = buttons.indexOf(document.activeElement as HTMLElement);
         event.preventDefault();
         buttons[(current + (event.shiftKey ? -1 : 1) + buttons.length) % buttons.length]?.focus();
@@ -217,6 +225,21 @@ export function GuidedTour() {
       else document.querySelector<HTMLButtonElement>('[data-tour="replay"]')?.focus();
     };
   }, [open, runId, engine, seek]);
+
+  // Collapsing changes focus and camera clearance without restarting playback.
+  useEffect(() => {
+    if (!open) return;
+    if (collapsed) targetElement('show-guide')?.focus();
+    else {
+      card.current?.querySelector<HTMLButtonElement>('button')?.focus();
+      const frame = requestAnimationFrame(() => {
+        const target = circle.current?.dataset.target;
+        const element = target && targetElement(target);
+        if (element) setPlacement(cardPlacement(element.getBoundingClientRect(), card.current));
+      });
+      return () => cancelAnimationFrame(frame);
+    }
+  }, [open, collapsed]);
 
   // Follow responsive tray motion imperatively; React does not render per animation frame.
   useEffect(() => {
@@ -271,9 +294,10 @@ export function GuidedTour() {
         <svg width="34" height="42" viewBox="0 0 34 42"><path d="M3 2 L3 31 L11 24 L17 38 L24 35 L18 21 L29 21 Z" fill="var(--accent)" stroke="var(--panel-solid)" strokeWidth="3" strokeLinejoin="round" /></svg>
       </div>
     </>}
-    <div ref={card} className="ds-tour-card ds-panel" role="dialog" aria-modal="true" aria-labelledby="ds-tour-title" aria-describedby="ds-tour-body" data-position={placement} data-step={step.id}>
+    <div ref={card} id="ds-guide-panel" hidden={collapsed} className="ds-tour-card ds-panel" role="dialog" aria-modal="true" aria-labelledby="ds-tour-title" aria-describedby="ds-tour-body" data-position={placement} data-step={step.id}>
       <div className="ds-tour-heading">
         <span className="ds-label-sm">{text.label}</span>
+        <button type="button" className="ds-tour-hide" onClick={() => actions.setGuideCollapsed(true)} aria-expanded="true" aria-controls="ds-guide-panel"><IconChevron size={14} />{text.hide}</button>
         <button type="button" className="ds-icon-btn ds-icon-btn--ghost" onClick={close} aria-label={text.close}><IconClose size={17} /></button>
       </div>
       <div className="ds-tour-copy" aria-live="polite" aria-atomic="true">

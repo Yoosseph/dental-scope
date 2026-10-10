@@ -2,7 +2,7 @@ import { NUMBERING_LABEL, NUMBERING_SHORT, NUMBERING_SYSTEMS } from '../anatomy/
 import { REPO_URL } from '../app/repo';
 import { useT } from '../i18n';
 import { actions, useApp } from '../state/store';
-import { IconExternal, IconInfo, IconMoon, IconSearch, IconSun, IconPlay } from './icons';
+import { IconExternal, IconInfo, IconMoon, IconSearch, IconSun, IconPlay, IconChevron } from './icons';
 import { TOUR_TEXT } from '../i18n/tour';
 import { LanguageSwitcher } from './LanguageSwitcher';
 
@@ -29,9 +29,10 @@ export function Identity() {
 export function TopActions() {
   const theme = useApp((s) => s.theme);
   const lang = useApp((s) => s.lang);
+  const guideCollapsed = useApp(s => s.guideOpen && s.guideCollapsed);
   const m = useT();
   return (
-    <div className="ds-top-actions">
+    <div className={`ds-top-actions${guideCollapsed ? ' is-guide-collapsed' : ''}`}>
       <LanguageSwitcher />
       <NumberingControls />
       <button type="button" data-tour="search" className="ds-search-trigger" onClick={() => actions.openSearch(true)} aria-label={m.searchAnatomy} aria-keyshortcuts="/">
@@ -39,7 +40,9 @@ export function TopActions() {
         <span>{m.searchAnatomy}</span>
         <kbd>/</kbd>
       </button>
-      <button type="button" data-tour="replay" className="ds-icon-btn" onClick={() => actions.startGuide()} aria-label={TOUR_TEXT[lang].replay} title={TOUR_TEXT[lang].replay}><IconPlay /></button>
+      {guideCollapsed ?
+        <button type="button" data-tour="show-guide" className="ds-guide-show ds-icon-btn" onClick={() => actions.setGuideCollapsed(false)} aria-expanded="false" aria-controls="ds-guide-panel"><IconChevron size={15} />{TOUR_TEXT[lang].show}</button> :
+        <button type="button" data-tour="replay" className="ds-icon-btn" onClick={() => actions.startGuide()} aria-label={TOUR_TEXT[lang].replay} title={TOUR_TEXT[lang].replay}><IconPlay /></button>}
       <button type="button" className="ds-icon-btn" onClick={() => actions.setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label={theme === 'dark' ? m.toLight : m.toDark} title={m.theme}>
         {theme === 'dark' ? <IconSun /> : <IconMoon />}
       </button>

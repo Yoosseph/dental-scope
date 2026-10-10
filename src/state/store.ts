@@ -88,6 +88,7 @@ export interface AppState {
   searchOpen: boolean;
   searchQuery: string;
   guideOpen: boolean;
+  guideCollapsed: boolean;
   guideRunId: number;
   aboutOpen: boolean;
   controlsOpen: boolean;
@@ -137,6 +138,7 @@ export const initialState: AppState = {
   searchOpen: false,
   searchQuery: '',
   guideOpen: false,
+  guideCollapsed: false,
   guideRunId: 0,
   aboutOpen: false,
   controlsOpen: false,
@@ -367,15 +369,16 @@ export const actions = {
     setState({ searchOpen: open });
   },
   setSearchQuery(searchQuery: string) { setState({ searchQuery }); },
-  startGuide() { setState(s => ({ guideOpen: true, guideRunId: s.guideRunId + 1, labels: true, aboutOpen: false, controlsOpen: false, searchOpen: false })); },
-  closeGuide() { setState({ guideOpen: false }); },
+  startGuide() { setState(s => ({ guideOpen: true, guideCollapsed: false, guideRunId: s.guideRunId + 1, labels: true, aboutOpen: false, controlsOpen: false, searchOpen: false })); },
+  setGuideCollapsed(guideCollapsed: boolean) { setState({ guideCollapsed }); },
+  closeGuide() { setState({ guideOpen: false, guideCollapsed: false }); },
   /** A demonstration starts/ends in the adult scene without rewriting viewer preferences. */
   resetGuideScene(labels = false) {
     const orbitMode = orbitBeforeTooth ?? getState().orbitMode;
     orbitBeforeTooth = null;
     adultSceneBeforeDevelopment = null;
     setState(s => ({ ...initialState, ready: s.ready, loading: s.loading, error: s.error, theme: s.theme, lang: s.lang,
-      numbering: s.numbering, orbitMode, labels, guideOpen: s.guideOpen, guideRunId: s.guideRunId, resetId: s.resetId + 1 }));
+      numbering: s.numbering, orbitMode, labels, guideOpen: s.guideOpen, guideCollapsed: s.guideCollapsed, guideRunId: s.guideRunId, resetId: s.resetId + 1 }));
   },
   openAbout(open: boolean) {
     setState(open ? { aboutOpen: true, controlsOpen: false } : { aboutOpen: false });

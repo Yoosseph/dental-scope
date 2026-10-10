@@ -2636,7 +2636,15 @@ button.ds-layer-name:hover {
 }
 .ds-tour-card { position: fixed; z-index: 3; top: calc(90px + var(--safe-top, 0px)); right: 24px; width: min(390px, calc(100vw - 24px)); padding: 16px 18px; background: var(--panel-solid); box-shadow: 0 12px 42px var(--scrim-strong); max-height: calc(100dvh - 120px); display: flex; flex-direction: column; }
 .ds-tour-card[data-position='left'] { right: auto; left: 24px; }
+.ds-tour-card[hidden] { display: none; }
+.ds-top-actions.is-guide-collapsed { z-index: 41; }
+.ds-top-actions.is-guide-collapsed > :not(.ds-guide-show), .ds-top-actions.is-guide-collapsed > :not(.ds-guide-show) * { pointer-events: none; }
+.ds-top-actions .ds-guide-show { width: auto; padding: 0 10px; gap: 5px; font-size: 12px; white-space: nowrap; }
+.ds-guide-show svg { transform: rotate(90deg); flex-shrink: 0; }
 .ds-tour-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ds-tour-heading .ds-label-sm { flex: 1; min-width: 0; }
+.ds-tour-hide { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; color: var(--accent); flex-shrink: 0; min-height: 28px; }
+.ds-tour-hide svg { transform: rotate(-90deg); }
 .ds-tour-heading .ds-icon-btn { width: 28px; height: 28px; min-width: 28px; min-height: 28px; }
 .ds-tour-copy { overflow-y: auto; min-height: 0; }
 .ds-tour-card h2 { margin: 8px 0; font: 500 25px/1.15 var(--font-display); }
@@ -2669,6 +2677,7 @@ button.ds-layer-name:hover {
 @keyframes ds-tour-ripple { 0% { transform: scale(.3); opacity: 1; } 100% { transform: scale(1.7); opacity: 0; } }
 .ds-tour.is-paused * { animation-play-state: paused; }
 @media (max-width: 1023px), (pointer: coarse) and (max-width: 1366px) {
+  .ds-top-actions.is-guide-collapsed .ds-lang-select { display: none; }
   .ds-tour-card, .ds-tour-card[data-position='left'] { left: 50%; right: auto; transform: translateX(-50%); top: calc(76px + var(--safe-top, 0px)); max-height: min(360px, calc(var(--visual-height, 100dvh) * .43)); padding: 10px 14px; }
   .ds-tour-card[data-position='bottom'] { top: auto; bottom: calc(76px + var(--safe-bottom, 0px)); }
   .ds-tour-card h2 { font-size: 22px; }

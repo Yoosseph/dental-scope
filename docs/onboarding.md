@@ -35,6 +35,12 @@ later. Asset failures or missing controls offer retry and exploration. Playback
 pauses when the page is hidden, supports a manual pause, and respects reduced
 motion. Keyboard focus stays in the guide and returns to the replay control.
 
+Hide guide collapses the caption into a fixed Show guide control in the top bar
+while the demonstration keeps playing. Restoring it preserves the step, speed
+and pause state. The hidden panel contributes no camera clearance. Keyboard
+focus moves between the panel and its top-bar control, and Escape still exits
+the demonstration while collapsed. New runs start with the panel expanded.
+
 The guide offers 1×, 1.5× and 2× playback. The adapter supplies the current rate,
 so changing speed adjusts the current hold without restarting a step. Loading
 and layout readiness keep their real-time timeout. Previous/Next and the named
