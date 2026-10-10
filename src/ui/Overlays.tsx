@@ -88,8 +88,8 @@ export function Footer() {
     <footer className="ds-footer">
       <p className="ds-disclaimer">
         {m.disclaimer}{' '}
-        <button type="button" className="ds-link-btn" onClick={() => actions.openAbout(true)}>
-          {m.controlsCredits}
+        <button type="button" className="ds-link-btn" onClick={() => actions.openControls(true)}>
+          {m.controlsTitle}
         </button>
         {' · '}
         <a className="ds-link-btn" href={aboutPageHref(lang)}>
@@ -101,25 +101,37 @@ export function Footer() {
 }
 
 export function AboutDialog() {
-  const open = useApp((s) => s.aboutOpen);
+  const open = useApp((s) => s.aboutOpen || s.controlsOpen);
+  const controls = useApp((s) => s.controlsOpen);
   const lang = useApp((s) => s.lang);
   const m = useT();
   const ref = useRef<HTMLDialogElement>(null);
+  const close = () => { actions.openAbout(false); actions.openControls(false); };
   useEffect(() => {
     const d = ref.current;
     if (!d) return;
-    if (open && !d.open) d.showModal();
+    if (open) {
+      if (!d.open) d.showModal();
+      d.querySelector<HTMLButtonElement>('button')?.focus();
+    }
     if (!open && d.open) d.close();
-  }, [open]);
+  }, [open, controls]);
   return (
-    <dialog ref={ref} className="ds-about ds-panel" onClose={() => actions.openAbout(false)} aria-labelledby="ds-about-title">
-      <button type="button" className="ds-icon-btn ds-icon-btn--ghost ds-about-close" onClick={() => actions.openAbout(false)} aria-label={m.close}>
+    <dialog ref={ref} className="ds-about ds-panel" onClose={close} aria-labelledby="ds-about-title">
+      <button type="button" className="ds-icon-btn ds-icon-btn--ghost ds-about-close" onClick={close} aria-label={m.close}>
         <IconClose />
       </button>
-      <h2 id="ds-about-title">{m.aboutTitle}</h2>
+      <h2 id="ds-about-title">{controls ? m.controlsTitle : m.aboutTitle}</h2>
+      {controls ? <dl className="ds-keys">
+        {m.keys.map(([k, v]) => (
+          <Fragment key={k}><dt>{k}</dt><dd>{v}</dd></Fragment>
+        ))}
+      </dl> : <>
       <p>{m.aboutIntro}</p>
       <p>
         <a href={aboutPageHref(lang)}>{m.aboutGuide}</a>
+        {' · '}
+        <button type="button" className="ds-link-btn" onClick={() => actions.openControls(true)}>{m.controlsTitle}</button>
       </p>
       <h3>{m.eduTitle}</h3>
       <p>{m.eduBody}</p>
@@ -149,15 +161,6 @@ export function AboutDialog() {
           .
         </p>
       )}
-      <h3>{m.controlsTitle}</h3>
-      <dl className="ds-keys">
-        {m.keys.map(([k, v]) => (
-          <Fragment key={k}>
-            <dt>{k}</dt>
-            <dd>{v}</dd>
-          </Fragment>
-        ))}
-      </dl>
       <p className="ds-about-foot">
         {m.licences}
         {REPO_URL && (
@@ -169,6 +172,7 @@ export function AboutDialog() {
           </>
         )}
       </p>
+      </>}
     </dialog>
   );
 }

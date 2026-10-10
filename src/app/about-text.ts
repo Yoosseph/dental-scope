@@ -57,7 +57,7 @@ const en: AboutText = {
   openExplorer: 'Open the 3D explorer →',
   h1: 'Dental Scope: free interactive 3D dental anatomy',
   lede: 'Dental Scope is a free, open-source 3D dental anatomy explorer. Rotate a full skull and both jaws, pick any of the 32 permanent teeth, and dissect a tooth layer by layer, from enamel and dentin down to the pulp and root canals. It runs in the browser with nothing to install.',
-  toc: ['Features', 'All 32 teeth', 'Tooth numbering', 'Tooth types', 'Anatomy glossary', 'FAQ', 'Credits'],
+  toc: ['Features', 'All 32 teeth', 'Tooth numbering', 'Tooth types', 'Anatomy glossary', 'FAQ', 'Anatomy sources'],
   onThisPage: 'On this page',
   featuresTitle: 'What you can do',
   features: [
@@ -138,7 +138,7 @@ const en: AboutText = {
       a: 'No. Dental Scope is an educational reference only. Internal tooth tissues are modeled with simplified proportions and nerves and vessels follow an anatomy atlas rather than measurements of one person, so it must not be used for diagnosis, treatment planning or clinical decisions.',
     },
   ],
-  creditsTitle: 'Credits and licence',
+  creditsTitle: 'Anatomy sources and licences',
   creditsHtml:
     'Made by {author}. The source code is on <a href="{repo}" rel="noopener">GitHub</a>. The jaws, teeth, skull and muscles come from <a href="{bp3d}" rel="noopener">BodyParts3D</a>, © The Database Center for Life Science, licensed under <a href="{licence}" rel="noopener">CC Attribution-Share Alike 2.1 Japan</a>. Third molars, gums, alveolar bone and the joint are derived from those meshes; enamel, dentin, cementum, periodontal ligament, pulp and canals are modeled with simplified proportions. The dental nerve and vessel paths follow the <a href="https://github.com/Z-Anatomy/Models-of-human-anatomy" rel="noopener">Z-Anatomy</a> atlas (CC BY-SA 4.0), fitted onto these jaws; the superior alveolar nerves, the inferior alveolar vein and the pterygoid plexus are schematic. V1, VII, IX, X and XII additions, skull-exit markers and joint movement are schematic teaching examples. The maxillary sinuses are modeled inside the maxilla, as neither source includes them.',
   note: 'Dental Scope is an educational reference. It is not intended for diagnosis, treatment planning or clinical decisions.',
@@ -155,7 +155,7 @@ const sv: AboutText = {
   openExplorer: 'Öppna 3D-utforskaren →',
   h1: 'Dental Scope: gratis interaktiv tandanatomi i 3D',
   lede: 'Dental Scope är en gratis 3D-utforskare av tandanatomi med öppen källkod. Rotera en hel skalle och båda käkarna, välj vilken som helst av de 32 permanenta tänderna och dissekera en tand lager för lager, från emalj och dentin ner till pulpan och rotkanalerna. Den körs i webbläsaren utan att något behöver installeras.',
-  toc: ['Funktioner', 'Alla 32 tänder', 'Tandnumrering', 'Tandtyper', 'Anatomisk ordlista', 'Vanliga frågor', 'Källor'],
+  toc: ['Funktioner', 'Alla 32 tänder', 'Tandnumrering', 'Tandtyper', 'Anatomisk ordlista', 'Vanliga frågor', 'Anatomiska källor'],
   onThisPage: 'På den här sidan',
   featuresTitle: 'Vad du kan göra',
   features: [
@@ -271,7 +271,7 @@ const sv: AboutText = {
       a: 'Nej. Dental Scope är enbart ett referensmaterial för utbildning. Tändernas inre vävnader är modellerade med förenklade proportioner och nerver och kärl följer en anatomisk atlas, inte mätningar på en enskild person, så det får inte användas för diagnostik, behandlingsplanering eller kliniska beslut.',
     },
   ],
-  creditsTitle: 'Källor och licens',
+  creditsTitle: 'Anatomiska källor och licenser',
   creditsHtml:
     'Skapad av {author}. Källkoden finns på <a href="{repo}" rel="noopener">GitHub</a>. Käkarna, tänderna, skallen och musklerna kommer från <a href="{bp3d}" rel="noopener">BodyParts3D</a>, © The Database Center for Life Science, licensierat under <a href="{licence}" rel="noopener">CC Attribution-Share Alike 2.1 Japan</a>. Tredje molarerna, tandköttet, alveolarbenet och käkleden är härledda från dessa modeller; emalj, dentin, rotcement, parodontalligament, pulpa och kanaler är modellerade med förenklade proportioner. De dentala nerv- och kärlförloppen följer <a href="https://github.com/Z-Anatomy/Models-of-human-anatomy" rel="noopener">Z-Anatomy</a>-atlasen (CC BY-SA 4.0), anpassad till de här käkarna; de övre alveolarnerverna, v. alveolaris inferior och plexus pterygoideus är schematiska. Tilläggen V1, VII, IX, X och XII, markörer för skallens nervutgångar och käkledsrörelsen är schematiska undervisningsexempel. Bihålorna i överkäken är modellerade inuti överkäken, eftersom ingen av källorna innehåller dem.',
   note: 'Dental Scope är ett referensmaterial för utbildning. Det är inte avsett för diagnostik, behandlingsplanering eller kliniska beslut.',
@@ -288,7 +288,7 @@ const de: AboutText = {
   openExplorer: '3D-Explorer öffnen →',
   h1: 'Dental Scope: kostenlose interaktive Zahnanatomie in 3D',
   lede: 'Dental Scope ist ein kostenloser Open-Source-3D-Explorer der Zahnanatomie. Drehe einen vollständigen Schädel mit beiden Kiefern, wähle einen der 32 bleibenden Zähne und zerlege einen Zahn Schicht für Schicht, vom Schmelz und Dentin bis zur Pulpa und zu den Wurzelkanälen. Er läuft im Browser, ohne dass etwas installiert werden muss.',
-  toc: ['Funktionen', 'Alle 32 Zähne', 'Zahnschemata', 'Zahntypen', 'Anatomie-Glossar', 'Häufige Fragen', 'Quellen'],
+  toc: ['Funktionen', 'Alle 32 Zähne', 'Zahnschemata', 'Zahntypen', 'Anatomie-Glossar', 'Häufige Fragen', 'Anatomische Quellen'],
   onThisPage: 'Auf dieser Seite',
   featuresTitle: 'Was du tun kannst',
   features: [
@@ -404,7 +404,7 @@ const de: AboutText = {
       a: 'Nein. Dental Scope ist ausschließlich ein Nachschlagewerk für die Lehre. Die inneren Zahngewebe sind mit vereinfachten Proportionen modelliert und Nerven und Gefäße folgen einem anatomischen Atlas statt Messungen an einer einzelnen Person, daher darf es nicht für Diagnosen, Behandlungsplanung oder klinische Entscheidungen verwendet werden.',
     },
   ],
-  creditsTitle: 'Quellen und Lizenz',
+  creditsTitle: 'Anatomische Quellen und Lizenzen',
   creditsHtml:
     'Erstellt von {author}. Der Quellcode liegt auf <a href="{repo}" rel="noopener">GitHub</a>. Kiefer, Zähne, Schädel und Muskeln stammen aus <a href="{bp3d}" rel="noopener">BodyParts3D</a>, © The Database Center for Life Science, lizenziert unter <a href="{licence}" rel="noopener">CC Attribution-Share Alike 2.1 Japan</a>. Weisheitszähne, Zahnfleisch, Alveolarknochen und Kiefergelenk sind aus diesen Modellen abgeleitet; Zahnschmelz, Dentin, Wurzelzement, Desmodont, Pulpa und Kanäle sind mit vereinfachten Proportionen modelliert. Die dentalen Nerven- und Gefäßverläufe folgen dem <a href="https://github.com/Z-Anatomy/Models-of-human-anatomy" rel="noopener">Z-Anatomy</a>-Atlas (CC BY-SA 4.0), angepasst an diese Kiefer; die oberen Alveolarnerven, die V. alveolaris inferior und der Plexus pterygoideus sind schematisch. Die Ergänzungen V1, VII, IX, X und XII, Schädelöffnungspunkte und Gelenkbewegung sind schematische Lehrbeispiele. Die Kieferhöhlen sind in den Oberkiefer hineinmodelliert, da keine der Quellen sie enthält.',
   note: 'Dental Scope ist ein Nachschlagewerk für die Lehre. Es ist nicht für Diagnosen, Behandlungsplanung oder klinische Entscheidungen bestimmt.',
@@ -421,7 +421,7 @@ const es: AboutText = {
   openExplorer: 'Abrir el explorador 3D →',
   h1: 'Dental Scope: anatomía dental interactiva en 3D, gratis',
   lede: 'Dental Scope es un explorador 3D de anatomía dental gratuito y de código abierto. Gira un cráneo completo y ambos maxilares, elige cualquiera de los 32 dientes permanentes y disecciona un diente capa a capa, desde el esmalte y la dentina hasta la pulpa y los conductos radiculares. Funciona en el navegador, sin instalar nada.',
-  toc: ['Funciones', 'Los 32 dientes', 'Numeración dental', 'Tipos de dientes', 'Glosario anatómico', 'Preguntas frecuentes', 'Créditos'],
+  toc: ['Funciones', 'Los 32 dientes', 'Numeración dental', 'Tipos de dientes', 'Glosario anatómico', 'Preguntas frecuentes', 'Fuentes anatómicas'],
   onThisPage: 'En esta página',
   featuresTitle: 'Qué puedes hacer',
   features: [
@@ -537,7 +537,7 @@ const es: AboutText = {
       a: 'No. Dental Scope es solo una referencia educativa. Los tejidos internos del diente se modelan con proporciones simplificadas, y los nervios y vasos siguen un atlas anatómico en lugar de mediciones de una persona concreta, por lo que no debe usarse para diagnosticar, planificar tratamientos ni tomar decisiones clínicas.',
     },
   ],
-  creditsTitle: 'Créditos y licencia',
+  creditsTitle: 'Fuentes anatómicas y licencias',
   creditsHtml:
     'Creado por {author}. El código fuente está en <a href="{repo}" rel="noopener">GitHub</a>. Los maxilares, los dientes, el cráneo y los músculos proceden de <a href="{bp3d}" rel="noopener">BodyParts3D</a>, © The Database Center for Life Science, con licencia <a href="{licence}" rel="noopener">CC Attribution-Share Alike 2.1 Japan</a>. Los terceros molares, la encía, el hueso alveolar y la articulación se derivan de esos modelos; el esmalte, la dentina, el cemento, el ligamento periodontal, la pulpa y los conductos se modelan con proporciones simplificadas. Los trayectos dentales de nervios y vasos siguen el atlas <a href="https://github.com/Z-Anatomy/Models-of-human-anatomy" rel="noopener">Z-Anatomy</a> (CC BY-SA 4.0), ajustado a estos maxilares; los nervios alveolares superiores, la vena alveolar inferior y el plexo pterigoideo son esquemáticos. Las adiciones V1, VII, IX, X y XII, los puntos de salida del cráneo y el movimiento articular son ejemplos didácticos esquemáticos. Los senos maxilares están modelados dentro del maxilar, ya que ninguna de las fuentes los incluye.',
   note: 'Dental Scope es una referencia educativa. No está destinada al diagnóstico, la planificación de tratamientos ni la toma de decisiones clínicas.',
@@ -554,7 +554,7 @@ const la: AboutText = {
   openExplorer: 'Exploratorem tridimensionalem aperi →',
   h1: 'Dental Scope: anatomia dentalis tridimensionalis et interactiva, gratis',
   lede: 'Dental Scope est explorator anatomiae dentalis tridimensionalis, gratuitus et codice aperto. Cranium totum et ambas maxillas verte, quemlibet ex triginta duobus dentibus permanentibus elige, dentemque stratum post stratum disseca, ab enamelo et dentino usque ad pulpam et canales radicis. In navigatro currit, nihil instituendum est.',
-  toc: ['Facultates', 'Omnes 32 dentes', 'Numeratio dentium', 'Genera dentium', 'Glossarium anatomicum', 'Quaestiones frequentes', 'Auctores'],
+  toc: ['Facultates', 'Omnes 32 dentes', 'Numeratio dentium', 'Genera dentium', 'Glossarium anatomicum', 'Quaestiones frequentes', 'Fontes anatomici'],
   onThisPage: 'In hac pagina',
   featuresTitle: 'Quid facere possis',
   features: [
@@ -670,7 +670,7 @@ const la: AboutText = {
       a: 'Non licet. Dental Scope tantum subsidium ad docendum est. Textus interni dentis proportionibus simplicibus finguntur, nervique et vasa atlantem anatomicum sequuntur, non mensuras unius hominis; itaque ad diagnosim, ad curationem instituendam aut ad consilia clinica adhiberi non debet.',
     },
   ],
-  creditsTitle: 'Auctores et licentia',
+  creditsTitle: 'Fontes anatomici et licentiae',
   creditsHtml:
     'Fecit {author}. Codex fontis in <a href="{repo}" rel="noopener">GitHub</a> est. Maxillae, dentes, cranium et musculi ex <a href="{bp3d}" rel="noopener">BodyParts3D</a> veniunt, © The Database Center for Life Science, sub licentia <a href="{licence}" rel="noopener">CC Attribution-Share Alike 2.1 Japan</a>. Molares tertii, gingiva, os alveolare et articulatio ex illis exemplaribus derivantur; enamelum, dentinum, cementum, ligamentum periodontale, pulpa et canales proportionibus simplicibus finguntur. Viae nervorum et vasorum dentalium atlantem <a href="https://github.com/Z-Anatomy/Models-of-human-anatomy" rel="noopener">Z-Anatomy</a> (CC BY-SA 4.0) sequuntur, his maxillis accommodatum; nervi alveolares superiores, vena alveolaris inferior et plexus pterygoideus schematici sunt. Additamenta V1, VII, IX, X et XII, signa exituum cranii et motus articulationis exempla didactica schematica sunt. Sinus maxillares intra maxillam ficti sunt, quia neuter fons eos continet.',
   note: 'Dental Scope subsidium ad docendum est. Non ad diagnosim, ad curationem instituendam aut ad consilia clinica destinatum est.',

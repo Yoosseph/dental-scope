@@ -107,3 +107,31 @@ test('credits deep links retain theme and keyboard dismissal', async ({ page }) 
   await expect(page.getByRole('dialog', { name: 'Credits', exact: true })).toBeHidden();
   await expect(page).toHaveURL(/\/$/);
 });
+
+test('controls help is separate from anatomy sources and contributor credits', async ({ page }, testInfo) => {
+  await page.goto('/');
+  if (testInfo.project.name === 'phone') {
+    await page.getByRole('button', { name: 'About Dental Scope', exact: true }).click();
+    await page.getByRole('dialog', { name: 'About Dental Scope', exact: true }).getByRole('button', { name: 'Controls', exact: true }).click();
+  } else await page.getByRole('button', { name: 'Controls', exact: true }).click();
+  const controls = page.getByRole('dialog', { name: 'Controls', exact: true });
+  await expect(controls).toBeVisible();
+  await expect(controls.locator('.ds-keys')).toContainText('Right-drag');
+  await expect(controls).not.toContainText('BodyParts3D');
+  await expect(controls.locator('.ds-about-close')).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(controls).toBeHidden();
+  await page.getByRole('button', { name: 'About Dental Scope', exact: true }).click();
+  const about = page.getByRole('dialog', { name: 'About Dental Scope', exact: true });
+  await expect(about.getByRole('heading', { name: 'Anatomy sources', exact: true })).toBeVisible();
+  await expect(about).toContainText('BodyParts3D');
+  await expect(about.locator('.ds-keys')).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Credits', exact: true }).click();
+  const credits = page.getByRole('dialog', { name: 'Credits', exact: true });
+  await expect(credits.getByRole('heading', { name: 'Engineering contributors:', exact: true })).toBeVisible();
+  await expect(credits.getByRole('heading', { name: 'Dental contributors:', exact: true })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await page.goto('/about/');
+  await expect(page.getByRole('heading', { name: 'Anatomy sources and licences', exact: true })).toBeVisible();
+});

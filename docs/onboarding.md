@@ -10,6 +10,10 @@ Skip guide button. The top-bar play button replays it. Closing, skipping or pres
 cancels playback and returns to the adult scene; language, theme, numbering and
 orbit preferences are retained. The guide records `ds.guide.seen.v1` in local
 storage when opened. If storage is blocked, it appears once per mounted session.
+Completing the full guide automatically runs the Reset all behavior, returns
+to the starting view and closes the overlay. Numbering and orbit settings
+return to their defaults; theme and language stay unchanged. There is no
+confirmation screen at the end, and the guide can be replayed from the top bar.
 
 `src/app/tour.ts` owns the step data and the reusable, abortable player. A step
 declares a caption ID, an optional `data-tour` target, its action, panel, reading

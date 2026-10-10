@@ -78,7 +78,7 @@ describe('scripted tour playback', () => {
 });
 
 describe('first visit and replay', () => {
-  it('keeps labels on through development, tooth exploration and the final guide scene', () => {
+  it('keeps labels on through development, tooth exploration and nerves, then resets on completion', () => {
     setState({ ...initialState });
     actions.startGuide();
     actions.resetGuideScene(true);
@@ -92,11 +92,9 @@ describe('first visit and replay', () => {
     actions.exitDissect();
     actions.applyStudyPreset('nerves');
     expect(getState().labels).toBe(true);
-    actions.resetGuideScene(true);
-    expect(getState()).toMatchObject({ guideOpen: true, labels: true, dissectFdi: null });
-    actions.resetGuideScene();
+    actions.resetAll();
     actions.closeGuide();
-    expect(getState()).toMatchObject({ guideOpen: false, labels: false });
+    expect(getState()).toMatchObject({ guideOpen: false, labels: false, studyView: null, view: 'front', dissectFdi: null });
     setState({ ...initialState });
   });
 

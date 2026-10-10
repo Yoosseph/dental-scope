@@ -44,7 +44,6 @@ export const en = {
 
   /* footer */
   disclaimer: 'Educational anatomical reference. Not intended for diagnosis or treatment.',
-  controlsCredits: 'Controls & credits',
 
   /* about dialog */
   aboutTitle: 'About Dental Scope',
@@ -54,7 +53,7 @@ export const en = {
   eduTitle: 'Educational use only',
   eduBody:
     'Dental Scope is an educational reference. It is not a diagnostic tool and must not be used for diagnosis, treatment planning or clinical decisions.',
-  madeTitle: 'How the anatomy is made',
+  madeTitle: 'Anatomy sources',
   provSource: 'Source',
   provSourceBody:
     'jaws, teeth, skull and muscles come from BodyParts3D 3.0, © The Database Center for Life Science, licensed under CC Attribution-Share Alike 2.1 Japan.',

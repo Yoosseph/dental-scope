@@ -125,15 +125,19 @@ test('replay advances when the page became visible before the guide opened', asy
   await page.getByRole('button', { name: 'Close guide', exact: true }).click();
 });
 
-test('the complete guide finishes and can be replayed', async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('ds.guide.seen.v1', 'seen'));
+test('the complete guide resets all, closes automatically and can be replayed', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('ds.guide.seen.v1', 'seen');
+    localStorage.setItem('ds.numbering', 'universal');
+    localStorage.setItem('ds.orbit', 'free');
+  });
   await page.goto('/');
   await expect(page.getByRole('status')).toHaveCount(0);
   await page.getByRole('button', { name: 'Replay guide', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Start exploring', exact: true })).toBeVisible({ timeout: process.env.CI ? 180_000 : 90_000 });
-  await expect(page.locator('.ds-tour-count')).toHaveText('17 / 17');
-  await page.getByRole('button', { name: 'Start exploring', exact: true }).click();
-  await expect(page.locator('.ds-tour-card')).toHaveCount(0);
+  await expect(page.locator('.ds-tour-card')).toBeVisible();
+  await expect(page.locator('.ds-tour-card')).toHaveCount(0, { timeout: process.env.CI ? 180_000 : 90_000 });
+  expect(await page.evaluate(() => [localStorage.getItem('ds.numbering'), localStorage.getItem('ds.orbit')])).toEqual(['fdi', 'fixed']);
+  await expect(page.locator('.ds-tour-cursor, .ds-tour-circle')).toHaveCount(0);
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole('button', { name: 'Replay guide', exact: true })).toBeFocused();
   await page.getByRole('button', { name: 'Replay guide', exact: true }).click();

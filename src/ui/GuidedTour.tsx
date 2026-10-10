@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { FIRST_VISIT_TOOTH, FIRST_VISIT_TOUR, needsFirstVisitGuide, playTour, rememberGuideVisit, tourDelay } from '../app/tour';
+import { navigate } from '../app/router';
 import { isCompactLayout } from '../app/viewport';
 import { DEVELOPMENT_SOURCES } from '../content/developmentAnatomy';
 import { useLang } from '../i18n';
@@ -45,7 +46,7 @@ export function GuidedTour() {
   const [mark, setMark] = useState<Mark | null>(null);
   const [placement, setPlacement] = useState<Placement>('top');
   const [highlight, setHighlight] = useState(false);
-  const [status, setStatus] = useState<'loading' | 'playing' | 'ready' | 'error'>('loading');
+  const [status, setStatus] = useState<'loading' | 'playing' | 'error'>('loading');
   const [paused, setPaused] = useState(false);
   const pauseRef = useRef(false);
   const controller = useRef<AbortController | null>(null);
@@ -135,9 +136,12 @@ export function GuidedTour() {
         activate: next => {
           signal.throwIfAborted();
           if (next.action === 'finish') {
-            actions.resetGuideScene(true);
-            engine.resetToStart();
-            setStatus('ready');
+            abort.abort();
+            void navigate(() => {
+              actions.resetAll();
+              engine.resetToStart();
+              actions.closeGuide();
+            });
           } else if (next.action === 'search') actions.setSearchQuery(next.value ?? '');
           else if (next.target) {
             const element = targetElement(next.target)!;
@@ -255,11 +259,9 @@ export function GuidedTour() {
       <div className="ds-tour-progress" aria-hidden="true"><span style={{ width: `${(index + 1) / FIRST_VISIT_TOUR.length * 100}%` }} /></div>
       <div className="ds-tour-actions">
         <span className="ds-tour-count">{index + 1} / {FIRST_VISIT_TOUR.length}</span>
-        {status === 'ready' ? <button type="button" className="ds-primary" onClick={close}>{text.explore}</button> : <>
-          <button type="button" className="ds-secondary ds-tour-skip" onClick={close}>{text.skip}</button>
-          {status === 'error' ? <button type="button" className="ds-secondary" onClick={() => actions.startGuide()}><IconReplay size={14} />{text.retry}</button> :
-            <button type="button" className="ds-secondary" onClick={togglePause}>{paused ? <IconPlay size={14} /> : <IconPause size={14} />}{paused ? text.resume : text.pause}</button>}
-        </>}
+        <button type="button" className="ds-secondary ds-tour-skip" onClick={close}>{text.skip}</button>
+        {status === 'error' ? <button type="button" className="ds-secondary" onClick={() => actions.startGuide()}><IconReplay size={14} />{text.retry}</button> :
+          <button type="button" className="ds-secondary" onClick={togglePause}>{paused ? <IconPlay size={14} /> : <IconPause size={14} />}{paused ? text.resume : text.pause}</button>}
       </div>
     </div>
   </div>;

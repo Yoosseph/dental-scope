@@ -36,7 +36,6 @@ export const sv: Messages = {
   preparing: 'Förbereder tandanatomin',
 
   disclaimer: 'Anatomiskt referensmaterial för utbildning. Inte avsett för diagnostik eller behandling.',
-  controlsCredits: 'Kontroller och källor',
 
   aboutTitle: 'Om Dental Scope',
   aboutIntro:
@@ -45,7 +44,7 @@ export const sv: Messages = {
   eduTitle: 'Endast för utbildning',
   eduBody:
     'Dental Scope är ett referensmaterial för utbildning. Det är inget diagnostiskt verktyg och får inte användas för diagnostik, behandlingsplanering eller kliniska beslut.',
-  madeTitle: 'Hur anatomin är gjord',
+  madeTitle: 'Anatomiska källor',
   provSource: 'Källa',
   provSourceBody:
     'käkar, tänder, skalle och muskler kommer från BodyParts3D 3.0, © The Database Center for Life Science, licensierat under CC Attribution-Share Alike 2.1 Japan.',

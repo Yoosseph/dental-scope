@@ -36,7 +36,6 @@ export const de: Messages = {
   preparing: 'Zahnanatomie wird vorbereitet',
 
   disclaimer: 'Anatomisches Nachschlagewerk für die Lehre. Nicht für Diagnose oder Behandlung bestimmt.',
-  controlsCredits: 'Steuerung und Quellen',
 
   aboutTitle: 'Über Dental Scope',
   aboutIntro:
@@ -45,7 +44,7 @@ export const de: Messages = {
   eduTitle: 'Nur für Lehrzwecke',
   eduBody:
     'Dental Scope ist ein Nachschlagewerk für die Lehre. Es ist kein Diagnosewerkzeug und darf nicht für Diagnosen, Behandlungsplanung oder klinische Entscheidungen verwendet werden.',
-  madeTitle: 'Wie die Anatomie entsteht',
+  madeTitle: 'Anatomische Quellen',
   provSource: 'Quelle',
   provSourceBody:
     'Kiefer, Zähne, Schädel und Muskeln stammen aus BodyParts3D 3.0, © The Database Center for Life Science, lizenziert unter CC Attribution-Share Alike 2.1 Japan.',

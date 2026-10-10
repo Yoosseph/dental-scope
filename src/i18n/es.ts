@@ -36,7 +36,6 @@ export const es: Messages = {
   preparing: 'Preparando la anatomía dental',
 
   disclaimer: 'Referencia anatómica con fines educativos. No está destinada al diagnóstico ni al tratamiento.',
-  controlsCredits: 'Controles y créditos',
 
   aboutTitle: 'Acerca de Dental Scope',
   aboutIntro:
@@ -45,7 +44,7 @@ export const es: Messages = {
   eduTitle: 'Solo para uso educativo',
   eduBody:
     'Dental Scope es una referencia educativa. No es una herramienta diagnóstica y no debe usarse para diagnosticar, planificar tratamientos ni tomar decisiones clínicas.',
-  madeTitle: 'Cómo se ha creado la anatomía',
+  madeTitle: 'Fuentes anatómicas',
   provSource: 'Fuente',
   provSourceBody:
     'los maxilares, los dientes, el cráneo y los músculos proceden de BodyParts3D 3.0, © The Database Center for Life Science, con licencia CC Attribution-Share Alike 2.1 Japan.',

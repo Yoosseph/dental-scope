@@ -90,6 +90,7 @@ export interface AppState {
   guideOpen: boolean;
   guideRunId: number;
   aboutOpen: boolean;
+  controlsOpen: boolean;
   creditsOpen: boolean;
   panel: 'layers' | 'tree';
   mobileSheet: 'none' | 'layers' | 'detail' | 'tools';
@@ -138,6 +139,7 @@ export const initialState: AppState = {
   guideOpen: false,
   guideRunId: 0,
   aboutOpen: false,
+  controlsOpen: false,
   creditsOpen: false,
   panel: 'layers',
   mobileSheet: 'none',
@@ -365,7 +367,7 @@ export const actions = {
     setState({ searchOpen: open });
   },
   setSearchQuery(searchQuery: string) { setState({ searchQuery }); },
-  startGuide() { setState(s => ({ guideOpen: true, guideRunId: s.guideRunId + 1, labels: true, aboutOpen: false, searchOpen: false })); },
+  startGuide() { setState(s => ({ guideOpen: true, guideRunId: s.guideRunId + 1, labels: true, aboutOpen: false, controlsOpen: false, searchOpen: false })); },
   closeGuide() { setState({ guideOpen: false }); },
   /** A demonstration starts/ends in the adult scene without rewriting viewer preferences. */
   resetGuideScene(labels = false) {
@@ -376,10 +378,13 @@ export const actions = {
       numbering: s.numbering, orbitMode, labels, guideOpen: s.guideOpen, guideRunId: s.guideRunId, resetId: s.resetId + 1 }));
   },
   openAbout(open: boolean) {
-    setState({ aboutOpen: open });
+    setState(open ? { aboutOpen: true, controlsOpen: false } : { aboutOpen: false });
+  },
+  openControls(open: boolean) {
+    setState(open ? { controlsOpen: true, aboutOpen: false } : { controlsOpen: false });
   },
   openCredits(open: boolean) {
-    setState(open ? { creditsOpen: true, aboutOpen: false, searchOpen: false, guideOpen: false } : { creditsOpen: false });
+    setState(open ? { creditsOpen: true, aboutOpen: false, controlsOpen: false, searchOpen: false, guideOpen: false } : { creditsOpen: false });
   },
   setPanel(p: AppState['panel']) {
     setState({ panel: p });

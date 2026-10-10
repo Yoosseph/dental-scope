@@ -36,7 +36,6 @@ export const la: Messages = {
   preparing: 'Anatomia dentalis paratur',
 
   disclaimer: 'Subsidium anatomicum ad docendum. Non ad diagnosim neque ad curationem destinatum.',
-  controlsCredits: 'Moderamina et auctores',
 
   aboutTitle: 'De Dental Scope',
   aboutIntro:
@@ -45,7 +44,7 @@ export const la: Messages = {
   eduTitle: 'Tantum ad docendum',
   eduBody:
     'Dental Scope subsidium ad docendum est. Instrumentum diagnosticum non est neque ad diagnosim, ad curationem instituendam aut ad consilia clinica adhibendum est.',
-  madeTitle: 'Quomodo anatomia facta sit',
+  madeTitle: 'Fontes anatomici',
   provSource: 'Fons',
   provSourceBody:
     'maxillae, dentes, cranium et musculi ex BodyParts3D 3.0 veniunt, © The Database Center for Life Science, sub licentia CC Attribution-Share Alike 2.1 Japan.',
