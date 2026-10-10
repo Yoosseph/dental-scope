@@ -1766,7 +1766,7 @@ button.ds-layer-name:hover {
 .ds-credits-links { display: inline-flex; gap: 4px; }
 .ds-credits-links a { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: var(--radius-sm); }
 .ds-credits-links a:hover { background: var(--hover); }
-.ds-credits .ds-credits-thanks { margin: 26px 0 0; font-size: 13px; }
+.ds-credits .ds-credits-thanks { margin: 26px 0 0; font-size: 14px; font-weight: 600; color: var(--ink); }
 .ds-about h2 {
   margin: 0 0 8px;
   font-family: var(--font-display);
