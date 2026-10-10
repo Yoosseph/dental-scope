@@ -109,13 +109,19 @@ export function GuidedTour() {
       while (!getState().ready && !getState().error) await tourDelay(100, signal);
       if (getState().error) throw new Error('Scene loading failed');
       setStatus('playing');
+      let expandedDetail = false;
       await playTour(FIRST_VISIT_TOUR, {
         paused: () => pauseRef.current || document.hidden,
         showStep: (_step, next) => setIndex(next),
         prepare: next => {
+          expandedDetail = isCompactLayout() && next.detailExpanded === true;
           if (next.panel) {
             actions.setCollapsed(next.panel === 'tools' ? 'dock' : next.panel, false);
             if (isCompactLayout()) actions.setMobileSheet(next.panel);
+          }
+          if (isCompactLayout() && next.detailExpanded !== undefined) {
+            const control = targetElement('detail-size-toggle');
+            if (control && (control.getAttribute('aria-expanded') === 'true') !== next.detailExpanded) control.click();
           }
         },
         locate: target => {
@@ -123,7 +129,11 @@ export function GuidedTour() {
           if (!element) return false;
           element.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
           const rect = element.getBoundingClientRect();
-          return rect.top >= 0 && rect.bottom <= window.innerHeight;
+          const bodyElement = expandedDetail ? element.closest('.ds-detail-body') : null;
+          if (bodyElement && !bodyElement.closest('.ds-detail.is-expanded')) return false;
+          const body = bodyElement?.getBoundingClientRect();
+          return rect.top >= 0 && rect.bottom <= window.innerHeight
+            && (!body || rect.top >= body.top - 1 && rect.bottom <= body.bottom + 1);
         },
         point: (target, clicking) => {
           const element = targetElement(target)!;
@@ -156,6 +166,8 @@ export function GuidedTour() {
           const expected = next.waitFor;
           return (!expected?.selectedId || s.selectedId === expected.selectedId)
             && (expected?.dissectFdi === undefined || s.dissectFdi === expected.dissectFdi)
+            && (expected?.explode === undefined || s.explode === expected.explode)
+            && (expected?.surfaceFeatures === undefined || s.surfaceFeatures === expected.surfaceFeatures)
             && (!expected?.asset || s.loading[expected.asset] === 1);
         },
         clearPointer: () => setHighlight(false),
@@ -232,7 +244,7 @@ export function GuidedTour() {
     <div className="ds-tour-shield" aria-hidden="true" />
     {mark && status === 'playing' && <>
       {highlight &&
-      <svg ref={circle} key={mark.target} className="ds-tour-circle" viewBox={`0 0 ${mark.rect.width + 20} ${mark.rect.height + 16}`} aria-hidden="true"
+      <svg ref={circle} key={mark.target} data-target={mark.target} className="ds-tour-circle" viewBox={`0 0 ${mark.rect.width + 20} ${mark.rect.height + 16}`} aria-hidden="true"
         style={{ left: mark.rect.x - 10, top: mark.rect.y - 8, width: mark.rect.width + 20, height: mark.rect.height + 16 }}>
         <path d={circlePath(mark.rect.width + 20, mark.rect.height + 16)} pathLength="1" />
       </svg>}
@@ -242,7 +254,7 @@ export function GuidedTour() {
         <svg width="34" height="42" viewBox="0 0 34 42"><path d="M3 2 L3 31 L11 24 L17 38 L24 35 L18 21 L29 21 Z" fill="var(--accent)" stroke="var(--panel-solid)" strokeWidth="3" strokeLinejoin="round" /></svg>
       </div>
     </>}
-    <div ref={card} className="ds-tour-card ds-panel" role="dialog" aria-modal="true" aria-labelledby="ds-tour-title" aria-describedby="ds-tour-body" data-position={placement}>
+    <div ref={card} className="ds-tour-card ds-panel" role="dialog" aria-modal="true" aria-labelledby="ds-tour-title" aria-describedby="ds-tour-body" data-position={placement} data-step={step.id}>
       <div className="ds-tour-heading">
         <span className="ds-label-sm">{text.label}</span>
         <button type="button" className="ds-icon-btn ds-icon-btn--ghost" onClick={close} aria-label={text.close}><IconClose size={17} /></button>

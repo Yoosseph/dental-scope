@@ -146,7 +146,7 @@ function ArchControls() {
 
   return (
     <div className="ds-dock-main">
-      <button type="button" className={`ds-play${playing ? ' is-playing' : ''}`} onClick={play} aria-label={playLabel} title={playLabel}>
+      <button type="button" data-tour="dissect-anatomy-play" className={`ds-play${playing ? ' is-playing' : ''}`} onClick={play} aria-label={playLabel} title={playLabel}>
         <PlayIcon playing={playing} atEnd={atEnd} />
       </button>
       <div className="ds-slider ds-slider--dissect">

@@ -41,6 +41,10 @@ it('resolves every scripted target in the real UI across development, search and
   actions.openSearch(false);
   actions.select('tooth-36');
   markup += html();
+  actions.setSurfaceFeatures(true);
+  markup += html();
+  actions.select('surface-central-groove-36');
+  markup += html();
   actions.enterDissect(36);
   markup += html();
   for (const step of FIRST_VISIT_TOUR) if (step.target) {

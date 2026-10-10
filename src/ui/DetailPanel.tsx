@@ -55,7 +55,7 @@ export function DetailPanel() {
   return (
     <aside className={`ds-panel ds-detail${mobileOpen ? ' is-mobile-open' : ''}${collapsed ? ' is-collapsed' : ''}${expanded ? ' is-expanded' : ''}`} aria-label={m.detailsAria(nameOf(s, lang))} aria-live="polite">
       <PanelHandle panel="detail" />
-      <button type="button" className="ds-detail-expand" aria-expanded={expanded} aria-label={expanded ? text.collapseDetails : text.expandDetails} onClick={() => setExpandedId(expanded ? null : selectedId)}>{expanded ? text.collapseDetails : text.expandDetails}</button>
+      <button type="button" data-tour="detail-size-toggle" className="ds-detail-expand" aria-expanded={expanded} aria-label={expanded ? text.collapseDetails : text.expandDetails} onClick={() => setExpandedId(expanded ? null : selectedId)}>{expanded ? text.collapseDetails : text.expandDetails}</button>
       <div className="ds-detail-head">
         <span className="ds-detail-bar" style={{ background: catDef?.color ?? 'var(--accent)' }} aria-hidden="true" />
         <div className="ds-eyebrow">{catDef ? m.category[catDef.id] : kindLabel(s, m)}</div>
@@ -78,7 +78,7 @@ export function DetailPanel() {
             {crumbs.map((c, i) => (
               <span key={c.id}>
                 {i > 0 && <span aria-hidden="true"> › </span>}
-                <button type="button" className="ds-link-btn" onClick={() => void go(c.id)}>
+                <button type="button" data-tour={c.tooth ? 'surface-parent-tooth' : undefined} className="ds-link-btn" onClick={() => void go(c.id)}>
                   {c.tooth ? `${formatTooth(c.tooth.fdi, numbering)} ${shortTooth(c, lang)}` : nameOf(c, lang)}
                 </button>
               </span>

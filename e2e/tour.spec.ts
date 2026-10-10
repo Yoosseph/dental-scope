@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 declare global {
   interface Window { restoreGuideRendering: () => void }
@@ -27,22 +27,22 @@ test('the guide stays on the right through the adult to teeth transition', async
   await page.goto('/');
   await expect(page.getByRole('status')).toHaveCount(0);
   await page.getByRole('button', { name: 'Replay guide', exact: true }).click();
-  await expect(page.locator('.ds-tour-count')).toHaveText('3 / 17');
+  await expect(page.locator('.ds-tour-card')).toHaveAttribute('data-step', 'mixed');
   const samples = await page.evaluate(async () => {
     const values: { step: string; left: number; position: string | undefined }[] = [];
     const deadline = performance.now() + 15_000;
     while (performance.now() < deadline) {
       await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
       const card = document.querySelector<HTMLElement>('.ds-tour-card')!;
-      const step = card.querySelector('.ds-tour-count')!.textContent;
-      if (step === '6 / 17') break;
-      if (step === '4 / 17' || step === '5 / 17') {
+      const step = card.dataset.step!;
+      if (step === 'search') break;
+      if (step === 'adult' || step === 'teeth') {
         values.push({ step, left: card.getBoundingClientRect().left, position: card.dataset.position });
       }
     }
     return values;
   });
-  expect(new Set(samples.map(sample => sample.step))).toEqual(new Set(['4 / 17', '5 / 17']));
+  expect(new Set(samples.map(sample => sample.step))).toEqual(new Set(['adult', 'teeth']));
   expect(samples.filter(sample => sample.left < 640).length, 'guide frames that jumped to the left').toBe(0);
   await page.getByRole('button', { name: 'Close guide', exact: true }).click();
 });
@@ -55,6 +55,7 @@ test('guide circles form a complete outline around a moving control', async ({ p
   await page.goto('/');
   await expect(page.getByRole('status')).toHaveCount(0);
   await page.getByRole('button', { name: 'Replay guide', exact: true }).click();
+  await expect(page.locator('.ds-tour-card')).toHaveAttribute('data-step', 'primary');
   await expect(page.locator('.ds-tour-circle')).toBeAttached();
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
   const geometry = await page.locator('.ds-tour-circle').evaluate(element => {
@@ -94,7 +95,7 @@ test('the nerve step shows a focused view with a clear explanation', async ({ pa
   await page.goto('/');
   await expect(page.getByRole('status')).toHaveCount(0);
   await page.getByRole('button', { name: 'Replay guide', exact: true }).click();
-  await expect(page.locator('.ds-tour-count')).toHaveText('16 / 17', { timeout: 70_000 });
+  await expect(page.locator('.ds-tour-card')).toHaveAttribute('data-step', 'nerves', { timeout: 100_000 });
   await expect(page.locator('[data-tour="preset-nerves"]')).toHaveAttribute('aria-checked', 'true');
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
   await expect(page.locator('#ds-tour-body')).toContainText('camera now frames the gold nerve paths');
@@ -105,6 +106,67 @@ test('the nerve step shows a focused view with a clear explanation', async ({ pa
     for (let i = 0; i < 3; i++) await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
   });
   await page.screenshot({ path: testInfo.outputPath('guide-nerves.png') });
+  await page.getByRole('button', { name: 'Close guide', exact: true }).click();
+});
+
+async function captureGuide(page: Page, path: string, paused = false) {
+  if (!paused) await page.locator('.ds-tour-card').getByRole('button', { name: 'Pause', exact: true }).click();
+  await page.evaluate(async () => {
+    window.restoreGuideRendering();
+    document.dispatchEvent(new Event('visibilitychange'));
+    for (let i = 0; i < 3; i++) await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+  });
+  await page.screenshot({ path });
+  await page.evaluate(() => {
+    WebGL2RenderingContext.prototype.drawElements = () => {};
+    WebGL2RenderingContext.prototype.drawArrays = () => {};
+  });
+  await page.getByRole('button', { name: 'Resume', exact: true }).click();
+}
+
+test('the guide opens the labelled anatomy before development and demonstrates tooth surfaces before tissues', async ({ page }, testInfo) => {
+  await page.addInitScript(() => localStorage.setItem('ds.guide.seen.v1', 'seen'));
+  await page.goto('/');
+  await expect(page.getByRole('status')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Replay guide', exact: true }).click();
+  const card = page.locator('.ds-tour-card');
+  await expect(card).toHaveAttribute('data-step', 'open-skull');
+  await expect(page.getByRole('slider', { name: 'Dissect anatomy', exact: true })).toHaveValue('1');
+  await expect(page.getByRole('button', { name: 'Labels', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await captureGuide(page, testInfo.outputPath('guide-opening-anatomy.png'));
+  await expect(card).toHaveAttribute('data-step', 'opening-teeth');
+  await expect(page.locator('[data-tour="preset-dentition"]')).toHaveAttribute('aria-checked', 'true');
+  await expect(card).toHaveAttribute('data-step', 'primary');
+  await expect(page.locator('[data-tour="development-primary"]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(card).toHaveAttribute('data-step', 'surfaces');
+  const surfaceToggle = page.locator('[data-tour="surface-features-toggle"]');
+  await expect(surfaceToggle).toHaveAttribute('aria-pressed', 'true');
+  await expect(card).toHaveAttribute('data-step', 'surface-feature');
+  await expect(page.locator('[data-tour="surface-central-groove-36"]')).toHaveClass(/is-active/);
+  await expect(page.locator('.ds-detail-title')).toHaveText('Central groove');
+  await expect(card).toHaveAttribute('data-step', 'surface-description');
+  await expect(page.locator('.ds-tour-circle')).toHaveAttribute('data-target', 'tooth-details');
+  await card.getByRole('button', { name: 'Pause', exact: true }).click();
+  await expect(page.locator('[data-tour="tooth-details"]')).toBeInViewport();
+  if (testInfo.project.name === 'phone') {
+    await expect(page.locator('[data-tour="detail-size-toggle"]')).toHaveAttribute('aria-expanded', 'true');
+    await expect.poll(() => page.locator('[data-tour="tooth-details"]').evaluate(element => {
+      const text = element.getBoundingClientRect();
+      const body = element.closest('.ds-detail-body')!.getBoundingClientRect();
+      return text.top >= body.top - 1 && text.bottom <= body.bottom + 1;
+    }), { message: 'the complete description fits inside the expanded phone panel' }).toBe(true);
+  }
+  await captureGuide(page, testInfo.outputPath('guide-surface-feature.png'), true);
+  await expect(card).toHaveAttribute('data-step', 'surface-angle');
+  await expect(page.locator('[data-tour="detail-size-toggle"]')).toHaveAttribute('aria-expanded', 'false');
+  await expect(card).toHaveAttribute('data-step', 'surface-top');
+  await expect(surfaceToggle).toHaveAttribute('aria-pressed', 'true');
+  await expect(card).toHaveAttribute('data-step', 'surface-hide');
+  await expect(surfaceToggle).toHaveAttribute('aria-pressed', 'false');
+  await expect(card).toHaveAttribute('data-step', 'inside');
+  await expect(page.locator('.ds-detail-title')).toContainText('first molar');
+  await expect(card).toHaveAttribute('data-step', 'dentin');
+  await expect(page.locator('[data-tour="dissect-2"]')).toHaveAttribute('aria-checked', 'true');
   await page.getByRole('button', { name: 'Close guide', exact: true }).click();
 });
 
@@ -121,7 +183,7 @@ test('replay advances when the page became visible before the guide opened', asy
   });
   await page.getByRole('button', { name: 'Replay guide', exact: true }).click();
   await expect(page.locator('#ds-tour-body')).toContainText('Watch a short demonstration');
-  await expect(page.locator('.ds-tour-count')).toHaveText('2 / 17', { timeout: 10_000 });
+  await expect(page.locator('.ds-tour-card')).toHaveAttribute('data-step', 'open-skull', { timeout: 10_000 });
   await page.getByRole('button', { name: 'Close guide', exact: true }).click();
 });
 
@@ -135,13 +197,13 @@ test('the complete guide resets all, closes automatically and can be replayed', 
   await expect(page.getByRole('status')).toHaveCount(0);
   await page.getByRole('button', { name: 'Replay guide', exact: true }).click();
   await expect(page.locator('.ds-tour-card')).toBeVisible();
-  await expect(page.locator('.ds-tour-card')).toHaveCount(0, { timeout: process.env.CI ? 180_000 : 90_000 });
+  await expect(page.locator('.ds-tour-card')).toHaveCount(0, { timeout: process.env.CI ? 180_000 : 110_000 });
   expect(await page.evaluate(() => [localStorage.getItem('ds.numbering'), localStorage.getItem('ds.orbit')])).toEqual(['fdi', 'fixed']);
   await expect(page.locator('.ds-tour-cursor, .ds-tour-circle')).toHaveCount(0);
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByRole('button', { name: 'Replay guide', exact: true })).toBeFocused();
   await page.getByRole('button', { name: 'Replay guide', exact: true }).click();
-  await expect(page.locator('.ds-tour-count')).toHaveText('2 / 17');
+  await expect(page.locator('.ds-tour-card')).toHaveAttribute('data-step', 'open-skull');
   await page.keyboard.press('Escape');
   await expect(page.locator('.ds-tour-card')).toHaveCount(0);
 });
@@ -152,7 +214,7 @@ test('the guide card does not change sides repeatedly within a step', async ({ p
   await page.goto('/');
   await expect(page.getByRole('status')).toHaveCount(0);
   await page.getByRole('button', { name: 'Replay guide', exact: true }).click();
-  await expect(page.locator('.ds-tour-count')).toHaveText('2 / 17');
+  await expect(page.locator('.ds-tour-card')).toHaveAttribute('data-step', 'primary');
   await expect(page.locator('.ds-tour-cursor')).toBeVisible();
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
   const positions = await page.evaluate(async () => {

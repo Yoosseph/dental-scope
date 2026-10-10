@@ -5,15 +5,19 @@ export interface TourStep {
   action?: 'click' | 'search' | 'finish';
   value?: string;
   panel?: 'tools' | 'detail' | 'layers';
+  /** Use the existing detail-sheet size control when demonstrating text on phones. */
+  detailExpanded?: boolean;
   hold: number;
   /** Existing, sourced educational content accompanies these steps. */
   development?: 'primary' | 'early-mixed';
-  waitFor?: { selectedId?: string; dissectFdi?: number; asset?: string };
+  waitFor?: { selectedId?: string; dissectFdi?: number; asset?: string; explode?: number; surfaceFeatures?: boolean };
 }
 
 export const FIRST_VISIT_TOOTH = 36;
 export const FIRST_VISIT_TOUR: readonly TourStep[] = [
   { id: 'welcome', hold: 1800 },
+  { id: 'open-skull', target: 'dissect-anatomy-play', action: 'click', panel: 'tools', waitFor: { explode: 1 }, hold: 3500 },
+  { id: 'opening-teeth', target: 'preset-dentition', action: 'click', panel: 'layers', hold: 2400 },
   { id: 'primary', target: 'development-primary', action: 'click', panel: 'tools', development: 'primary', hold: 3200 },
   { id: 'mixed', target: 'development-early-mixed', action: 'click', panel: 'tools', development: 'early-mixed', hold: 3200 },
   { id: 'adult', target: 'development-adult', action: 'click', panel: 'tools', hold: 1000 },
@@ -21,7 +25,14 @@ export const FIRST_VISIT_TOUR: readonly TourStep[] = [
   { id: 'search', target: 'search', action: 'click', hold: 1200 },
   { id: 'query', target: 'search-input', action: 'search', value: `fdi ${FIRST_VISIT_TOOTH}`, hold: 1100 },
   { id: 'tooth', target: `result-tooth-${FIRST_VISIT_TOOTH}`, action: 'click', waitFor: { selectedId: `tooth-${FIRST_VISIT_TOOTH}` }, hold: 2000 },
-  { id: 'details', target: 'tooth-details', panel: 'detail', hold: 2800 },
+  { id: 'details', target: 'tooth-details', panel: 'detail', detailExpanded: true, hold: 2800 },
+  { id: 'surfaces', target: 'surface-features-toggle', action: 'click', panel: 'detail', detailExpanded: false, waitFor: { dissectFdi: FIRST_VISIT_TOOTH, surfaceFeatures: true }, hold: 3500 },
+  { id: 'surface-feature', target: `surface-central-groove-${FIRST_VISIT_TOOTH}`, action: 'click', panel: 'detail', waitFor: { selectedId: `surface-central-groove-${FIRST_VISIT_TOOTH}` }, hold: 2400 },
+  { id: 'surface-description', target: 'tooth-details', panel: 'detail', detailExpanded: true, hold: 3500 },
+  { id: 'surface-angle', target: 'surface-view-facial', action: 'click', panel: 'detail', detailExpanded: false, hold: 2400 },
+  { id: 'surface-top', target: 'surface-view-occlusal', action: 'click', panel: 'detail', hold: 2400 },
+  { id: 'surface-hide', target: 'surface-features-toggle', action: 'click', panel: 'detail', waitFor: { surfaceFeatures: false }, hold: 1000 },
+  { id: 'surface-tooth', target: 'surface-parent-tooth', action: 'click', panel: 'detail', waitFor: { selectedId: `tooth-${FIRST_VISIT_TOOTH}` }, hold: 1000 },
   { id: 'inside', target: 'explore-inside', action: 'click', waitFor: { dissectFdi: FIRST_VISIT_TOOTH }, panel: 'detail', hold: 1600 },
   { id: 'dentin', target: 'dissect-2', action: 'click', panel: 'tools', hold: 2000 },
   { id: 'canals', target: 'dissect-4', action: 'click', panel: 'tools', hold: 2400 },

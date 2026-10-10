@@ -1,8 +1,11 @@
 # Scripted onboarding
 
 The first-visit demonstration starts when the core scene is ready. It uses the
-existing development timeline, search, detail panel, tooth dissection and nerve
-preset. It takes about 42 seconds, excluding asset loading, and keeps labels on.
+existing anatomy dissection, development timeline, search, detail panel, surface
+feature controls, tooth dissection and nerve preset. It takes about 75 seconds,
+excluding asset loading, and keeps labels on. It first plays the skull/jaw
+separation to the In position checkpoint and shows the labelled teeth before
+introducing bite development.
 The Teeth preset clears surrounding anatomy before focusing the representative
 tooth; the camera refits it after the caption and panel positions are measured.
 The caption uses the inverse of the app's color theme and provides a prominent
@@ -41,8 +44,17 @@ sides only when the control overlaps its bounds; bottom timeline controls do
 not move it away from the right. Red outlines use closed paths in pixel
 coordinates so their strokes stay complete when a control changes size.
 
+Before the internal tissue levels, the guide enables surface features, selects
+the existing Central groove landmark to show its description and sources,
+demonstrates facial and biting-surface camera views, then hides the overlay and
+uses the tooth breadcrumb to return to the whole tooth. The existing Surface
+anatomy controls retain their schematic/draft note and sourced content.
+On phones, reading stops temporarily expand the detail sheet using its own
+size control. Surface camera demonstrations return it to the compact size so
+the crown remains visible.
+
 The Nerves preset frames the displayed dental nerve paths in the space clear
-of panels and captions. Step 16 holds that view longer and explains the gold
+of panels and captions. The nerve step holds that view longer and explains the gold
 paths and translucent context. It uses the same preset handler as exploration.
 
 Captions are in `src/i18n/tour.ts` for all five interface languages. Development
