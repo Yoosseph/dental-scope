@@ -8,6 +8,7 @@ export function useViewportInsets(engine: Engine) {
   const selected = useApp(s => !!s.selectedId);
   const dissect = useApp(s => s.dissectFdi !== null);
   const sheet = useApp(s => s.mobileSheet);
+  const quiz = useApp(s => s.mode === 'quiz');
   const lang = useApp(s => s.lang);
   const laidOut = useApp((s) => s.explodePhase === 2);
   const detailHidden = useApp((s) => s.collapsed.detail);
@@ -38,8 +39,9 @@ export function useViewportInsets(engine: Engine) {
       const toolbar = visibleRect('.ds-dock');
       const bar = visibleRect('.ds-mobile-bar');
       const panel = compact.matches ? visibleRect('.ds-layers.is-mobile-open, .ds-detail.is-mobile-open') : visibleRect('.ds-detail');
+      const quizSheet = compact.matches ? visibleRect('.ds-quiz:not(.is-folded)') : null;
       const sideSheet = compact.matches && window.matchMedia('(orientation: landscape) and (max-height: 600px)').matches;
-      const bottoms = [toolbar, bar, ...(!sideSheet && compact.matches ? [panel] : [])].filter((r): r is DOMRect => !!r);
+      const bottoms = [toolbar, bar, ...(!sideSheet && compact.matches ? [panel, quizSheet] : [])].filter((r): r is DOMRect => !!r);
       const bottom = Math.max(0, ...bottoms.map((r) => bounds.bottom - r.top + 12));
       const side = sideSheet ? panel ?? (sheet === 'tools' ? toolbar : null) : !compact.matches ? panel : null;
       let right = side ? bounds.right - side.left + 12 : 0;
@@ -66,7 +68,7 @@ export function useViewportInsets(engine: Engine) {
     update();
     const observer = new ResizeObserver(schedule);
     if (ui) observer.observe(ui);
-    for (const element of ui?.querySelectorAll('.ds-dock, .ds-layers, .ds-detail, .ds-mobile-bar') ?? []) observer.observe(element);
+    for (const element of ui?.querySelectorAll('.ds-dock, .ds-layers, .ds-detail, .ds-mobile-bar, .ds-quiz') ?? []) observer.observe(element);
     const tour = document.querySelector<HTMLElement>('.ds-tour-card');
     if (tour) observer.observe(tour);
     const tourPosition = new MutationObserver(schedule);
@@ -82,6 +84,6 @@ export function useViewportInsets(engine: Engine) {
       window.removeEventListener('resize', schedule);
       window.visualViewport?.removeEventListener('resize', schedule);
     };
-  }, [engine, selected, dissect, laidOut, sheet, detailHidden, dockHidden, layersHidden, jawControls, developmentStage, studyView, lang, guideOpen, guideCollapsed]);
+  }, [engine, selected, dissect, laidOut, sheet, quiz, detailHidden, dockHidden, layersHidden, jawControls, developmentStage, studyView, lang, guideOpen, guideCollapsed]);
 
 }

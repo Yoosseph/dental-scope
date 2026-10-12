@@ -2,6 +2,8 @@ import { NUMBERING_LABEL, NUMBERING_SHORT, NUMBERING_SYSTEMS } from '../anatomy/
 import { REPO_URL } from '../app/repo';
 import { useT } from '../i18n';
 import { actions, useApp } from '../state/store';
+import { MODES, switchMode } from '../modes/modes';
+import { useServices } from './context';
 import { IconExternal, IconInfo, IconMoon, IconSearch, IconSun, IconPlay, IconChevron } from './icons';
 import { TOUR_TEXT } from '../i18n/tour';
 import { LanguageSwitcher } from './LanguageSwitcher';
@@ -33,6 +35,7 @@ export function TopActions() {
   const m = useT();
   return (
     <div className={`ds-top-actions${guideCollapsed ? ' is-guide-collapsed' : ''}`}>
+      <ModeSwitch />
       <LanguageSwitcher />
       <NumberingControls />
       <button type="button" data-tour="search" className="ds-search-trigger" onClick={() => actions.openSearch(true)} aria-label={m.searchAnatomy} aria-keyshortcuts="/">
@@ -61,6 +64,34 @@ export function NumberingControls() {
       {NUMBERING_SYSTEMS.map((s) => (
         <button key={s} type="button" role="radio" aria-checked={numbering === s} className={numbering === s ? 'is-active' : ''} onClick={() => actions.setNumbering(s)} title={m.numberingTitle(NUMBERING_LABEL[s])}>
           {NUMBERING_SHORT[s]}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Switch between the available modes (Explore, Quiz). */
+export function ModeSwitch() {
+  const mode = useApp((s) => s.mode);
+  const m = useT();
+  const { engine, registry } = useServices();
+  const modes = MODES.filter((x) => x.available);
+  return (
+    <div className="ds-mode-switch ds-segmented" role="radiogroup" aria-label={m.modesGroup}>
+      {modes.map((x) => (
+        <button
+          key={x.id}
+          type="button"
+          role="radio"
+          aria-checked={mode === x.id}
+          className={mode === x.id ? 'is-active' : ''}
+          onClick={() => {
+            if (mode === x.id) return;
+            const from = MODES.find((mm) => mm.id === mode);
+            switchMode(from, x, { registry, engine });
+          }}
+        >
+          {m.mode[x.id]}
         </button>
       ))}
     </div>

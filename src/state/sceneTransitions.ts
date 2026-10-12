@@ -11,6 +11,21 @@ export function adultSceneSnapshot(s: AppState) {
   };
 }
 
+/** Scene settings temporarily saved while Quiz mode transforms the explorer scene. */
+export function quizSceneSnapshot(s: AppState): Partial<AppState> {
+  return {
+    ...adultSceneSnapshot(s),
+    selectedId: s.selectedId,
+    dissectFdi: s.dissectFdi,
+    dissectLevel: s.dissectLevel,
+    toothExplode: s.toothExplode,
+    passageIds: s.passageIds,
+    view: s.view,
+    autoRotate: s.autoRotate,
+    orbitMode: s.orbitMode,
+  };
+}
+
 /** Shared reset when entering an adult study preset or a developmental stage. */
 export function clearSceneTools(s: AppState): Partial<AppState> {
   return {

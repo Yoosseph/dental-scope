@@ -14,6 +14,7 @@ import { useKeyboard } from './useKeyboard';
 import { useViewportInsets } from './useViewportInsets';
 import { GuidedTour } from './GuidedTour';
 import { CreditsDialog } from './CreditsDialog';
+import { QuizMode } from './QuizMode';
 
 export function App() {
   const { engine, registry } = useServices();
@@ -23,6 +24,7 @@ export function App() {
   const dissect = useApp((s) => s.dissectFdi !== null);
   const sheet = useApp((s) => s.mobileSheet);
   const lang = useApp((s) => s.lang);
+  const quiz = useApp((s) => s.mode === 'quiz');
   const m = useT();
 
   useEffect(() => {
@@ -48,34 +50,35 @@ export function App() {
   useViewportInsets(engine);
 
   return (
-    <div className={`ds-app${selected ? ' has-selection' : ''}${dissect ? ' is-dissecting' : ''}`} data-sheet={sheet}>
-      <div className="ds-stage" ref={stage} />
+    <div className={`ds-app${selected ? ' has-selection' : ''}${dissect ? ' is-dissecting' : ''}${quiz ? ' is-quiz' : ''}`} data-sheet={sheet}>
+      <div className="ds-stage" ref={stage} {...(quiz ? { role: 'img', 'aria-label': m.quizBoardAria } : {})} />
       <div className="ds-ui">
         <Identity />
         <TopActions />
-        <LayersPanel />
-        <DetailPanel />
+        {!quiz && <LayersPanel />}
+        {!quiz && <DetailPanel />}
         <Dock />
         <Footer />
         <ResetButton />
         <LoadingCard />
+        {quiz && <QuizMode />}
         <nav className="ds-mobile-bar ds-panel" aria-label={m.mobileControls}>
-          <button type="button" className={sheet === 'layers' ? 'is-active' : ''} onClick={() => actions.setMobileSheet(sheet === 'layers' ? 'none' : 'layers')} aria-pressed={sheet === 'layers'}>
+          {!quiz && <button type="button" className={sheet === 'layers' ? 'is-active' : ''} onClick={() => actions.setMobileSheet(sheet === 'layers' ? 'none' : 'layers')} aria-pressed={sheet === 'layers'}>
             <IconLayers /> <span>{m.layers}</span>
-          </button>
-          <button type="button" data-tour="search" onClick={() => actions.openSearch(true)}>
+          </button>}
+          {!quiz && <button type="button" data-tour="search" onClick={() => actions.openSearch(true)}>
             <IconSearch /> <span>{m.search}</span>
-          </button>
+          </button>}
           <button type="button" className={sheet === 'tools' ? 'is-active' : ''} onClick={() => actions.setMobileSheet(sheet === 'tools' ? 'none' : 'tools')} aria-pressed={sheet === 'tools'}>
             <IconSection /> <span>{m.tools}</span>
           </button>
-          {selected && <button type="button" className={sheet === 'detail' ? 'is-active' : ''} onClick={() => actions.setMobileSheet(sheet === 'detail' ? 'none' : 'detail')} aria-pressed={sheet === 'detail'}>
+          {!quiz && selected && <button type="button" className={sheet === 'detail' ? 'is-active' : ''} onClick={() => actions.setMobileSheet(sheet === 'detail' ? 'none' : 'detail')} aria-pressed={sheet === 'detail'}>
             <IconInfo /> <span>{m.details}</span>
           </button>}
         </nav>
         {sheet !== 'none' && <button type="button" className="ds-scrim" aria-label={m.closePanel} onClick={() => actions.setMobileSheet('none')} />}
       </div>
-      <SearchPanel />
+      {!quiz && <SearchPanel />}
       <AboutDialog />
       <CreditsDialog />
       <GuidedTour />

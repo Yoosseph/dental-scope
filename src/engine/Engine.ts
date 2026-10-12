@@ -554,7 +554,10 @@ export class Engine {
       const owner = this.registry.meshOwner.get(key);
       items.push({ key, w: size.x, h: size.y, ...boardSlot(key, this.registry.categoriesOfMesh(key), owner ? this.registry.get(owner)?.toothFdi : undefined) });
     }
-    const { centers, bounds } = shelfLayout(items, this.rig.camera.aspect, BOARD_GAP);
+    // The board packs to the area the UI leaves clear (see `boardViewport`) so on a
+    // phone it sits above the Quiz bottom sheet instead of behind it.
+    const view = this.boardViewport();
+    const { centers, bounds } = shelfLayout(items, view.aspect, BOARD_GAP);
     this.boardAspect = this.rig.camera.aspect;
     const origin = this.rig.home.target;
     for (const [key, c] of centers) {
@@ -570,17 +573,31 @@ export class Engine {
       }
     }
     if (frame) {
-      // fit the board rectangle (not its bounding sphere); the margin keeps it clear of the
-      // side panels, the dock and the mobile bar
+      // fit the board rectangle (not its bounding sphere) inside the clear viewport;
+      // the view offset from `setInsets` centres it there and the margin keeps it clear
+      // of the side panels, the dock and the mobile sheet
       const cam = this.rig.camera;
       const tanV = tanHalfFov(cam);
       const halfW = (bounds.x1 - bounds.x0) / 2;
       const halfH = (bounds.y1 - bounds.y0) / 2;
-      const distance = Math.max((halfH * BOARD_MARGIN.h) / tanV, (halfW * BOARD_MARGIN.w) / (tanV * cam.aspect));
+      const distance = Math.max(
+        (halfH * BOARD_MARGIN.h) / (view.vFrac * tanV),
+        (halfW * BOARD_MARGIN.w) / (view.hFrac * tanV * cam.aspect),
+      );
       setState({ view: null });
       this.rig.focusSphere(new THREE.Vector3(origin.x, origin.y, origin.z), Math.hypot(halfW, halfH), { direction: new THREE.Vector3(0, 0.02, 1), distance, duration: 0.9 });
     }
     this.invalidate();
+  }
+
+  /** The part of the canvas the UI leaves clear, as a packing aspect plus width/height fractions. */
+  private boardViewport() {
+    const w = Math.max(1, this.container.clientWidth);
+    const h = Math.max(1, this.container.clientHeight);
+    const ins = this.insetTarget;
+    const usableW = Math.max(160, w - ins.left - ins.right);
+    const usableH = Math.max(160, h - ins.top - ins.bottom);
+    return { aspect: usableW / usableH, hFrac: usableW / w, vFrac: usableH / h };
   }
 
   /** Keep the separating jaws in view: fit the camera to the exploded anatomy as the slider moves. */
@@ -1360,6 +1377,16 @@ export class Engine {
     this.startView();
   }
 
+  /**
+   * Re-pack and frame the laid-out board. Quiz mode jumps straight to the
+   * board, so the first pack can happen before every tooth shell has loaded;
+   * once the last shell arrives this points the camera at the complete set.
+   */
+  frameBoard() {
+    if (getState().explodePhase !== 2) return;
+    this.layoutBoard(true);
+  }
+
   /** Start with the whole skull centred and visible above the controls. */
   private startView(duration = 0.9) {
     if (getState().view !== 'front') setState({ view: 'front' });
@@ -1452,6 +1479,12 @@ export class Engine {
       this.insets.top = from.top + (top - from.top) * k;
       this.applyViewOffset();
     });
+    // Quiz jumps straight to the board before the bottom sheet has been measured;
+    // re-pack and re-fit once the clear area is known so no tooth hides behind it.
+    if (getState().mode === 'quiz' && getState().explodePhase === 2) {
+      clearTimeout(this.boardTimer);
+      this.boardTimer = window.setTimeout(() => this.layoutBoard(true), 150);
+    }
   }
 
   private applyViewOffset() {

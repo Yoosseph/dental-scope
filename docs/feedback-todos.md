@@ -93,7 +93,9 @@ This batch records the new Swedish feedback. The completed items above belong to
 
 ### Owner's implementation scope — confirmed 2026-10-05
 
-Work in this order: tooth morphology/appearance with optional anatomical labels and overlays, then the remaining sinuses, then vessel visibility and inspection. Include the labels and overlays in the current scope, while prioritizing sharp, anatomically appropriate shapes and tooth-specific patterns over cosmetic sharpening. Quiz/self-test and contributor credits are deferred and excluded from this implementation. The existing development feature retains its review/documentation follow-ups. New anatomical content and fitted teaching geometry remain draft until expert review.
+Work in this order: tooth morphology/appearance with optional anatomical labels and overlays, then the remaining sinuses, then vessel visibility and inspection. Include the labels and overlays in the current scope, while prioritizing sharp, anatomically appropriate shapes and tooth-specific patterns over cosmetic sharpening. Quiz/self-test and contributor credits were deferred and excluded from that implementation. The existing development feature retains its review/documentation follow-ups. New anatomical content and fitted teaching geometry remain draft until expert review.
+
+> **Update (2026-10-12):** Quiz mode has since been implemented on a separate `quiz-mode` branch (identify all 32 permanent teeth on the separated board; see the README roadmap and [architecture.md](architecture.md) §10). It supersedes the "Quiz/self-test … deferred" line above. Contributor credits remain excluded.
 
 ### Assessment against the current project
 
@@ -196,4 +198,4 @@ The owner authorized implementation after planning. Engineering work for section
 - [ ] Confirm the exact historical deployment version if needed for the student's original report.
 - [x] Owner authorized committing this implementation. No deployment has been performed; anatomical/student review remains pending.
 
-Quiz/self-test and contributor credits remain excluded.
+Quiz/self-test is now implemented on the `quiz-mode` branch (see [architecture.md](architecture.md) §10), superseding the earlier exclusion; its lesson-style content and hints remain draft. Contributor credits remain excluded.

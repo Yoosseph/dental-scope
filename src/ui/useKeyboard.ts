@@ -17,6 +17,12 @@ export function useKeyboard(engine: Engine) {
       const step = Math.PI / 18;
       // letter shortcuts work with or without Shift / Caps Lock
       const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+      // In Quiz mode only camera and answer-selection shortcuts stay enabled;
+      // everything that reveals names, changes the scene or opens exploration
+      // ('i' isolate, 'h' hide, 'g' ghost, 'd' tooth view, 'e' explode,
+      // 'c' clip, 'l' labels, '[' ']' dissect) is disabled. '/' still works:
+      // opening search leaves Quiz mode first.
+      if (s.mode === 'quiz' && !['/', 'Escape', 'f', 'r', '+', '=', '-', '_', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key)) return;
       switch (key) {
         case '/':
           e.preventDefault();

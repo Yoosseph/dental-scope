@@ -22,7 +22,20 @@ export function Dock() {
   const collapsed = useApp((s) => s.collapsed.dock);
   const jawControls = useApp((s) => s.jawControls);
   const development = useApp((s) => s.developmentStage !== null);
+  const quiz = useApp((s) => s.mode === 'quiz');
   const m = useT();
+  // In Quiz mode the dock shrinks to camera controls only (the board is the
+  // whole scene; explore tools would change it or reveal names).
+  if (quiz) {
+    return (
+      <div className={`ds-dock${mobileOpen ? ' is-mobile-open' : ''}${collapsed ? ' is-collapsed' : ''}`}>
+        <PanelHandle panel="dock" />
+        <div className="ds-panel ds-toolbar" role="toolbar" aria-label={m.toolbarScene}>
+          <CameraControls />
+        </div>
+      </div>
+    );
+  }
   return (
     <div className={`ds-dock${mobileOpen ? ' is-mobile-open' : ''}${collapsed ? ' is-collapsed' : ''}`}>
       <PanelHandle panel="dock" />

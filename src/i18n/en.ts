@@ -3,7 +3,7 @@
  * every key (the Messages type enforces it).
  */
 import type { CategoryId, NumberingSystem } from '../anatomy/types';
-import type { ClipAxis, OrbitMode, ViewPreset } from '../state/store';
+import type { ClipAxis, ModeId, OrbitMode, ViewPreset } from '../state/store';
 
 export const en = {
   langLabel: 'Language',
@@ -266,6 +266,39 @@ export const en = {
   resetView: 'Reset view',
   cameraView: 'Camera view',
   viewBtn: 'View',
+
+  /* quiz mode */
+  modesGroup: 'Mode',
+  mode: {
+    explore: 'Explore',
+    quiz: 'Quiz',
+    learn: 'Learn',
+    compare: 'Compare',
+  } as Record<ModeId, string>,
+  quizTitle: 'Tooth quiz',
+  quizBoardAria: 'Board with the 32 permanent teeth',
+  quizFind: 'Find this tooth on the board:',
+  quizPickInstruction: 'Pick your answer on the board, then submit.',
+  quizSelected: 'Answer selected — you can still change it before submitting.',
+  quizSubmit: 'Submit answer',
+  quizNext: 'Next tooth',
+  quizFinish: 'Finish',
+  quizRestart: 'Restart quiz',
+  quizExit: 'Exit quiz mode',
+  quizHint: 'Hint',
+  quizHintOn: 'Hint on',
+  quizHintOff: 'Hint off',
+  quizDraft: 'Draft',
+  quizCorrect: 'Correct!',
+  quizIncorrect: 'Not this time.',
+  quizAnswerWas: (name: string, fdi: number) => `Correct tooth: ${name} — FDI ${fdi}.`,
+  quizScore: (correct: number, total: number) => `${correct} of ${total}`,
+  quizProgress: (answered: number, total: number) => `${answered}/${total}`,
+  quizComplete: 'Quiz complete',
+  quizCompleteBody: (correct: number, total: number) => `You identified ${correct} of ${total} teeth correctly.`,
+  quizQuestion: 'Question',
+  quizFoldOpen: 'Open quiz panel',
+  quizFoldClose: 'Collapse quiz panel',
 
   /* 3D labels */
   selectX: (x: string) => `Select ${x}`,
