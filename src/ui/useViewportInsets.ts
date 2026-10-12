@@ -40,6 +40,8 @@ export function useViewportInsets(engine: Engine) {
       const bar = visibleRect('.ds-mobile-bar');
       const panel = compact.matches ? visibleRect('.ds-layers.is-mobile-open, .ds-detail.is-mobile-open') : visibleRect('.ds-detail');
       const quizSheet = compact.matches ? visibleRect('.ds-quiz:not(.is-folded)') : null;
+      // On desktop the quiz card is a left sidebar, not a bottom sheet: keep the board clear of it.
+      const quizCard = !compact.matches ? visibleRect('.ds-quiz') : null;
       const sideSheet = compact.matches && window.matchMedia('(orientation: landscape) and (max-height: 600px)').matches;
       const bottoms = [toolbar, bar, ...(!sideSheet && compact.matches ? [panel, quizSheet] : [])].filter((r): r is DOMRect => !!r);
       const bottom = Math.max(0, ...bottoms.map((r) => bounds.bottom - r.top + 12));
@@ -47,6 +49,7 @@ export function useViewportInsets(engine: Engine) {
       let right = side ? bounds.right - side.left + 12 : 0;
       const layers = !compact.matches && (dissect || studyView === 'nerves') ? visibleRect('.ds-layers') : null;
       let left = layers ? layers.right - bounds.left + 12 : 0;
+      if (quizCard) left = Math.max(left, quizCard.right - bounds.left + 12);
       // Landscape tool sheets occupy the side, not the lower half of the model.
       const clearance = sideSheet && sheet === 'tools' ? (bar ? bounds.bottom - bar.top + 12 : 0) : bottom;
       ui.style.setProperty('--dock-clearance', `${Math.max(64, bottom + 12)}px`);

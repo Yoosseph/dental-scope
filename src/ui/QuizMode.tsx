@@ -77,35 +77,39 @@ export function QuizMode() {
   return (
     <section className={`ds-panel ds-quiz${folded ? ' is-folded' : ''}`} aria-label={m.quizTitle}>
       <header className="ds-quiz-head">
-        <h2 className="ds-quiz-title">
-          <IconTooth size={17} />
-          {m.quizTitle}
-        </h2>
+        <div className="ds-quiz-head-main">
+          <h2 className="ds-quiz-title">
+            <IconTooth size={17} />
+            <span>{m.quizTitle}</span>
+          </h2>
+          <div className="ds-quiz-head-actions">
+            <button
+              type="button"
+              className="ds-quiz-restart"
+              aria-label={m.quizRestart}
+              title={m.quizRestart}
+              onClick={onRestart}
+            >
+              <IconReset size={15} />
+            </button>
+            <button
+              type="button"
+              className="ds-quiz-fold"
+              aria-expanded={!folded}
+              aria-label={folded ? m.quizFoldOpen : m.quizFoldClose}
+              onClick={() => setFolded((v) => !v)}
+            >
+              <IconChevron size={16} />
+            </button>
+            <button type="button" className="ds-quiz-exit" aria-label={m.quizExit} onClick={leave}>
+              {m.quizExit}
+            </button>
+          </div>
+        </div>
         <span className="ds-quiz-meta">
           <span className="ds-quiz-progress">{m.quizProgress(Math.min(session.index + 1, QUIZ_SIZE), QUIZ_SIZE)}</span>
           <span className="ds-quiz-score">{m.quizScore(score(session), answeredCount(session))}</span>
         </span>
-        <button
-          type="button"
-          className="ds-quiz-restart"
-          aria-label={m.quizRestart}
-          title={m.quizRestart}
-          onClick={onRestart}
-        >
-          <IconReset size={15} />
-        </button>
-        <button
-          type="button"
-          className="ds-quiz-fold"
-          aria-expanded={!folded}
-          aria-label={folded ? m.quizFoldOpen : m.quizFoldClose}
-          onClick={() => setFolded((v) => !v)}
-        >
-          <IconChevron size={16} />
-        </button>
-        <button type="button" className="ds-quiz-exit" aria-label={m.quizExit} onClick={leave}>
-          {m.quizExit}
-        </button>
       </header>
 
       <div className="ds-quiz-body">

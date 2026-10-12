@@ -766,7 +766,7 @@ button.ds-layer-name:hover {
   left: 24px;
   top: 124px;
   bottom: 64px;
-  width: 272px;
+  width: 320px;
   max-height: 640px;
   display: flex;
   flex-direction: column;
@@ -775,26 +775,47 @@ button.ds-layer-name:hover {
 }
 .ds-quiz-head {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
-  padding: 10px 12px 8px;
+  padding: 10px 12px 10px;
   border-bottom: 1px solid var(--line);
   flex-shrink: 0;
 }
+.ds-quiz-head-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
 .ds-quiz-title {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 6px;
   margin: 0;
   font-size: 14px;
   font-weight: 600;
   min-width: 0;
+  flex: 1;
 }
-.ds-quiz-meta {
-  margin-left: auto;
+.ds-quiz-title svg {
+  flex-shrink: 0;
+}
+.ds-quiz-title span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ds-quiz-head-actions {
   display: inline-flex;
+  align-items: center;
   gap: 6px;
   flex-shrink: 0;
+}
+.ds-quiz-meta {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 .ds-quiz-progress,
 .ds-quiz-score {
@@ -855,10 +876,10 @@ button.ds-layer-name:hover {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 12px 14px 14px;
+  padding: 14px 16px 16px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 .ds-quiz-q {
   margin: 0;
