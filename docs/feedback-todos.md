@@ -93,11 +93,9 @@ This batch records the new Swedish feedback. The completed items above belong to
 
 ### Owner's implementation scope — confirmed 2026-10-05
 
-Work in this order: tooth morphology/appearance with optional anatomical labels and overlays, then the remaining sinuses, then vessel visibility and inspection. Include the labels and overlays in the current scope, while prioritizing sharp, anatomically appropriate shapes and tooth-specific patterns over cosmetic sharpening. Quiz/self-test and contributor credits were deferred and excluded from that implementation. The existing development feature retains its review/documentation follow-ups. New anatomical content and fitted teaching geometry remain draft until expert review.
+Work in this order: tooth morphology/appearance with optional anatomical labels and overlays, then the remaining sinuses, then vessel visibility and inspection. Include the labels and overlays in the current scope, while prioritizing sharp, anatomically appropriate shapes and tooth-specific patterns over cosmetic sharpening. Quiz/self-test and contributor credits are deferred and excluded from this implementation. The existing development feature retains its review/documentation follow-ups. New anatomical content and fitted teaching geometry remain draft until expert review.
 
-> **Update (2026-10-12):** Quiz mode has since been implemented on a separate `quiz-mode` branch (identify all 32 permanent teeth on the separated board; see the README roadmap and [architecture.md](architecture.md) §10). It supersedes the "Quiz/self-test … deferred" line above. Contributor credits remain excluded.
-
-> **Update (2026-10-17):** Pre-merge polish of Quiz mode after a review pass on the branch. Implemented: board positions can be shuffled per round with an on/off switch (`quizBoardOrder`), a **Show answer** control extends hint mode (the question counts as answered but never as correct), the question moved out of the card into a large top-centre prompt that the board is framed below, and the quiz dock now carries answer-safe inspection — the camera, the surface-feature overlay and a section plane that cuts **only the tooth picked on the board**, so the laid-out board stays intact and nothing names a tooth before it is submitted. Session format became `ds.quiz.session.v2`. Still open: educator review of the type-level hints (draft), a real-device look at the quiz interaction, and the deferred idea of teeth flying into an empty skull as answers are completed (out of scope for this pass).
+> **Update (2026-10-17):** Quiz mode was added later in PR #46: identify the 32 permanent teeth on the laid-out board, with optional shuffled positions, type-level hints, Show answer and answer-safe surface/section inspection of the picked tooth. See the README roadmap and [architecture.md](architecture.md) §10. The hints are draft until educator review. Contributor credits remain excluded.
 
 ### Assessment against the current project
 
@@ -200,4 +198,4 @@ The owner authorized implementation after planning. Engineering work for section
 - [ ] Confirm the exact historical deployment version if needed for the student's original report.
 - [x] Owner authorized committing this implementation. No deployment has been performed; anatomical/student review remains pending.
 
-Quiz/self-test is now implemented on the `quiz-mode` branch (see [architecture.md](architecture.md) §10), superseding the earlier exclusion; its lesson-style content and hints remain draft. Contributor credits remain excluded.
+Contributor credits remain excluded. Quiz/self-test was added later (see the update note under the owner's implementation scope).
