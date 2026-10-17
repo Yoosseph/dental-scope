@@ -77,6 +77,8 @@ export function layersActive(fdi: number, ctx: VisibilityContext): boolean {
   const { state, loadedTeeth } = ctx;
   if (!loadedTeeth.has(fdi)) return false;
   if (state.dissectFdi === fdi) return true;
+  // Quiz keeps the board whole: only the tooth being inspected swaps its shell for its tissues
+  if (state.mode === 'quiz') return state.clip.enabled && state.selectedId === `tooth-${fdi}`;
   return state.dissectFdi === null && state.clip.enabled;
 }
 

@@ -281,6 +281,17 @@ export const sv: Messages = {
   quizQuestion: 'Fråga',
   quizFoldOpen: 'Öppna quizpanelen',
   quizFoldClose: 'Fäll ihop quizpanelen',
+  quizShuffle: 'Blanda placeringar',
+  quizShuffleOn: 'Blandad',
+  quizShuffleOff: 'Fast',
+  quizShuffleTitle: 'Slumpa var varje tand sitter på tavlan, mot att memorera positioner',
+  quizShowAnswer: 'Visa svaret',
+  quizShowAnswerTitle: 'Ge upp frågan och visa rätt tand; den räknas som besvarad men inte som rätt',
+  quizRevealed: 'Svaret visat.',
+  quizSurface: 'Ytstrukturer',
+  quizSurfaceTitle: 'Visa ytstrukturerna för tanden som är vald på tavlan',
+  quizInspectHint: 'Tips: välj en tand och rotera tavlan, visa dess ytstrukturer eller skär upp den med verktygen i panelen.',
+  quizPickFirst: 'Välj en tand på tavlan först',
 
   selectX: (x) => `Välj ${x}`,
 };

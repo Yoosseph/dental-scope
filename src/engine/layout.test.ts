@@ -89,4 +89,14 @@ describe('boardSlot', () => {
     expect(boardSlot('maxilla-right', ['maxilla'], undefined).order).toBeLessThan(boardSlot('maxilla-left', ['maxilla'], undefined).order);
     expect(boardSlot('mental-nerve-right-branch-1', ['nerves'], undefined).order).toBeLessThan(boardSlot('mental-nerve-left-branch-1', ['nerves'], undefined).order);
   });
+  it('takes a shuffled slot while keeping every layer of that tooth together', () => {
+    const rank = (fdi: number) => (fdi === 16 ? 0 : undefined);
+    const swapped = boardSlot('tooth-16', ['permanent-teeth'], 16, rank);
+    expect(swapped.order).toBe(0);
+    expect(swapped.group).toBe(2);
+    // enamel of the same tooth rides along on the shuffled slot, one layer above the shell
+    expect(boardSlot('enamel-16', ['permanent-teeth'], 16, rank).order).toBe(swapped.order + 1);
+    // an unmapped tooth falls back to its natural reading order
+    expect(boardSlot('tooth-11', ['permanent-teeth'], 11, rank).order).toBe(boardSlot('tooth-11', ['permanent-teeth'], 11).order);
+  });
 });

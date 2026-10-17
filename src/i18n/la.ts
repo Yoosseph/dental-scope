@@ -281,6 +281,17 @@ export const la: Messages = {
   quizQuestion: 'Quaestio',
   quizFoldOpen: 'Aperi tabellam ludi',
   quizFoldClose: 'Collige tabellam ludi',
+  quizShuffle: 'Loca permuta',
+  quizShuffleOn: 'Permixta',
+  quizShuffleOff: 'Fixa',
+  quizShuffleTitle: 'Fortuito dispone ubi quisque dens in tabula sedeat, ne memoria teneantur loca',
+  quizShowAnswer: 'Responsum ostende',
+  quizShowAnswerTitle: 'Huic quaestioni cede et dentem rectum ostende; responsum numerabitur, non rectum',
+  quizRevealed: 'Responsum ostensum.',
+  quizSurface: 'Structurae superficiei',
+  quizSurfaceTitle: 'Structuras superficiei dentis in tabula electi superimpone',
+  quizInspectHint: 'Monitum: dentem elige, deinde tabulam volva et instrumentis tabellae structuras superficiei ostende vel dentem seca.',
+  quizPickFirst: 'Prius dentem in tabula elige',
 
   selectX: (x: string) => `Elige: ${x}`,
 };

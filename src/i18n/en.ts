@@ -299,6 +299,17 @@ export const en = {
   quizQuestion: 'Question',
   quizFoldOpen: 'Open quiz panel',
   quizFoldClose: 'Collapse quiz panel',
+  quizShuffle: 'Shuffle positions',
+  quizShuffleOn: 'Shuffled',
+  quizShuffleOff: 'Fixed',
+  quizShuffleTitle: 'Randomize where each tooth sits on the board, against memorizing positions',
+  quizShowAnswer: 'Show answer',
+  quizShowAnswerTitle: 'Give up on this question and reveal the correct tooth; it counts as answered but not correct',
+  quizRevealed: 'Answer revealed.',
+  quizSurface: 'Surface features',
+  quizSurfaceTitle: 'Overlay the surface features of the tooth selected on the board',
+  quizInspectHint: 'Tip: pick a tooth, then rotate the board and use the dock tools to show its surface features or slice it open.',
+  quizPickFirst: 'Select a tooth on the board first',
 
   /* 3D labels */
   selectX: (x: string) => `Select ${x}`,

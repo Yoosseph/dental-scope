@@ -23,6 +23,7 @@ export function quizSceneSnapshot(s: AppState): Partial<AppState> {
     view: s.view,
     autoRotate: s.autoRotate,
     orbitMode: s.orbitMode,
+    surfaceFeatures: s.surfaceFeatures,
   };
 }
 
@@ -33,6 +34,7 @@ export function clearSceneTools(s: AppState): Partial<AppState> {
     isolateId: null, isolateContext: false, passageIds: [],
     jawControls: false, jawOpening: 0, jawPlaying: false,
     explode: 0, explodePhase: 1, toothExplode: 0,
-    clip: { ...s.clip, enabled: false }, selectionRequest: null,
+    clip: { ...s.clip, enabled: false }, surfaceFeatures: false, selectionRequest: null,
+    quizBoardOrder: null,
   };
 }

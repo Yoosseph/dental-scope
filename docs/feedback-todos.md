@@ -97,6 +97,8 @@ Work in this order: tooth morphology/appearance with optional anatomical labels 
 
 > **Update (2026-10-12):** Quiz mode has since been implemented on a separate `quiz-mode` branch (identify all 32 permanent teeth on the separated board; see the README roadmap and [architecture.md](architecture.md) §10). It supersedes the "Quiz/self-test … deferred" line above. Contributor credits remain excluded.
 
+> **Update (2026-10-17):** Pre-merge polish of Quiz mode after a review pass on the branch. Implemented: board positions can be shuffled per round with an on/off switch (`quizBoardOrder`), a **Show answer** control extends hint mode (the question counts as answered but never as correct), the question moved out of the card into a large top-centre prompt that the board is framed below, and the quiz dock now carries answer-safe inspection — the camera, the surface-feature overlay and a section plane that cuts **only the tooth picked on the board**, so the laid-out board stays intact and nothing names a tooth before it is submitted. Session format became `ds.quiz.session.v2`. Still open: educator review of the type-level hints (draft), a real-device look at the quiz interaction, and the deferred idea of teeth flying into an empty skull as answers are completed (out of scope for this pass).
+
 ### Assessment against the current project
 
 - **All paranasal sinuses:** valid scope gap. The registry and asset pipeline currently include only the left/right maxillary sinuses. The other groups are the frontal sinuses, sphenoidal sinuses and ethmoidal air cells; the ethmoid component should not be represented as one simple cavity. See [StatPearls: Nose Paranasal Sinuses](https://www.ncbi.nlm.nih.gov/books/NBK499826/?report=reader).

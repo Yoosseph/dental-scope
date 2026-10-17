@@ -7,13 +7,16 @@ import {
   createQuiz,
   currentFdi,
   isCorrect,
+  isRevealed,
   isSubmitted,
   loadSavedQuiz,
   parseQuiz,
+  revealAnswer,
   saveQuiz,
   score,
   serializeQuiz,
   setHint,
+  setShuffle,
   shuffle,
   submitAnswer,
   QUIZ_SIZE,
@@ -32,9 +35,15 @@ function seeded(seed: number): () => number {
 
 const finished: QuizProgress = {
   order: [...PERMANENT_FDI],
+  board: [
+    ...PERMANENT_FDI.filter((f) => f < 30),
+    ...PERMANENT_FDI.filter((f) => f >= 30),
+  ],
   index: QUIZ_SIZE,
   answers: PERMANENT_FDI.map((f) => f),
+  revealed: Array<boolean>(QUIZ_SIZE).fill(false),
   hint: false,
+  shuffle: true,
 };
 
 describe('shuffle', () => {
@@ -120,6 +129,62 @@ describe('session flow', () => {
   });
 });
 
+describe('board shuffle', () => {
+  it('creates a board with both arches in their own half', () => {
+    const q = createQuiz(seeded(13));
+    expect(q.board).toHaveLength(QUIZ_SIZE);
+    expect(new Set(q.board).size).toBe(QUIZ_SIZE);
+    expect(q.board.slice(0, 16).every((f) => f < 30)).toBe(true);
+    expect(q.board.slice(16).every((f) => f >= 30)).toBe(true);
+    expect(q.shuffle).toBe(true);
+  });
+
+  it('permutes each arch independently when it draws a new board', () => {
+    const boards = new Set<string>();
+    for (let seed = 0; seed < 12; seed++) boards.add(createQuiz(seeded(seed)).board.join(','));
+    expect(boards.size).toBeGreaterThan(1);
+  });
+
+  it('draws a fresh board whenever the setting changes', () => {
+    const q = createQuiz(seeded(21));
+    const off = setShuffle(q, false, seeded(22));
+    expect(off.shuffle).toBe(false);
+    expect(off.board).toHaveLength(QUIZ_SIZE);
+    expect(new Set(off.board).size).toBe(QUIZ_SIZE);
+    expect(off.order).toEqual(q.order);
+    const on = setShuffle(off, true, seeded(23));
+    expect(on.shuffle).toBe(true);
+    expect(new Set(on.board).size).toBe(QUIZ_SIZE);
+  });
+});
+
+describe('reveal answer', () => {
+  it('reveals the current question and counts it as answered but not correct', () => {
+    const q = createQuiz(seeded(31));
+    const revealed = revealAnswer(q);
+    expect(isRevealed(revealed)).toBe(true);
+    expect(isSubmitted(revealed)).toBe(true);
+    expect(isCorrect(revealed)).toBe(false);
+    expect(answeredCount(revealed)).toBe(1);
+    expect(score(revealed)).toBe(0);
+  });
+
+  it('never overrides a submitted answer', () => {
+    const q = createQuiz(seeded(32));
+    const answered = submitAnswer(q, q.order[0]);
+    const revealed = revealAnswer(answered);
+    expect(revealed).toBe(answered);
+    expect(isRevealed(revealed)).toBe(false);
+  });
+
+  it('advances after a reveal and has no effect once the quiz is finished', () => {
+    const q = revealAnswer(createQuiz(seeded(33)));
+    expect(advance(q).index).toBe(1);
+    expect(revealAnswer(finished)).toBe(finished);
+    expect(isSubmitted(finished)).toBe(false);
+  });
+});
+
 describe('serialization', () => {
   it('round-trips a session through JSON', () => {
     const q = submitAnswer(createQuiz(seeded(42)), PERMANENT_FDI[3]);
@@ -159,6 +224,18 @@ describe('serialization', () => {
     const badHint = JSON.parse(valid) as QuizProgress;
     badHint.hint = 'yes' as unknown as boolean;
     expect(parseQuiz(JSON.stringify(badHint))).toBeNull();
+    // board with an arch crossing the row boundary
+    const badBoard = JSON.parse(valid) as QuizProgress;
+    [badBoard.board[0], badBoard.board[16]] = [badBoard.board[16], badBoard.board[0]];
+    expect(parseQuiz(JSON.stringify(badBoard))).toBeNull();
+    // revealed flags not matching the session size
+    const badRevealed = JSON.parse(valid) as QuizProgress;
+    badRevealed.revealed = [true];
+    expect(parseQuiz(JSON.stringify(badRevealed))).toBeNull();
+    // shuffle not a boolean
+    const badShuffle = JSON.parse(valid) as QuizProgress;
+    badShuffle.shuffle = 1 as unknown as boolean;
+    expect(parseQuiz(JSON.stringify(badShuffle))).toBeNull();
   });
 });
 

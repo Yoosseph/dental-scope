@@ -86,6 +86,8 @@ export interface AppState {
   toothExplode: number; // 0…1
 
   mode: ModeId;
+  /** Board slot order while Quiz shuffles positions (null outside Quiz / when off); see `src/modes/quiz.ts`. */
+  quizBoardOrder: number[] | null;
   searchOpen: boolean;
   searchQuery: string;
   guideOpen: boolean;
@@ -136,6 +138,7 @@ export const initialState: AppState = {
   dissectLevel: 0,
   toothExplode: 0,
   mode: 'explore',
+  quizBoardOrder: null,
   searchOpen: false,
   searchQuery: '',
   guideOpen: false,
@@ -332,7 +335,7 @@ export const actions = {
   },
   setClip(patch: Partial<ClipState>) {
     // a section plane cuts through the scene in place, so it leaves the laid-out phase
-    setState((s) => ({ clip: { ...s.clip, ...patch }, explodePhase: patch.enabled ? 1 : s.explodePhase }));
+    setState((s) => ({ clip: { ...s.clip, ...patch }, explodePhase: patch.enabled && s.mode !== 'quiz' ? 1 : s.explodePhase }));
   },
   setNumbering(n: NumberingSystem) {
     setState({ numbering: n });
@@ -450,6 +453,9 @@ export const actions = {
     const restore = quizSceneBefore ?? {};
     quizSceneBefore = null;
     setState((st) => ({ ...clearSceneTools(st), mode: 'explore', ...restore }));
+  },
+  setQuizBoardOrder(quizBoardOrder: number[] | null) {
+    setState({ quizBoardOrder });
   },
   setLoading(stage: string, v: number) {
     setState((s) => ({ loading: { ...s.loading, [stage]: v } }));

@@ -16,7 +16,7 @@ import { Animator } from './animator';
 import { AssetLoader } from './assets';
 import { CameraRig, PRESET_DIRS } from './camera';
 import { archOffset, isNeurovascular, neurovascularStretch, pulpLayerOffset, toothLayerOffset } from './explode';
-import { boardAssemblyKey, boardSlot, shelfLayout, type LayoutItem } from './layout';
+import { boardAssemblyKey, boardSlot, archOrder, shuffledRanks, shelfLayout, type LayoutItem } from './layout';
 import { computeLabelPoint } from './labelPoint';
 import { LabelLayer, type LabelCandidate } from './labels';
 import { HIGHLIGHT, THEME_LIGHTING, highlightColor, themedColor, applyThemeToMaterial, createTissueMaterial, setFibreAxis, setMaterialOpacity, styleKeyFor, type SceneTheme, type TissueMaterial } from './materials';
@@ -487,7 +487,10 @@ export class Engine {
       s.explodePhase !== p.explodePhase ||
       s.ghostOpacity !== p.ghostOpacity ||
       (s.selectedId !== p.selectedId && (this.isSinus(s.selectedId) || this.isSinus(p.selectedId)));
-    if (visChanged) this.refreshVisibility();
+    // Quiz: with a section open, picking another tooth moves the cut and swaps that
+    // tooth's shell for its tissues, so visibility and the board pack must follow.
+    const quizCutMoved = s.mode === 'quiz' && s.clip.enabled && s.selectedId !== p.selectedId;
+    if (visChanged || quizCutMoved) this.refreshVisibility();
     if (s.jawOpening !== p.jawOpening && !s.jawPlaying) this.jawCur = s.jawOpening;
     if (s.jawPlaying && !p.jawPlaying) {
       if (this.animator.reducedMotion) { actions.setJawOpening(s.jawOpening); return; }
@@ -497,7 +500,7 @@ export class Engine {
     if (s.explode !== p.explode || s.explodePhase !== p.explodePhase) this.refreshRootCuts(s);
     if (s.selectedId !== p.selectedId || s.hoveredId !== p.hoveredId || s.dissectFdi !== p.dissectFdi) this.refreshHighlight();
     if (visChanged || s.lang !== p.lang || s.numbering !== p.numbering) this.pointerDirty = true;
-    if (s.clip !== p.clip || s.dissectFdi !== p.dissectFdi) this.refreshClip();
+    if (s.clip !== p.clip || s.dissectFdi !== p.dissectFdi || (quizCutMoved && s.clip.enabled)) this.refreshClip();
     if (s.clip.enabled && !p.clip.enabled && s.dissectFdi === null) void this.ensureAllTeeth().catch(() => setState({ error: 'load' }));
     if (s.dissectFdi !== p.dissectFdi && s.dissectFdi !== null) void this.ensureTooth(s.dissectFdi).catch(() => {});
     if (s.autoRotate !== p.autoRotate) this.rig.controls.autoRotate = s.autoRotate;
@@ -515,6 +518,7 @@ export class Engine {
     if (visChanged || s.labels !== p.labels || s.surfaceFeatures !== p.surfaceFeatures || s.numbering !== p.numbering || s.selectedId !== p.selectedId || s.lang !== p.lang) this.refreshLabels();
     // a new phase or a changed set of visible structures re-packs the board and frames it
     if (s.explodePhase !== p.explodePhase || (s.explodePhase === 2 && visChanged)) this.layoutBoard(true);
+    else if (s.explodePhase === 2 && (s.quizBoardOrder !== p.quizBoardOrder || quizCutMoved)) this.layoutBoard(false);
     if (s.explodePhase === 1 && p.explodePhase === 2 && s.dissectFdi === null && !s.isolateId) {
       // back from the board: frame the in-position dissection again
       this.reframeForExplode(s, s.explode > 0 ? 'three-quarter' : 'front');
@@ -549,10 +553,14 @@ export class Engine {
       assembly.bounds.union(e.mesh.geometry.boundingBox!);
       assembly.members.push(e);
     }
+    // while Quiz shuffles positions, look the tooth up in the shuffled slot order instead of its reading order
+    const board = getState().quizBoardOrder;
+    const ranks = board && board.length === 32 ? shuffledRanks(board) : null;
+    const rankOf = (fdi: number | undefined) => (fdi === undefined ? undefined : ranks ? ranks.get(fdi) ?? archOrder(fdi) : undefined);
     for (const [key, assembly] of assemblies) {
       const size = assembly.bounds.getSize(new THREE.Vector3());
       const owner = this.registry.meshOwner.get(key);
-      items.push({ key, w: size.x, h: size.y, ...boardSlot(key, this.registry.categoriesOfMesh(key), owner ? this.registry.get(owner)?.toothFdi : undefined) });
+      items.push({ key, w: size.x, h: size.y, ...boardSlot(key, this.registry.categoriesOfMesh(key), owner ? this.registry.get(owner)?.toothFdi : undefined, rankOf) });
     }
     // The board packs to the area the UI leaves clear (see `boardViewport`) so on a
     // phone it sits above the Quiz bottom sheet instead of behind it.
@@ -725,8 +733,9 @@ export class Engine {
 
   private activeBounds(): THREE.Box3 {
     const { dissectFdi } = getState();
-    if (dissectFdi !== null) {
-      const b = this.boundsOf(`tooth-${dissectFdi}`, false);
+    const refFdi = this.quizInspectFdi() ?? dissectFdi;
+    if (refFdi !== null) {
+      const b = this.boundsOf(`tooth-${refFdi}`, false);
       if (!b.isEmpty()) return b;
     }
     const b = new THREE.Box3();
@@ -737,18 +746,42 @@ export class Engine {
     return b.isEmpty() ? this.sceneBounds : b;
   }
 
+  /**
+   * FDI of the tooth the answer-safe inspection tools act on in Quiz mode: the
+   * tooth picked on the board. Null in other modes and when nothing is picked.
+   */
+  private quizInspectFdi(): number | null {
+    const { mode, selectedId } = getState();
+    if (mode !== 'quiz' || !selectedId) return null;
+    return this.registry.get(selectedId)?.toothFdi ?? null;
+  }
+
+  /** FDI of the tooth a mesh belongs to (shell or one of its layers), or null. */
+  private toothFdiOfMesh(meshKey: string): number | null {
+    const direct = shellFdi(meshKey);
+    if (direct !== null) return direct;
+    const owner = this.registry.meshOwner.get(meshKey);
+    return (owner ? this.registry.get(owner)?.toothFdi : undefined) ?? null;
+  }
+
   private refreshClip() {
     const { clip, dissectFdi } = getState();
-    const frame = dissectFdi !== null ? this.registry.get(`tooth-${dissectFdi}`)?.tooth?.frame : undefined;
+    // in Quiz the section belongs to the tooth being inspected, not to the whole board
+    const quizFdi = this.quizInspectFdi();
+    const refFdi = quizFdi ?? dissectFdi;
+    const frame = refFdi !== null ? this.registry.get(`tooth-${refFdi}`)?.tooth?.frame : undefined;
     this.section.setFrame(frame ? { sagittal: frame.buccal, coronal: frame.mesial, axial: frame.axis } : null);
     this.section.update(clip, this.activeBounds(), this.rig.camera, this.rig.controls.target);
     const planes = clip.enabled ? this.section.planes : null;
     for (const e of this.entries.values()) {
       const m = e.mesh.material;
       const style = m.userData.styleKey;
-      m.userData.fx.uCapEnabled.value = clip.enabled && ['shell', 'enamel', 'dentin-coronal', 'dentin-radicular', 'cementum', 'pdl', 'pulp-chamber', 'canal'].includes(style) ? 1 : 0;
-      if ((m.clippingPlanes?.length ?? 0) !== (planes?.length ?? 0)) {
-        m.clippingPlanes = planes;
+      // Quiz cuts only the picked tooth's meshes; the rest of the board stays whole
+      const cut = planes !== null && (quizFdi === null || this.toothFdiOfMesh(e.key) === quizFdi);
+      m.userData.fx.uCapEnabled.value = cut && ['shell', 'enamel', 'dentin-coronal', 'dentin-radicular', 'cementum', 'pdl', 'pulp-chamber', 'canal'].includes(style) ? 1 : 0;
+      const want = cut ? planes : null;
+      if ((m.clippingPlanes?.length ?? 0) !== (want?.length ?? 0)) {
+        m.clippingPlanes = want;
         m.needsUpdate = true;
       }
     }
@@ -1684,8 +1717,14 @@ export class Engine {
       e.mesh.matrixWorldNeedsUpdate = true;
       e.mesh.updateMatrixWorld(true);
     }
+    // while Quiz is active the surface features of the *selected* tooth are overlaid on the
+    // board shell (not a dissected tooth); labels stay off, so nothing reveals the answer
     const host = s.dissectFdi !== null ? this.entries.get(`enamel-${s.dissectFdi}`) : undefined;
-    this.surfaceLayer.update(s.dissectFdi, s.surfaceFeatures && s.dissectLevel <= 1 && !s.clip.enabled && !this.developmentScene.active, host?.mesh, s.selectedId);
+    const quizSurfaceFdi = s.mode === 'quiz' && s.selectedId ? (this.registry.get(s.selectedId)?.toothFdi ?? null) : null;
+    const surfaceFdi = s.mode === 'quiz' ? quizSurfaceFdi : s.dissectFdi;
+    const surfaceHost = (s.mode === 'quiz' && surfaceFdi !== null ? this.entries.get(`tooth-${surfaceFdi}`) : undefined) ?? host;
+    const surfaceEnabled = surfaceFdi !== null && s.surfaceFeatures && !s.clip.enabled && !this.developmentScene.active && (s.mode === 'quiz' || s.dissectLevel <= 1);
+    this.surfaceLayer.update(surfaceFdi, surfaceEnabled, surfaceHost?.mesh, s.selectedId);
     if (layoutChanged) this.labels?.markSceneChanged();
 
     const st = s.selectedId ? this.registry.get(s.selectedId) : undefined;

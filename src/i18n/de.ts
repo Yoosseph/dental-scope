@@ -281,6 +281,17 @@ export const de: Messages = {
   quizQuestion: 'Frage',
   quizFoldOpen: 'Quiz-Panel öffnen',
   quizFoldClose: 'Quiz-Panel einklappen',
+  quizShuffle: 'Positionen mischen',
+  quizShuffleOn: 'Gemischt',
+  quizShuffleOff: 'Fest',
+  quizShuffleTitle: 'Zufällig verteilen, wo jeder Zahn auf der Tafel sitzt, gegen das Auswendiglernen von Positionen',
+  quizShowAnswer: 'Antwort zeigen',
+  quizShowAnswerTitle: 'Diese Frage aufgeben und den richtigen Zahn zeigen; sie zählt als beantwortet, aber nicht als richtig',
+  quizRevealed: 'Antwort gezeigt.',
+  quizSurface: 'Oberflächenmerkmale',
+  quizSurfaceTitle: 'Die Oberflächenmerkmale des auf der Tafel gewählten Zahns einblenden',
+  quizInspectHint: 'Tipp: einen Zahn wählen, dann die Tafel drehen und mit den Werkzeugen im Dock Oberflächenmerkmale zeigen oder ihn aufschneiden.',
+  quizPickFirst: 'Zuerst einen Zahn auf der Tafel wählen',
 
   selectX: (x) => `${x} auswählen`,
 };

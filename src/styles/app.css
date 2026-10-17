@@ -881,19 +881,6 @@ button.ds-layer-name:hover {
   flex-direction: column;
   gap: 12px;
 }
-.ds-quiz-q {
-  margin: 0;
-  font-size: 13px;
-  color: var(--muted);
-}
-.ds-quiz-q strong {
-  display: block;
-  margin-top: 2px;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--ink);
-  overflow-wrap: anywhere;
-}
 .ds-quiz-guide {
   margin: 0;
   display: flex;
@@ -1005,6 +992,75 @@ button.ds-layer-name:hover {
 /* in Quiz mode the hover tooltip and structure labels would reveal names: hide them */
 .ds-app.is-quiz .ds-tip {
   display: none;
+}
+/* the current question is the one thing to read at a glance: a big prompt over the board */
+.ds-quiz-prompt {
+  position: absolute;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  max-width: min(560px, calc(100% - 32px));
+  padding: 9px 22px 11px;
+  border-radius: 14px;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--panel-shadow);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  pointer-events: none;
+  text-align: center;
+  animation: ds-quiz-prompt-in 260ms var(--ease);
+}
+@keyframes ds-quiz-prompt-in {
+  from {
+    opacity: 0;
+  }
+}
+.ds-quiz-prompt-label {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.ds-quiz-prompt-name {
+  font-family: var(--font-display);
+  font-size: 27px;
+  font-weight: 600;
+  font-variation-settings: 'opsz' 48;
+  letter-spacing: -0.01em;
+  line-height: 1.12;
+  overflow-wrap: anywhere;
+}
+.ds-quiz-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ds-quiz-reveal {
+  align-self: flex-start;
+  padding: 5px 9px;
+  border: 1px dashed var(--line);
+  border-radius: 7px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.ds-quiz-reveal:hover {
+  color: var(--ink);
+  background: var(--hover);
+}
+.ds-quiz-guide[data-state='revealed'] {
+  color: var(--warn);
+  font-weight: 600;
+}
+.ds-quiz-inspect {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--muted);
 }
 
 /* ------------------------------------------------------------------ detail */
@@ -1327,6 +1383,14 @@ button.ds-layer-name:hover {
 .ds-tool.is-active {
   background: var(--accent-soft);
   color: var(--accent);
+}
+/* a tool that needs a picked tooth first (Quiz inspection) */
+.ds-tool[aria-disabled='true'] {
+  opacity: 0.45;
+}
+.ds-tool[aria-disabled='true']:hover {
+  background: none;
+  color: var(--muted);
 }
 /* Labels toggle: performance note just above the dock, on hover and keyboard focus */
 .ds-dock-main {
@@ -2677,6 +2741,14 @@ button.ds-layer-name:hover {
     max-height: min(58dvh, calc(100dvh - 190px - var(--safe-top) - var(--safe-bottom)));
     transform: none;
   }
+  .ds-quiz-prompt {
+    top: calc(58px + var(--safe-top));
+    max-width: calc(100% - 16px - var(--safe-left) - var(--safe-right));
+    padding: 7px 14px 9px;
+  }
+  .ds-quiz-prompt-name {
+    font-size: 21px;
+  }
   .ds-quiz-fold {
     display: inline-flex;
   }
@@ -2839,6 +2911,22 @@ button.ds-layer-name:hover {
   .ds-development-heading { font-size: 10px; }
   .ds-dock.is-mobile-open .ds-compact-settings { padding: 6px 9px; font-size: 11px; }
   .ds-section-panel .ds-icon-btn { min-width: 32px; min-height: 32px; }
+}
+
+/* A phone rotated horizontally is short: shrink the prompt and keep the card
+   below it, so the two read as one column instead of overlapping. */
+@media (max-width: 1023px) and (orientation: landscape) and (max-height: 600px),
+       (pointer: coarse) and (max-width: 1366px) and (orientation: landscape) and (max-height: 600px) {
+  .ds-quiz-prompt {
+    top: calc(54px + var(--safe-top));
+    padding: 5px 14px 7px;
+  }
+  .ds-quiz-prompt-name {
+    font-size: 19px;
+  }
+  .ds-quiz {
+    max-height: calc(100dvh - 200px - var(--safe-top) - var(--safe-bottom));
+  }
 }
 
 /* A side sheet keeps the model usable on a phone rotated horizontally. */

@@ -42,6 +42,8 @@ export function useViewportInsets(engine: Engine) {
       const quizSheet = compact.matches ? visibleRect('.ds-quiz:not(.is-folded)') : null;
       // On desktop the quiz card is a left sidebar, not a bottom sheet: keep the board clear of it.
       const quizCard = !compact.matches ? visibleRect('.ds-quiz') : null;
+      // The quiz question banner sits top-centre over the board on every layout.
+      const quizPrompt = visibleRect('.ds-quiz-prompt');
       const sideSheet = compact.matches && window.matchMedia('(orientation: landscape) and (max-height: 600px)').matches;
       const bottoms = [toolbar, bar, ...(!sideSheet && compact.matches ? [panel, quizSheet] : [])].filter((r): r is DOMRect => !!r);
       const bottom = Math.max(0, ...bottoms.map((r) => bounds.bottom - r.top + 12));
@@ -55,7 +57,7 @@ export function useViewportInsets(engine: Engine) {
       ui.style.setProperty('--dock-clearance', `${Math.max(64, bottom + 12)}px`);
       const tour = document.querySelector<HTMLElement>('.ds-tour-card');
       const tourBounds = tour?.getBoundingClientRect();
-      let top = 0;
+      let top = quizPrompt ? Math.max(0, quizPrompt.bottom - bounds.top + 12) : 0;
       let tourBottom = clearance;
       if (tour && tourBounds?.width && tourBounds.height) {
         if (!compact.matches) {
@@ -63,7 +65,7 @@ export function useViewportInsets(engine: Engine) {
           else right = Math.max(right, bounds.right - tourBounds.left + 12);
         } else if (sideSheet) left = Math.max(left, tourBounds.right + 12);
         else if (tour.dataset.position === 'bottom') tourBottom = Math.max(tourBottom, bounds.bottom - tourBounds.top + 12);
-        else top = tourBounds.bottom + 12;
+        else top = Math.max(top, tourBounds.bottom + 12);
       }
       engine.setInsets(Math.min(right, bounds.width - 100), Math.min(tourBottom, bounds.height - 100), Math.min(left, bounds.width - 100), Math.max(0, Math.min(top, bounds.height - tourBottom - 80)));
     };
@@ -71,7 +73,7 @@ export function useViewportInsets(engine: Engine) {
     update();
     const observer = new ResizeObserver(schedule);
     if (ui) observer.observe(ui);
-    for (const element of ui?.querySelectorAll('.ds-dock, .ds-layers, .ds-detail, .ds-mobile-bar, .ds-quiz') ?? []) observer.observe(element);
+    for (const element of ui?.querySelectorAll('.ds-dock, .ds-layers, .ds-detail, .ds-mobile-bar, .ds-quiz, .ds-quiz-prompt') ?? []) observer.observe(element);
     const tour = document.querySelector<HTMLElement>('.ds-tour-card');
     if (tour) observer.observe(tour);
     const tourPosition = new MutationObserver(schedule);

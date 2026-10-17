@@ -125,4 +125,32 @@ describe('quiz mode transitions', () => {
     actions.resetAll();
     expect(getState()).toMatchObject({ mode: 'explore', selectedId: null, mobileSheet: 'none', explode: 0 });
   });
+
+  it('carries a shuffled board order while in quiz and clears it on exit', () => {
+    actions.enterQuiz();
+    const board = [11, 12, 13, 14, 15, 16, 17, 18, 21, 22, 23, 24, 25, 26, 27, 28, 31, 32, 33, 34, 35, 36, 37, 38, 41, 42, 43, 44, 45, 46, 47, 48];
+    actions.setQuizBoardOrder(board);
+    expect(getState().quizBoardOrder).toEqual(board);
+    actions.exitQuiz();
+    expect(getState().quizBoardOrder).toBeNull();
+  });
+
+  it('slices the laid-out board in place: the section tool keeps phase 2 in quiz', () => {
+    actions.enterQuiz();
+    actions.setClip({ enabled: true, axis: 'coronal', offset: 0 });
+    expect(getState()).toMatchObject({ explodePhase: 2, clip: { enabled: true, axis: 'coronal' } });
+    actions.exitQuiz();
+    expect(getState().clip.enabled).toBe(false);
+    actions.setClip({ enabled: true });
+    expect(getState().explodePhase).toBe(1); // the explorer still returns to the in-position view
+  });
+
+  it('restores surface-feature state when the quiz is left', () => {
+    setState({ surfaceFeatures: true });
+    actions.enterQuiz();
+    expect(getState().surfaceFeatures).toBe(false);
+    actions.setSurfaceFeatures(true);
+    actions.exitQuiz();
+    expect(getState().surfaceFeatures).toBe(true);
+  });
 });

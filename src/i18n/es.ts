@@ -281,6 +281,17 @@ export const es: Messages = {
   quizQuestion: 'Pregunta',
   quizFoldOpen: 'Abrir el panel del quiz',
   quizFoldClose: 'Plegar el panel del quiz',
+  quizShuffle: 'Mezclar posiciones',
+  quizShuffleOn: 'Mezcladas',
+  quizShuffleOff: 'Fijas',
+  quizShuffleTitle: 'Aleatoriza dónde se sitúa cada diente en la tabla, contra la memorización de posiciones',
+  quizShowAnswer: 'Mostrar la respuesta',
+  quizShowAnswerTitle: 'Abandona esta pregunta y muestra el diente correcto; cuenta como respondida pero no como correcta',
+  quizRevealed: 'Respuesta mostrada.',
+  quizSurface: 'Detalles superficiales',
+  quizSurfaceTitle: 'Superpone los detalles superficiales del diente seleccionado en la tabla',
+  quizInspectHint: 'Consejo: elige un diente y luego gira la tabla y usa las herramientas del panel para mostrar sus detalles superficiales o cortarlo.',
+  quizPickFirst: 'Primero elige un diente en la tabla',
 
   selectX: (x: string) => `Seleccionar ${x}`,
 };
