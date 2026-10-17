@@ -490,6 +490,7 @@ export class Engine {
     // Quiz: with a section open, picking another tooth moves the cut and swaps that
     // tooth's shell for its tissues, so visibility and the board pack must follow.
     const quizCutMoved = s.mode === 'quiz' && s.clip.enabled && s.selectedId !== p.selectedId;
+    if (s.mode !== p.mode) this.hideHoverInfo();
     if (visChanged || quizCutMoved) this.refreshVisibility();
     if (s.jawOpening !== p.jawOpening && !s.jawPlaying) this.jawCur = s.jawOpening;
     if (s.jawPlaying && !p.jawPlaying) {
@@ -1023,6 +1024,12 @@ export class Engine {
 
   /** The same localized anatomy appears when hovering the volume or its label. */
   private showHoverInfo(id: string, x: number, y: number) {
+    // Quiz: the tooltip names the tooth and its number, which would give the answer away
+    if (getState().mode === 'quiz') {
+      this.tip.classList.remove('is-visible');
+      this.tip.setAttribute('aria-hidden', 'true');
+      return;
+    }
     const structure = this.registry.require(id);
     const { numbering, lang } = getState();
     const key = `${id}:${lang}:${numbering}`;

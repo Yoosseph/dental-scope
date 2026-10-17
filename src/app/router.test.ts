@@ -127,3 +127,27 @@ describe('credits popup deep links', () => {
     expect(getState().creditsOpen).toBe(true);
   });
 });
+
+describe('quiz mode addresses', () => {
+  it('keeps the bare address while a tooth is picked, so the URL never names the answer', async () => {
+    url = new URL('https://example.org/tooth/36/');
+    stop = startRouter(engine, registry);
+    await Promise.resolve();
+    actions.enterQuiz();
+    expect(url.pathname).toBe('/');
+    actions.select('tooth-16');
+    await navigate(() => { actions.select('tooth-21'); });
+    expect(url.pathname).toBe('/');
+    expect(pushState).not.toHaveBeenCalledWith(null, '', '/tooth/21/');
+  });
+
+  it('leaves the quiz on Back/Forward instead of selecting a tooth from history', async () => {
+    stop = startRouter(engine, registry);
+    actions.enterQuiz();
+    url = new URL('https://example.org/tooth/11/');
+    events.dispatchEvent(new Event('popstate'));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(getState().mode).toBe('explore');
+    expect(getState().selectedId).toBe('tooth-11');
+  });
+});
