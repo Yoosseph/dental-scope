@@ -291,6 +291,10 @@ export const la: Messages = {
   quizSurface: 'Structurae superficiei',
   quizSurfaceTitle: 'Structuras superficiei dentis in tabula electi superimpone',
   quizInspectHint: 'Monitum: dentem elige, deinde tabulam volva et instrumentis tabellae structuras superficiei ostende vel dentem seca.',
+  quizYourPick: (name, fdi) => `Electio tua: ${name} — FDI ${fdi}.`,
+  quizPickByPosition: 'Vel ex loco in tabula elige',
+  quizPickPlaceholder: 'Locum elige…',
+  quizSlot: (upper, n) => `Dentes ${upper ? 'superiores' : 'inferiores'}, locus ${n} ex 16`,
   quizPickFirst: 'Prius dentem in tabula elige',
 
   selectX: (x: string) => `Elige: ${x}`,

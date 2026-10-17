@@ -15,6 +15,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { typeOf } from '../anatomy/notation';
+import { archOrder } from '../engine/layout';
 import { nameOf, useLang, useT } from '../i18n';
 import { QUIZ_HINTS } from '../i18n/quiz';
 import { EXPLORE_MODE, QUIZ_MODE, switchMode } from '../modes/modes';
@@ -72,6 +73,13 @@ export function QuizMode() {
   const correct = submitted && isCorrect(session);
   const answerFdi = !submitted && selectedId !== null ? registry.get(selectedId)?.toothFdi ?? null : null;
   const hint = !submitted && session.hint && fdi !== null ? QUIZ_HINTS[lang][typeOf(fdi)] : null;
+  // the user's own pick when it was wrong, so the feedback names both teeth
+  const pickedFdi = submitted && !revealed && !correct ? session.answers[session.index] : null;
+  const pickedTooth = pickedFdi !== null ? registry.get(`tooth-${pickedFdi}`) : undefined;
+  // board slots in reading order (upper teeth, then lower), for picking without a pointer;
+  // the options name only a position, never a tooth
+  const slots = session.shuffle ? session.board : boardReadingOrder(session.board);
+  const slotIndex = answerFdi !== null ? slots.indexOf(answerFdi) : -1;
 
   // answering or giving up swaps the submit button for the next one: keep keyboard focus on it
   const wasSubmitted = useRef(submitted);
@@ -189,8 +197,30 @@ export function QuizMode() {
 
               {submitted && fdi !== null && tooth !== undefined && (
                 <p className="ds-quiz-answer" role="status" data-state={correct ? 'ok' : 'ko'}>
-                  {m.quizAnswerWas(name, fdi)}
+                  {pickedFdi !== null && pickedTooth !== undefined && (
+                    <span className="ds-quiz-picked">{m.quizYourPick(nameOf(pickedTooth, lang), pickedFdi)}</span>
+                  )}
+                  <span>{m.quizAnswerWas(name, fdi)}</span>
                 </p>
+              )}
+
+              {!submitted && (
+                <label className="ds-quiz-slot">
+                  <span>{m.quizPickByPosition}</span>
+                  <select
+                    className="ds-study-select"
+                    value={slotIndex >= 0 ? String(slotIndex) : ''}
+                    onChange={(e) => {
+                      const i = Number(e.currentTarget.value);
+                      if (e.currentTarget.value !== '' && slots[i] !== undefined) actions.select(`tooth-${slots[i]}`);
+                    }}
+                  >
+                    <option value="" disabled>{m.quizPickPlaceholder}</option>
+                    {slots.map((_, i) => (
+                      <option key={i} value={String(i)}>{m.quizSlot(i < 16, (i % 16) + 1)}</option>
+                    ))}
+                  </select>
+                </label>
               )}
 
               <div className="ds-quiz-tools">
@@ -213,6 +243,11 @@ export function QuizMode() {
                   <span>{m.quizShuffle}</span>
                   <span className="ds-hint-state">{session.shuffle ? m.quizShuffleOn : m.quizShuffleOff}</span>
                 </button>
+                {!submitted && (
+                  <button type="button" className="ds-quiz-reveal" title={m.quizShowAnswerTitle} onClick={onReveal}>
+                    {m.quizShowAnswer}
+                  </button>
+                )}
               </div>
 
               {hint !== null && (
@@ -220,12 +255,6 @@ export function QuizMode() {
                   <span>{hint}</span>
                   <em>{m.quizDraft}</em>
                 </p>
-              )}
-
-              {!submitted && (
-                <button type="button" className="ds-quiz-reveal" title={m.quizShowAnswerTitle} onClick={onReveal}>
-                  {m.quizShowAnswer}
-                </button>
               )}
 
               <p className="ds-quiz-inspect">{m.quizInspectHint}</p>
@@ -248,4 +277,10 @@ export function QuizMode() {
       </section>
     </>
   );
+}
+
+/** The unshuffled board as the engine lays it out: each arch in reading order (viewer's left first). */
+function boardReadingOrder(board: readonly number[]): number[] {
+  const byRank = (a: number, b: number) => archOrder(a) - archOrder(b);
+  return [...board.filter((f) => f < 30).sort(byRank), ...board.filter((f) => f >= 30).sort(byRank)];
 }

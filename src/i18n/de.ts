@@ -291,6 +291,10 @@ export const de: Messages = {
   quizSurface: 'Oberflächenmerkmale',
   quizSurfaceTitle: 'Die Oberflächenmerkmale des auf der Tafel gewählten Zahns einblenden',
   quizInspectHint: 'Tipp: einen Zahn wählen, dann die Tafel drehen und mit den Werkzeugen im Dock Oberflächenmerkmale zeigen oder ihn aufschneiden.',
+  quizYourPick: (name, fdi) => `Deine Wahl: ${name} — FDI ${fdi}.`,
+  quizPickByPosition: 'Oder nach Position auf der Tafel wählen',
+  quizPickPlaceholder: 'Position wählen …',
+  quizSlot: (upper, n) => `${upper ? 'Obere' : 'Untere'} Zähne, Position ${n} von 16`,
   quizPickFirst: 'Zuerst einen Zahn auf der Tafel wählen',
 
   selectX: (x) => `${x} auswählen`,

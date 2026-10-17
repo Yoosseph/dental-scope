@@ -765,7 +765,8 @@ button.ds-layer-name:hover {
   position: absolute;
   left: 24px;
   top: 124px;
-  bottom: 64px;
+  /* stay above the dock, which grows when the inspection tools are shown */
+  bottom: var(--dock-clearance, 64px);
   width: 320px;
   max-height: 640px;
   display: flex;
@@ -907,6 +908,21 @@ button.ds-layer-name:hover {
   color: var(--muted);
   overflow-wrap: anywhere;
 }
+.ds-quiz-answer {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ds-quiz-picked {
+  color: var(--muted);
+}
+.ds-quiz-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
 .ds-quiz-answer[data-state='ok'] {
   background: var(--accent-soft);
   color: var(--ink);
@@ -993,6 +1009,14 @@ button.ds-layer-name:hover {
 .ds-app.is-quiz .ds-tip {
   display: none;
 }
+.ds-mobile-bar .ds-mobile-mode {
+  display: none;
+}
+@media (max-width: 600px) {
+  .ds-mobile-bar .ds-mobile-mode {
+    display: flex;
+  }
+}
 /* the current question is the one thing to read at a glance: a big prompt over the board */
 .ds-quiz-prompt {
   position: absolute;
@@ -1041,7 +1065,7 @@ button.ds-layer-name:hover {
   gap: 6px;
 }
 .ds-quiz-reveal {
-  align-self: flex-start;
+  align-self: center;
   padding: 5px 9px;
   border: 1px dashed var(--line);
   border-radius: 7px;
@@ -2758,6 +2782,10 @@ button.ds-layer-name:hover {
   .ds-quiz.is-folded .ds-quiz-body {
     display: none;
   }
+  /* phones: the dock tip repeats what the Tools sheet shows; drop it so the board stays large */
+  .ds-quiz-inspect {
+    display: none;
+  }
   .ds-layers.is-mobile-open { height: min(58dvh, calc(100dvh - 190px - var(--safe-top) - var(--safe-bottom))); }
   .ds-layers.is-mobile-open { overflow-y: auto; overscroll-behavior: contain; }
   .ds-layers > * { flex-shrink: 0; }
@@ -2837,7 +2865,8 @@ button.ds-layer-name:hover {
 @media (max-width: 600px) {
   .ds-title { font-size: 18px; }
   .ds-top-actions .ds-lang { display: none; }
-  .ds-top-actions .ds-mode-switch button { padding: 0 8px; font-size: 11px; }
+  /* the top bar has no room beside the title: the mode switch lives in the bottom bar */
+  .ds-top-actions .ds-mode-switch { display: none; }
   .ds-quiz-exit { padding: 0 6px; font-size: 10px; }
   .ds-mobile-bar button { flex-direction: column; gap: 2px; font-size: 10px; }
   .ds-view-picker-text { display: none; }

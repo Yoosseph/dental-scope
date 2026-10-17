@@ -291,6 +291,10 @@ export const sv: Messages = {
   quizSurface: 'Ytstrukturer',
   quizSurfaceTitle: 'Visa ytstrukturerna för tanden som är vald på tavlan',
   quizInspectHint: 'Tips: välj en tand och rotera tavlan, visa dess ytstrukturer eller skär upp den med verktygen i panelen.',
+  quizYourPick: (name, fdi) => `Ditt val: ${name} — FDI ${fdi}.`,
+  quizPickByPosition: 'Eller välj efter position på tavlan',
+  quizPickPlaceholder: 'Välj en position…',
+  quizSlot: (upper, n) => `${upper ? 'Övre' : 'Nedre'} tänder, position ${n} av 16`,
   quizPickFirst: 'Välj en tand på tavlan först',
 
   selectX: (x) => `Välj ${x}`,

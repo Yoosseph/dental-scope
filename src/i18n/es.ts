@@ -291,6 +291,10 @@ export const es: Messages = {
   quizSurface: 'Detalles superficiales',
   quizSurfaceTitle: 'Superpone los detalles superficiales del diente seleccionado en la tabla',
   quizInspectHint: 'Consejo: elige un diente y luego gira la tabla y usa las herramientas del panel para mostrar sus detalles superficiales o cortarlo.',
+  quizYourPick: (name, fdi) => `Tu elección: ${name} — FDI ${fdi}.`,
+  quizPickByPosition: 'O elige por posición en la tabla',
+  quizPickPlaceholder: 'Elige una posición…',
+  quizSlot: (upper, n) => `Dientes ${upper ? 'superiores' : 'inferiores'}, posición ${n} de 16`,
   quizPickFirst: 'Primero elige un diente en la tabla',
 
   selectX: (x: string) => `Seleccionar ${x}`,

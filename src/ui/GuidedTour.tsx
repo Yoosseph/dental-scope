@@ -85,7 +85,8 @@ export function GuidedTour() {
     // Access to localStorage itself may throw (privacy modes / blocked storage).
     let firstVisit = true;
     try { firstVisit = needsFirstVisitGuide(localStorage); } catch { /* Show once this session. */ }
-    if (firstVisit) actions.startGuide();
+    // someone who already switched to Quiz while the scene loaded keeps their quiz
+    if (firstVisit && getState().mode !== 'quiz') actions.startGuide();
   }, [ready, error, creditsOpen]);
 
   const cleanScene = () => { actions.resetGuideScene(); engine.resetToStart(); };

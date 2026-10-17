@@ -5,7 +5,7 @@ import { actions, useApp } from '../state/store';
 import { useServices } from './context';
 import { DetailPanel } from './DetailPanel';
 import { Dock } from './Dock';
-import { IconInfo, IconLayers, IconReset, IconSearch, IconSection } from './icons';
+import { IconArrowLeft, IconInfo, IconLayers, IconReset, IconSearch, IconSection, IconTooth } from './icons';
 import { LayersPanel } from './LayersPanel';
 import { AboutDialog, Footer, LoadingCard } from './Overlays';
 import { SearchPanel } from './SearchPanel';
@@ -15,6 +15,7 @@ import { useViewportInsets } from './useViewportInsets';
 import { GuidedTour } from './GuidedTour';
 import { CreditsDialog } from './CreditsDialog';
 import { QuizMode } from './QuizMode';
+import { EXPLORE_MODE, QUIZ_MODE, switchMode } from '../modes/modes';
 
 export function App() {
   const { engine, registry } = useServices();
@@ -69,6 +70,13 @@ export function App() {
           {!quiz && <button type="button" data-tour="search" onClick={() => actions.openSearch(true)}>
             <IconSearch /> <span>{m.search}</span>
           </button>}
+          <button
+            type="button"
+            className="ds-mobile-mode"
+            onClick={() => (quiz ? switchMode(QUIZ_MODE, EXPLORE_MODE, { registry, engine }) : switchMode(EXPLORE_MODE, QUIZ_MODE, { registry, engine }))}
+          >
+            {quiz ? <IconArrowLeft /> : <IconTooth />} <span>{quiz ? m.mode.explore : m.mode.quiz}</span>
+          </button>
           <button type="button" className={sheet === 'tools' ? 'is-active' : ''} onClick={() => actions.setMobileSheet(sheet === 'tools' ? 'none' : 'tools')} aria-pressed={sheet === 'tools'}>
             <IconSection /> <span>{m.tools}</span>
           </button>

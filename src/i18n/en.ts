@@ -309,6 +309,10 @@ export const en = {
   quizSurface: 'Surface features',
   quizSurfaceTitle: 'Overlay the surface features of the tooth selected on the board',
   quizInspectHint: 'Tip: pick a tooth, then rotate the board and use the dock tools to show its surface features or slice it open.',
+  quizYourPick: (name: string, fdi: number) => `Your pick: ${name} — FDI ${fdi}.`,
+  quizPickByPosition: 'Or pick by board position',
+  quizPickPlaceholder: 'Choose a position…',
+  quizSlot: (upper: boolean, n: number) => `${upper ? 'Upper' : 'Lower'} teeth, position ${n} of 16`,
   quizPickFirst: 'Select a tooth on the board first',
 
   /* 3D labels */

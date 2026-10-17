@@ -36,22 +36,24 @@ export function Dock() {
         <PanelHandle panel="dock" />
         <div className="ds-panel ds-toolbar" role="toolbar" aria-label={m.toolbarScene}>
           <CameraControls />
-          <ToolToggle
-            active={clip}
-            disabled={!quizPicked}
-            onClick={() => actions.setClip({ enabled: !clip, axis: 'sagittal', offset: 0 })}
-            icon={<IconSection />}
-            label={m.section}
-            title={quizPicked ? m.sectionTitle : m.quizPickFirst}
-          />
-          <ToolToggle
-            active={surfaceFeatures}
-            disabled={!quizPicked}
-            onClick={() => actions.setSurfaceFeatures(!surfaceFeatures)}
-            icon={<IconLabel />}
-            label={m.quizSurface}
-            title={quizPicked ? m.quizSurfaceTitle : m.quizPickFirst}
-          />
+          <div className="ds-dock-tools">
+            <ToolToggle
+              active={clip}
+              disabled={!quizPicked}
+              onClick={() => actions.setClip({ enabled: !clip, axis: 'sagittal', offset: 0 })}
+              icon={<IconSection />}
+              label={m.section}
+              title={quizPicked ? m.sectionTitle : m.quizPickFirst}
+            />
+            <ToolToggle
+              active={surfaceFeatures}
+              disabled={!quizPicked}
+              onClick={() => actions.setSurfaceFeatures(!surfaceFeatures)}
+              icon={<IconLabel />}
+              label={m.quizSurface}
+              title={quizPicked ? m.quizSurfaceTitle : m.quizPickFirst}
+            />
+          </div>
         </div>
         <SectionControls />
       </div>
