@@ -115,7 +115,7 @@ describe('session flow', () => {
   it('finishes with a score and answer count across the whole quiz', () => {
     // every answer correct except the first
     const answers = PERMANENT_FDI.map((f, i) => (i === 0 ? (f === 11 ? 12 : 11) : f));
-    const q: QuizProgress = { order: [...PERMANENT_FDI], index: QUIZ_SIZE, answers, hint: true };
+    const q: QuizProgress = { ...finished, answers, hint: true };
     expect(score(q)).toBe(QUIZ_SIZE - 1);
     expect(answeredCount(q)).toBe(QUIZ_SIZE);
   });
