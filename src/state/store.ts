@@ -88,6 +88,8 @@ export interface AppState {
   mode: ModeId;
   /** Board slot order while Quiz shuffles positions (null outside Quiz / when off); see `src/modes/quiz.ts`. */
   quizBoardOrder: number[] | null;
+  /** The "New" pointer to Quiz mode was closed or the quiz was opened (saved per viewer). */
+  quizNewSeen: boolean;
   searchOpen: boolean;
   searchQuery: string;
   guideOpen: boolean;
@@ -139,6 +141,7 @@ export const initialState: AppState = {
   toothExplode: 0,
   mode: 'explore',
   quizBoardOrder: null,
+  quizNewSeen: false,
   searchOpen: false,
   searchQuery: '',
   guideOpen: false,
@@ -169,7 +172,7 @@ export const setState = store.setState;
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 
 /** localStorage keys of the per-viewer preferences. */
-const PREF = { numbering: 'ds.numbering', theme: 'ds.theme', orbit: 'ds.orbit', lang: 'ds.lang' } as const;
+const PREF = { numbering: 'ds.numbering', theme: 'ds.theme', orbit: 'ds.orbit', lang: 'ds.lang', quizNew: 'ds.quiz.new.seen.v1' } as const;
 
 /** Remember a per-viewer preference (restored by restorePreferences). */
 function persist(key: string, value: string) {
@@ -253,7 +256,7 @@ export const actions = {
     adultSceneBeforeDevelopment = null;
     quizSceneBefore = null;
     clearSavedQuiz();
-    setState((s) => ({ ...initialState, ready: s.ready, loading: s.loading, error: s.error, theme: s.theme, lang: s.lang, guideRunId: s.guideRunId, resetId: s.resetId + 1 }));
+    setState((s) => ({ ...initialState, ready: s.ready, loading: s.loading, error: s.error, theme: s.theme, lang: s.lang, quizNewSeen: s.quizNewSeen, guideRunId: s.guideRunId, resetId: s.resetId + 1 }));
     persist(PREF.numbering, initialState.numbering);
     persist(PREF.orbit, initialState.orbitMode);
   },
@@ -396,7 +399,7 @@ export const actions = {
     const orbitMode = orbitBeforeTooth ?? getState().orbitMode;
     orbitBeforeTooth = null;
     adultSceneBeforeDevelopment = null;
-    setState(s => ({ ...initialState, ready: s.ready, loading: s.loading, error: s.error, theme: s.theme, lang: s.lang,
+    setState(s => ({ ...initialState, ready: s.ready, loading: s.loading, error: s.error, theme: s.theme, lang: s.lang, quizNewSeen: s.quizNewSeen,
       numbering: s.numbering, orbitMode, labels, mode: 'explore', guideOpen: s.guideOpen, guideCollapsed: s.guideCollapsed, guideRunId: s.guideRunId, resetId: s.resetId + 1 }));
   },
   openAbout(open: boolean) {
@@ -432,6 +435,7 @@ export const actions = {
     if (s.dissectFdi !== null) actions.exitDissect();
     if (s.developmentStage) actions.setDevelopmentStage(null);
     quizSceneBefore = quizSceneSnapshot(s);
+    actions.dismissQuizNew();
     setState((st) => ({
       ...clearSceneTools(st),
       mode: 'quiz',
@@ -457,6 +461,12 @@ export const actions = {
   setQuizBoardOrder(quizBoardOrder: number[] | null) {
     setState({ quizBoardOrder });
   },
+  /** Hide the "New" pointer to Quiz mode for good. */
+  dismissQuizNew() {
+    if (getState().quizNewSeen) return;
+    setState({ quizNewSeen: true });
+    persist(PREF.quizNew, 'seen');
+  },
   setLoading(stage: string, v: number) {
     setState((s) => ({ loading: { ...s.loading, [stage]: v } }));
   },
@@ -475,6 +485,7 @@ export function restorePreferences() {
     if (o === 'fixed' || o === 'free') setState({ orbitMode: o });
     const l = localStorage.getItem(PREF.lang);
     if (isLang(l)) setState({ lang: l });
+    if (localStorage.getItem(PREF.quizNew) === 'seen') setState({ quizNewSeen: true });
   } catch {
     /* storage unavailable */
   }

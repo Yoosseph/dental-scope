@@ -9,7 +9,7 @@ import { IconArrowLeft, IconInfo, IconLayers, IconReset, IconSearch, IconSection
 import { LayersPanel } from './LayersPanel';
 import { AboutDialog, Footer, LoadingCard } from './Overlays';
 import { SearchPanel } from './SearchPanel';
-import { Identity, TopActions } from './TopBar';
+import { Identity, QuizNewNote, TopActions } from './TopBar';
 import { useKeyboard } from './useKeyboard';
 import { useViewportInsets } from './useViewportInsets';
 import { GuidedTour } from './GuidedTour';
@@ -20,6 +20,7 @@ import { EXPLORE_MODE, QUIZ_MODE, switchMode } from '../modes/modes';
 export function App() {
   const { engine, registry } = useServices();
   const stage = useRef<HTMLDivElement>(null);
+  const quizButton = useRef<HTMLButtonElement>(null);
   const theme = useApp((s) => s.theme);
   const selected = useApp((s) => !!s.selectedId);
   const dissect = useApp((s) => s.dissectFdi !== null);
@@ -71,12 +72,14 @@ export function App() {
             <IconSearch /> <span>{m.search}</span>
           </button>}
           <button
+            ref={quizButton}
             type="button"
             className="ds-mobile-mode"
             onClick={() => (quiz ? switchMode(QUIZ_MODE, EXPLORE_MODE, { registry, engine }) : switchMode(EXPLORE_MODE, QUIZ_MODE, { registry, engine }))}
           >
             {quiz ? <IconArrowLeft /> : <IconTooth />} <span>{quiz ? m.mode.explore : m.mode.quiz}</span>
           </button>
+          <QuizNewNote anchor={quizButton} placement="above" />
           <button type="button" className={sheet === 'tools' ? 'is-active' : ''} onClick={() => actions.setMobileSheet(sheet === 'tools' ? 'none' : 'tools')} aria-pressed={sheet === 'tools'}>
             <IconSection /> <span>{m.tools}</span>
           </button>

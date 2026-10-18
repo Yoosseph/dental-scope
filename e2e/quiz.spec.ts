@@ -76,3 +76,22 @@ test('the quiz layout keeps the title, prompt and controls clear of each other',
     }
   }
 });
+
+test('the New card opens the quiz and stays away once closed', async ({ page }) => {
+  await page.goto('/');
+  const note = page.locator('.ds-quiz-new:visible');
+  await expect(note).toContainText('New!');
+  await note.getByRole('button', { name: /Try the tooth quiz/ }).click();
+  await expect(page.locator('.ds-quiz')).toBeVisible();
+  await page.getByRole('button', { name: 'Exit quiz mode' }).first().click();
+  await expect(page.locator('.ds-quiz-new')).toHaveCount(0);
+
+  // a fresh viewer closes it with the cross instead; it stays closed after a reload
+  await page.evaluate(() => localStorage.removeItem('ds.quiz.new.seen.v1'));
+  await page.reload();
+  await page.locator('.ds-quiz-new:visible').getByRole('button', { name: 'Dismiss' }).click();
+  await expect(page.locator('.ds-quiz-new')).toHaveCount(0);
+  await page.reload();
+  await expect(page.locator('.ds-mode-switch:visible, .ds-mobile-mode:visible').first()).toBeVisible();
+  await expect(page.locator('.ds-quiz-new')).toHaveCount(0);
+});
