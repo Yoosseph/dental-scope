@@ -1,8 +1,11 @@
+import { useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import { NUMBERING_LABEL, NUMBERING_SHORT, NUMBERING_SYSTEMS } from '../anatomy/notation';
 import { REPO_URL } from '../app/repo';
 import { useT } from '../i18n';
 import { actions, useApp } from '../state/store';
-import { IconExternal, IconInfo, IconMoon, IconSearch, IconSun, IconPlay, IconChevron } from './icons';
+import { MODES, QUIZ_MODE, switchMode } from '../modes/modes';
+import { useServices } from './context';
+import { IconClose, IconExternal, IconInfo, IconMoon, IconSearch, IconSun, IconPlay, IconChevron } from './icons';
 import { TOUR_TEXT } from '../i18n/tour';
 import { LanguageSwitcher } from './LanguageSwitcher';
 
@@ -33,6 +36,7 @@ export function TopActions() {
   const m = useT();
   return (
     <div className={`ds-top-actions${guideCollapsed ? ' is-guide-collapsed' : ''}`}>
+      <ModeSwitch />
       <LanguageSwitcher />
       <NumberingControls />
       <button type="button" data-tour="search" className="ds-search-trigger" onClick={() => actions.openSearch(true)} aria-label={m.searchAnatomy} aria-keyshortcuts="/">
@@ -63,6 +67,87 @@ export function NumberingControls() {
           {NUMBERING_SHORT[s]}
         </button>
       ))}
+    </div>
+  );
+}
+
+/** Switch between the available modes (Explore, Quiz). */
+export function ModeSwitch() {
+  const mode = useApp((s) => s.mode);
+  const m = useT();
+  const { engine, registry } = useServices();
+  const modes = MODES.filter((x) => x.available);
+  const quizButton = useRef<HTMLButtonElement>(null);
+  return (
+    <div className="ds-mode-anchor">
+      <div className="ds-mode-switch ds-segmented" role="radiogroup" aria-label={m.modesGroup}>
+        {modes.map((x) => (
+          <button
+            key={x.id}
+            ref={x.id === 'quiz' ? quizButton : undefined}
+            type="button"
+            role="radio"
+            aria-checked={mode === x.id}
+            className={mode === x.id ? 'is-active' : ''}
+            onClick={() => {
+              if (mode === x.id) return;
+              const from = MODES.find((mm) => mm.id === mode);
+              switchMode(from, x, { registry, engine });
+            }}
+          >
+            {m.mode[x.id]}
+          </button>
+        ))}
+      </div>
+      <QuizNewNote anchor={quizButton} placement="below" />
+    </div>
+  );
+}
+
+/**
+ * A small "New" card pointing at a Quiz button, for viewers who might miss the
+ * mode. Opening it enters Quiz; closing it (or entering Quiz any other way)
+ * hides it for good (`quizNewSeen`). The top bar shows it below the switch, the
+ * phone bottom bar above its Quiz button; CSS hides whichever is not in use.
+ */
+export function QuizNewNote({ anchor, placement }: { anchor: RefObject<HTMLElement | null>; placement: 'below' | 'above' }) {
+  const show = useApp((s) => s.ready && !s.quizNewSeen && s.mode !== 'quiz' && !s.guideOpen);
+  const lang = useApp((s) => s.lang);
+  const mode = useApp((s) => s.mode);
+  const { engine, registry } = useServices();
+  const m = useT();
+  const note = useRef<HTMLDivElement>(null);
+  const [arrowX, setArrowX] = useState<number | null>(null);
+
+  // point the arrow at the centre of the Quiz button, wherever the card ends up
+  useLayoutEffect(() => {
+    if (!show) return;
+    const place = () => {
+      const a = anchor.current?.getBoundingClientRect();
+      const n = note.current?.getBoundingClientRect();
+      if (!a || !n || !a.width || !n.width) return;
+      setArrowX(Math.min(n.width - 14, Math.max(14, a.left + a.width / 2 - n.left)));
+    };
+    place();
+    window.addEventListener('resize', place);
+    return () => window.removeEventListener('resize', place);
+  }, [show, anchor, lang]);
+
+  if (!show) return null;
+  const open = () => switchMode(MODES.find((x) => x.id === mode), QUIZ_MODE, { registry, engine });
+  return (
+    <div
+      ref={note}
+      className={`ds-quiz-new ds-quiz-new--${placement}`}
+      style={arrowX === null ? undefined : ({ '--arrow-x': `${arrowX}px` } as CSSProperties)}
+    >
+      <button type="button" className="ds-quiz-new-open" onClick={open}>
+        <span className="ds-quiz-new-badge">{m.quizNewBadge}</span>
+        <span>{m.quizNewText}</span>
+      </button>
+      <button type="button" className="ds-quiz-new-close" aria-label={m.quizNewDismiss} title={m.quizNewDismiss} onClick={() => actions.dismissQuizNew()}>
+        <IconClose size={12} />
+      </button>
     </div>
   );
 }

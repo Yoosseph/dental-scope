@@ -32,3 +32,31 @@ describe('see-through bone', () => {
     expect(visual('inferior-alveolar-nerve-right')).toBe('on');
   });
 });
+
+describe('quiz section', () => {
+  // in Quiz every board tooth is loaded (ensureAllTeeth), so its layers resolve
+  const cutVisual = (key: string, patch: Partial<AppState>) =>
+    resolveMesh(key, { registry, state: { ...initialState, ...patch }, loadedTeeth: new Set([11, 36]) });
+  const cut = { ...initialState.clip, enabled: true };
+
+  it('swaps only the picked tooth for its tissues', () => {
+    const picked = { mode: 'quiz' as const, clip: cut, selectedId: 'tooth-36' };
+    expect(cutVisual('tooth-36', picked)).toBe('off');
+    expect(cutVisual('enamel-36', picked)).toBe('on');
+    // the rest of the board keeps its shells, so the cut stays local to the picked tooth
+    expect(cutVisual('tooth-11', picked)).toBe('on');
+    expect(cutVisual('enamel-11', picked)).toBe('off');
+  });
+
+  it('cuts nothing while no tooth is picked', () => {
+    const none = { mode: 'quiz' as const, clip: cut, selectedId: null };
+    expect(cutVisual('tooth-36', none)).toBe('on');
+    expect(cutVisual('enamel-36', none)).toBe('off');
+  });
+
+  it('leaves the explore cutaway (every tooth opened) untouched', () => {
+    const explore = { clip: cut, selectedId: 'tooth-36', dissectFdi: null };
+    expect(cutVisual('tooth-11', explore)).toBe('off');
+    expect(cutVisual('enamel-11', explore)).toBe('on');
+  });
+});

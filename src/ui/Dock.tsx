@@ -22,7 +22,43 @@ export function Dock() {
   const collapsed = useApp((s) => s.collapsed.dock);
   const jawControls = useApp((s) => s.jawControls);
   const development = useApp((s) => s.developmentStage !== null);
+  const quiz = useApp((s) => s.mode === 'quiz');
+  const clip = useApp((s) => s.clip.enabled);
+  const surfaceFeatures = useApp((s) => s.surfaceFeatures);
+  const quizPicked = useApp((s) => s.mode === 'quiz' && s.selectedId !== null);
   const m = useT();
+  // In Quiz mode the dock shrinks to inspection tools that act on the tooth picked on
+  // the board. The camera, the section plane and the surface-feature overlay are all
+  // answer-safe: none of them names a tooth.
+  if (quiz) {
+    return (
+      <div className={`ds-dock${mobileOpen ? ' is-mobile-open' : ''}${collapsed ? ' is-collapsed' : ''}`}>
+        <PanelHandle panel="dock" />
+        <div className="ds-panel ds-toolbar" role="toolbar" aria-label={m.toolbarScene}>
+          <CameraControls />
+          <div className="ds-dock-tools">
+            <ToolToggle
+              active={clip}
+              disabled={!quizPicked}
+              onClick={() => actions.setClip({ enabled: !clip, axis: 'sagittal', offset: 0 })}
+              icon={<IconSection />}
+              label={m.section}
+              title={quizPicked ? m.sectionTitle : m.quizPickFirst}
+            />
+            <ToolToggle
+              active={surfaceFeatures}
+              disabled={!quizPicked}
+              onClick={() => actions.setSurfaceFeatures(!surfaceFeatures)}
+              icon={<IconLabel />}
+              label={m.quizSurface}
+              title={quizPicked ? m.quizSurfaceTitle : m.quizPickFirst}
+            />
+          </div>
+        </div>
+        <SectionControls />
+      </div>
+    );
+  }
   return (
     <div className={`ds-dock${mobileOpen ? ' is-mobile-open' : ''}${collapsed ? ' is-collapsed' : ''}`}>
       <PanelHandle panel="dock" />
@@ -437,6 +473,7 @@ function ToolToggle({
   label,
   title,
   describedBy,
+  disabled = false,
 }: {
   active: boolean;
   onClick: () => void;
@@ -444,9 +481,20 @@ function ToolToggle({
   label: string;
   title?: string;
   describedBy?: string;
+  disabled?: boolean;
 }) {
   return (
-    <button type="button" className={`ds-tool${active ? ' is-active' : ''}`} onClick={onClick} aria-pressed={active} title={title} aria-describedby={describedBy}>
+    <button
+      type="button"
+      className={`ds-tool${active ? ' is-active' : ''}`}
+      onClick={() => {
+        if (!disabled) onClick();
+      }}
+      aria-pressed={active}
+      aria-disabled={disabled || undefined}
+      title={title}
+      aria-describedby={describedBy}
+    >
       {icon}
       <span>{label}</span>
     </button>

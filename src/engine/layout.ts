@@ -91,11 +91,24 @@ export function boardAssemblyKey(meshKey: string): string {
   return meshKey;
 }
 
-/** Reading position of a tooth in its arch as seen from the front: patient's right first (18…11, 21…28). */
-function archOrder(fdi: number): number {
+export function archOrder(fdi: number): number {
   const q = Math.floor(fdi / 10);
   const pos = fdi % 10;
   return q === 1 || q === 4 ? 8 - pos : 8 + pos;
+}
+
+/**
+ * Board reading rank per FDI for a shuffled board order (16 upper slots, then
+ * 16 lower). Each arch keeps its own row, so a tooth can only take a slot of
+ * its own arch and two teeth can never share one.
+ */
+export function shuffledRanks(board: readonly number[]): Map<number, number> {
+  const m = new Map<number, number>();
+  for (let i = 0; i < 16; i++) {
+    m.set(board[i], i);
+    m.set(board[16 + i], i);
+  }
+  return m;
 }
 
 /**
@@ -106,12 +119,14 @@ function archOrder(fdi: number): number {
  * in reading order. Right-side structures come first (they are on the viewer's
  * left when facing the patient).
  */
-export function boardSlot(meshKey: string, cats: readonly string[], fdi: number | undefined): { group: number; order: number } {
+export function boardSlot(meshKey: string, cats: readonly string[], fdi: number | undefined, toothRank?: (fdi: number) => number | undefined): { group: number; order: number } {
   const side = meshKey.endsWith('-left') || meshKey.includes('-left-') ? 1 : 0;
   const slot = (band: number, sub: number, order: number) => ({ group: band, order: sub * 1000 + order });
   if (fdi !== undefined) {
     const layer = Math.max(0, LAYER_ORDER.findIndex((l) => meshKey.startsWith(`${l}-`)));
-    return slot(fdi < 30 ? 2 : 3, 0, archOrder(fdi) * 10 + layer);
+    // while Quiz shuffles positions, a tooth may take any slot of its own arch
+    const rank = toothRank?.(fdi);
+    return slot(fdi < 30 ? 2 : 3, 0, (rank ?? archOrder(fdi)) * 10 + layer);
   }
   const vessel = cats.includes('nerves') || cats.includes('arteries') || cats.includes('veins');
   if (/^(articular-(fossa|disc)|mandibular-condyle)/.test(meshKey)) return slot(0, 1, side * 10 + (meshKey.startsWith('articular-fossa') ? 0 : meshKey.startsWith('articular-disc') ? 1 : 2));

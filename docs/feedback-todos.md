@@ -95,6 +95,8 @@ This batch records the new Swedish feedback. The completed items above belong to
 
 Work in this order: tooth morphology/appearance with optional anatomical labels and overlays, then the remaining sinuses, then vessel visibility and inspection. Include the labels and overlays in the current scope, while prioritizing sharp, anatomically appropriate shapes and tooth-specific patterns over cosmetic sharpening. Quiz/self-test and contributor credits are deferred and excluded from this implementation. The existing development feature retains its review/documentation follow-ups. New anatomical content and fitted teaching geometry remain draft until expert review.
 
+> **Update (2026-10-17):** Quiz mode was added later in PR #46: identify the 32 permanent teeth on the laid-out board, with optional shuffled positions, type-level hints, Show answer and answer-safe surface/section inspection of the picked tooth. See the README roadmap and [architecture.md](architecture.md) §10. The hints are draft until educator review. Contributor credits remain excluded.
+
 ### Assessment against the current project
 
 - **All paranasal sinuses:** valid scope gap. The registry and asset pipeline currently include only the left/right maxillary sinuses. The other groups are the frontal sinuses, sphenoidal sinuses and ethmoidal air cells; the ethmoid component should not be represented as one simple cavity. See [StatPearls: Nose Paranasal Sinuses](https://www.ncbi.nlm.nih.gov/books/NBK499826/?report=reader).
@@ -196,4 +198,4 @@ The owner authorized implementation after planning. Engineering work for section
 - [ ] Confirm the exact historical deployment version if needed for the student's original report.
 - [x] Owner authorized committing this implementation. No deployment has been performed; anatomical/student review remains pending.
 
-Quiz/self-test and contributor credits remain excluded.
+Contributor credits remain excluded. Quiz/self-test was added later (see the update note under the owner's implementation scope).

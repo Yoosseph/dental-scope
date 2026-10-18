@@ -58,6 +58,14 @@ export function parsePath(path: string, registry: Registry): Route {
   return { id: null, dissect: false };
 }
 
+/**
+ * The address for the current scene. Quiz mode keeps the bare site address: a
+ * picked tooth's URL (`/tooth/36/`) would reveal its number before it is submitted.
+ */
+function scenePath(s: { mode: string; selectedId: string | null; dissectFdi: number | null }, registry: Registry): string {
+  return s.mode === 'quiz' ? pathFor(null, null, registry) : pathFor(s.selectedId, s.dissectFdi, registry);
+}
+
 export function pathFor(id: string | null, dissectFdi: number | null, registry: Registry): string {
   const base = HASH ? '' : BASE;
   if (!id && dissectFdi === null) return `${base}/`;
@@ -83,7 +91,7 @@ export function startRouter(engine: Engine, registry: Registry): () => void {
       if (request === revision) {
         navigating = false;
         const s = getState();
-        const next = s.creditsOpen ? `${HASH ? '' : BASE}/${creditsPath(s.lang)}` : pathFor(s.selectedId, s.dissectFdi, registry);
+        const next = s.creditsOpen ? `${HASH ? '' : BASE}/${creditsPath(s.lang)}` : scenePath(s, registry);
         if (next !== currentPath()) writeUrl(next, push);
       }
     }
@@ -97,6 +105,8 @@ export function startRouter(engine: Engine, registry: Registry): () => void {
     const r = parsePath(path, registry);
     applying = true;
     try {
+      // Back/Forward leaves the quiz: a history entry would otherwise select a tooth by number
+      if (getState().mode === 'quiz') actions.exitQuiz();
       if (r.credits) {
         if (r.lang) actions.setLang(r.lang);
         actions.openCredits(true);
@@ -130,11 +140,11 @@ export function startRouter(engine: Engine, registry: Registry): () => void {
       return;
     }
     if (p.creditsOpen) {
-      writeUrl(pathFor(s.selectedId, s.dissectFdi, registry), false);
+      writeUrl(scenePath(s, registry), false);
       return;
     }
-    if (s.selectedId === p.selectedId && s.dissectFdi === p.dissectFdi) return;
-    const next = pathFor(s.selectedId, s.dissectFdi, registry);
+    if (s.selectedId === p.selectedId && s.dissectFdi === p.dissectFdi && s.mode === p.mode) return;
+    const next = scenePath(s, registry);
     if (next !== currentPath()) writeUrl(next, false);
   });
   const onPop = () => void apply(currentPath());

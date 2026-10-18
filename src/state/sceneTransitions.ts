@@ -11,6 +11,22 @@ export function adultSceneSnapshot(s: AppState) {
   };
 }
 
+/** Scene settings temporarily saved while Quiz mode transforms the explorer scene. */
+export function quizSceneSnapshot(s: AppState): Partial<AppState> {
+  return {
+    ...adultSceneSnapshot(s),
+    selectedId: s.selectedId,
+    dissectFdi: s.dissectFdi,
+    dissectLevel: s.dissectLevel,
+    toothExplode: s.toothExplode,
+    passageIds: s.passageIds,
+    view: s.view,
+    autoRotate: s.autoRotate,
+    orbitMode: s.orbitMode,
+    surfaceFeatures: s.surfaceFeatures,
+  };
+}
+
 /** Shared reset when entering an adult study preset or a developmental stage. */
 export function clearSceneTools(s: AppState): Partial<AppState> {
   return {
@@ -18,6 +34,7 @@ export function clearSceneTools(s: AppState): Partial<AppState> {
     isolateId: null, isolateContext: false, passageIds: [],
     jawControls: false, jawOpening: 0, jawPlaying: false,
     explode: 0, explodePhase: 1, toothExplode: 0,
-    clip: { ...s.clip, enabled: false }, selectionRequest: null,
+    clip: { ...s.clip, enabled: false }, surfaceFeatures: false, selectionRequest: null,
+    quizBoardOrder: null,
   };
 }

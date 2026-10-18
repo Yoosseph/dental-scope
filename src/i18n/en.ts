@@ -3,7 +3,7 @@
  * every key (the Messages type enforces it).
  */
 import type { CategoryId, NumberingSystem } from '../anatomy/types';
-import type { ClipAxis, OrbitMode, ViewPreset } from '../state/store';
+import type { ClipAxis, ModeId, OrbitMode, ViewPreset } from '../state/store';
 
 export const en = {
   langLabel: 'Language',
@@ -266,6 +266,57 @@ export const en = {
   resetView: 'Reset view',
   cameraView: 'Camera view',
   viewBtn: 'View',
+
+  /* quiz mode */
+  modesGroup: 'Mode',
+  mode: {
+    explore: 'Explore',
+    quiz: 'Quiz',
+    learn: 'Learn',
+    compare: 'Compare',
+  } as Record<ModeId, string>,
+  quizTitle: 'Tooth quiz',
+  quizBoardAria: 'Board with the 32 permanent teeth',
+  quizFind: 'Find this tooth on the board:',
+  quizPickInstruction: 'Pick your answer on the board, then submit.',
+  quizSelected: 'Answer selected — you can still change it before submitting.',
+  quizSubmit: 'Submit answer',
+  quizNext: 'Next tooth',
+  quizFinish: 'Finish',
+  quizRestart: 'Restart quiz',
+  quizExit: 'Exit quiz mode',
+  quizNewBadge: 'New!',
+  quizNewText: 'Try the tooth quiz',
+  quizNewDismiss: 'Dismiss',
+  quizHint: 'Hint',
+  quizHintOn: 'Hint on',
+  quizHintOff: 'Hint off',
+  quizDraft: 'Draft',
+  quizCorrect: 'Correct!',
+  quizIncorrect: 'Not this time.',
+  quizAnswerWas: (name: string, fdi: number) => `Correct tooth: ${name} — FDI ${fdi}.`,
+  quizScore: (correct: number, total: number) => `${correct} of ${total}`,
+  quizProgress: (answered: number, total: number) => `${answered}/${total}`,
+  quizComplete: 'Quiz complete',
+  quizCompleteBody: (correct: number, total: number) => `You identified ${correct} of ${total} teeth correctly.`,
+  quizQuestion: 'Question',
+  quizFoldOpen: 'Open quiz panel',
+  quizFoldClose: 'Collapse quiz panel',
+  quizShuffle: 'Shuffle positions',
+  quizShuffleOn: 'Shuffled',
+  quizShuffleOff: 'Fixed',
+  quizShuffleTitle: 'Randomize where each tooth sits on the board, against memorizing positions',
+  quizShowAnswer: 'Show answer',
+  quizShowAnswerTitle: 'Give up on this question and reveal the correct tooth; it counts as answered but not correct',
+  quizRevealed: 'Answer revealed.',
+  quizSurface: 'Surface features',
+  quizSurfaceTitle: 'Overlay the surface features of the tooth selected on the board',
+  quizInspectHint: 'Tip: pick a tooth, then rotate the board and use the dock tools to show its surface features or slice it open.',
+  quizYourPick: (name: string, fdi: number) => `Your pick: ${name} — FDI ${fdi}.`,
+  quizPickByPosition: 'Or pick by board position',
+  quizPickPlaceholder: 'Choose a position…',
+  quizSlot: (upper: boolean, n: number) => `${upper ? 'Upper' : 'Lower'} teeth, position ${n} of 16`,
+  quizPickFirst: 'Select a tooth on the board first',
 
   /* 3D labels */
   selectX: (x: string) => `Select ${x}`,

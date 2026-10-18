@@ -10,7 +10,8 @@ import type { CategoryId, NumberingSystem } from '../anatomy/types';
 import { DEFAULT_LANG, isLang, type Lang } from '../i18n/lang';
 import type { NerveSide, NerveView } from '../anatomy/nerveViews';
 import { DEVELOPMENT_STAGES, type DevelopmentStageId } from '../anatomy/development';
-import { adultSceneSnapshot, clearSceneTools } from './sceneTransitions';
+import { clearSavedQuiz } from '../modes/quiz';
+import { adultSceneSnapshot, clearSceneTools, quizSceneSnapshot } from './sceneTransitions';
 
 export type ClipAxis = 'sagittal' | 'coronal' | 'axial' | 'view';
 export type ModeId = 'explore' | 'learn' | 'quiz' | 'compare';
@@ -85,6 +86,10 @@ export interface AppState {
   toothExplode: number; // 0…1
 
   mode: ModeId;
+  /** Board slot order while Quiz shuffles positions (null outside Quiz / when off); see `src/modes/quiz.ts`. */
+  quizBoardOrder: number[] | null;
+  /** The "New" pointer to Quiz mode was closed or the quiz was opened (saved per viewer). */
+  quizNewSeen: boolean;
   searchOpen: boolean;
   searchQuery: string;
   guideOpen: boolean;
@@ -135,6 +140,8 @@ export const initialState: AppState = {
   dissectLevel: 0,
   toothExplode: 0,
   mode: 'explore',
+  quizBoardOrder: null,
+  quizNewSeen: false,
   searchOpen: false,
   searchQuery: '',
   guideOpen: false,
@@ -165,7 +172,7 @@ export const setState = store.setState;
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 
 /** localStorage keys of the per-viewer preferences. */
-const PREF = { numbering: 'ds.numbering', theme: 'ds.theme', orbit: 'ds.orbit', lang: 'ds.lang' } as const;
+const PREF = { numbering: 'ds.numbering', theme: 'ds.theme', orbit: 'ds.orbit', lang: 'ds.lang', quizNew: 'ds.quiz.new.seen.v1' } as const;
 
 /** Remember a per-viewer preference (restored by restorePreferences). */
 function persist(key: string, value: string) {
@@ -179,6 +186,8 @@ function persist(key: string, value: string) {
 /** orbit mode to restore when the user leaves a tooth (set when entering one switched it to free) */
 let orbitBeforeTooth: OrbitMode | null = null;
 let adultSceneBeforeDevelopment: Partial<AppState> | null = null;
+/** Explore scene to restore when Quiz mode is left (see `enterQuiz`/`exitQuiz`). */
+let quizSceneBefore: Partial<AppState> | null = null;
 
 export const actions = {
   applyStudyPreset(id: string) {
@@ -245,12 +254,20 @@ export const actions = {
   resetAll() {
     orbitBeforeTooth = null;
     adultSceneBeforeDevelopment = null;
-    setState((s) => ({ ...initialState, ready: s.ready, loading: s.loading, error: s.error, theme: s.theme, lang: s.lang, guideRunId: s.guideRunId, resetId: s.resetId + 1 }));
+    quizSceneBefore = null;
+    clearSavedQuiz();
+    setState((s) => ({ ...initialState, ready: s.ready, loading: s.loading, error: s.error, theme: s.theme, lang: s.lang, quizNewSeen: s.quizNewSeen, guideRunId: s.guideRunId, resetId: s.resetId + 1 }));
     persist(PREF.numbering, initialState.numbering);
     persist(PREF.orbit, initialState.orbitMode);
   },
   select(id: string | null) {
-    setState((s) => ({ selectedId: id, selectionRequest: null, mobileSheet: id ? 'detail' : 'none', passageIds: id && s.passageIds.includes(id) ? s.passageIds : [] }));
+    setState((s) => ({
+      selectedId: id,
+      selectionRequest: null,
+      // inside Quiz mode the quiz card is the detail view: keep the mobile sheet unchanged
+      mobileSheet: id ? (s.mode === 'quiz' ? s.mobileSheet : 'detail') : 'none',
+      passageIds: id && s.passageIds.includes(id) ? s.passageIds : [],
+    }));
   },
   hover(id: string | null) {
     if (getState().hoveredId !== id) setState({ hoveredId: id });
@@ -321,7 +338,7 @@ export const actions = {
   },
   setClip(patch: Partial<ClipState>) {
     // a section plane cuts through the scene in place, so it leaves the laid-out phase
-    setState((s) => ({ clip: { ...s.clip, ...patch }, explodePhase: patch.enabled ? 1 : s.explodePhase }));
+    setState((s) => ({ clip: { ...s.clip, ...patch }, explodePhase: patch.enabled && s.mode !== 'quiz' ? 1 : s.explodePhase }));
   },
   setNumbering(n: NumberingSystem) {
     setState({ numbering: n });
@@ -366,10 +383,15 @@ export const actions = {
     setState({ dissectLevel: Math.max(0, Math.min(DISSECT_LEVELS.length - 1, level)) });
   },
   openSearch(open: boolean) {
+    // search reveals names, so it always returns to the explorer
+    if (open && getState().mode === 'quiz') actions.exitQuiz();
     setState({ searchOpen: open });
   },
   setSearchQuery(searchQuery: string) { setState({ searchQuery }); },
-  startGuide() { setState(s => ({ guideOpen: true, guideCollapsed: false, guideRunId: s.guideRunId + 1, labels: true, aboutOpen: false, controlsOpen: false, searchOpen: false })); },
+  startGuide() {
+    if (getState().mode === 'quiz') actions.exitQuiz();
+    setState((s) => ({ guideOpen: true, guideCollapsed: false, guideRunId: s.guideRunId + 1, labels: true, aboutOpen: false, controlsOpen: false, searchOpen: false }));
+  },
   setGuideCollapsed(guideCollapsed: boolean) { setState({ guideCollapsed }); },
   closeGuide() { setState({ guideOpen: false, guideCollapsed: false }); },
   /** A demonstration starts/ends in the adult scene without rewriting viewer preferences. */
@@ -377,8 +399,8 @@ export const actions = {
     const orbitMode = orbitBeforeTooth ?? getState().orbitMode;
     orbitBeforeTooth = null;
     adultSceneBeforeDevelopment = null;
-    setState(s => ({ ...initialState, ready: s.ready, loading: s.loading, error: s.error, theme: s.theme, lang: s.lang,
-      numbering: s.numbering, orbitMode, labels, guideOpen: s.guideOpen, guideCollapsed: s.guideCollapsed, guideRunId: s.guideRunId, resetId: s.resetId + 1 }));
+    setState(s => ({ ...initialState, ready: s.ready, loading: s.loading, error: s.error, theme: s.theme, lang: s.lang, quizNewSeen: s.quizNewSeen,
+      numbering: s.numbering, orbitMode, labels, mode: 'explore', guideOpen: s.guideOpen, guideCollapsed: s.guideCollapsed, guideRunId: s.guideRunId, resetId: s.resetId + 1 }));
   },
   openAbout(open: boolean) {
     setState(open ? { aboutOpen: true, controlsOpen: false } : { aboutOpen: false });
@@ -406,6 +428,45 @@ export const actions = {
   setMode(m: ModeId) {
     setState({ mode: m });
   },
+  /** Enter Quiz mode: snapshot the explorer scene, then lay the 32 teeth out on the board. */
+  enterQuiz() {
+    const s = getState();
+    if (s.mode === 'quiz') return;
+    if (s.dissectFdi !== null) actions.exitDissect();
+    if (s.developmentStage) actions.setDevelopmentStage(null);
+    quizSceneBefore = quizSceneSnapshot(s);
+    actions.dismissQuizNew();
+    setState((st) => ({
+      ...clearSceneTools(st),
+      mode: 'quiz',
+      labels: false,
+      explode: 1,
+      explodePhase: 2,
+      searchOpen: false,
+      aboutOpen: false,
+      controlsOpen: false,
+      creditsOpen: false,
+      guideOpen: false,
+      guideCollapsed: false,
+      mobileSheet: 'none',
+    }));
+  },
+  /** Leave Quiz mode and restore the explorer scene that was active before it. */
+  exitQuiz() {
+    if (getState().mode !== 'quiz') return;
+    const restore = quizSceneBefore ?? {};
+    quizSceneBefore = null;
+    setState((st) => ({ ...clearSceneTools(st), mode: 'explore', ...restore }));
+  },
+  setQuizBoardOrder(quizBoardOrder: number[] | null) {
+    setState({ quizBoardOrder });
+  },
+  /** Hide the "New" pointer to Quiz mode for good. */
+  dismissQuizNew() {
+    if (getState().quizNewSeen) return;
+    setState({ quizNewSeen: true });
+    persist(PREF.quizNew, 'seen');
+  },
   setLoading(stage: string, v: number) {
     setState((s) => ({ loading: { ...s.loading, [stage]: v } }));
   },
@@ -424,6 +485,7 @@ export function restorePreferences() {
     if (o === 'fixed' || o === 'free') setState({ orbitMode: o });
     const l = localStorage.getItem(PREF.lang);
     if (isLang(l)) setState({ lang: l });
+    if (localStorage.getItem(PREF.quizNew) === 'seen') setState({ quizNewSeen: true });
   } catch {
     /* storage unavailable */
   }

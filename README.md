@@ -79,7 +79,7 @@ src/
   state/     Zustand store, pure visibility resolver
   engine/    Three.js engine: loading, materials, picking, camera, explode, section, labels
   ui/        React panels (no per-frame rendering)
-  modes/     Explore + scaffolds for Learn / Quiz / Compare
+  modes/     Explore + Quiz (learn/compare still scaffolds)
 tools/pipeline/   BodyParts3D → production GLB
 ```
 
@@ -101,6 +101,7 @@ Actionable follow-ups from dental feedback: [feedback TODOs](docs/feedback-todos
 - [x] Atlas nerve and vessel paths (Z-Anatomy, CC BY-SA 4.0)
 - [ ] CBCT-derived canals where licences allow
 - [x] Primary dentition and an eruption timeline (schematic mixed-dentition stages; expert review pending)
+- [x] Quiz mode: identify all 32 permanent teeth on the separated board (shuffled positions, hints, show answer, answer-safe surface and section inspection, score)
 - [ ] Learn mode: guided lessons as data
 - [ ] Compare mode: two teeth side by side
 - [ ] Salivary glands, tongue and oral mucosa

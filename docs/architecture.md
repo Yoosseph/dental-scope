@@ -122,11 +122,11 @@ One vanilla Zustand store. React reads it with `useApp(selector)`, and the engin
 | visibility | `categories` (id → `on`/`ghost`/`off`), `hidden`, `ghosted` (id → true), `isolateId`, `isolateContext`, `ghostOpacity` |
 | arch view | `explode` (0…1), `explodePhase` (1 in position / 2 laid out), `labels`, `clip` {enabled, axis, offset, flip}, `view` (preset or null), `autoRotate`, `orbitMode` (`fixed`/`free`) |
 | tooth dissection | `dissectFdi`, `dissectLevel` (0 whole → 4 canals), `toothExplode` |
-| UI | `numbering`, `theme`, `searchOpen`, `aboutOpen`, `panel` (layers/tree), `mobileSheet`, `mode` 🧩 |
+| UI | `numbering`, `theme`, `searchOpen`, `aboutOpen`, `panel` (layers/tree), `mobileSheet`, `mode` (explore/quiz), `quizBoardOrder` (Quiz board slot order while shuffling) ✅ |
 
 `numbering`, `theme` and `orbitMode` are saved per viewer in `localStorage`.
 
-`state/sceneTransitions.ts` owns the shared study/development reset and the adult scene snapshot restored on leaving development. Pending selection is plain state: only the current request may commit after a download, and failed tooth requests are removed from the engine cache so Retry can load them again. `ui/useViewportInsets.ts` measures the panels, mobile controls and tour; the engine receives only the resulting insets.
+`state/sceneTransitions.ts` owns the shared study/development reset, the adult scene snapshot restored on leaving development, and `quizSceneSnapshot` (the Explore scene captured on entering Quiz and restored on Exit). Pending selection is plain state: only the current request may commit after a download, and failed tooth requests are removed from the engine cache so Retry can load them again. `ui/useViewportInsets.ts` measures the panels, mobile controls, tour, quiz card/sheet and quiz question prompt; the engine receives only the resulting insets.
 
 **Visibility** (`state/visibility.ts`). `resolveMesh(meshKey, ctx)` is the only function that decides whether a mesh is `on`, `ghost`, `faint` (a quieter ghost used for context around a dissected tooth) or `off`. It combines categories, hide/ghost on the structure and its ancestors, tooth shell vs internal layers (`layersActive`), dissection-level rules (`dissectRule`), isolation, and any filters added with `registerVisibilityFilter` (the hook for modes and a future timeline). `revealPatch` makes a structure reachable, and `Engine.selectFromUI` uses it for search, tree, label and deep-link navigation.
 
@@ -145,7 +145,7 @@ loop (rAF) ─► controls.update + rig.tick (pivot spring) + animator.tick + ti
 ```
 
 - **Scene entries.** Each loaded mesh key becomes a `MeshEntry` with its material, its arch- and tooth-level explode offsets (computed once in `explode.ts`), its phase-2 board slot, and animated opacity and highlight. Picking raycasts visible meshes (opaque first) and maps them to the owning structure.
-- **UI → engine.** Components get the engine from `useServices()` and call `selectFromUI(id, {focus})`, `focus(id)`, `ensureTooth(fdi)`, `setView(preset)`, `resetCamera()`, `zoom`, `orbit` and `setInsets`. Everything else goes through store actions.
+- **UI → engine.** Components get the engine from `useServices()` and call `selectFromUI(id, {focus})`, `focus(id)`, `ensureTooth(fdi)`, `ensureAllTeeth()`, `frameBoard()`, `setView(preset)`, `resetCamera()`, `zoom`, `orbit` and `setInsets`. Everything else goes through store actions. The board packs and fits into the usable viewport (`boardViewport`, the container minus the current insets), so it clears the quiz card and the mobile sheet.
 - **Engine → UI.** The engine only writes to the store (`actions.select`, `setLoading`, `setState({view})`). It never calls React.
 - **Camera** (`camera.ts`). OrbitControls with damping, `focusSphere` tweens along a spherical arc, 8 presets, and dynamic near/far. **Orbit modes:** *free* lets pan, zoom-to-cursor and focus move the target. *Fixed* keeps the target on a pivot: the dentition, or the tooth being dissected. After a pan it glides back (`pivotSpring`), and focus puts the structure on the pivot→camera line (`fixedFocusPose`).
 - **Materials** (`materials.ts`). One `MeshPhysicalMaterial` per mesh, with a shared shader patch for:
@@ -190,7 +190,8 @@ The pipeline (details in [assets.md](assets.md)): BodyParts3D STL → `tools/pip
 ## 10. Modes and planned work
 
 - ✅ **Explore**: everything above.
-- 🧩 **Learn / Quiz / Compare**: `modes/modes.ts` defines the `Mode` interface, the lesson format, `pickQuizTarget` and `switchMode` (which registers a visibility filter). There's no UI or content for them yet: `actions.setMode` exists, but nothing calls it.
+- ✅ **Quiz** (`modes/quiz.ts`, `ui/QuizMode.tsx`, `i18n/quiz.ts`). Identify all 32 permanent teeth on the phase-2 board. Entering snapshots the scene, forces `mode: 'quiz'`, lays the arch out and shows tooth shells only (the other categories stay hidden until Exit restores the snapshot, unless Explore itself started laid out). The round asks one tooth at a time, in a random order: the question ("find this tooth: name") is a large top-centre prompt over the board (`role="status"`, measured by `useViewportInsets` as a top inset so the board is framed below it), while the card holds the tools. Select on the canvas, submit, see the name and FDI, then Next; hints are type-level, sourced and draft-flagged, and **Show answer** (`revealed[]`) gives up on the current question — it counts as answered, never as correct. **Shuffle positions** re-permutes the board on each round: `quizBoardOrder` (16 upper slots, then 16 lower, arch-pure so two teeth can never share a slot) reaches the engine, which swaps the tooth's reading rank (`archOrder`) for its shuffled one in `layoutBoard`/`boardSlot`; turning it off packs the natural reading order again. The quiz dock keeps the camera and adds answer-safe **inspection**: the surface-feature overlay and the section plane both act on the tooth picked on the board (`layersActive`, `Engine.quizInspectFdi`), and the cut stays local to it (`refreshClip` scopes the clipping planes per mesh, so the rest of the board stays laid out and no shell is hidden); a click on the sectioned tooth's tissues still picks the whole tooth (`selectFromUI`). None of the tools names a tooth before it is submitted: the hover tooltip is suppressed in Quiz, the router keeps the bare site address instead of `/tooth/<n>/` while a tooth is picked, and Back/Forward leaves the quiz. Teeth can also be picked by board position from a select in the card, for keyboard and screen-reader users. The session (order, board, answers, revealed, hint, shuffle, index) lives in `sessionStorage` (`ds.quiz.session.v2`) and resumes on re-entry; Restart clears it. `modes/modes.ts` registers the tooth-only visibility filter idempotently on `enter` and disposes it on `exit`, so reset, search and guided-tour paths that force-exit Quiz cannot leak a live filter. The quiz card reuses the entrance/fold patterns; the prompt, the card and the camera dock are measured as viewport insets so the board is framed clear of them. All strings are localised in the five languages.
+- 🧩 **Learn / Compare**: `modes/modes.ts` still carries the shared `Mode` interface, the lesson format and `switchMode`; there is no lesson content or UI for them yet.
 - 🗺 Primary dentition and an eruption timeline (`ToothMeta.dentition`, a visibility filter), measured nerve and vessel paths, procedure modules, and expert-reviewed text. See the README roadmap.
 
 ## 11. Where to start
@@ -206,7 +207,7 @@ The pipeline (details in [assets.md](assets.md)): BodyParts3D STL → `tools/pip
 | Change visibility rules | `state/visibility.ts` | |
 | Add a URL or change metadata | `app/router.ts`, `app/seo.ts`, `vite.config.ts` | |
 | Replace or add 3D data | `tools/pipeline/*` | [assets.md](assets.md), [CREDITS.md](../CREDITS.md) (licences) |
-| Build a Learn/Quiz mode | `modes/modes.ts`, `registerVisibilityFilter` | §10 |
+| Add a lesson or a mode | `modes/modes.ts`, `modes/quiz.ts`, `registerVisibilityFilter` | §10 |
 
 ## 12. Performance and accessibility
 
