@@ -1068,8 +1068,14 @@ export class Engine {
    * reveal it, load what it needs, fly to it and open its panel.
    */
   async selectFromUI(id: string, opts: { focus?: boolean; reveal?: boolean } = {}) {
-    const s = this.registry.get(id);
+    let s = this.registry.get(id);
     if (!s) return;
+    // Quiz answers are whole teeth: a click on a sectioned tooth's tissue picks that tooth,
+    // which keeps its section showing instead of swapping the shell back in
+    if (getState().mode === 'quiz' && s.toothFdi !== undefined && id !== `tooth-${s.toothFdi}`) {
+      id = `tooth-${s.toothFdi}`;
+      s = this.registry.require(id);
+    }
     if (!await this.prepareSelection(id, 'select', s.toothFdi)) return;
     if (!getState().developmentStage && this.developmentScene.active) { this.developmentScene.finishTransition(); this.refreshVisibility(); }
     if (id.startsWith('development-')) {

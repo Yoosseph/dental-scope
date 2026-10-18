@@ -22,6 +22,13 @@ beforeEach(() => setState({ ...initialState }));
 afterEach(() => { vi.unstubAllGlobals(); actions.resetAll(); });
 
 describe('selection loading', () => {
+  it('picks the whole tooth when a sectioned tooth is clicked in Quiz mode', async () => {
+    const { engine } = viewer();
+    setState({ mode: 'quiz', explodePhase: 2, clip: { ...initialState.clip, enabled: true } });
+    await engine.selectFromUI('enamel-36', { focus: false, reveal: false });
+    expect(getState()).toMatchObject({ selectedId: 'tooth-36', dissectFdi: null, explodePhase: 2 });
+  });
+
   it('retries a failed tooth download without reloading the page', async () => {
     const { engine, load, focus } = viewer();
     load.mockRejectedValueOnce(new Error('offline'));
