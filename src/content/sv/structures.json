@@ -351,6 +351,44 @@
       "infraorbital-nerve"
     ]
   },
+  "greater-palatine-nerve": {
+    "summary": "En gren av n. maxillaris (V2) från fossa pterygopalatina. Den löper ned genom canalis palatinus major tillsammans med a. palatina descendens och kommer ut genom foramen palatinum majus, palatinalt om överkäkens molarer.",
+    "function": "Känsel till hårda gommen och gomsidans tandkött från hörntanden och bakåt; vid hörntanden överlappar området med n. nasopalatinus.",
+    "clinical": "Bedövas med en blockad vid foramen palatinum majus vid behandling av gomsidans tandkött vid överkäkens premolarer och molarer. Förloppet som visas är schematiskt.",
+    "related": [
+      "maxillary-nerve",
+      "nasopalatine-nerve",
+      "descending-palatine-artery",
+      "palatine-bone"
+    ],
+    "sources": [
+      {
+        "title": "StatPearls: Nasopalatine Nerve",
+        "url": "https://www.ncbi.nlm.nih.gov/books/NBK538422/"
+      },
+      {
+        "title": "StatPearls: Pterygopalatine Fossa",
+        "url": "https://www.ncbi.nlm.nih.gov/books/NBK513269/"
+      }
+    ]
+  },
+  "nasopalatine-nerve": {
+    "summary": "En gren av n. maxillaris (V2) som lämnar fossa pterygopalatina genom foramen sphenopalatinum, löper nedåt och framåt på nässkiljeväggen och når munnen genom canalis incisivus, strax bakom de centrala incisiverna.",
+    "function": "Känsel till nässkiljeväggen och till gomslemhinnan och tandköttet på gomsidan av de sex främre överkäkständerna. Höger och vänster nerv förenas innan de kommer ut genom foramen incisivum.",
+    "clinical": "En nasopalatinusblockad vid papilla incisiva bedövar gomsidans vävnad vid överkäkens framtänder på båda sidor. Förloppet som visas är schematiskt.",
+    "related": [
+      "maxillary-nerve",
+      "greater-palatine-nerve",
+      "vomer",
+      "maxilla"
+    ],
+    "sources": [
+      {
+        "title": "StatPearls: Nasopalatine Nerve",
+        "url": "https://www.ncbi.nlm.nih.gov/books/NBK538422/"
+      }
+    ]
+  },
   "inferior-alveolar-artery": {
     "summary": "En gren av a. maxillaris som följer n. alveolaris inferior genom mandibularkanalen.",
     "function": "Blodförsörjning till underkäken och underkäkens tänder.",

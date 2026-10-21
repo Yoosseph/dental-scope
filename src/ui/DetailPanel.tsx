@@ -95,6 +95,12 @@ export function DetailPanel() {
         {content.location && <Section title={FEEDBACK_TEXT[lang].location}>{content.location}</Section>}
         {content.function && <Section title={m.function}>{content.function}</Section>}
         {content.clinical && <Section title={m.clinical}>{content.clinical}</Section>}
+        {content.guides.map((g) => (
+          <section key={g.title} className="ds-detail-section">
+            <h3>{g.title}</h3>
+            <dl className="ds-guide">{g.rows.map((r) => <Fact key={r.label} label={r.label} value={r.value} />)}</dl>
+          </section>
+        ))}
         {s.categories.includes('sinus') && <button type="button" className="ds-chip ds-chip--button" onClick={() => void engine.showStudyView('sinuses', s.id)}>{STUDY_TEXT[lang].sinusView}</button>}
         {s.categories.some(c => c === 'arteries' || c === 'veins') && <button type="button" className="ds-chip ds-chip--button" onClick={() => void engine.showStudyView('vessels', s.id)}>{STUDY_TEXT[lang].vesselView}</button>}
         {s.id === 'hyoid-bone'  && <HyoidConnections />}

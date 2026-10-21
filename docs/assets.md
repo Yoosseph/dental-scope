@@ -22,7 +22,7 @@ Every 3D asset shipped in `public/models/`, where it comes from, its licence and
 | `derived` | Cut from or approximated using source geometry (alveolar bone, condyles, fossae, third molars) |
 | `modeled` | Internal tooth anatomy generated inside the real tooth shape with simplified, approximate proportions (not measured); the maxillary sinuses, hollowed out of the maxilla with an approximate wall thickness |
 | `atlas` | Nerve and vessel centrelines from the Z-Anatomy atlas (CC BY-SA 4.0), fitted onto these jaws: anatomical course, not measured in this individual |
-| `schematic` | Teaching paths and landmarks placed to illustrate relationships: superior alveolar nerves, V1, VII/IX/X/XII, mandibular canal envelopes, inferior alveolar vein, pterygoid plexus and joint discs |
+| `schematic` | Teaching paths and landmarks placed to illustrate relationships: superior alveolar and palatal (greater palatine, nasopalatine) nerves, V1, VII/IX/X/XII, mandibular canal envelopes, inferior alveolar vein, pterygoid plexus and joint discs |
 
 The provenance of every mesh is recorded in `manifest.json`; the About dialog explains the levels.
 
@@ -37,6 +37,7 @@ The provenance of every mesh is recorded in `manifest.json`; the About dialog ex
 - **Tooth layers** — see `tools/pipeline/tooth_layers.py`: signed-distance field of each tooth → cervical line from a typical crown/root ratio → enamel and cementum by depth → pulp chamber by inner offset → canals traced along each detected root; canal count per root follows the most common textbook configuration.
 - **Atlas nerves and vessels** — `tools/pipeline/extract_z_anatomy.py` (run once with Blender's `bpy` module) samples the Z-Anatomy Bezier curves, fits the Z-Anatomy mandible and maxillae onto the BodyParts3D ones with a similarity ICP (median residual on the mandible 0.27 mm) and writes the centrelines to `tools/pipeline/data/z-anatomy-neurovascular.json`. `build_assets.py` sweeps them into tubes, ends the inferior alveolar nerve's dental branches at the tooth apices (adding one for a tooth without a branch), clips the neck vessels (external carotid artery, internal jugular, retromandibular and facial veins) just below the angle of the mandible, retains the complete sampled trigeminal root and ganglion via `cranial.py`, leaves out the external jugular vein and the posterior division of the retromandibular vein, gives the inferior alveolar nerve trunk its real calibre (about 2.2 mm) and uses the atlas nerve path to place the mandibular, mental and infraorbital foramen landmarks.
 - **Schematic nerves and vessels / TMJ discs** — the superior alveolar nerves branch from the atlas maxillary and infraorbital nerves to the upper apices; the pterygoid plexus is a small venous network on the lateral pterygoid draining into the atlas maxillary vein; the inferior alveolar vein runs beside the atlas artery from the plexus to the mental foramen. Discs sit between condylar head and fossa.
+- **Palatal nerves** — `tools/pipeline/palatal.py`. Neither source has the greater palatine or nasopalatine nerves, so both are schematic tubes in app space: from the pterygopalatine fossa below the atlas maxillary nerve, the greater palatine nerve follows the atlas descending palatine artery down its canal and forward in the palatal groove, with short branches to the palatal gingiva of the premolars and molars; the nasopalatine nerve crosses to the vomer (control points measured beside this skull's deviated septum) and leaves the incisive foramen behind the central incisors with a fan to the anterior palatal gingiva. `build_assets.py` adds them after the cranial extension; to replace only these four meshes in the shipped assets run `refresh_palatal.py` and then `refresh_palatal.mjs`. Sources and limits: [innervation-identification.md](innervation-identification.md).
 - **Maxillary sinuses** — `tools/pipeline/sinus.py`. Neither source has them (both maxillae are solid), so each is modelled: the BodyParts3D maxilla is voxelised (0.4 mm), eroded by a 1 mm wall, cut medially at the lateral nasal wall (the lateral edge of the inferior nasal concha), kept 1 mm from the tooth roots and 0.8 mm from the superior alveolar and infraorbital nerves, opened (2 mm) to drop thin remnants of the processes, and the largest cavity is meshed with marching cubes. `manifest.sinus` holds each volume and the distance from each upper root apex to the sinus floor.
 - **Jaw weights** — every nerve and vessel vertex stores (in its vertex colour) how far it moves with the skull (1) rather than the mandible (0) when the arches separate, from its distances to the two bones, so paths between the jaws stretch instead of breaking.
 - **Dissection tiers** (`manifest.explode`, `teeth[].extract`, `teeth[].collar`) — measured by `explode_plan` in `build_assets.py`; `validate_assets.py` checks that no tooth passes visibly through its gum at any point of the slider.
@@ -97,10 +98,14 @@ The Z-Anatomy centrelines are committed, so the steps above do not need Blender.
 | `facial-zygomatic-branch-left` | neurovascular.glb | — | schematic | Teaching path or canal envelope generated by `cranial.py` (see feedback-anatomy.md) | 260 |
 | `facial-zygomatic-branch-right` | neurovascular.glb | — | schematic | Teaching path or canal envelope generated by `cranial.py` (see feedback-anatomy.md) | 260 |
 | `frontal-bone` | context.glb | FMA52734 | source | Axis/unit transform, decimation, meshopt compression | 15,000 |
+| `frontal-sinus-left` | context.glb | — | schematic | Generated by `build_assets.py` from computed landmarks | 5,120 |
+| `frontal-sinus-right` | context.glb | — | schematic | Generated by `build_assets.py` from computed landmarks | 5,120 |
 | `gingiva-lower` | core.glb | FMA59764 | derived | Transform + partition or approximation from the named source mesh (see below) | 93,038 |
 | `gingiva-upper` | core.glb | FMA59763 | derived | Transform + partition or approximation from the named source mesh (see below) | 99,072 |
 | `glossopharyngeal-nerve-left` | neurovascular.glb | — | schematic | Teaching path or canal envelope generated by `cranial.py` (see feedback-anatomy.md) | 500 |
 | `glossopharyngeal-nerve-right` | neurovascular.glb | — | schematic | Teaching path or canal envelope generated by `cranial.py` (see feedback-anatomy.md) | 500 |
+| `greater-palatine-nerve-left` | neurovascular.glb | — | schematic | Teaching path generated by `palatal.py` (see innervation-identification.md) | 2,720 |
+| `greater-palatine-nerve-right` | neurovascular.glb | — | schematic | Teaching path generated by `palatal.py` (see innervation-identification.md) | 2,720 |
 | `hyoid-bone` | context.glb | FMA52749 | source | Axis/unit transform, decimation, meshopt compression | 5,534 |
 | `hypoglossal-nerve-left` | neurovascular.glb | — | schematic | Teaching path or canal envelope generated by `cranial.py` (see feedback-anatomy.md) | 620 |
 | `hypoglossal-nerve-right` | neurovascular.glb | — | schematic | Teaching path or canal envelope generated by `cranial.py` (see feedback-anatomy.md) | 620 |
@@ -160,6 +165,8 @@ The Z-Anatomy centrelines are committed, so the steps above do not need Blender.
 | `middle-superior-alveolar-nerve-right` | neurovascular.glb | — | schematic | Generated by `build_assets.py` from computed landmarks | 304 |
 | `nasal-bone-left` | context.glb | FMA53648 | source | Axis/unit transform, decimation, meshopt compression | 1,124 |
 | `nasal-bone-right` | context.glb | FMA53647 | source | Axis/unit transform, decimation, meshopt compression | 1,024 |
+| `nasopalatine-nerve-left` | neurovascular.glb | — | schematic | Teaching path generated by `palatal.py` (see innervation-identification.md) | 1,520 |
+| `nasopalatine-nerve-right` | neurovascular.glb | — | schematic | Teaching path generated by `palatal.py` (see innervation-identification.md) | 1,520 |
 | `occipital-bone` | context.glb | FMA52735 | source | Axis/unit transform, decimation, meshopt compression | 11,998 |
 | `ophthalmic-nerve-left` | neurovascular.glb | — | schematic | Teaching path or canal envelope generated by `cranial.py` (see feedback-anatomy.md) | 500 |
 | `ophthalmic-nerve-right` | neurovascular.glb | — | schematic | Teaching path or canal envelope generated by `cranial.py` (see feedback-anatomy.md) | 500 |
@@ -177,42 +184,44 @@ The Z-Anatomy centrelines are committed, so the steps above do not need Blender.
 | `retromandibular-vein-left` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 816 |
 | `retromandibular-vein-right` | neurovascular.glb | — | atlas | Z-Anatomy centreline (CC BY-SA 4.0) fitted to the jaws, swept into a tube by `build_assets.py` | 816 |
 | `sphenoid-bone` | context.glb | FMA52736 | source | Axis/unit transform, decimation, meshopt compression | 15,000 |
+| `sphenoidal-sinus-left` | context.glb | — | schematic | Generated by `build_assets.py` from computed landmarks | 5,120 |
+| `sphenoidal-sinus-right` | context.glb | — | schematic | Generated by `build_assets.py` from computed landmarks | 5,120 |
 | `temporal-bone-left` | context.glb | FMA52739 | source | Axis/unit transform, decimation, meshopt compression | 10,948 |
 | `temporal-bone-right` | context.glb | FMA52738 | source | Axis/unit transform, decimation, meshopt compression | 11,005 |
 | `temporalis-left` | context.glb | FMA49008 | source | Axis/unit transform, decimation, meshopt compression | 14,998 |
 | `temporalis-right` | context.glb | FMA49007 | source | Axis/unit transform, decimation, meshopt compression | 15,000 |
-| `tooth-11` | core.glb | FMA55681 | source | Axis/unit transform, decimation, meshopt compression | 6,446 |
-| `tooth-12` | core.glb | FMA55680 | source | Axis/unit transform, decimation, meshopt compression | 6,842 |
-| `tooth-13` | core.glb | FMA55798 | source | Axis/unit transform, decimation, meshopt compression | 6,966 |
-| `tooth-14` | core.glb | FMA55689 | source | Axis/unit transform, decimation, meshopt compression | 8,054 |
-| `tooth-15` | core.glb | FMA55688 | source | Axis/unit transform, decimation, meshopt compression | 7,330 |
-| `tooth-16` | core.glb | FMA55698 | source | Axis/unit transform, decimation, meshopt compression | 10,786 |
-| `tooth-17` | core.glb | FMA55697 | source | Axis/unit transform, decimation, meshopt compression | 9,254 |
-| `tooth-18` | core.glb | — | derived | Transform + partition or approximation from the named source mesh (see below) | 9,254 |
-| `tooth-21` | core.glb | FMA55682 | source | Axis/unit transform, decimation, meshopt compression | 6,444 |
-| `tooth-22` | core.glb | FMA55683 | source | Axis/unit transform, decimation, meshopt compression | 6,896 |
-| `tooth-23` | core.glb | FMA55799 | source | Axis/unit transform, decimation, meshopt compression | 6,966 |
-| `tooth-24` | core.glb | FMA55690 | source | Axis/unit transform, decimation, meshopt compression | 8,058 |
-| `tooth-25` | core.glb | FMA55691 | source | Axis/unit transform, decimation, meshopt compression | 7,334 |
-| `tooth-26` | core.glb | FMA55699 | source | Axis/unit transform, decimation, meshopt compression | 10,788 |
-| `tooth-27` | core.glb | FMA55700 | source | Axis/unit transform, decimation, meshopt compression | 9,244 |
-| `tooth-28` | core.glb | — | derived | Transform + partition or approximation from the named source mesh (see below) | 9,244 |
-| `tooth-31` | core.glb | FMA57143 | source | Axis/unit transform, decimation, meshopt compression | 4,596 |
-| `tooth-32` | core.glb | FMA57141 | source | Axis/unit transform, decimation, meshopt compression | 4,804 |
-| `tooth-33` | core.glb | FMA55687 | source | Axis/unit transform, decimation, meshopt compression | 5,906 |
-| `tooth-34` | core.glb | FMA55693 | source | Axis/unit transform, decimation, meshopt compression | 5,886 |
-| `tooth-35` | core.glb | FMA55692 | source | Axis/unit transform, decimation, meshopt compression | 5,620 |
-| `tooth-36` | core.glb | FMA55704 | source | Axis/unit transform, decimation, meshopt compression | 8,810 |
-| `tooth-37` | core.glb | FMA55703 | source | Axis/unit transform, decimation, meshopt compression | 8,088 |
-| `tooth-38` | core.glb | — | derived | Transform + partition or approximation from the named source mesh (see below) | 8,088 |
-| `tooth-41` | core.glb | FMA57142 | source | Axis/unit transform, decimation, meshopt compression | 4,600 |
-| `tooth-42` | core.glb | FMA57140 | source | Axis/unit transform, decimation, meshopt compression | 4,790 |
-| `tooth-43` | core.glb | FMA55686 | source | Axis/unit transform, decimation, meshopt compression | 5,894 |
-| `tooth-44` | core.glb | FMA55694 | source | Axis/unit transform, decimation, meshopt compression | 5,900 |
-| `tooth-45` | core.glb | FMA55695 | source | Axis/unit transform, decimation, meshopt compression | 5,624 |
-| `tooth-46` | core.glb | FMA55705 | source | Axis/unit transform, decimation, meshopt compression | 8,818 |
-| `tooth-47` | core.glb | FMA55706 | source | Axis/unit transform, decimation, meshopt compression | 8,102 |
-| `tooth-48` | core.glb | — | derived | Transform + partition or approximation from the named source mesh (see below) | 8,102 |
+| `tooth-11` | core.glb | FMA55681 | schematic | Generated by `build_assets.py` from computed landmarks | 25,784 |
+| `tooth-12` | core.glb | FMA55680 | schematic | Generated by `build_assets.py` from computed landmarks | 27,368 |
+| `tooth-13` | core.glb | FMA55798 | schematic | Generated by `build_assets.py` from computed landmarks | 27,864 |
+| `tooth-14` | core.glb | FMA55689 | schematic | Generated by `build_assets.py` from computed landmarks | 32,216 |
+| `tooth-15` | core.glb | FMA55688 | schematic | Generated by `build_assets.py` from computed landmarks | 52,568 |
+| `tooth-16` | core.glb | FMA55698 | schematic | Generated by `build_assets.py` from computed landmarks | 43,144 |
+| `tooth-17` | core.glb | FMA55697 | schematic | Generated by `build_assets.py` from computed landmarks | 37,016 |
+| `tooth-18` | core.glb | — | schematic | Generated by `build_assets.py` from computed landmarks | 37,016 |
+| `tooth-21` | core.glb | FMA55682 | schematic | Generated by `build_assets.py` from computed landmarks | 25,776 |
+| `tooth-22` | core.glb | FMA55683 | schematic | Generated by `build_assets.py` from computed landmarks | 27,584 |
+| `tooth-23` | core.glb | FMA55799 | schematic | Generated by `build_assets.py` from computed landmarks | 27,864 |
+| `tooth-24` | core.glb | FMA55690 | schematic | Generated by `build_assets.py` from computed landmarks | 32,232 |
+| `tooth-25` | core.glb | FMA55691 | schematic | Generated by `build_assets.py` from computed landmarks | 50,536 |
+| `tooth-26` | core.glb | FMA55699 | schematic | Generated by `build_assets.py` from computed landmarks | 43,152 |
+| `tooth-27` | core.glb | FMA55700 | schematic | Generated by `build_assets.py` from computed landmarks | 36,976 |
+| `tooth-28` | core.glb | — | schematic | Generated by `build_assets.py` from computed landmarks | 36,976 |
+| `tooth-31` | core.glb | FMA57143 | schematic | Generated by `build_assets.py` from computed landmarks | 18,384 |
+| `tooth-32` | core.glb | FMA57141 | schematic | Generated by `build_assets.py` from computed landmarks | 19,216 |
+| `tooth-33` | core.glb | FMA55687 | schematic | Generated by `build_assets.py` from computed landmarks | 23,624 |
+| `tooth-34` | core.glb | FMA55693 | schematic | Generated by `build_assets.py` from computed landmarks | 23,544 |
+| `tooth-35` | core.glb | FMA55692 | schematic | Generated by `build_assets.py` from computed landmarks | 22,480 |
+| `tooth-36` | core.glb | FMA55704 | schematic | Generated by `build_assets.py` from computed landmarks | 35,240 |
+| `tooth-37` | core.glb | FMA55703 | schematic | Generated by `build_assets.py` from computed landmarks | 32,352 |
+| `tooth-38` | core.glb | — | schematic | Generated by `build_assets.py` from computed landmarks | 32,352 |
+| `tooth-41` | core.glb | FMA57142 | schematic | Generated by `build_assets.py` from computed landmarks | 18,400 |
+| `tooth-42` | core.glb | FMA57140 | schematic | Generated by `build_assets.py` from computed landmarks | 19,160 |
+| `tooth-43` | core.glb | FMA55686 | schematic | Generated by `build_assets.py` from computed landmarks | 23,576 |
+| `tooth-44` | core.glb | FMA55694 | schematic | Generated by `build_assets.py` from computed landmarks | 23,600 |
+| `tooth-45` | core.glb | FMA55695 | schematic | Generated by `build_assets.py` from computed landmarks | 22,496 |
+| `tooth-46` | core.glb | FMA55705 | schematic | Generated by `build_assets.py` from computed landmarks | 35,272 |
+| `tooth-47` | core.glb | FMA55706 | schematic | Generated by `build_assets.py` from computed landmarks | 32,408 |
+| `tooth-48` | core.glb | — | schematic | Generated by `build_assets.py` from computed landmarks | 32,408 |
 | `trigeminal-nerve-left` | neurovascular.glb | — | atlas | Full sampled Z-Anatomy root and ganglion, swept into a tube by `cranial.py` | 660 |
 | `trigeminal-nerve-right` | neurovascular.glb | — | atlas | Full sampled Z-Anatomy root and ganglion, swept into a tube by `cranial.py` | 660 |
 | `vagus-nerve-left` | neurovascular.glb | — | schematic | Teaching path or canal envelope generated by `cranial.py` (see feedback-anatomy.md) | 500 |

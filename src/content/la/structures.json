@@ -351,6 +351,44 @@
       "infraorbital-nerve"
     ]
   },
+  "greater-palatine-nerve": {
+    "summary": "Ramus nervi maxillaris (V2) e fossa pterygopalatina. Per canalem palatinum majorem cum arteria palatina descendente descendit et per foramen palatinum majus palatinaliter molarium superiorum exit.",
+    "function": "Sensum palato duro et gingivae palatinae a canino retrorsum praebet; prope caninum territorium eius cum territorio nervi nasopalatini congruit.",
+    "clinical": "Anaesthesia ad foramen palatinum majus efficitur, cum gingiva palatina premolarium et molarium superiorum tractatur. Cursus ostensus schematicus est.",
+    "related": [
+      "maxillary-nerve",
+      "nasopalatine-nerve",
+      "descending-palatine-artery",
+      "palatine-bone"
+    ],
+    "sources": [
+      {
+        "title": "StatPearls: Nasopalatine Nerve",
+        "url": "https://www.ncbi.nlm.nih.gov/books/NBK538422/"
+      },
+      {
+        "title": "StatPearls: Pterygopalatine Fossa",
+        "url": "https://www.ncbi.nlm.nih.gov/books/NBK513269/"
+      }
+    ]
+  },
+  "nasopalatine-nerve": {
+    "summary": "Ramus nervi maxillaris (V2) qui fossam pterygopalatinam per foramen sphenopalatinum relinquit, in septo nasi deorsum et antrorsum currit et per canalem incisivum statim post incisivos mediales os intrat.",
+    "function": "Sensum septo nasi et mucosae gingivaeque palatinae sex dentium anteriorum superiorum praebet. Nervi dexter et sinister coniunguntur antequam per foramen incisivum exeunt.",
+    "clinical": "Anaesthesia nasopalatina ad papillam incisivam textum palatinum dentium anteriorum superiorum utrimque obtundit. Cursus ostensus schematicus est.",
+    "related": [
+      "maxillary-nerve",
+      "greater-palatine-nerve",
+      "vomer",
+      "maxilla"
+    ],
+    "sources": [
+      {
+        "title": "StatPearls: Nasopalatine Nerve",
+        "url": "https://www.ncbi.nlm.nih.gov/books/NBK538422/"
+      }
+    ]
+  },
   "inferior-alveolar-artery": {
     "summary": "Ramus arteriae maxillaris qui nervum alveolarem inferiorem per canalem mandibulae comitatur.",
     "function": "Sanguinem mandibulae et dentibus inferioribus suppeditat.",

@@ -351,6 +351,44 @@
       "infraorbital-nerve"
     ]
   },
+  "greater-palatine-nerve": {
+    "summary": "Una rama del nervio maxilar (V2) que parte de la fosa pterigopalatina. Desciende por el conducto palatino mayor junto con la arteria palatina descendente y sale por el agujero palatino mayor, a la altura palatina de los molares superiores.",
+    "function": "Sensibilidad del paladar duro y de la encía palatina desde el canino hacia atrás; junto al canino su territorio se superpone con el del nervio nasopalatino.",
+    "clinical": "Se anestesia con un bloqueo palatino mayor junto a su agujero para intervenir en la encía palatina de premolares y molares superiores. El trayecto mostrado es esquemático.",
+    "related": [
+      "maxillary-nerve",
+      "nasopalatine-nerve",
+      "descending-palatine-artery",
+      "palatine-bone"
+    ],
+    "sources": [
+      {
+        "title": "StatPearls: Nasopalatine Nerve",
+        "url": "https://www.ncbi.nlm.nih.gov/books/NBK538422/"
+      },
+      {
+        "title": "StatPearls: Pterygopalatine Fossa",
+        "url": "https://www.ncbi.nlm.nih.gov/books/NBK513269/"
+      }
+    ]
+  },
+  "nasopalatine-nerve": {
+    "summary": "Una rama del nervio maxilar (V2) que sale de la fosa pterigopalatina por el agujero esfenopalatino, desciende hacia delante por el tabique nasal y llega a la boca por el conducto incisivo, justo detrás de los incisivos centrales.",
+    "function": "Sensibilidad del tabique nasal y de la mucosa y la encía palatinas de los seis dientes anteriores superiores. Los nervios derecho e izquierdo se unen antes de salir por el agujero incisivo.",
+    "clinical": "Un bloqueo nasopalatino en la papila incisiva anestesia el tejido palatino de los dientes anteriores superiores de ambos lados. El trayecto mostrado es esquemático.",
+    "related": [
+      "maxillary-nerve",
+      "greater-palatine-nerve",
+      "vomer",
+      "maxilla"
+    ],
+    "sources": [
+      {
+        "title": "StatPearls: Nasopalatine Nerve",
+        "url": "https://www.ncbi.nlm.nih.gov/books/NBK538422/"
+      }
+    ]
+  },
   "inferior-alveolar-artery": {
     "summary": "Una rama de la arteria maxilar que acompaña al nervio alveolar inferior por el conducto mandibular.",
     "function": "Irrigación de la mandíbula y de los dientes inferiores.",

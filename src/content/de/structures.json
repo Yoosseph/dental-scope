@@ -351,6 +351,44 @@
       "infraorbital-nerve"
     ]
   },
+  "greater-palatine-nerve": {
+    "summary": "Ein Ast des N. maxillaris (V2) aus der Fossa pterygopalatina. Er zieht mit der A. palatina descendens durch den Canalis palatinus major nach unten und tritt palatinal der oberen Molaren aus dem Foramen palatinum majus aus.",
+    "function": "Sensible Versorgung des harten Gaumens und des palatinalen Zahnfleischs vom Eckzahn nach hinten; am Eckzahn überlappt sein Gebiet mit dem des N. nasopalatinus.",
+    "clinical": "Wird für Eingriffe am palatinalen Zahnfleisch der oberen Prämolaren und Molaren am Foramen palatinum majus anästhesiert. Der gezeigte Verlauf ist schematisch.",
+    "related": [
+      "maxillary-nerve",
+      "nasopalatine-nerve",
+      "descending-palatine-artery",
+      "palatine-bone"
+    ],
+    "sources": [
+      {
+        "title": "StatPearls: Nasopalatine Nerve",
+        "url": "https://www.ncbi.nlm.nih.gov/books/NBK538422/"
+      },
+      {
+        "title": "StatPearls: Pterygopalatine Fossa",
+        "url": "https://www.ncbi.nlm.nih.gov/books/NBK513269/"
+      }
+    ]
+  },
+  "nasopalatine-nerve": {
+    "summary": "Ein Ast des N. maxillaris (V2), der die Fossa pterygopalatina durch das Foramen sphenopalatinum verlässt, auf dem Nasenseptum nach vorn unten zieht und durch den Canalis incisivus direkt hinter den mittleren Schneidezähnen die Mundhöhle erreicht.",
+    "function": "Sensible Versorgung des Nasenseptums sowie der palatinalen Schleimhaut und des Zahnfleischs der sechs oberen Frontzähne. Rechter und linker Nerv vereinigen sich vor ihrem Austritt aus dem Foramen incisivum.",
+    "clinical": "Eine Anästhesie an der Papilla incisiva betäubt das palatinale Gewebe der oberen Frontzähne beidseits. Der gezeigte Verlauf ist schematisch.",
+    "related": [
+      "maxillary-nerve",
+      "greater-palatine-nerve",
+      "vomer",
+      "maxilla"
+    ],
+    "sources": [
+      {
+        "title": "StatPearls: Nasopalatine Nerve",
+        "url": "https://www.ncbi.nlm.nih.gov/books/NBK538422/"
+      }
+    ]
+  },
   "inferior-alveolar-artery": {
     "summary": "Ein Ast der A. maxillaris, der den N. alveolaris inferior durch den Canalis mandibulae begleitet.",
     "function": "Blutversorgung des Unterkiefers und der unteren Zähne.",

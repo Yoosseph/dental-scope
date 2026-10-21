@@ -217,6 +217,34 @@
     "clinical": "The path shown is schematic.",
     "related": ["infraorbital-nerve"]
   },
+  "greater-palatine-nerve": {
+    "summary": "A branch of the maxillary nerve (V2) from the pterygopalatine fossa. It descends through the greater palatine canal with the descending palatine artery and emerges from the greater palatine foramen, palatal to the upper molars.",
+    "function": "Sensation to the hard palate and the palatal gingiva from the canine backwards; near the canine its area overlaps with that of the nasopalatine nerve.",
+    "clinical": "Anaesthetised by a greater palatine block near its foramen for work on the palatal gingiva of the upper premolars and molars. The path shown is schematic.",
+    "related": ["maxillary-nerve", "nasopalatine-nerve", "descending-palatine-artery", "palatine-bone"],
+    "sources": [
+      {
+        "title": "StatPearls: Nasopalatine Nerve",
+        "url": "https://www.ncbi.nlm.nih.gov/books/NBK538422/"
+      },
+      {
+        "title": "StatPearls: Pterygopalatine Fossa",
+        "url": "https://www.ncbi.nlm.nih.gov/books/NBK513269/"
+      }
+    ]
+  },
+  "nasopalatine-nerve": {
+    "summary": "A branch of the maxillary nerve (V2) that leaves the pterygopalatine fossa through the sphenopalatine foramen, runs down and forward on the nasal septum and enters the mouth through the incisive canal, just behind the central incisors.",
+    "function": "Sensation to the nasal septum and to the palatal mucosa and gingiva of the six upper front teeth. The right and left nerves join before they emerge from the incisive foramen.",
+    "clinical": "A nasopalatine block at the incisive papilla anaesthetises the palatal tissue of the upper anterior teeth on both sides. The path shown is schematic.",
+    "related": ["maxillary-nerve", "greater-palatine-nerve", "vomer", "maxilla"],
+    "sources": [
+      {
+        "title": "StatPearls: Nasopalatine Nerve",
+        "url": "https://www.ncbi.nlm.nih.gov/books/NBK538422/"
+      }
+    ]
+  },
   "inferior-alveolar-artery": {
     "summary": "A branch of the maxillary artery that accompanies the inferior alveolar nerve through the mandibular canal.",
     "function": "Blood supply to the mandible and mandibular teeth.",

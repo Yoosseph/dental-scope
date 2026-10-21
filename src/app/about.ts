@@ -8,6 +8,7 @@
 import { PERMANENT_FDI, TOOTH_TYPES, archOf, fdiToPalmer, fdiToUniversal, sideOf, typeOf } from '../anatomy/notation.ts';
 import type { ToothType } from '../anatomy/types.ts';
 import { CONTENT } from '../content/content.ts';
+import { toothGuide } from '../content/toothGuides.ts';
 import { TYPE_PLURALS, archTypeName, toothNameIn } from '../i18n/anatomy.ts';
 import { LANGS, LANG_NATIVE, type Lang } from '../i18n/lang.ts';
 import { ABOUT_TEXT } from './about-text.ts';
@@ -40,6 +41,8 @@ const GLOSSARY: string[][] = [
     'posterior-superior-alveolar-nerve',
     'middle-superior-alveolar-nerve',
     'anterior-superior-alveolar-nerve',
+    'greater-palatine-nerve',
+    'nasopalatine-nerve',
     'inferior-alveolar-artery',
   ],
   ['masseter', 'temporalis', 'medial-pterygoid', 'lateral-pterygoid', 'buccinator', 'orbicularis-oris', 'mentalis'],
@@ -82,6 +85,7 @@ function toothTypeSection(type: ToothType, base: string, lang: Lang): string {
           ${e.function ? `<p><strong>${esc(T.functionLabel)}</strong> ${esc(e.function)}</p>` : ''}
           ${e.clinical ? `<p><strong>${esc(T.notesLabel)}</strong> ${esc(e.clinical)}</p>` : ''}
           ${facts ? `<dl>${facts}</dl>` : ''}
+          ${(toothGuide(`tooth:${type}:${arch}`, lang) ?? []).map((g) => `<p><strong>${esc(g.title)}</strong></p><dl>${g.rows.map((r) => `<dt>${esc(r.label)}</dt><dd>${esc(r.value)}</dd>`).join('')}</dl>`).join('')}
           <p class="links">${esc(T.viewIn3d)} ${fdis.map((f) => `<a href="${toothHref(f, base, lang)}">${esc(toothName(f, lang))} (${f} · #${fdiToUniversal(f)})</a>`).join(', ')}</p>
         </article>`;
     })

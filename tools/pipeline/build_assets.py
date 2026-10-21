@@ -634,6 +634,8 @@ def main():
     context_geometry = dict(scenes["core"].geometry)
     context_geometry.update(scenes["context"].geometry)
     extend_cranial(scenes["neurovascular"], context_geometry, manifest, S, {"structures": za})
+    from palatal import extend_palatal
+    extend_palatal(scenes["neurovascular"], manifest)
     manifest["explode"] = explode_plan(scenes["core"].geometry, manifest["teeth"])
 
     for name, sc in scenes.items():

@@ -59,6 +59,22 @@ test('desktop layers remain reachable with nerve settings expanded', async ({ pa
   await expect(page.locator('.ds-count[aria-label="32 teeth"]')).toHaveText('32');
 });
 
+test('a tooth explains its nerve supply and how to identify it, and the palatal nerves are searchable', async ({ page }) => {
+  await page.goto('/tooth/36/');
+  const body = page.locator('.ds-detail-body');
+  await expect(body.getByRole('heading', { name: 'Nerve supply' })).toBeAttached();
+  await expect(body).toContainText('Inferior alveolar nerve (V3)');
+  await expect(body.getByRole('heading', { name: 'How to identify it' })).toBeAttached();
+  await expect(body).toContainText('three on the buccal side');
+  await page.locator('[data-tour="search"]:visible').click();
+  const input = page.getByRole('combobox', { name: 'Search anatomy' });
+  await input.fill('nasopalatine');
+  await expect(page.locator('#ds-search-results').getByRole('option').first()).toContainText('nasopalatine nerve');
+  await input.press('Enter');
+  await expect(page.getByRole('heading', { name: /nasopalatine nerve/ })).toBeVisible();
+  await expect(body).toContainText('incisive canal');
+});
+
 test('primary dentition has an explicit development action', async ({ page }, testInfo) => {
   await page.goto('/');
   if (testInfo.project.name === 'phone') await page.getByRole('button', { name: 'Layers', exact: true }).click();
