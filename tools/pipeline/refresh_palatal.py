@@ -9,7 +9,7 @@ from pathlib import Path
 
 import numpy as np
 
-from palatal import palatal_meshes, palatal_paths
+from palatal import palatal_nerves
 
 
 def main():
@@ -18,15 +18,14 @@ def main():
     parser.add_argument('--out', required=True, type=Path)
     args = parser.parse_args()
     manifest = json.loads(args.manifest.read_text())
-    paths = palatal_paths(manifest)
     nerves = {}
-    for key, mesh in palatal_meshes(manifest).items():
+    for key, mesh, paths in palatal_nerves(manifest):
         assert mesh.is_watertight and len(mesh.vertices) < 65536, key
         nerves[key] = {
             'positions': mesh.vertices.astype(np.float32).flatten().tolist(),
             'indices': mesh.faces.flatten().tolist(),
             'bounds': mesh.bounds.round(4).tolist(), 'triangles': len(mesh.faces),
-            'paths': [np.asarray(p).round(4).tolist() for p, _, _ in paths[key]],
+            'paths': paths,
         }
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(nerves))

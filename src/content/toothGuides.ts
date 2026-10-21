@@ -13,6 +13,7 @@ type Source = { title: string; url: string };
 
 interface Guide {
   nerves: { pulp: Translation; facial: Translation; oral: Translation; numbing: Translation };
+  /** `side` is the clue that finds mesial; `toothGuide` appends the arch's side rule. */
   identify: { type: Translation; arch: Translation; side: Translation };
   sources: Source[];
 }
@@ -44,11 +45,19 @@ const MOLAR_INJECTION = pubmed('Loetscher et al. 1988: Anesthesia of the maxilla
 const MSA = pubmed('Heasman 1984: Clinical anatomy of the superior alveolar nerves', '6239647');
 const CROSSOVER = pubmed('Rood 1977: Causes of failure of mandibular analgesia', '268219');
 const INCISOR_INFILTRATION = pubmed('Jaber et al. 2010: Infiltration for mandibular incisors', '20953168');
+const UPPER_SOURCES = [ALVEOLAR, NASOPALATINE, TECHNIQUES, DENTITION];
+const UPPER_PREMOLAR_SOURCES = [ALVEOLAR, MSA, NASOPALATINE, TECHNIQUES, DENTITION];
+const LOWER_INCISOR_SOURCES = [DENTITION, CROSSOVER, INCISOR_INFILTRATION, IANB, MANDIBULAR];
+const LOWER_SOURCES = [DENTITION, IANB, MANDIBULAR];
+const LOWER_MOLAR_SOURCES = [MANDIBULAR, IANB, DENTITION];
 
-/** "Hold it crown down/up with the lip/cheek side towards you…": mesial on the viewer's right means the person's right side. */
-const hold = (arch: Arch, surface: 'lip' | 'cheek'): Translation => {
+/**
+ * "Hold it crown down/up with the lip/cheek side towards you…": mesial on the viewer's
+ * right means the person's right side. Incisors and canines show their lip side.
+ */
+const sideRule = (type: ToothType, arch: Arch): Translation => {
   const up = arch === 'mandibular';
-  const lip = surface === 'lip';
+  const lip = type.endsWith('incisor') || type === 'canine';
   return [
     `Hold it crown ${up ? 'up' : 'down'} with the ${lip ? 'lip' : 'cheek'} side towards you: if mesial is on your right, it is from the right side of the mouth; if it is on your left, from the left side.`,
     `Håll tanden med kronan ${up ? 'uppåt' : 'nedåt'} och ${lip ? 'läppsidan' : 'kindsidan'} mot dig: är den mesiala sidan till höger kommer tanden från munnens högra sida, är den till vänster från den vänstra.`,
@@ -56,10 +65,6 @@ const hold = (arch: Arch, surface: 'lip' | 'cheek'): Translation => {
     `Sostenga el diente con la corona hacia ${up ? 'arriba' : 'abajo'} y la cara ${lip ? 'labial' : 'vestibular'} hacia usted: si mesial queda a su derecha, pertenece al lado derecho de la boca; si queda a su izquierda, al izquierdo.`,
     `Dentem corona ${up ? 'sursum' : 'deorsum'} versa et facie ${lip ? 'labiali' : 'buccali'} ad te conversa tene: si latus mesiale ad dextram tuam est, dens ex latere dextro oris est; si ad sinistram, ex sinistro.`,
   ];
-};
-const side = (clue: Translation, arch: Arch, surface: 'lip' | 'cheek'): Translation => {
-  const rule = hold(arch, surface);
-  return clue.map((c, i) => `${c} ${rule[i]}`) as Translation;
 };
 
 // ---- shared nerve phrases ------------------------------------------------
@@ -188,15 +193,15 @@ const GUIDES: Record<`${ToothType}:${Arch}`, Guide> = {
         'Superior: mucho más ancho que un incisivo inferior, con fosa lingual profunda y cíngulo marcado; los incisivos inferiores son estrechos y su raíz está aplanada lateralmente.',
         'Superior: multo latior quam incisivus inferior, fossa linguali profunda et cingulo manifesto; incisivi inferiores angusti sunt, radice a lateribus compressa.',
       ],
-      side: side([
+      side: [
         'The mesial corner of the cutting edge is almost a right angle; the distal corner is rounded.',
         'Skärkantens mesiala hörn är nästan rätvinkligt, det distala är rundat.',
         'Die mesiale Ecke der Schneidekante ist fast rechtwinklig, die distale abgerundet.',
         'El ángulo mesial del borde incisal es casi recto; el distal es redondeado.',
         'Angulus mesialis marginis incisalis fere rectus est, distalis rotundatus.',
-      ], 'maxillary', 'lip'),
+      ],
     },
-    sources: [ALVEOLAR, NASOPALATINE, TECHNIQUES, DENTITION],
+    sources: UPPER_SOURCES,
   },
   'lateral-incisor:maxillary': {
     nerves: { pulp: ASA_PULP, facial: ASA, oral: NP, numbing: ANTERIOR_NUMBING },
@@ -215,15 +220,15 @@ const GUIDES: Record<`${ToothType}:${Arch}`, Guide> = {
         'Superior: cíngulo y fosa lingual marcados y raíz redondeada; los incisivos inferiores tienen la cara lingual lisa y la raíz aplanada lateralmente.',
         'Superior: cingulum et fossa lingualis manifesta, radix rotundata; incisivi inferiores faciem lingualem levem et radicem a lateribus compressam habent.',
       ],
-      side: side([
+      side: [
         'The distal corner is clearly rounder than the mesial one, and the root tip often bends distally.',
         'Det distala hörnet är tydligt rundare än det mesiala, och rotspetsen böjer ofta distalt.',
         'Die distale Ecke ist deutlich runder als die mesiale, und die Wurzelspitze biegt oft nach distal.',
         'El ángulo distal es claramente más redondeado que el mesial, y el ápice suele inclinarse hacia distal.',
         'Angulus distalis clare rotundior est quam mesialis, et apex radicis saepe distaliter flectitur.',
-      ], 'maxillary', 'lip'),
+      ],
     },
-    sources: [ALVEOLAR, NASOPALATINE, TECHNIQUES, DENTITION],
+    sources: UPPER_SOURCES,
   },
   'canine:maxillary': {
     nerves: {
@@ -265,15 +270,15 @@ const GUIDES: Record<`${ToothType}:${Arch}`, Guide> = {
         'Superior: cúspide más afilada y corona más ancha con cíngulo y cresta lingual marcados; el canino inferior es más estrecho y liso por lingual, y su contorno mesial continúa casi recto con la raíz.',
         'Superior: cuspis acutior, corona latior cingulo et crista linguali validis; caninus inferior angustior et lingualiter levior est, eiusque margo mesialis fere recte in radicem transit.',
       ],
-      side: side([
+      side: [
         'The mesial cusp ridge is shorter than the distal one, and the distal contact area lies closer to the root.',
         'Kuspens mesiala kant är kortare än den distala, och den distala kontaktpunkten ligger närmare roten.',
         'Die mesiale Höckerkante ist kürzer als die distale, und der distale Kontaktpunkt liegt näher an der Wurzel.',
         'La arista mesial de la cúspide es más corta que la distal, y el punto de contacto distal está más cerca de la raíz.',
         'Crista cuspidis mesialis brevior est quam distalis, et area contactus distalis radici propior est.',
-      ], 'maxillary', 'lip'),
+      ],
     },
-    sources: [ALVEOLAR, NASOPALATINE, TECHNIQUES, DENTITION],
+    sources: UPPER_SOURCES,
   },
   'first-premolar:maxillary': {
     nerves: { pulp: PREMOLAR_PULP, facial: SAME_SA, oral: GP, numbing: PREMOLAR_NUMBING },
@@ -292,15 +297,15 @@ const GUIDES: Record<`${ToothType}:${Arch}`, Guide> = {
         'Superior: dos cúspides de anchura casi igual sobre una corona alineada con la raíz; los premolares inferiores inclinan la corona hacia la lengua, y el primer premolar inferior solo tiene una cúspide lingual diminuta.',
         'Superior: cuspides duae fere aeque latae in corona recte radici insidente; premolares inferiores coronam ad linguam inclinant, et primus premolaris inferior cuspidem lingualem minimam tantum habet.',
       ],
-      side: side([
+      side: [
         'A concavity on the mesial side of the crown neck, continuing onto the root and crossed by a groove over the mesial marginal ridge, marks mesial.',
         'En konkavitet på kronhalsens mesiala sida, som fortsätter ner på roten och korsas av en fåra över den mesiala randlisten, visar var mesialt är.',
         'Eine Einziehung an der mesialen Seite des Zahnhalses, die sich auf die Wurzel fortsetzt und von einer Furche über der mesialen Randleiste gekreuzt wird, zeigt mesial an.',
         'Una concavidad en la cara mesial del cuello, que continúa por la raíz y está cruzada por un surco sobre la cresta marginal mesial, indica el lado mesial.',
         'Concavitas in latere mesiali colli coronae, in radicem continuata et sulco super cristam marginalem mesialem transita, latus mesiale indicat.',
-      ], 'maxillary', 'cheek'),
+      ],
     },
-    sources: [ALVEOLAR, MSA, NASOPALATINE, TECHNIQUES, DENTITION],
+    sources: UPPER_PREMOLAR_SOURCES,
   },
   'second-premolar:maxillary': {
     nerves: { pulp: PREMOLAR_PULP, facial: SAME_SA, oral: GP, numbing: PREMOLAR_NUMBING },
@@ -319,15 +324,15 @@ const GUIDES: Record<`${ToothType}:${Arch}`, Guide> = {
         'Superior: cúspides vestibular y palatina de tamaño similar sobre una corona erguida; el segundo premolar inferior es más cuadrado y a menudo tiene dos cúspides linguales.',
         'Superior: cuspides buccalis et palatina similis magnitudinis in corona erecta; secundus premolaris inferior quadratior est et saepe duas cuspides linguales habet.',
       ],
-      side: side([
+      side: [
         'There is no deep mesial concavity; the palatal cusp tip lies slightly mesial and the root often bends distally.',
         'Det finns ingen djup mesial konkavitet; den palatinala kuspspetsen ligger något mesialt och roten böjer ofta distalt.',
         'Eine tiefe mesiale Einziehung fehlt; die palatinale Höckerspitze liegt etwas mesial, und die Wurzel biegt oft nach distal.',
         'No hay una concavidad mesial profunda; la punta de la cúspide palatina está algo desplazada a mesial y la raíz suele inclinarse hacia distal.',
         'Concavitas mesialis profunda deest; apex cuspidis palatinae paulo mesialius situs est, et radix saepe distaliter flectitur.',
-      ], 'maxillary', 'cheek'),
+      ],
     },
-    sources: [ALVEOLAR, MSA, NASOPALATINE, TECHNIQUES, DENTITION],
+    sources: UPPER_PREMOLAR_SOURCES,
   },
   'first-molar:maxillary': {
     nerves: {
@@ -363,13 +368,13 @@ const GUIDES: Record<`${ToothType}:${Arch}`, Guide> = {
         'Superior: tres raíces (dos vestibulares y una palatina larga) y contorno coronal romboidal; los molares inferiores tienen dos raíces, mesial y distal.',
         'Superior: radices tres (duae buccales, una palatina longa) et ambitus coronae rhomboideus; molares inferiores duas radices habent, mesialem et distalem.',
       ],
-      side: side([
+      side: [
         'Turn the single palatal root towards the tongue. The large mesiopalatal cusp (with the Carabelli cusp, if present) and the broad mesiobuccal root are mesial, and the roots lean distally.',
         'Vänd den enda palatinala roten mot tungan. Den stora mesiopalatinala kuspen (med Carabellis kusp om den finns) och den breda mesiobuckala roten är mesiala, och rötterna lutar distalt.',
         'Drehen Sie die einzelne palatinale Wurzel zur Zunge. Der große mesiopalatinale Höcker (mit dem Tuberculum Carabelli, falls vorhanden) und die breite mesiobukkale Wurzel liegen mesial, und die Wurzeln neigen sich nach distal.',
         'Oriente la única raíz palatina hacia la lengua. La gran cúspide mesiopalatina (con el tubérculo de Carabelli, si existe) y la ancha raíz mesiovestibular son mesiales, y las raíces se inclinan hacia distal.',
         'Radicem palatinam unicam ad linguam verte. Cuspis mesiopalatina magna (cum tuberculo Carabelli, si adest) et radix mesiobuccalis lata mesiales sunt, et radices distaliter inclinant.',
-      ], 'maxillary', 'cheek'),
+      ],
     },
     sources: [MOLAR_DISSECTION, MOLAR_INJECTION, ALVEOLAR, NASOPALATINE, DENTITION],
   },
@@ -401,15 +406,15 @@ const GUIDES: Record<`${ToothType}:${Arch}`, Guide> = {
         'Superior: tres raíces (dos vestibulares y una palatina); los molares inferiores tienen dos.',
         'Superior: radices tres (duae buccales, una palatina); molares inferiores duas habent.',
       ],
-      side: side([
+      side: [
         'Turn the palatal root towards the tongue; the roots lean distally and the mesial half of the crown is the larger.',
         'Vänd den palatinala roten mot tungan; rötterna lutar distalt och kronans mesiala halva är störst.',
         'Drehen Sie die palatinale Wurzel zur Zunge; die Wurzeln neigen sich nach distal, und die mesiale Kronenhälfte ist die größere.',
         'Oriente la raíz palatina hacia la lengua; las raíces se inclinan hacia distal y la mitad mesial de la corona es la mayor.',
         'Radicem palatinam ad linguam verte; radices distaliter inclinant et dimidium mesiale coronae maius est.',
-      ], 'maxillary', 'cheek'),
+      ],
     },
-    sources: [ALVEOLAR, NASOPALATINE, TECHNIQUES, DENTITION],
+    sources: UPPER_SOURCES,
   },
   'third-molar:maxillary': {
     nerves: { pulp: PSA, facial: PSA, oral: GP_FORAMEN, numbing: MOLAR_NUMBING },
@@ -428,15 +433,15 @@ const GUIDES: Record<`${ToothType}:${Arch}`, Guide> = {
         'Superior: si hay raíces separadas, son dos vestibulares y una palatina; los terceros molares inferiores son más largos de mesial a distal y suelen conservar una raíz mesial y otra distal.',
         'Superior: radices separatae, si adsunt, duae buccales et una palatina sunt; molares tertii inferiores mesiodistaliter longiores sunt et plerumque radicem mesialem et distalem servant.',
       ],
-      side: side([
+      side: [
         'The fused roots usually bend distally. With this much variation, identification is often by elimination.',
         'De sammanvuxna rötterna böjer oftast distalt. Med så stor variation sker identifieringen ofta genom uteslutning.',
         'Die verschmolzenen Wurzeln biegen meist nach distal. Bei so großer Variabilität gelingt die Bestimmung oft nur im Ausschlussverfahren.',
         'Las raíces fusionadas suelen inclinarse hacia distal. Con tanta variación, la identificación suele hacerse por descarte.',
         'Radices coalitae plerumque distaliter flectuntur. Tanta varietate dens saepe per exclusionem agnoscitur.',
-      ], 'maxillary', 'cheek'),
+      ],
     },
-    sources: [ALVEOLAR, NASOPALATINE, TECHNIQUES, DENTITION],
+    sources: UPPER_SOURCES,
   },
   'central-incisor:mandibular': {
     nerves: {
@@ -466,15 +471,15 @@ const GUIDES: Record<`${ToothType}:${Arch}`, Guide> = {
         'Dens permanens minimus: corona angusta fere symmetrica angulis acutis et margine incisali recto, radix una a lateribus compressa.',
       ],
       arch: LOWER_INCISOR_ARCH,
-      side: side([
+      side: [
         'Right and left are very hard to tell apart because both corners are sharp; a slightly deeper groove along the distal root surface is the most useful clue.',
         'Höger och vänster är mycket svåra att skilja eftersom båda hörnen är skarpa; en något djupare fåra längs rotens distala yta är den bästa ledtråden.',
         'Rechts und links sind sehr schwer zu unterscheiden, da beide Ecken scharf sind; eine etwas tiefere Furche auf der distalen Wurzelfläche ist der beste Hinweis.',
         'Derecho e izquierdo son muy difíciles de distinguir porque ambos ángulos son agudos; un surco algo más profundo en la cara distal de la raíz es la mejor pista.',
         'Dexter et sinister aegerrime distinguuntur, quod ambo anguli acuti sunt; sulcus paulo profundior in facie distali radicis optimum indicium est.',
-      ], 'mandibular', 'lip'),
+      ],
     },
-    sources: [DENTITION, CROSSOVER, INCISOR_INFILTRATION, IANB, MANDIBULAR],
+    sources: LOWER_INCISOR_SOURCES,
   },
   'lateral-incisor:mandibular': {
     nerves: {
@@ -504,15 +509,15 @@ const GUIDES: Record<`${ToothType}:${Arch}`, Guide> = {
         'Paulo maior quam incisivus medialis inferior, angulo distali rotundiore et radice una compressa.',
       ],
       arch: LOWER_INCISOR_ARCH,
-      side: side([
+      side: [
         'The cutting edge is twisted distolingually to follow the curve of the arch, the cingulum lies distal to the centre and the distal corner is rounder.',
         'Skärkanten är vriden distolingualt efter tandbågens kurva, cingulum ligger distalt om mitten och det distala hörnet är rundare.',
         'Die Schneidekante ist dem Zahnbogen folgend nach distolingual gedreht, das Tuberculum dentis liegt distal der Mitte, und die distale Ecke ist runder.',
         'El borde incisal está girado hacia distolingual siguiendo la curva de la arcada, el cíngulo queda distal al centro y el ángulo distal es más redondeado.',
         'Margo incisalis secundum curvaturam arcus distolingualiter tortus est, cingulum distaliter a medio iacet, angulus distalis rotundior est.',
-      ], 'mandibular', 'lip'),
+      ],
     },
-    sources: [DENTITION, CROSSOVER, INCISOR_INFILTRATION, IANB, MANDIBULAR],
+    sources: LOWER_INCISOR_SOURCES,
   },
   'canine:mandibular': {
     nerves: {
@@ -542,15 +547,15 @@ const GUIDES: Record<`${ToothType}:${Arch}`, Guide> = {
         'Inferior: corona más estrecha y lisa por lingual, cúspide más roma y contorno mesial que continúa casi recto con la raíz; el canino superior es más ancho, con cíngulo y cresta lingual marcados.',
         'Inferior: corona angustior lingualiter levis, cuspis obtusior, margo mesialis fere recte in radicem transiens; caninus superior latior est cingulo et crista linguali validis.',
       ],
-      side: side([
+      side: [
         'The mesial cusp ridge is the shorter one and the mesial outline is almost straight with the root, while the distal contact area lies closer to the root.',
         'Kuspens mesiala kant är den kortare och den mesiala konturen nästan rak med roten, medan den distala kontaktpunkten ligger närmare roten.',
         'Die mesiale Höckerkante ist die kürzere, die mesiale Kontur verläuft fast gerade mit der Wurzel, und der distale Kontaktpunkt liegt näher an der Wurzel.',
         'La arista mesial de la cúspide es la más corta y el contorno mesial es casi recto con la raíz, mientras que el contacto distal está más cerca de la raíz.',
         'Crista cuspidis mesialis brevior est et margo mesialis cum radice fere rectus, area autem contactus distalis radici propior est.',
-      ], 'mandibular', 'lip'),
+      ],
     },
-    sources: [DENTITION, IANB, MANDIBULAR],
+    sources: LOWER_SOURCES,
   },
   'first-premolar:mandibular': {
     nerves: { pulp: PREMOLAR_IAN, facial: MENTAL, oral: LINGUAL, numbing: PREMOLAR_BLOCK },
@@ -569,15 +574,15 @@ const GUIDES: Record<`${ToothType}:${Arch}`, Guide> = {
         'Inferior: la corona se inclina hacia la lengua sobre la raíz y la cúspide lingual es diminuta; los premolares superiores tienen dos cúspides de anchura similar en una corona erguida.',
         'Inferior: corona supra radicem ad linguam inclinat et cuspis lingualis minima est; premolares superiores duas cuspides similis latitudinis in corona erecta habent.',
       ],
-      side: side([
+      side: [
         'A mesiolingual groove separates the mesial marginal ridge from the lingual cusp, and the mesial marginal ridge sits lower than the distal one.',
         'En mesiolingual fåra skiljer den mesiala randlisten från den linguala kuspen, och den mesiala randlisten ligger lägre än den distala.',
         'Eine mesiolinguale Furche trennt die mesiale Randleiste vom lingualen Höcker, und die mesiale Randleiste liegt tiefer als die distale.',
         'Un surco mesiolingual separa la cresta marginal mesial de la cúspide lingual, y la cresta marginal mesial está más baja que la distal.',
         'Sulcus mesiolingualis cristam marginalem mesialem a cuspide linguali separat, et crista marginalis mesialis humilior est quam distalis.',
-      ], 'mandibular', 'cheek'),
+      ],
     },
-    sources: [DENTITION, IANB, MANDIBULAR],
+    sources: LOWER_SOURCES,
   },
   'second-premolar:mandibular': {
     nerves: { pulp: PREMOLAR_IAN, facial: MENTAL, oral: LINGUAL, numbing: PREMOLAR_BLOCK },
@@ -596,15 +601,15 @@ const GUIDES: Record<`${ToothType}:${Arch}`, Guide> = {
         'Inferior: la corona se inclina hacia la lengua sobre una sola raíz; el segundo premolar superior tiene dos cúspides parejas en una corona erguida.',
         'Inferior: corona in radice singulari ad linguam inclinat; secundus premolaris superior duas cuspides aequales in corona erecta habet.',
       ],
-      side: side([
+      side: [
         'In the three-cusp form the mesiolingual cusp is larger than the distolingual one; in the two-cusp form the lingual cusp tip lies mesially.',
         'I den trekuspiga formen är den mesiolinguala kuspen större än den distolinguala; i den tvåkuspiga formen ligger den linguala kuspspetsen mesialt.',
         'Bei der dreihöckrigen Form ist der mesiolinguale Höcker größer als der distolinguale; bei der zweihöckrigen liegt die linguale Höckerspitze mesial.',
         'En la forma de tres cúspides la mesiolingual es mayor que la distolingual; en la de dos cúspides la punta de la cúspide lingual está desplazada a mesial.',
         'In forma tricuspidata cuspis mesiolingualis maior est quam distolingualis; in bicuspidata apex cuspidis lingualis mesialiter iacet.',
-      ], 'mandibular', 'cheek'),
+      ],
     },
-    sources: [DENTITION, IANB, MANDIBULAR],
+    sources: LOWER_SOURCES,
   },
   'first-molar:mandibular': {
     nerves: {
@@ -628,15 +633,15 @@ const GUIDES: Record<`${ToothType}:${Arch}`, Guide> = {
         'Cuspides quinque: tres buccales (mesiobuccalis, distobuccalis et parva distalis) et duae linguales, praeterea radices duae bene separatae, mesialis et distalis.',
       ],
       arch: LOWER_MOLAR_ARCH,
-      side: side([
+      side: [
         'The small distal cusp marks the distal end, the lingual cusps are higher and more pointed, the mesial root curves distally and the straighter distal root slopes distally.',
         'Den lilla distala kuspen markerar den distala änden, de linguala kusparna är högre och spetsigare, den mesiala roten böjer distalt och den rakare distala roten lutar distalt.',
         'Der kleine distale Höcker markiert das distale Ende, die lingualen Höcker sind höher und spitzer, die mesiale Wurzel krümmt sich nach distal, und die geradere distale Wurzel neigt sich nach distal.',
         'La pequeña cúspide distal marca el extremo distal, las cúspides linguales son más altas y agudas, la raíz mesial se curva hacia distal y la distal, más recta, se inclina hacia distal.',
         'Cuspis distalis parva finem distalem notat, cuspides linguales altiores et acutiores sunt, radix mesialis distaliter curvatur et radix distalis rectior distaliter inclinat.',
-      ], 'mandibular', 'cheek'),
+      ],
     },
-    sources: [MANDIBULAR, IANB, DENTITION],
+    sources: LOWER_MOLAR_SOURCES,
   },
   'second-molar:mandibular': {
     nerves: { pulp: IAN, facial: BUCCAL, oral: LINGUAL, numbing: MOLAR_BLOCK },
@@ -649,15 +654,15 @@ const GUIDES: Record<`${ToothType}:${Arch}`, Guide> = {
         'Cuspides quattuor fere aequales, quarum sulci in formam signi additionis se secant, et radices duae propius et magis parallelae quam in primo molari.',
       ],
       arch: LOWER_MOLAR_ARCH,
-      side: side([
+      side: [
         'The roots slope distally and the mesiobuccal cusp is the largest.',
         'Rötterna lutar distalt och den mesiobuckala kuspen är störst.',
         'Die Wurzeln neigen sich nach distal, und der mesiobukkale Höcker ist der größte.',
         'Las raíces se inclinan hacia distal y la cúspide mesiovestibular es la mayor.',
         'Radices distaliter inclinant et cuspis mesiobuccalis maxima est.',
-      ], 'mandibular', 'cheek'),
+      ],
     },
-    sources: [MANDIBULAR, IANB, DENTITION],
+    sources: LOWER_MOLAR_SOURCES,
   },
   'third-molar:mandibular': {
     nerves: {
@@ -693,45 +698,46 @@ const GUIDES: Record<`${ToothType}:${Arch}`, Guide> = {
         'Inferior: corona más larga de mesial a distal, con raíces mesial y distal; los terceros molares superiores suelen ser acorazonados, con tres cúspides.',
         'Inferior: corona mesiodistaliter longior radicibus mesiali et distali; molares tertii superiores saepe cordiformes sunt tribus cuspidibus.',
       ],
-      side: side([
+      side: [
         'The roots, often fused, curve distally.',
         'Rötterna, ofta sammanvuxna, böjer distalt.',
         'Die oft verschmolzenen Wurzeln krümmen sich nach distal.',
         'Las raíces, a menudo fusionadas, se curvan hacia distal.',
         'Radices, saepe coalitae, distaliter curvantur.',
-      ], 'mandibular', 'cheek'),
+      ],
     },
-    sources: [MANDIBULAR, IANB, DENTITION],
+    sources: LOWER_MOLAR_SOURCES,
   },
 };
 
 /** Content key → its guide, if the key is a tooth type entry (`tooth:<type>:<arch>`). */
-function guideFor(key: string): Guide | undefined {
+function guideFor(key: string): { guide: Guide; type: ToothType; arch: Arch } | undefined {
   const m = /^tooth:(.+):(maxillary|mandibular)$/.exec(key);
-  return m ? GUIDES[`${m[1]}:${m[2]}` as keyof typeof GUIDES] : undefined;
+  const guide = m ? GUIDES[`${m[1]}:${m[2]}` as keyof typeof GUIDES] : undefined;
+  return guide && { guide, type: m![1] as ToothType, arch: m![2] as Arch };
 }
 
 /** The two guide sections for a tooth content key, in a language. */
 export function toothGuide(key: string, lang: Lang): ToothGuide | undefined {
-  const g = guideFor(key);
-  if (!g) return undefined;
+  const found = guideFor(key);
+  if (!found) return undefined;
+  const { guide: { nerves, identify }, type, arch } = found;
   const i = LANGS.indexOf(lang);
   const L = GUIDE_LABELS[lang];
-  const palatal = key.endsWith(':maxillary');
   return [
     { title: L.nerves, rows: [
-      { label: L.pulp, value: g.nerves.pulp[i] },
-      { label: L.facial, value: g.nerves.facial[i] },
-      { label: palatal ? L.palatal : L.lingual, value: g.nerves.oral[i] },
-      { label: L.numbing, value: g.nerves.numbing[i] },
+      { label: L.pulp, value: nerves.pulp[i] },
+      { label: L.facial, value: nerves.facial[i] },
+      { label: arch === 'maxillary' ? L.palatal : L.lingual, value: nerves.oral[i] },
+      { label: L.numbing, value: nerves.numbing[i] },
     ] },
     { title: L.identify, rows: [
-      { label: L.type, value: g.identify.type[i] },
-      { label: L.arch, value: g.identify.arch[i] },
-      { label: L.side, value: g.identify.side[i] },
+      { label: L.type, value: identify.type[i] },
+      { label: L.arch, value: identify.arch[i] },
+      { label: L.side, value: `${identify.side[i]} ${sideRule(type, arch)[i]}` },
     ] },
   ];
 }
 
 /** Sources for a tooth key's guide, shown with the tooth's other references. */
-export const toothGuideSources = (key: string): Source[] => guideFor(key)?.sources ?? [];
+export const toothGuideSources = (key: string): Source[] => guideFor(key)?.guide.sources ?? [];

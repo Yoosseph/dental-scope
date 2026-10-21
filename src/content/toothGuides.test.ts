@@ -18,10 +18,10 @@ describe('tooth nerve supply and identification guides', () => {
       const en = toothGuide(key, 'en')!;
       expect(en.map((g) => g.rows.length), key).toEqual([4, 3]);
       for (const lang of LANGS.filter((l) => l !== 'en')) {
-        const rows = toothGuide(key, lang)!.flatMap((g) => g.rows);
-        expect(rows.every((r) => r.value.trim()), `${lang}: ${key}`).toBe(true);
+        const guide = toothGuide(key, lang)!;
+        expect(guide.flatMap((g) => g.rows).every((r) => r.value.trim()), `${lang}: ${key}`).toBe(true);
         // translated, not copied: the identification text always differs from English
-        expect(rows.at(-3)!.value, `${lang}: ${key}`).not.toBe(en[1].rows[0].value);
+        expect(guide[1].rows[0].value, `${lang}: ${key}`).not.toBe(en[1].rows[0].value);
       }
     }
   });
