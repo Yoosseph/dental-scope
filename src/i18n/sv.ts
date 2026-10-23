@@ -58,7 +58,7 @@ export const sv: Messages = {
     'de flesta nerver och kärl följer Z-Anatomy-atlasen (CC BY-SA 4.0), anpassad till de här käkarna: förloppet är anatomiskt, men inte uppmätt hos just den här individen.',
   provSchematic: 'Schematisk',
   provSchematicBody:
-    'de övre alveolarnerverna, v. alveolaris inferior, plexus pterygoideus och ledskivorna är placerade utifrån anatomiska landmärken för att visa samband, inte uppmätta förlopp.',
+    'de övre alveolarnerverna och gomnerverna (n. palatinus major och n. nasopalatinus), v. alveolaris inferior, plexus pterygoideus och ledskivorna är placerade utifrån anatomiska landmärken för att visa samband, inte uppmätta förlopp.',
   sources: 'Källor för dessa uppgifter',
   sourcesAria: 'Källor för dessa uppgifter (öppnas i en ny flik)',
   controlsTitle: 'Kontroller',

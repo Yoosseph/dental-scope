@@ -3,7 +3,7 @@ import type { Registry } from './registry';
 export const NERVE_VIEWS = ['dental', 'trigeminal', 'facial', 'lower-cranial', 'all'] as const;
 export type NerveView = typeof NERVE_VIEWS[number];
 export type NerveSide = 'both' | 'right' | 'left';
-const DENTAL = /^(trigeminal-nerve|mandibular-nerve|inferior-alveolar-nerve|mental-nerve|incisive-nerve|lingual-nerve|buccal-nerve|maxillary-nerve|infraorbital-nerve|(?:posterior|middle|anterior)-superior-alveolar-nerve)(?:-|$)/;
+const DENTAL = /^(trigeminal-nerve|mandibular-nerve|inferior-alveolar-nerve|mental-nerve|incisive-nerve|lingual-nerve|buccal-nerve|maxillary-nerve|infraorbital-nerve|(?:posterior|middle|anterior)-superior-alveolar-nerve|greater-palatine-nerve|nasopalatine-nerve)(?:-|$)/;
 
 /** Display groups preserve the anatomical course; they only choose which paths to inspect. */
 export function nerveInView(registry: Registry, id: string, view: NerveView, side: NerveSide): boolean {

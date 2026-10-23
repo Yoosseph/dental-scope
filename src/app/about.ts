@@ -8,6 +8,7 @@
 import { PERMANENT_FDI, TOOTH_TYPES, archOf, fdiToPalmer, fdiToUniversal, sideOf, typeOf } from '../anatomy/notation.ts';
 import type { ToothType } from '../anatomy/types.ts';
 import { CONTENT } from '../content/content.ts';
+import { toothGuide } from '../content/toothGuides.ts';
 import { TYPE_PLURALS, archTypeName, toothNameIn } from '../i18n/anatomy.ts';
 import { LANGS, LANG_NATIVE, type Lang } from '../i18n/lang.ts';
 import { ABOUT_TEXT } from './about-text.ts';
@@ -40,6 +41,8 @@ const GLOSSARY: string[][] = [
     'posterior-superior-alveolar-nerve',
     'middle-superior-alveolar-nerve',
     'anterior-superior-alveolar-nerve',
+    'greater-palatine-nerve',
+    'nasopalatine-nerve',
     'inferior-alveolar-artery',
   ],
   ['masseter', 'temporalis', 'medial-pterygoid', 'lateral-pterygoid', 'buccinator', 'orbicularis-oris', 'mentalis'],
@@ -60,6 +63,12 @@ function toothRow(fdi: number, base: string, lang: Lang): string {
   return `<li><a href="${toothHref(fdi, base, lang)}">${esc(toothName(fdi, lang))}</a> <span class="num">FDI ${fdi} · Universal ${fdiToUniversal(fdi)} · Palmer ${fdiToPalmer(fdi)}</span></li>`;
 }
 
+const term = (label: string, value: string) => `<dt>${esc(label)}</dt><dd>${esc(value)}</dd>`;
+
+/** A tooth type's nerve supply and identification guides, as titled definition lists. */
+const guides = (key: string, lang: Lang) =>
+  (toothGuide(key, lang) ?? []).map((g) => `<p><strong>${esc(g.title)}</strong></p><dl>${g.rows.map((r) => term(r.label, r.value)).join('')}</dl>`).join('');
+
 function toothTypeSection(type: ToothType, base: string, lang: Lang): string {
   const T = ABOUT_TEXT[lang];
   const content = CONTENT[lang] as Record<string, Entry>;
@@ -69,9 +78,9 @@ function toothTypeSection(type: ToothType, base: string, lang: Lang): string {
       if (!e) return '';
       const fdis = PERMANENT_FDI.filter((f) => typeOf(f) === type && archOf(f) === arch);
       const facts = [
-        e.roots && `<dt>${esc(T.rootsLabel)}</dt><dd>${esc(e.roots)}</dd>`,
-        e.canals && `<dt>${esc(T.canalsLabel)}</dt><dd>${esc(e.canals)}</dd>`,
-        e.eruption && `<dt>${esc(T.eruptionLabel)}</dt><dd>${esc(e.eruption)}</dd>`,
+        e.roots && term(T.rootsLabel, e.roots),
+        e.canals && term(T.canalsLabel, e.canals),
+        e.eruption && term(T.eruptionLabel, e.eruption),
       ]
         .filter(Boolean)
         .join('');
@@ -82,6 +91,7 @@ function toothTypeSection(type: ToothType, base: string, lang: Lang): string {
           ${e.function ? `<p><strong>${esc(T.functionLabel)}</strong> ${esc(e.function)}</p>` : ''}
           ${e.clinical ? `<p><strong>${esc(T.notesLabel)}</strong> ${esc(e.clinical)}</p>` : ''}
           ${facts ? `<dl>${facts}</dl>` : ''}
+          ${guides(`tooth:${type}:${arch}`, lang)}
           <p class="links">${esc(T.viewIn3d)} ${fdis.map((f) => `<a href="${toothHref(f, base, lang)}">${esc(toothName(f, lang))} (${f} · #${fdiToUniversal(f)})</a>`).join(', ')}</p>
         </article>`;
     })

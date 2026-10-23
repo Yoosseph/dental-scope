@@ -58,7 +58,7 @@ export const la: Messages = {
     'plerique nervi et vasa atlantem Z-Anatomy (CC BY-SA 4.0) sequuntur, his maxillis accommodatum: cursus anatomicus est, sed in hoc homine non mensus.',
   provSchematic: 'Schematicum',
   provSchematicBody:
-    'nervi alveolares superiores, vena alveolaris inferior, plexus pterygoideus et disci articulares ex notis anatomicis locantur ut relationes ostendant, non cursus mensos.',
+    'nervi alveolares superiores et palatini (palatinus major et nasopalatinus), vena alveolaris inferior, plexus pterygoideus et disci articulares ex notis anatomicis locantur ut relationes ostendant, non cursus mensos.',
   sources: 'Fontes horum dictorum',
   sourcesAria: 'Fontes horum dictorum (in nova tabula aperitur)',
   controlsTitle: 'Moderamina',

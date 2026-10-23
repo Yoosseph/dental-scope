@@ -58,7 +58,7 @@ export const es: Messages = {
     'la mayoría de los nervios y vasos siguen el atlas Z-Anatomy (CC BY-SA 4.0), ajustado a estos maxilares: su trayecto es anatómico, pero no está medido en este individuo.',
   provSchematic: 'Esquemático',
   provSchematicBody:
-    'los nervios alveolares superiores, la vena alveolar inferior, el plexo pterigoideo y los discos articulares se sitúan a partir de referencias anatómicas para mostrar relaciones, no trayectos medidos.',
+    'los nervios alveolares superiores y palatinos (palatino mayor y nasopalatino), la vena alveolar inferior, el plexo pterigoideo y los discos articulares se sitúan a partir de referencias anatómicas para mostrar relaciones, no trayectos medidos.',
   sources: 'Fuentes de estas afirmaciones',
   sourcesAria: 'Fuentes de estas afirmaciones (se abre en una pestaña nueva)',
   controlsTitle: 'Controles',

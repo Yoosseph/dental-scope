@@ -21,6 +21,7 @@ import { developmentContentKey } from '../anatomy/development.ts';
 import { VESSEL_REFERENCES } from './vesselReferences.ts';
 import { paranasalContent } from '../anatomy/paranasal.ts';
 import { surfaceFeatureContent } from '../anatomy/surfaceFeatures.ts';
+import { toothGuide, toothGuideSources, type ToothGuide } from './toothGuides.ts';
 
 export type ContentStatus = 'placeholder' | 'draft' | 'reviewed';
 
@@ -46,6 +47,8 @@ export interface ResolvedContent {
   sources: { title: string; url: string }[];
   facts: { label: string; value: string }[];
   related: string[];
+  /** Nerve supply and identification sections (permanent tooth types only). */
+  guides: ToothGuide;
   status: ContentStatus;
 }
 
@@ -122,9 +125,10 @@ export function resolveContent(registry: Registry, id: string, lang: Lang = 'en'
     function: raw?.function,
     clinical: raw?.clinical,
     location: raw?.location,
-    sources: raw?.sources ?? [],
+    sources: [...(raw?.sources ?? []), ...(key ? toothGuideSources(key) : [])],
     facts,
     related: [...new Set(related)],
+    guides: (key ? toothGuide(key, lang) : undefined) ?? [],
     status: raw ? STATUS : 'placeholder',
   };
 }

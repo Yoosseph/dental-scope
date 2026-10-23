@@ -67,7 +67,7 @@ export const en = {
     'most nerves and vessels follow the Z-Anatomy atlas (CC BY-SA 4.0), fitted onto these jaws: their course is anatomical, but not measured in this individual.',
   provSchematic: 'Schematic',
   provSchematicBody:
-    'the superior alveolar nerves, the inferior alveolar vein, the pterygoid plexus and the joint discs are placed from anatomical landmarks to show relationships, not measured paths.',
+    'the superior alveolar and palatal (greater palatine and nasopalatine) nerves, the inferior alveolar vein, the pterygoid plexus and the joint discs are placed from anatomical landmarks to show relationships, not measured paths.',
   sources: 'Sources for these statements',
   sourcesAria: 'Sources for these statements (opens in a new tab)',
   controlsTitle: 'Controls',

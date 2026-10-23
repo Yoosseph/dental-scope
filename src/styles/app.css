@@ -1295,6 +1295,20 @@ button.ds-layer-name:hover {
 .ds-facts dd {
   margin: 0;
 }
+/* tooth guides: a label above each short paragraph, so long values keep the panel width */
+.ds-guide {
+  margin: 4px 0 0;
+}
+.ds-guide dt {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--faint);
+}
+.ds-guide dd {
+  margin: 1px 0 0;
+  color: var(--ink);
+  opacity: 0.88;
+}
 .ds-detail-block {
   margin-top: 14px;
 }
