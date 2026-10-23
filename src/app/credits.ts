@@ -72,6 +72,7 @@ export const DENTAL: Contributor[] = [
   { name: 'Ghanem Al-Sabaawi', linkedin: 'https://www.linkedin.com/in/ghanem-al-sabaawi-4647372a3/' },
   { name: 'Dunya Omar', linkedin: 'https://www.linkedin.com/in/dunya-omar-9854552b6/' },
   { name: 'Amne Tamimi', linkedin: 'https://www.linkedin.com/in/amne-tamimi-89b284281/' },
+  { name: 'Merna Marcus', linkedin: 'https://www.linkedin.com/in/merna-marcus/' },
 ];
 
 export const creditsPath = (lang: Lang) => lang === 'en' ? 'credits/' : `credits/${lang}/`;
