@@ -1,8 +1,13 @@
 # Dental Scope
 
+[![CI](https://github.com/Yoosseph/dental-scope/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Yoosseph/dental-scope/actions/workflows/ci.yml)
+[![Live site](https://img.shields.io/website?url=https%3A%2F%2Fdental-scope.com&label=dental-scope.com)](https://dental-scope.com/)
+[![Code licence: MIT](https://img.shields.io/badge/code-MIT-blue.svg)](LICENSE)
+[![Content licence: CC BY-SA 4.0](https://img.shields.io/badge/content-CC%20BY--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-sa/4.0/)
+
 **Explore Dental Anatomy in 3D.**
 
-Dental Scope is an open-source, interactive 3D dental anatomy explorer. Start with the whole mouth — jaws, gingiva, the complete permanent dentition, nerves and the temporomandibular joints — and move all the way down to the enamel, dentin, pulp chamber and root canals of a single tooth.
+Dental Scope is an open-source, interactive 3D dental anatomy explorer. Start with the whole mouth (jaws, gingiva, the complete permanent dentition, nerves and the temporomandibular joints) and move all the way down to the enamel, dentin, pulp chamber and root canals of a single tooth.
 
 > Educational anatomical reference. Not intended for diagnosis or treatment.
 
@@ -20,7 +25,7 @@ Dental Scope is an open-source, interactive 3D dental anatomy explorer. Start wi
 - **All 32 permanent teeth**, individually selectable, named anatomically, with **FDI, Universal and Palmer** numbering (switchable).
 - **Inside every tooth:** enamel, coronal and radicular dentin, cementum, periodontal ligament, pulp chamber with pulp horns, and one canal per root in its most common configuration (e.g. MB2 in maxillary first molars, two mesial canals in mandibular first molars). Five dissection levels peel the tooth layer by layer.
 - **Dissection** at two levels: the whole mouth (*Dissect anatomy*: jaws apart, gum and teeth lifted off in clean tiers, bone see-through so the nerves and vessels stay where they run) and a single tooth (*Separate layers*: enamel shell, dentin, pulp and canals apart).
-- **Cross-sections:** sagittal, coronal, axial or view-aligned planes; inside a tooth they switch to mesiodistal, buccolingual and horizontal. Cut surfaces render as solid tissue, so enamel thickness, dentin and pulp read clearly — across all 32 teeth at once.
+- **Cross-sections:** sagittal, coronal, axial or view-aligned planes; inside a tooth they switch to mesiodistal, buccolingual and horizontal. Cut surfaces render as solid tissue, so enamel thickness, dentin and pulp read clearly, across all 32 teeth at once.
 - **Search** by name, tooth number in any system (`11`, `#8`, `UR6`, `fdi 36`), tissue, synonym (`gums`, `wisdom tooth`, `IAN`, `cuspid`).
 - **Layers** for 19 dental categories with show, show-only, translucent and hide; plus hide/ghost/isolate per structure and a full hierarchy tree.
 - **Premium camera:** arcing focus transitions, bounding-box framing, eight view presets including occlusal views, optical centre that stays clear of panels.
@@ -84,7 +89,7 @@ tools/pipeline/   BodyParts3D → production GLB
 ```
 
 - React renders the chrome; the engine owns Three.js and subscribes to the store. Nothing re-renders React per frame.
-- One pure function decides every mesh's visibility (categories, hide/ghost, isolation, dissection level, section) and accepts extra filters — the hook for future timeline and procedure modes.
+- One pure function decides every mesh's visibility (categories, hide/ghost, isolation, dissection level, section) and accepts extra filters: the hook for future timeline and procedure modes.
 - Loading is staged: jaws & teeth → skull & muscles → nerves & vessels → a tooth's internals on demand.
 
 Details and a handoff guide (commands, runtime flows, where to start): [docs/architecture.md](docs/architecture.md). Data research: [docs/dental-data-research.md](docs/dental-data-research.md).
