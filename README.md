@@ -4,6 +4,9 @@
 [![Live site](https://img.shields.io/website?url=https%3A%2F%2Fdental-scope.com&label=dental-scope.com)](https://dental-scope.com/)
 [![Code licence: MIT](https://img.shields.io/badge/code-MIT-blue.svg)](LICENSE)
 [![Content licence: CC BY-SA 4.0](https://img.shields.io/badge/content-CC%20BY--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-sa/4.0/)
+[![3D models licence: CC BY-SA 2.1 JP](https://img.shields.io/badge/3D%20models-CC%20BY--SA%202.1%20JP-lightgrey.svg)](https://creativecommons.org/licenses/by-sa/2.1/jp/deed.en)
+[![Content status: draft, pending expert review](https://img.shields.io/badge/content-draft%2C%20pending%20expert%20review-orange.svg)](docs/content.md)
+[![Dental reviewers wanted](https://img.shields.io/badge/dental%20reviewers-wanted-brightgreen.svg)](CONTRIBUTING.md#content-contributions)
 
 **Explore Dental Anatomy in 3D.**
 
@@ -116,7 +119,7 @@ Actionable follow-ups from dental feedback: [feedback TODOs](docs/feedback-todos
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Reviews of the anatomical text by dental professionals are especially welcome.
+See [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md). Reviews of the anatomical text by dental professionals are especially welcome.
 
 ## Licence
 
