@@ -60,4 +60,4 @@ Please include browser, device, steps to reproduce and a screenshot. For anatomi
 
 ## Code of conduct
 
-Be kind, assume good faith, and keep discussion focused on making dental education better.
+Be kind, assume good faith, and keep discussion focused on making dental education better. This project follows the [Contributor Covenant](CODE_OF_CONDUCT.md); please read it before taking part.
