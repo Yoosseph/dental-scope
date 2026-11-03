@@ -1,5 +1,6 @@
 # Dental Scope
 
+[![Ownit](https://ownit.ownit-worker.workers.dev/badge/Yoosseph/dental-scope.svg)](https://ownit.ownit-worker.workers.dev/Yoosseph/dental-scope)
 [![CI](https://github.com/Yoosseph/dental-scope/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Yoosseph/dental-scope/actions/workflows/ci.yml)
 [![Live site](https://img.shields.io/website?url=https%3A%2F%2Fdental-scope.com&label=dental-scope.com)](https://dental-scope.com/)
 [![Code licence: MIT](https://img.shields.io/badge/code-MIT-blue.svg)](LICENSE)
