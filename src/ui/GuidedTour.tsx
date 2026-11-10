@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
-import { FIRST_VISIT_TOOTH, FIRST_VISIT_TOUR, needsFirstVisitGuide, playTour, rememberGuideVisit, tourDelay } from '../app/tour';
+import { FIRST_VISIT_TOUR, needsFirstVisitGuide, playTour, rememberGuideVisit, tourDelay } from '../app/tour';
 import { navigate } from '../app/router';
 import { isCompactLayout } from '../app/viewport';
 import { DEVELOPMENT_SOURCES } from '../content/developmentAnatomy';
@@ -114,10 +114,6 @@ export function GuidedTour() {
     card.current?.querySelector<HTMLButtonElement>('button')?.focus();
 
     const demonstrate = async () => {
-      // Preload before any asynchronous selection. Closing during loading cannot select a tooth later.
-      // The abortable race also lets the overlay unmount promptly on a slow connection.
-      await Promise.race([engine.ensureTooth(FIRST_VISIT_TOOTH), tourDelay(30000, signal).then(() => { throw new Error('Tooth loading timed out'); })]);
-      signal.throwIfAborted();
       while (!getState().ready && !getState().error) await tourDelay(100, signal);
       if (getState().error) throw new Error('Scene loading failed');
       let expandedDetail = false;
@@ -125,6 +121,8 @@ export function GuidedTour() {
         paused: () => pauseRef.current || document.hidden,
         speed: () => speedRef.current,
         showStep: (nextStep, next) => { setIndex(next); setStatus('playing'); if (!nextStep.target) setMark(null); },
+        // The abortable race lets the overlay unmount promptly on a slow connection.
+        loadTooth: fdi => Promise.race([engine.ensureTooth(fdi), tourDelay(30000, signal).then(() => { throw new Error('Tooth loading timed out'); })]),
         prepare: next => {
           expandedDetail = isCompactLayout() && next.detailExpanded === true;
           if (next.panel) {
