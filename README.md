@@ -39,7 +39,7 @@ Dental Scope is an open-source, interactive 3D dental anatomy explorer. Start wi
 - **English, Swedish, German, Spanish and Latin:** switch with the flags at the top (Latin has no country, so it gets a Roman SPQR vexillum). Everything is translated by hand, including anatomical names, descriptions, search terms and the about page (`/about/sv/`, `/about/de/`, `/about/es/`, `/about/la/`). Add `?lang=sv`, `de`, `es` or `la` to a link to open it in that language. Latin uses Terminologia Anatomica names and a Neo-Latin interface. Translations live in `src/i18n/` and `src/content/<lang>/`.
 - **Honest data:** every structure shows whether it is *source*, *derived*, *modeled*, *atlas* or *schematic* geometry; all text shows its review status.
 - **Responsive** (bottom sheets on phones), **keyboard-accessible** (tree view, shortcuts, focus rings), **reduced-motion** aware, light and dark themes.
-- **Fast:** ≈2.3 MB of geometry for first paint, the rest streams in; ≈367 KB per tooth's internal anatomy on average, loaded on demand; render-on-demand loop.
+- **Fast:** ≈3.4 MB of compressed geometry for first paint, the rest streams in; ≈330 KB per tooth's internal anatomy on average, loaded on demand; render-on-demand loop.
 
 The dental feedback additions include nerve passage views, a Nerves & muscles transparency preset, sourced canal-count tables for every permanent tooth type, additional cranial nerves and an illustrative TMJ opening control. Scope, sources and the server review checklist are in [docs/feedback-anatomy.md](docs/feedback-anatomy.md).
 
