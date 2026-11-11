@@ -77,8 +77,6 @@ const STAGES = [
   { id: 'neurovascular', file: 'neurovascular.glb' },
 ] as const;
 
-const EXEMPLAR_TOOTH = 36;
-
 /** Phase-2 board: gap between laid-out parts (cm) and framing margins (height, width). */
 const BOARD_GAP = 0.35;
 const BOARD_MARGIN = { h: 1.5, w: 1.45 };
@@ -297,9 +295,6 @@ export class Engine {
         this.refreshAll();
         await nextFrame();
       }
-      // idle prefetch of the detailed exemplar tooth
-      const idle = (window as unknown as { requestIdleCallback?: (cb: () => void) => void }).requestIdleCallback ?? ((cb: () => void) => setTimeout(cb, 600));
-      idle(() => { if (!this.disposed) void this.ensureTooth(EXEMPLAR_TOOTH).catch(() => {}); });
     } catch (e) {
       console.error(e);
       setState({ error: 'load' }); // shown translated by the loading card

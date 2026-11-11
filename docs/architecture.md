@@ -171,7 +171,7 @@ The pipeline (details in [assets.md](assets.md)): BodyParts3D STL → `tools/pip
 | 1 | `core.glb` | Jaws, gingiva, 32 tooth shells | Immediately (`ready` after this) |
 | 2 | `context.glb` | Skull context, muscles, TMJ | Next |
 | 3 | `neurovascular.glb` | Nerves and vessels (atlas and schematic) | Next |
-| 4 | `teeth/tooth-XX.glb` | One tooth's internal layers | On demand (`ensureTooth`): dissection, search hit, deep link. Turning a section on in the overview loads all 32 (`ensureAllTeeth`, progress under `loading.teeth`). Tooth 36 is prefetched when idle. |
+| 4 | `teeth/tooth-XX.glb` | One tooth's internal layers | On demand (`ensureTooth`): dissection, search hit, deep link. Turning a section on in the overview loads all 32 (`ensureAllTeeth`, progress under `loading.teeth`). Nothing is prefetched: the first-visit guide loads tooth 36 when it reaches the tooth step. |
 
 ## 8. Anatomy, content and search
 

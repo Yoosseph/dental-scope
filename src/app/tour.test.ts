@@ -6,7 +6,7 @@ import { FIRST_VISIT_TOUR, GUIDE_VISIT_KEY, needsFirstVisitGuide, playTour, reme
 
 const step: TourStep = { id: 'example', target: 'button', action: 'click', hold: 400 };
 const port = (): TourPlayback => ({
-  paused: () => false, showStep: vi.fn(), prepare: vi.fn(), locate: () => true,
+  paused: () => false, showStep: vi.fn(), prepare: vi.fn(), loadTooth: vi.fn(() => Promise.resolve()), locate: () => true,
   point: vi.fn(), activate: vi.fn(), settled: () => true, clearPointer: vi.fn(),
 });
 
@@ -57,6 +57,31 @@ describe('scripted tour playback', () => {
     await vi.runAllTimersAsync();
     await playing;
     expect(playback.activate).toHaveBeenCalledExactlyOnceWith(step);
+  });
+
+  it('loads a tooth only when its step is reached, before pointing at the control', async () => {
+    const playback = port();
+    let finishLoad = () => {};
+    playback.loadTooth = vi.fn(() => new Promise<void>((resolve) => { finishLoad = resolve; }));
+    const playing = playTour([step, { ...step, id: 'tooth', target: 'result', loadTooth: 36 }], playback, new AbortController().signal);
+    await vi.advanceTimersByTimeAsync(650);
+    expect(playback.point).toHaveBeenCalledWith('button', true);
+    expect(playback.loadTooth).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(400);
+    expect(playback.loadTooth).toHaveBeenCalledExactlyOnceWith(36);
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(playback.point).not.toHaveBeenCalledWith('result', false);
+    finishLoad();
+    await vi.runAllTimersAsync();
+    await playing;
+    expect(playback.point).toHaveBeenCalledWith('result', true);
+  });
+
+  it('downloads the first-visit tooth no earlier than the step that selects it', () => {
+    const loading = FIRST_VISIT_TOUR.findIndex((s) => s.loadTooth !== undefined);
+    const selecting = FIRST_VISIT_TOUR.findIndex((s) => s.waitFor?.selectedId?.startsWith('tooth-'));
+    expect(loading).toBe(selecting);
+    expect(FIRST_VISIT_TOUR.filter((s) => s.loadTooth !== undefined)).toHaveLength(1);
   });
 
   it('reports a missing control so the UI can offer retry or exploration', async () => {

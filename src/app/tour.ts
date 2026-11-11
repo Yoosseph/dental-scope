@@ -10,6 +10,8 @@ export interface TourStep {
   hold: number;
   /** Existing, sourced educational content accompanies these steps. */
   development?: 'primary' | 'early-mixed';
+  /** Fetch this tooth's internal layers before the step points at anything; visitors who close the guide earlier never download it. */
+  loadTooth?: number;
   waitFor?: { selectedId?: string; dissectFdi?: number; asset?: string; explode?: number; surfaceFeatures?: boolean };
 }
 
@@ -24,7 +26,7 @@ export const FIRST_VISIT_TOUR: readonly TourStep[] = [
   { id: 'teeth', target: 'preset-dentition', action: 'click', panel: 'layers', hold: 1000 },
   { id: 'search', target: 'search', action: 'click', hold: 1200 },
   { id: 'query', target: 'search-input', action: 'search', value: `fdi ${FIRST_VISIT_TOOTH}`, hold: 1100 },
-  { id: 'tooth', target: `result-tooth-${FIRST_VISIT_TOOTH}`, action: 'click', waitFor: { selectedId: `tooth-${FIRST_VISIT_TOOTH}` }, hold: 2000 },
+  { id: 'tooth', target: `result-tooth-${FIRST_VISIT_TOOTH}`, action: 'click', loadTooth: FIRST_VISIT_TOOTH, waitFor: { selectedId: `tooth-${FIRST_VISIT_TOOTH}` }, hold: 2000 },
   { id: 'details', target: 'tooth-details', panel: 'detail', detailExpanded: true, hold: 2800 },
   { id: 'surfaces', target: 'surface-features-toggle', action: 'click', panel: 'detail', detailExpanded: false, waitFor: { dissectFdi: FIRST_VISIT_TOOTH, surfaceFeatures: true }, hold: 3500 },
   { id: 'surface-feature', target: `surface-central-groove-${FIRST_VISIT_TOOTH}`, action: 'click', panel: 'detail', waitFor: { selectedId: `surface-central-groove-${FIRST_VISIT_TOOTH}` }, hold: 2400 },
@@ -48,6 +50,7 @@ export interface TourPlayback {
   speed?: () => number;
   showStep: (step: TourStep, index: number) => void;
   prepare: (step: TourStep) => void;
+  loadTooth: (fdi: number) => Promise<void>;
   locate: (target: string) => boolean;
   point: (target: string, clicking: boolean) => void;
   activate: (step: TourStep) => void;
@@ -97,6 +100,11 @@ export async function playTour(steps: readonly TourStep[], port: TourPlayback, s
     port.clearPointer();
     if (!rebuilding) port.showStep(step, index);
     port.prepare(step);
+    // Loaded before any asynchronous selection, so closing during loading cannot select a tooth later.
+    if (step.loadTooth !== undefined) {
+      await port.loadTooth(step.loadTooth);
+      signal.throwIfAborted();
+    }
     if (step.target) {
       await until(() => port.locate(step.target!), seeking);
       if (!rebuilding) {
