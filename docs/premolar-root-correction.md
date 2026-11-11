@@ -28,16 +28,15 @@ Selective rebuild (from the repository root):
 
 ```sh
 python tools/pipeline/refresh_morphology.py --bp3d tools/pipeline/raw/stl --out tools/pipeline/.cache/premolar-roots --only 15,25
-# Optional if the native Python simplifier cannot load:
-node tools/pipeline/simplify_morphology.mjs tools/pipeline/.cache/premolar-roots
 node tools/pipeline/refresh_morphology.mjs tools/pipeline/.cache/premolar-roots
 ```
 
-The portable simplifier uses the existing meshoptimizer dependency, keeps shell
-vertices unchanged, limits relative tissue surface error to 0.001, and rejects
-open, inconsistently oriented, or non-positive-volume results. On this Windows
-host the native Python simplifier was blocked by application control, so this
-portable path was used. No application-control settings were changed.
+On this Windows host the native Python simplifier was blocked by application
+control, so the correction originally used the portable `simplify_morphology.mjs`.
+That path left the shells and thin tissues far over their triangle budgets.
+`refresh_morphology.py` now needs the native simplifier, so run it in WSL instead
+(see [triangle budgets](assets.md#triangle-budgets)). No application-control
+settings were changed.
 
 Verification of the final decoded compressed assets: 15/25 each have one contour
 at 35%, 55%, 75%, and 90% root depth; 14/24 retain two contours at the latter

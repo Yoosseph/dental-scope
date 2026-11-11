@@ -265,14 +265,14 @@ def main():
         if f in layers:
             L = layers[f]
             relief = CrownRelief(m, L.frame, arch, ttype, L.cej_height)
-            refined = finalize(relief.refine(m), 20000)
-            L.meshes['enamel'] = finalize(relief.enamel(L.meshes['enamel'], m), 16000)
+            refined = finalize(relief.refine(m), 20000, f'tooth-{f}')
+            L.meshes['enamel'] = finalize(relief.enamel(L.meshes['enamel'], m), 16000, f'enamel-{f}')
             for key, mesh in L.meshes.items():
                 if key != 'enamel': mesh.vertices = relief.deform(mesh.vertices)
             L.landmarks = {key: relief.deform(np.array([point]))[0] for key, point in L.landmarks.items()}
             features = relief.annotations(refined)
             m, prov = refined, 'schematic'
-        add("core", f"tooth-{f}", finalize(m, 20000), prov, TEETH_FMA[f])
+        add("core", f"tooth-{f}", finalize(m, 20000, f'tooth-{f}'), prov, TEETH_FMA[f])
         fr = frames[f]
         info = dict(arch=arch, side=side, type=ttype, provenance=prov,
                     frame=dict(origin=S.p(fr.origin).round(4).tolist(), axis=S.d(fr.axis).round(4).tolist(),
@@ -624,7 +624,7 @@ def main():
         sc = trimesh.Scene()
         for name, m in L.meshes.items():
             key = f"{name}-{f}"
-            m = finalize(m, 16000)
+            m = finalize(m, 16000, key)
             ma = S.mesh(m)
             sc.add_geometry(ma, node_name=key, geom_name=key)
             register(key, ma, 4, f"teeth/tooth-{f}.glb", "schematic")

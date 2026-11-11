@@ -5,6 +5,7 @@ Doctoropsy's tooth morphology teaching. These coefficients/placements are
 schematic, not measurements. Roots and the modeled cervical margin are retained.
 See docs/student-feedback-implementation.md for sources and limitations.
 """
+import sys
 import numpy as np
 import trimesh
 from geometry import smooth_taubin, orient_outward, decimate, fast_simplification
@@ -13,21 +14,62 @@ from tooth_layers import TYPE_PARAMS, cervical_height
 FACIAL_KEYS = {'labial-ridge', 'buccal-ridge'}
 
 
-def finalize(mesh, budget):
-    """Never exchange a closed tissue solid for an open simplification."""
+def closed_solid(mesh):
+    return mesh.is_watertight and mesh.is_winding_consistent and mesh.volume > 0
+
+
+def finalize(mesh, budget, name='mesh'):
+    """Simplify a closed tissue solid to its triangle budget, never to an open one.
+
+    Without the native simplifier nothing can be reduced, so this fails instead
+    of shipping full-resolution meshes (see docs/assets.md, triangle budgets).
+    """
+    if len(mesh.faces) <= budget:
+        return mesh
+    if fast_simplification is None:
+        raise RuntimeError(f'{name}: fast-simplification is unavailable, so {len(mesh.faces)} triangles cannot be '
+                           f'reduced to {budget}. Install tools/pipeline/requirements.txt (on Windows, run the pipeline in WSL).')
+    def fits(trial):  # the simplifier can stop early, well short of the target
+        return len(trial.faces) <= budget and closed_solid(trial)
     reduced = decimate(mesh, budget)
-    if reduced.is_watertight and reduced.is_winding_consistent and reduced.volume > 0:
+    if fits(reduced):
         return reduced
-    if fast_simplification is not None:
-        for aggression in (3., 1., 0.):
-            v, f = fast_simplification.simplify(np.asarray(mesh.vertices, np.float32), np.asarray(mesh.faces, np.int32),
-                                               target_count=budget, agg=aggression, preserve_border=True)
-            trial = orient_outward(trimesh.Trimesh(v, f, process=False))
-            if trial.is_watertight and trial.is_winding_consistent and trial.volume > 0:
-                return trial
-    # Thin root walls can collapse under aggressive simplification. Keeping the
-    # closed input is preferable to filling anatomical holes after the fact.
+    for aggression in (3., 1., 0.):
+        v, f = fast_simplification.simplify(np.asarray(mesh.vertices, np.float32), np.asarray(mesh.faces, np.int32),
+                                           target_count=budget, agg=aggression, preserve_border=True)
+        trial = orient_outward(trimesh.Trimesh(v, f, process=False))
+        if fits(trial):
+            return trial
+    # Edge collapse pinches thin root walls (cementum, PDL, radicular dentin) to
+    # non-manifold edges. Manifold's simplify only makes collapses that keep the
+    # solid manifold; take the smallest tolerance that fits the budget.
+    trial = manifold_simplify(mesh, budget)
+    if trial is not None:
+        return trial
+    # Keeping the closed input is preferable to filling anatomical holes after
+    # the fact, but it is over budget, so say so; the asset build rejects it.
+    print(f'WARNING {name}: no closed simplification reached {budget} triangles; '
+          f'keeping {len(mesh.faces)} unsimplified', file=sys.stderr, flush=True)
     return mesh
+
+
+def manifold_simplify(mesh, budget, max_tolerance=0.1):
+    """Closed simplification within budget, or None. Tolerances are in mm; 0.1 is
+    about the 0.09 mm voxel the tissue layers are meshed from, so no coarser."""
+    import manifold3d
+    solid = manifold3d.Manifold(manifold3d.Mesh(np.asarray(mesh.vertices, np.float32), np.asarray(mesh.faces, np.uint32)))
+    if solid.status() != manifold3d.Error.NoError:
+        return None
+    tolerance = 0.005
+    while tolerance <= max_tolerance:
+        out = solid.simplify(tolerance)
+        if out.num_tri() <= budget:
+            result = out.to_mesh()
+            trial = orient_outward(trimesh.Trimesh(np.asarray(result.vert_properties[:, :3], float), np.asarray(result.tri_verts), process=False))
+            if closed_solid(trial) and abs(trial.volume / mesh.volume - 1) < 0.02:
+                return trial
+        tolerance *= 1.25
+    return None
 
 
 def ramp(x, a, b):

@@ -30,6 +30,7 @@ def main():
     from geometry import decimate
     from build_assets import tooth_info
     report = []
+    over_budget = []
     for f, source in sorted(teeth.items()):
         if only and f not in only:
             continue
@@ -68,7 +69,8 @@ def main():
         for key, mesh in layers.meshes.items():
             if key == 'enamel': continue
             meshes[key] = __import__('trimesh').Trimesh(relief.deform(mesh.vertices), mesh.faces.copy(), process=False)
-        meshes = {key: finalize(mesh, 20000 if key == 'tooth' else 16000) for key, mesh in meshes.items()}
+        meshes = {key: finalize(mesh, budget(key), f'{key}-{f}') for key, mesh in meshes.items()}
+        over_budget += [f'{key}-{f}: {len(mesh.faces)} > {budget(key)}' for key, mesh in meshes.items() if len(mesh.faces) > budget(key)]
         for key, mesh in meshes.items():
             if not mesh.is_watertight or not mesh.is_winding_consistent or mesh.volume <= 0 or not np.isfinite(mesh.vertices).all():
                 raise ValueError(f'{key}-{f}: invalid final closed solid')
@@ -91,6 +93,13 @@ def main():
         root_note = 'schematic single root' if f in (15, 25) else 'source roots preserved'
         print(f'{f}: {len(features)} surface features; {root_note}', flush=True)
     (args.out / 'validation.json').write_text(json.dumps(report, indent=2))
+    if over_budget:
+        raise SystemExit('Tooth meshes over their triangle budget (src/anatomy/triangleBudgets.ts):\n' + '\n'.join(over_budget))
+
+
+def budget(key):
+    """Matches TOOTH_SHELL_BUDGET / TOOTH_LAYER_BUDGET in src/anatomy/triangleBudgets.ts."""
+    return 20000 if key == 'tooth' else 16000
 
 
 if __name__ == '__main__':
