@@ -9,6 +9,7 @@ import { GUIDE_PAGES, GUIDE_REDIRECTS, guideHtml } from './src/app/guide.ts';
 import { Registry } from './src/anatomy/registry.ts';
 import type { Manifest } from './src/anatomy/types.ts';
 import { descriptionGaps } from './src/content/descriptionCoverage.ts';
+import { triangleBudgetGaps } from './src/anatomy/triangleBudgets.ts';
 
 const base = process.env.DS_BASE ?? '/';
 /** Absolute public URL of the deployed site (e.g. https://user.github.io/dental-scope/); enables canonical URLs and the sitemap. */
@@ -33,9 +34,11 @@ function seo(): Plugin {
   return {
     name: 'dental-scope-seo',
     buildStart() {
-      const registry = new Registry(JSON.parse(readFileSync('public/models/manifest.json', 'utf8')) as Manifest);
-      const gaps = descriptionGaps(registry);
+      const manifest = JSON.parse(readFileSync('public/models/manifest.json', 'utf8')) as Manifest;
+      const gaps = descriptionGaps(new Registry(manifest));
       if (gaps.length) throw new Error(`Missing anatomy descriptions:\n${gaps.join('\n')}`);
+      const heavy = triangleBudgetGaps(manifest);
+      if (heavy.length) throw new Error(`Tooth meshes over their triangle budget:\n${heavy.join('\n')}`);
     },
     configResolved(config) {
       outDir = resolve(config.root, config.build.outDir);
