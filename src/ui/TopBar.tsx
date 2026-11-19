@@ -7,16 +7,19 @@ import { MODES, QUIZ_MODE, switchMode } from '../modes/modes';
 import { useServices } from './context';
 import { IconClose, IconExternal, IconInfo, IconMoon, IconSearch, IconSun, IconPlay, IconChevron } from './icons';
 import { TOUR_TEXT } from '../i18n/tour';
+import { CONTACT_TEXT } from '../i18n/contact';
 import { LanguageSwitcher } from './LanguageSwitcher';
 
 export function Identity() {
   const m = useT();
+  const contact = CONTACT_TEXT[useApp((s) => s.lang)];
   return (
     <>
       <header className="ds-identity">
         <h1 className="ds-title">Dental Scope</h1>
         <p className="ds-credit">
           <button type="button" aria-haspopup="dialog" onClick={() => actions.openCredits(true)}>{m.credits}</button>
+          <button type="button" className="ds-credit-feedback" aria-haspopup="dialog" title={contact.openAria} onClick={() => actions.openContact(true)}>{contact.open}</button>
           {REPO_URL && (
             <a href={REPO_URL} target="_blank" rel="noopener noreferrer" aria-label={m.supportRepoAria}>
               {m.supportRepo}

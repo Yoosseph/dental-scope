@@ -14,6 +14,7 @@ import { useKeyboard } from './useKeyboard';
 import { useViewportInsets } from './useViewportInsets';
 import { GuidedTour } from './GuidedTour';
 import { CreditsDialog } from './CreditsDialog';
+import { ContactDialog } from './ContactDialog';
 import { QuizMode } from './QuizMode';
 import { EXPLORE_MODE, QUIZ_MODE, switchMode } from '../modes/modes';
 
@@ -92,6 +93,7 @@ export function App() {
       {!quiz && <SearchPanel />}
       <AboutDialog />
       <CreditsDialog />
+      <ContactDialog />
       <GuidedTour />
     </div>
   );

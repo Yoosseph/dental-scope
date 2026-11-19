@@ -2226,6 +2226,35 @@ button.ds-layer-name:hover {
 .ds-credits-links a { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: var(--radius-sm); }
 .ds-credits-links a:hover { background: var(--hover); }
 .ds-credits .ds-credits-thanks { margin: 26px 0 0; font-size: 14px; font-weight: 600; color: var(--ink); }
+/* feedback form */
+.ds-contact-form { display: grid; gap: 12px; margin-top: 4px; }
+.ds-contact-form > p { margin: 0; }
+.ds-contact-kinds { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0; padding: 0; border: 0; }
+.ds-contact-kinds legend { width: 100%; margin-bottom: 6px; padding: 0; font-size: 13px; font-weight: 600; color: var(--ink); }
+.ds-contact-kinds label { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); cursor: pointer; }
+.ds-contact-kinds input { accent-color: var(--accent); }
+.ds-contact-field { display: grid; gap: 4px; font-size: 13px; font-weight: 600; color: var(--ink); }
+.ds-contact-field input,
+.ds-contact-field textarea {
+  width: 100%;
+  padding: 8px 10px;
+  font: inherit;
+  font-weight: 400;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+.ds-contact-field textarea { resize: vertical; min-height: 120px; }
+.ds-contact-field input:focus-visible,
+.ds-contact-field textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+.ds-contact-field small { font-weight: 400; font-size: 11.5px; color: var(--faint); }
+.ds-contact-hp { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }
+.ds-about .ds-contact-note { margin: 0; font-size: 11.5px; color: var(--faint); }
+.ds-about .ds-contact-error { margin: 0; color: var(--ink); font-size: 13px; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--accent-soft); }
+.ds-contact-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 16px; }
+.ds-contact-actions a { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; }
+.ds-contact-done { display: grid; justify-items: start; gap: 12px; }
 .ds-about h2 {
   margin: 0 0 8px;
   font-family: var(--font-display);
@@ -3009,6 +3038,8 @@ button.ds-layer-name:hover {
   .ds-identity { top: calc(16px + var(--safe-top)); left: calc(10px + var(--safe-left)); }
   .ds-title { font-size: 18px; }
   .ds-footer { display: none; }
+  /* no room beside the top actions; phones reach the form from the About dialog */
+  .ds-credit .ds-credit-feedback { display: none; }
   .ds-top-actions { top: calc(8px + var(--safe-top)); right: calc(8px + var(--safe-right)); gap: 4px; }
   .ds-top-actions .ds-lang { display: none; }
   .ds-lang-select {
