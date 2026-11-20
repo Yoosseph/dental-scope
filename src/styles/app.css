@@ -2253,6 +2253,8 @@ button.ds-layer-name:hover {
 .ds-about .ds-contact-note { margin: 0; font-size: 11.5px; color: var(--faint); }
 .ds-about .ds-contact-error { margin: 0; color: var(--ink); font-size: 13px; padding: 8px 10px; border-radius: var(--radius-sm); background: var(--accent-soft); }
 .ds-contact-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 16px; }
+.ds-contact-actions .ds-primary,
+.ds-contact-done .ds-primary { flex: none; padding: 0 22px; }
 .ds-contact-actions a { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; }
 .ds-contact-done { display: grid; justify-items: start; gap: 12px; }
 .ds-about h2 {
