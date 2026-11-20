@@ -22,6 +22,19 @@ export const IconCheck = (p: P) => (
     <path d="m6 12.5 4 4 8-9" />
   </Svg>
 );
+export const IconMessage = (p: P) => (
+  <Svg {...p}>
+    <path d="M5 5.5h14a1.5 1.5 0 0 1 1.5 1.5v8.5A1.5 1.5 0 0 1 19 17h-8l-4.5 3.5V17H5a1.5 1.5 0 0 1-1.5-1.5V7A1.5 1.5 0 0 1 5 5.5Z" />
+    <path d="M8 10h8M8 13h5" />
+  </Svg>
+);
+export const IconUsers = (p: P) => (
+  <Svg {...p}>
+    <circle cx="9" cy="8.5" r="3" />
+    <path d="M3.5 19c.6-3 2.8-4.8 5.5-4.8s4.9 1.8 5.5 4.8" />
+    <path d="M15.5 5.8a3 3 0 0 1 0 5.4M17 14.6c1.8.6 3 2.1 3.5 4.4" />
+  </Svg>
+);
 export const IconClose = (p: P) => (
   <Svg {...p}>
     <path d="M6 6l12 12M18 6 6 18" />

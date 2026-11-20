@@ -10,7 +10,7 @@ export const sv: Messages = {
   loadError: '3D-anatomin kunde inte laddas. Kontrollera din anslutning och ladda om sidan.',
 
   credits: 'Medverkande',
-  supportRepo: 'Stöd projektet',
+  supportRepo: 'GitHub',
   supportRepoAria: 'Stöd Dental Scope på GitHub (öppnas i en ny flik)',
   numberingGroup: 'Tandnumreringssystem',
   numberingTitle: (system) => `Tandnumrering enligt ${system}`,

@@ -15,7 +15,7 @@ export const en = {
 
   /* top bar */
   credits: 'Credits',
-  supportRepo: 'Support repo',
+  supportRepo: 'GitHub',
   supportRepoAria: 'Support Dental Scope on GitHub (opens in a new tab)',
   numberingGroup: 'Tooth numbering system',
   numberingTitle: (system: string) => `${system} tooth numbering`,

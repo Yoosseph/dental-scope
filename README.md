@@ -75,7 +75,7 @@ Every build also writes a text-first guide page for every tooth and structure in
 
 ### Feedback form
 
-The **Feedback** link (header on desktop, About dialog on phones) opens a short form. It posts to `api/contact.ts`, a Vercel function that emails the message through [Resend](https://resend.com). The repository holds no secrets: the function reads these environment variables, set in the Vercel project (Settings → Environment Variables), not in GitHub:
+The **Feedback** button under the title (also linked from the About dialog) opens a short form. It posts to `api/contact.ts`, a Vercel function that emails the message through [Resend](https://resend.com). The repository holds no secrets: the function reads these environment variables, set in the Vercel project (Settings → Environment Variables), not in GitHub:
 
 | Variable | Required | Value |
 | --- | --- | --- |

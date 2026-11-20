@@ -10,7 +10,7 @@ export const la: Messages = {
   loadError: 'Anatomia tridimensionalis onerari non potuit. Conexionem inspice et paginam renova.',
 
   credits: 'Collaboratores',
-  supportRepo: 'Adiuva proiectum',
+  supportRepo: 'GitHub',
   supportRepoAria: 'Adiuva Dental Scope in GitHub (in nova tabula aperitur)',
   numberingGroup: 'Ratio numerandi dentes',
   numberingTitle: (system: string) => `Numeratio dentium ${system}`,
