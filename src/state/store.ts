@@ -98,6 +98,8 @@ export interface AppState {
   aboutOpen: boolean;
   controlsOpen: boolean;
   creditsOpen: boolean;
+  /** feedback form dialog */
+  contactOpen: boolean;
   panel: 'layers' | 'tree';
   mobileSheet: 'none' | 'layers' | 'detail' | 'tools';
   theme: 'light' | 'dark';
@@ -150,6 +152,7 @@ export const initialState: AppState = {
   aboutOpen: false,
   controlsOpen: false,
   creditsOpen: false,
+  contactOpen: false,
   panel: 'layers',
   mobileSheet: 'none',
   theme: 'light', // light by default; users can switch to dark (choice is remembered)
@@ -409,7 +412,10 @@ export const actions = {
     setState(open ? { controlsOpen: true, aboutOpen: false } : { controlsOpen: false });
   },
   openCredits(open: boolean) {
-    setState(open ? { creditsOpen: true, aboutOpen: false, controlsOpen: false, searchOpen: false, guideOpen: false } : { creditsOpen: false });
+    setState(open ? { creditsOpen: true, contactOpen: false, aboutOpen: false, controlsOpen: false, searchOpen: false, guideOpen: false } : { creditsOpen: false });
+  },
+  openContact(open: boolean) {
+    setState(open ? { contactOpen: true, creditsOpen: false, aboutOpen: false, controlsOpen: false, searchOpen: false, guideOpen: false } : { contactOpen: false });
   },
   setPanel(p: AppState['panel']) {
     setState({ panel: p });
@@ -446,6 +452,7 @@ export const actions = {
       aboutOpen: false,
       controlsOpen: false,
       creditsOpen: false,
+      contactOpen: false,
       guideOpen: false,
       guideCollapsed: false,
       mobileSheet: 'none',

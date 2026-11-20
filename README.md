@@ -73,6 +73,18 @@ Set `DS_SITE_URL` to the public address of the deployment (e.g. `https://user.gi
 
 Every build also writes a text-first guide page for every tooth and structure in all five languages: English at the root (`teeth/36-mandibular-left-first-molar/`), the others under `sv/`, `de/`, `es/` and `la/` with translated slugs (`sv/tander/36-vanster-forsta-molar-i-underkaken/`). A guide page stays `noindex` until its own text reaches 150 words (`MIN_INDEX_WORDS` in `src/app/guide.ts`); only indexable pages go into `sitemap.xml`, with hreflang links between their language versions. Once a tooth's English guide page is indexable, the matching explorer entry page (`tooth/36/`) leaves the index so the two don't compete. Vercel preview deployments (or any build with `DS_PREVIEW=1`) are `noindex` everywhere and `robots.txt` blocks all crawlers.
 
+### Feedback form
+
+The **Feedback** link (header on desktop, About dialog on phones) opens a short form. It posts to `api/contact.ts`, a Vercel function that emails the message through [Resend](https://resend.com). The repository holds no secrets: the function reads these environment variables, set in the Vercel project (Settings → Environment Variables), not in GitHub:
+
+| Variable | Required | Value |
+| --- | --- | --- |
+| `RESEND_API_KEY` | yes | A Resend API key (`re_…`). A *sending access* key limited to the sending domain is enough. |
+| `CONTACT_TO_EMAIL` | yes | The address that receives the messages. |
+| `CONTACT_FROM_EMAIL` | no | Sender on a domain verified in Resend, e.g. `feedback@dental-scope.com`. A bare address is shown as `Dental Scope <…>`. Defaults to Resend's test sender `onboarding@resend.dev`, which only delivers to the Resend account's own address. |
+
+Every email has the sender name *Dental Scope*, a subject starting with `[Dental Scope]` and the Resend tag `source: dental-scope`; replies go to the visitor's address when they give one. Without `RESEND_API_KEY` and `CONTACT_TO_EMAIL` (forks, `npm run preview`, other hosts) the endpoint answers `503` and the form links to GitHub issues instead. The function checks the origin, validates and escapes the input, drops honeypot submissions and rate limits bursts per instance.
+
 ### Keyboard
 
 `/` search · `Esc` clear / leave tooth · `F` focus · `I` isolate · `H` hide · `G` ghost · `D` inside tooth · `[` `]` dissection level · `E` dissect anatomy / separate tooth layers · `C` section · `L` labels · arrows orbit · `+` `−` zoom · `R` reset

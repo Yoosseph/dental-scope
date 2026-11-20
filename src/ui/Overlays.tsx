@@ -7,6 +7,7 @@ import { interfaceText } from '../i18n/interface';
 import { nameOf } from '../i18n';
 import { useServices } from './context';
 import { navigate } from '../app/router';
+import { CONTACT_TEXT } from '../i18n/contact';
 
 /** Loading stages, in order (their names are in the messages, `stage`). */
 const STAGES = ['core', 'context', 'neurovascular'];
@@ -132,6 +133,8 @@ export function AboutDialog() {
         <a href={aboutPageHref(lang)}>{m.aboutGuide}</a>
         {' · '}
         <button type="button" className="ds-link-btn" onClick={() => actions.openControls(true)}>{m.controlsTitle}</button>
+        {' · '}
+        <button type="button" className="ds-link-btn" aria-haspopup="dialog" title={CONTACT_TEXT[lang].openAria} onClick={() => actions.openContact(true)}>{CONTACT_TEXT[lang].open}</button>
       </p>
       <h3>{m.eduTitle}</h3>
       <p>{m.eduBody}</p>
