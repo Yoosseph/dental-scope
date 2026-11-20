@@ -10,7 +10,7 @@ export const de: Messages = {
   loadError: 'Die 3D-Anatomie konnte nicht geladen werden. Prüfe deine Verbindung und lade die Seite neu.',
 
   credits: 'Mitwirkende',
-  supportRepo: 'Projekt unterstützen',
+  supportRepo: 'GitHub',
   supportRepoAria: 'Dental Scope auf GitHub unterstützen (öffnet in einem neuen Tab)',
   numberingGroup: 'Zahnschema',
   numberingTitle: (system) => `Zahnschema ${system}`,

@@ -8,12 +8,13 @@ const TITLE = 'Found an issue, or something you want to tell me?';
 
 async function openForm(page: Page, testInfo: TestInfo) {
   await page.goto('/');
+  const header = page.locator('.ds-identity').getByRole('button', { name: 'Feedback', exact: true });
+  await expect(header).toBeVisible();
   if (testInfo.project.name === 'phone') {
-    // the header has no room on phones; the About dialog links to the form
-    await expect(page.locator('.ds-identity').getByRole('button', { name: 'Feedback', exact: true })).toBeHidden();
+    // the About dialog links to the form as well
     await page.getByRole('button', { name: 'About Dental Scope', exact: true }).click();
     await page.getByRole('dialog', { name: 'About Dental Scope', exact: true }).getByRole('button', { name: 'Feedback', exact: true }).click();
-  } else await page.locator('.ds-identity').getByRole('button', { name: 'Feedback', exact: true }).click();
+  } else await header.click();
   const dialog = page.getByRole('dialog', { name: TITLE });
   await expect(dialog).toBeVisible();
   return dialog;

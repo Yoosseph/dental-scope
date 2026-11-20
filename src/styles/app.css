@@ -175,27 +175,35 @@ kbd {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
-  margin: 4px 0 0;
-  font-size: 11.5px;
-  color: var(--muted);
+  gap: 6px;
+  margin: 8px 0 0;
 }
-.ds-credit a,
-.ds-credit button {
+/* solid chips so the links stay readable over dark anatomy */
+.ds-hlink {
   pointer-events: auto;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  color: inherit;
-  text-decoration: underline;
-  text-decoration-color: var(--line);
-  text-underline-offset: 2px;
+  gap: 6px;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  box-shadow: var(--panel-shadow);
+  color: var(--ink);
+  font-size: 12.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background var(--dur), color var(--dur), transform var(--dur) var(--ease);
 }
-.ds-credit a:hover,
-.ds-credit button:hover {
-  color: var(--accent);
-  text-decoration-color: currentColor;
-}
+.ds-hlink svg { flex: none; color: var(--muted); }
+.ds-hlink:hover { background: var(--panel-solid); color: var(--accent); }
+.ds-hlink:hover svg { color: currentColor; }
+.ds-hlink:active { transform: translateY(1px); }
+.ds-hlink--accent { background: var(--accent); border-color: transparent; color: var(--accent-ink); }
+.ds-hlink--accent svg { color: currentColor; }
+.ds-hlink--accent:hover { background: var(--highlight); color: var(--accent-ink); }
 
 /* ------------------------------------------------------------------ top actions */
 .ds-top-actions {
@@ -3015,7 +3023,8 @@ button.ds-layer-name:hover {
   .ds-sr-hint { display: none; }
   .ds-footer { bottom: calc(84px + var(--safe-bottom)); }
   .ds-app[data-sheet='layers'] .ds-footer, .ds-app[data-sheet='detail'] .ds-footer, .ds-app[data-sheet='tools'] .ds-footer { display: none; }
-  .ds-reset-all { top: calc(74px + var(--safe-top)); bottom: auto; left: calc(16px + var(--safe-left)); min-width: 44px; min-height: 44px; }
+  /* below the identity chips */
+  .ds-reset-all { top: calc(92px + var(--safe-top)); bottom: auto; left: calc(16px + var(--safe-left)); min-width: 44px; min-height: 44px; }
   .ds-app.is-dissecting .ds-reset-all { bottom: auto; }
 }
 
@@ -3040,8 +3049,17 @@ button.ds-layer-name:hover {
   .ds-identity { top: calc(16px + var(--safe-top)); left: calc(10px + var(--safe-left)); }
   .ds-title { font-size: 18px; }
   .ds-footer { display: none; }
-  /* no room beside the top actions; phones reach the form from the About dialog */
-  .ds-credit .ds-credit-feedback { display: none; }
+  /* no room beside the top actions: the chips sit on the reset button's row */
+  .ds-credit {
+    position: fixed;
+    top: calc(74px + var(--safe-top));
+    left: calc(48px + var(--safe-left));
+    right: calc(8px + var(--safe-right));
+    margin: 0;
+    flex-wrap: nowrap;
+    gap: 5px;
+  }
+  .ds-hlink { height: 30px; padding: 0 9px; gap: 5px; font-size: 12px; }
   .ds-top-actions { top: calc(8px + var(--safe-top)); right: calc(8px + var(--safe-right)); gap: 4px; }
   .ds-top-actions .ds-lang { display: none; }
   .ds-lang-select {
@@ -3267,4 +3285,14 @@ button.ds-layer-name:hover {
 }
 @media (orientation: landscape) and (max-height: 600px) {
   .ds-detail.is-mobile-open, .ds-detail.is-mobile-open.is-expanded { height: auto; max-height: none; }
+}
+
+/* very narrow phones: the repository link keeps its icon and accessible name */
+@media (max-width: 374px) {
+  .ds-hlink .ds-hlink-text { display: none; }
+}
+
+/* the quiz question sits where the chips are on smaller screens */
+@media (max-width: 1023px), (pointer: coarse) and (max-width: 1366px) {
+  .ds-app.is-quiz .ds-credit { display: none; }
 }

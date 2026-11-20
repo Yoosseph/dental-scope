@@ -10,7 +10,7 @@ export const es: Messages = {
   loadError: 'No se ha podido cargar la anatomía 3D. Comprueba la conexión y vuelve a cargar la página.',
 
   credits: 'Créditos',
-  supportRepo: 'Apoyar proyecto',
+  supportRepo: 'GitHub',
   supportRepoAria: 'Apoyar Dental Scope en GitHub (se abre en una pestaña nueva)',
   numberingGroup: 'Sistema de numeración dental',
   numberingTitle: (system: string) => `Numeración dental ${system}`,

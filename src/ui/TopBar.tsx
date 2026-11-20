@@ -5,7 +5,7 @@ import { useT } from '../i18n';
 import { actions, useApp } from '../state/store';
 import { MODES, QUIZ_MODE, switchMode } from '../modes/modes';
 import { useServices } from './context';
-import { IconClose, IconExternal, IconInfo, IconMoon, IconSearch, IconSun, IconPlay, IconChevron } from './icons';
+import { IconClose, IconExternal, IconGitHub, IconInfo, IconMessage, IconUsers, IconMoon, IconSearch, IconSun, IconPlay, IconChevron } from './icons';
 import { TOUR_TEXT } from '../i18n/tour';
 import { CONTACT_TEXT } from '../i18n/contact';
 import { LanguageSwitcher } from './LanguageSwitcher';
@@ -18,11 +18,15 @@ export function Identity() {
       <header className="ds-identity">
         <h1 className="ds-title">Dental Scope</h1>
         <p className="ds-credit">
-          <button type="button" aria-haspopup="dialog" onClick={() => actions.openCredits(true)}>{m.credits}</button>
-          <button type="button" className="ds-credit-feedback" aria-haspopup="dialog" title={contact.openAria} onClick={() => actions.openContact(true)}>{contact.open}</button>
+          <button type="button" className="ds-hlink ds-hlink--accent" aria-haspopup="dialog" title={contact.openAria} onClick={() => actions.openContact(true)}>
+            <IconMessage size={14} />{contact.open}
+          </button>
+          <button type="button" className="ds-hlink" aria-haspopup="dialog" onClick={() => actions.openCredits(true)}>
+            <IconUsers size={14} />{m.credits}
+          </button>
           {REPO_URL && (
-            <a href={REPO_URL} target="_blank" rel="noopener noreferrer" aria-label={m.supportRepoAria}>
-              {m.supportRepo}
+            <a className="ds-hlink" href={REPO_URL} target="_blank" rel="noopener noreferrer" aria-label={m.supportRepoAria}>
+              <IconGitHub size={14} /><span className="ds-hlink-text">{m.supportRepo}</span>
               <IconExternal size={11} />
             </a>
           )}
